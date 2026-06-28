@@ -1,0 +1,86 @@
+
+.swiper {
+  width: 100%;
+  height: 100%;
+}
+
+.swiper-slide {
+  text-align: center;
+  font-size: 18px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.swiper-slide img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.swiper-slide {
+  width: 80%;
+}
+
+.swiper-slide:nth-child(2n) {
+  width: 60%;
+}
+
+.swiper-slide:nth-child(3n) {
+  width: 40%;
+}
+
+.mySwiper .swiper-pagination {
+  bottom: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+ 
+/* ── Individual bullet ── */
+.mySwiper .swiper-pagination-bullet {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #d1d5db; /* neutral-300 */
+  opacity: 1;
+  transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              background 0.35s ease,
+              transform 0.2s ease;
+  margin: 0 !important;
+  cursor: pointer;
+}
+ 
+/* ── Active bullet — pill shape with gold gradient ── */
+.mySwiper .swiper-pagination-bullet-active {
+  width: 28px;
+  background: linear-gradient(90deg, #d4a017 0%, #f5c842 50%, #d4a017 100%);
+  box-shadow: 0 0 8px rgba(212, 160, 23, 0.55);
+  transform: scaleY(1.1);
+}
+ 
+/* ── Hover on inactive bullets ── */
+.mySwiper .swiper-pagination-bullet:not(.swiper-pagination-bullet-active):hover {
+  background: #9ca3af;
+  transform: scale(1.2);
+}
+ 
+/* ── Navigation arrows (optional polish) ── */
+.mySwiper .swiper-button-next,
+.mySwiper .swiper-button-prev {
+  color: #d4a017;
+  --swiper-navigation-size: 24px;
+}
+ 
+.mySwiper .swiper-button-next:after,
+.mySwiper .swiper-button-prev:after {
+  font-weight: 900;
+}
+ .swiper-scrollbar {
+  margin-top: 30px;
+ }
+ .swiper-button-prev, .swiper-button-next { 
+  display: none;
+ }

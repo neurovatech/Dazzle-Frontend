@@ -1,0 +1,149 @@
+import {
+  ChangePasswordSchema,
+  changePasswordSchema,
+} from "@/schemas/changePasswordSchema";
+import { yupResolver } from "@hookform/resolvers/yup";
+import React from "react";
+import { SubmitHandler, useForm } from "react-hook-form";
+import PasswordInput from "../ui/PasswordInput";
+
+interface PropsType {
+  setShowOtp: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+const ChangePassword = ({ setShowOtp }: PropsType) => {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+    watch,
+  } = useForm<ChangePasswordSchema>({
+    resolver: yupResolver(changePasswordSchema),
+    mode: "onTouched",
+    // defaultValues: {
+    //   agreeToTerms: false,
+    // },
+  });
+
+  // Live password strength indicator
+  const passwordValue = watch("password", "");
+
+  const onSubmit: SubmitHandler<ChangePasswordSchema> = async (data) => {
+    try {
+      // 🔁 Replace with your real OTP API call
+      await new Promise((res) => setTimeout(res, 1200));
+      reset();
+      setShowOtp(true);
+      // Navigate to OTP verification page, passing email/phone
+      //   navigate("/verify-otp", {
+      //     state: { emailOrPhone: data.emailOrPhone },
+      //   });
+    } catch (error) {
+      console.error("Registration failed:", error);
+    }
+  };
+
+  const getPasswordStrength = (
+    pwd: string,
+  ): { label: string; color: string; width: string } => {
+    if (!pwd) return { label: "", color: "", width: "w-0" };
+    let score = 0;
+    if (pwd.length >= 6) score++;
+    if (/[A-Z]/.test(pwd)) score++;
+    if (/[a-z]/.test(pwd)) score++;
+    if (/[0-9]/.test(pwd)) score++;
+    if (/[@$!%*?&#]/.test(pwd)) score++;
+
+    if (score <= 2)
+      return { label: "Weak", color: "bg-red-400", width: "w-1/3" };
+    if (score === 3 || score === 4)
+      return { label: "Fair", color: "bg-yellow-400", width: "w-2/3" };
+    return { label: "Strong", color: "bg-green-500", width: "w-full" };
+  };
+
+  const strength = getPasswordStrength(passwordValue);
+
+  return (
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      noValidate
+      className="flex flex-col gap-6 w-full md:w-3/5 pt-3"
+    >
+      {/* Password */}
+      <PasswordInput
+        label="Current Password"
+        placeholder="Enter current password"
+        error={errors.currentPassword?.message}
+        register={register("currentPassword")}
+      />
+
+      <div className="flex flex-col gap-1.5">
+        <PasswordInput
+          label="Password"
+          placeholder="Enter correct password"
+          error={errors.password?.message}
+          register={register("password")}
+        />
+
+        {/* Password strength bar */}
+        {passwordValue && (
+          <div className="flex items-center gap-3 px-1">
+            <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${strength.color} ${strength.width}`}
+              />
+            </div>
+            <span
+              className={`text-xs font-semibold ${
+                strength.label === "Weak"
+                  ? "text-red-400"
+                  : strength.label === "Fair"
+                    ? "text-yellow-500"
+                    : "text-green-500"
+              }`}
+            >
+              {strength.label}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Confirm Password */}
+      <PasswordInput
+        label="Confirm Password"
+        placeholder="Enter confirm password"
+        error={errors.confirmPassword?.message}
+        register={register("confirmPassword")}
+      />
+
+      {/* Submit */}
+      <button
+        type="submit"
+        disabled={isSubmitting}
+        className="w-full py-4 rounded-2xl bg-gray-900 text-white text-sm font-bold tracking-widest uppercase hover:bg-gray-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 mt-1"
+      >
+        {isSubmitting ? (
+          <span className="flex items-center justify-center gap-2">
+            <svg
+              className="animate-spin"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+            </svg>
+            Sending OTP...
+          </span>
+        ) : (
+          "SEND OTP"
+        )}
+      </button>
+    </form>
+  );
+};
+
+export default ChangePassword;

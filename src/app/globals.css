@@ -1,0 +1,220 @@
+@import "tailwindcss";
+@variant dark (&:where(.dark, .dark *));
+:root {
+  --font-urbanist: "Urbanist", sans-serif;
+
+  /* Light theme */
+  --background: #ffffff;
+  --light_background: #f8f8f8;
+  --drak_background: #fff;
+  --foreground: #111111;
+
+  --primary: #222222;
+  --gold: #e9ccae;
+  --them_text_color: #222222;
+}
+
+/* Manual dark mode */
+.dark {
+  --background: #2e2b28;
+  --light_background: #393430;
+  --foreground: #ededed;
+  --primary: #ffffff;
+  --them_text_color: #ffffff;
+  --gold: #e9ccae;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-primary: var(--primary);
+  --color-gold: var(--gold);
+  --color-primary_color: var(--them_text_color);
+  --color-light_bg: var(--light_background);
+
+  --font-sans: "Urbanist", sans-serif;
+  --font-urbanist: "Urbanist", sans-serif;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-urbanist);
+  /* padding: 0 5px; */
+  transition:
+    background 0.3s ease,
+    color 0.3s ease;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* style for profile colored button start */
+@keyframes border-move {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-border-glow {
+  background-size: 200% 200% !important;
+  animation: border-move 2s linear infinite;
+}
+
+.swiper-button-prev,
+.swiper-button-next {
+  display: none;
+}
+.i_slider .swiper-button-prev,
+.i_slider .swiper-button-next {
+  display: none !important;
+}
+
+.gradient-text {
+  background: linear-gradient(90deg, #e9ccae, #e0e361 43%, #cb843b);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.e_slider .swiper-pagination {
+  display: none !important;
+}
+.e_slider .swiper-button-prev::after,
+.e_slider .swiper-button-next::after {
+  font-family: swiper-icons;
+  font-size: 20px;
+  letter-spacing: 0;
+  font-variant: initial;
+  line-height: 1;
+  text-transform: none !important;
+}
+.e_slider .swiper-button-prev,
+.e_slider .swiper-button-next {
+  cursor: pointer;
+  color: #222;
+}
+
+.swiper {
+  width: 100%;
+  height: 100%;
+}
+
+.swiper-slide {
+  text-align: center;
+  font-size: 18px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.swiper-slide img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.swiper-slide {
+  width: 80%;
+}
+
+.swiper-slide:nth-child(2n) {
+  width: 60%;
+}
+
+.swiper-slide:nth-child(3n) {
+  width: 40%;
+}
+
+.mySwiper .swiper-pagination {
+  bottom: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* ── Individual bullet ── */
+.mySwiper .swiper-pagination-bullet {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #d1d5db; /* neutral-300 */
+  opacity: 1;
+  transition:
+    width 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    background 0.35s ease,
+    transform 0.2s ease;
+  margin: 0 !important;
+  cursor: pointer;
+}
+
+/* ── Active bullet — pill shape with gold gradient ── */
+.mySwiper .swiper-pagination-bullet-active {
+  width: 28px;
+  background: linear-gradient(90deg, #d4a017 0%, #f5c842 50%, #d4a017 100%);
+  box-shadow: 0 0 8px rgba(212, 160, 23, 0.55);
+  transform: scaleY(1.1);
+}
+
+/* ── Hover on inactive bullets ── */
+.mySwiper
+  .swiper-pagination-bullet:not(.swiper-pagination-bullet-active):hover {
+  background: #9ca3af;
+  transform: scale(1.2);
+}
+
+/* ── Navigation arrows (optional polish) ── */
+.mySwiper .swiper-button-next,
+.mySwiper .swiper-button-prev {
+  color: #d4a017;
+  --swiper-navigation-size: 24px;
+}
+
+.mySwiper .swiper-button-next:after,
+.mySwiper .swiper-button-prev:after {
+  font-weight: 900;
+}
+.swiper-scrollbar {
+  margin-top: 30px;
+}
+.swiper-button-prev,
+.swiper-button-next {
+  display: none;
+}
+
+.marquee-track {
+  width: max-content;
+  animation: marquee-rtl 28s linear infinite;
+}
+
+@keyframes marquee-rtl {
+  0% {
+    transform: translateX(0%);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+  }
+}
