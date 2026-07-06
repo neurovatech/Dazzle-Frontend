@@ -36,7 +36,7 @@ const CheckboxInput: React.FC<CheckboxInputProps> = ({
             />
           </svg>
         </div>
-        <span className="text-sm text-gray-600 dark:text-white leading-snug group-hover:text-gray-900 transition-colors">
+        <span className="text-sm text-gray-600 dark:text-white dark:hover:text-white leading-snug group-hover:text-gray-900 transition-colors">
           {label}
         </span>
       </label>

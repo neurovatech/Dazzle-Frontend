@@ -1,71 +1,41 @@
-"use client";
 import Link from "next/link";
-import Image, { StaticImageData } from "next/image";
-
-import C1 from "@/images/c_1.png";
-import C2 from "@/images/c_2.png";
-import C3 from "@/images/c_3.png";
-import C4 from "@/images/c_4.png";
+import Image from "next/image";
 import ProductCard from "@/components/share/GlobalProductCard";
-interface CategoryItem {
-  id: number;
-  title: string;
-  image: StaticImageData;
-  link: string;
+import { api } from "@/lib/api";
+export interface Brand {
+  is_active: boolean;
+  id: string;
+  label: string;
+  logo: string;
+  slug: string;
 }
 
-function ShopBrand() {
+export default async function ShopBrand() {
+  let brands: Brand[] = [];
+  try {
+    const res = await api.get<{ data: Record<string, unknown>[] }>(
+      "/brands?order=1&page=1&limit=8",
+      { cache: "no-store" },
+    );
 
-  const categoriesData: CategoryItem[] = [
-    {
-      id: 1,
-      title: "Mobile",
-      image: C1,
-      link: "/categories/mobile",
-    },
-    {
-      id: 2,
-      title: "Tablets",
-      image: C2,
-      link: "/categories/tablets",
-    },
-    {
-      id: 3,
-      title: "Laptops",
-      image: C3,
-      link: "/categories/laptops",
-    },
-    {
-      id: 4,
-      title: "Smart-watch",
-      image: C4,
-      link: "/categories/smart-watch",
-    },
-    {
-      id: 5,
-      title: "Mobile",
-      image: C1,
-      link: "/categories/mobile",
-    },
-    {
-      id: 6,
-      title: "Tablets",
-      image: C2,
-      link: "/categories/tablets",
-    },
-    {
-      id: 7,
-      title: "Laptops",
-      image: C3,
-      link: "/categories/laptops",
-    },
-    {
-      id: 8,
-      title: "Smart-watch",
-      image: C4,
-      link: "/categories/smart-watch",
-    },
-  ];
+    const list = Array.isArray(res) ? res : (res?.data ?? []);
+    brands = list
+      .filter((b) => b.is_active === true)
+      .map((b) => ({
+        id: String(b.uuid),
+        label: String(b.brand_name ?? "Unknown Brand"),
+        logo: b.thumbnail_img ? String(b.thumbnail_img) : "",
+        slug: String(b.brand_slug ?? b.brand_name ?? ""),
+        is_active: Boolean(b.is_active),
+        is_featured: Boolean(b.is_featured),
+      }));
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const isExpectedNotFound = /not found/i.test(message);
+    if (!isExpectedNotFound) {
+      console.error("Error fetching warranty policy data:", error);
+    }
+  }
 
   const products = [
     {
@@ -120,7 +90,6 @@ function ShopBrand() {
     },
   ];
 
-
   return (
     <div className="md:px-12.5 px-4">
       <div className="flex justify-between items-center ">
@@ -128,30 +97,30 @@ function ShopBrand() {
           {" "}
           Shop by Brand{" "}
         </h3>
-        <Link href="#" className="">
+        <Link href="/brands" className="">
           See all
         </Link>
       </div>
       <div className="p-4">
-        <div className="grid gap-4 md:grid-cols-8 grid-cols-4">
-          {categoriesData?.map((item) => (
+        <div className="grid grid-cols-4 md:grid-cols-8 gap-4">
+          {brands?.map((item) => (
             <Link
               key={item.id}
-              href={item.link}
-              className="flex flex-col justify-center items-center group cursor-pointer"
+              href={item.slug}
+              className="flex flex-col items-center"
             >
-              <div className="bg-[#F5F5F5] dark:bg-[#CB843B]/10 dark:group-hover:bg-white/10 p-5 rounded-4xl transition-all duration-300 group-hover:bg-[#CB843B]/10 group-hover:scale-105">
+              <div className="w-full aspect-square flex items-center justify-center bg-[#F5F5F5] dark:bg-[#CB843B]/10 rounded-4xl p-4 transition-all duration-300 hover:bg-[#CB843B]/10 hover:scale-105">
                 <Image
-                  src={item.image}
-                  width={100}
-                  height={100}
-                  alt={item.title}
-                  className="transition-transform duration-300 group-hover:scale-110"
+                  src={item.logo}
+                  alt={item.label}
+                  width={80}
+                  height={80}
+                  className="w-full h-full object-contain transition-transform duration-300 hover:scale-110"
                 />
               </div>
 
-              <h5 className="lg:text-sm text-[10px] font-medium text-primary pt-2 transition-colors duration-300 group-hover:text-[#CB843B]">
-                {item.title}
+              <h5 className="mt-2 text-center text-[10px] lg:text-sm font-medium text-primary">
+                {item.label}
               </h5>
             </Link>
           ))}
@@ -168,5 +137,3 @@ function ShopBrand() {
     </div>
   );
 }
-
-export default ShopBrand;

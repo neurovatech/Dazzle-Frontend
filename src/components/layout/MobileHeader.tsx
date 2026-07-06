@@ -14,12 +14,15 @@ import Logo from "@/images/logo.png";
 import SearchBar from "@/components/search/SearchBar";
 import { exploreCategories } from "./types";
 import type { ApiCategory } from "./Header";
+import { useAppSelector } from "@/store/hooks";
+import { useTheme } from "next-themes";
 
 interface Props {
   categories?: ApiCategory[];
 }
 
 export default function MobileHeader({ categories }: Props) {
+  const token = useAppSelector((state) => state.auth.token);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState(
     categories && categories.length > 0
@@ -27,6 +30,9 @@ export default function MobileHeader({ categories }: Props) {
       : (exploreCategories[0]?.label ?? "Phones")
   );
   const [selectedBrand, setSelectedBrand] = useState("");
+
+  const { resolvedTheme } = useTheme();
+  const iconColor = resolvedTheme === "dark" ? "#fff" : "#222";
 
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -69,7 +75,7 @@ export default function MobileHeader({ categories }: Props) {
 
         <div className="flex items-center gap-2">
           <Link
-            href="/auth/login"
+            href={token ? "/profile" : "/auth/login"}
             className="w-10 h-10 rounded-xl bg-background flex items-center justify-center"
           >
             <UserIcon className="text-primary_color dark:text-white" />
@@ -90,7 +96,7 @@ export default function MobileHeader({ categories }: Props) {
           onClick={() => setMobileMenuOpen((prev) => !prev)}
           className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-gray-300 dark:bg-[#2e2b28]"
         >
-          {mobileMenuOpen ? <CloseIcon color="#fff"   /> : <MobileMenuIcon color="#fff" />}
+          {mobileMenuOpen ? <CloseIcon color={iconColor}   /> : <MobileMenuIcon color={iconColor} />}
         </button>
       </div>
 

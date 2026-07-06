@@ -32,7 +32,6 @@ export default function CategoryNav({ categories, childCategories }: Props) {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  // API categories থাকলে সেটি দাও, অন্যথায় fallback static categories দাও
   const panelCategories = categories && categories.length > 0 ? categories : exploreCategories;
 
   const panelProps = {

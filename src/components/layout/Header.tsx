@@ -72,6 +72,9 @@ export default async function Header() {
       cache: "no-store",
     });
 
+  
+    
+
     if (response?.data && Array.isArray(response.data)) {
       apiCategories = response.data
         .filter((cat) => cat.is_active)

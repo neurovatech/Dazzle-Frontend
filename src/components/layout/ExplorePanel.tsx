@@ -65,6 +65,7 @@ interface NormalizedCategory {
   uuid: string;
   label: string;
   category_slug: string;
+  category_images?: string;
   icon: CategoryIconName | React.ReactNode;
   is_active: boolean;
   is_featured: boolean;
@@ -135,6 +136,7 @@ function normalizeCategories(raw: RawCategory[]): NormalizedCategory[] {
         uuid: cat.uuid,
         label: cat.category_name,
         category_slug: cat.category_slug,
+        category_images: cat.thumbnail_img,
         icon: getCategoryIconName(cat.category_name),
         is_active: cat.is_active,
         is_featured: cat.is_featured,
@@ -192,7 +194,7 @@ function BrandLogo({
       alt={label}
       width={80}
       height={32}
-      className={className ?? "h-8 w-auto object-contain"}
+      className={className ?? "object-contain"}
     />
   );
 }
@@ -213,8 +215,8 @@ export default function ExplorePanel({
   );
 
   if (!isOpen) return null;
-
   const normalizedCategories = normalizeCategories(categories);
+  console.log("API Response for categories/brands:", normalizedCategories);
   const activeCat = normalizedCategories.find(
     (c) => c.label === activeCategory,
   );
@@ -234,7 +236,19 @@ export default function ExplorePanel({
             <ChevronLeft size={16} />
           </button>
           <span className="flex items-center gap-2 font-semibold text-sm text-primary dark:text-black">
-            {renderCategoryIcon(mobileActiveCat.icon)}
+            {/* {renderCategoryIcon(mobileActiveCat.icon)} */}
+            {mobileActiveCat.category_images ? (
+                    <Image
+                      src={mobileActiveCat.category_images}
+                      alt={mobileActiveCat.label}
+                      width={20}
+                      height={20}
+                      className="object-contain"
+                    />
+                  ) : (
+                    renderCategoryIcon(mobileActiveCat.icon)
+                  )}
+
             {mobileActiveCat.label}
           </span>
         </div>
@@ -291,7 +305,17 @@ export default function ExplorePanel({
                   className="flex items-center justify-between px-5 py-3.5 text-sm font-medium text-[#222222] hover:bg-[#E9CCAE33] active:bg-[#E9CCAE66] transition-colors"
                 >
                   <span className="flex items-center gap-3">
-                    {renderCategoryIcon(cat.icon)}
+                   {cat.category_images ? (
+                    <Image
+                      src={cat.category_images}
+                      alt={cat.label}
+                      width={20}
+                      height={20}
+                      className="object-contain"
+                    />
+                  ) : (
+                    renderCategoryIcon(cat.icon)
+                  )}
                     {cat.label}
                   </span>
                   <ChevronRight size={16} className="text-gray-400" />
@@ -310,7 +334,17 @@ export default function ExplorePanel({
                 className="flex items-center justify-between px-5 py-3.5 text-sm font-medium text-[#222222] hover:bg-[#E9CCAE33] active:bg-[#E9CCAE66] transition-colors"
               >
                 <span className="flex items-center gap-3">
-                  {renderCategoryIcon(cat.icon)}
+                  {cat.category_images ? (
+                    <Image
+                      src={cat.category_images}
+                      alt={cat.label}
+                      width={20}
+                      height={20}
+                      className="object-contain"
+                    />
+                  ) : (
+                    renderCategoryIcon(cat.icon)
+                  )}
                   {cat.label}
                 </span>
               </Link>
@@ -322,8 +356,9 @@ export default function ExplorePanel({
   }
 
   // ── Desktop ───────────────────────────────────────────────────────────────
+  console.log("API Response for categories/brands:", activeCat);
   return (
-    <div className="absolute z-50 top-full left-0 mt-2 bg-white dark:bg-[#393430] border border-gray-100 rounded-2xl shadow-2xl flex overflow-hidden w-[580px] max-h-[420px]">
+    <div className="absolute z-999 top-full left-0 mt-2 bg-white dark:bg-[#393430] border border-gray-100 rounded-2xl shadow-2xl flex overflow-hidden w-[580px] max-h-[420px]">
       {/* Category sidebar */}
       <div className="w-53.75 shrink-0 border-r border-gray-100 overflow-y-auto p-2">
         {normalizedCategories.map((cat) => (
@@ -337,7 +372,19 @@ export default function ExplorePanel({
             }`}
           >
             <span className="flex items-center gap-3">
-              {renderCategoryIcon(cat.icon)}
+              {/* {renderCategoryIcon(cat.icon)} */}
+              {cat.category_images ? (
+                <Image
+                  src={cat.category_images}
+                  alt={cat.label}
+                  width={20}
+                  height={20}
+                  className="object-contain"
+                />
+              ) : (
+                renderCategoryIcon(cat.icon)
+              )}
+
               {cat.label}
             </span>
           </button>

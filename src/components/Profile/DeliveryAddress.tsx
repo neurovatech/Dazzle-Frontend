@@ -1,287 +1,696 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
+import React, { useState } from "react";
+import Image from "next/image";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 import {
   ChevronRight,
-  Delete,
-  DotSquareIcon,
-  EditIcon,
-  StarIcon,
+  Edit2,
+  Trash2,
+  MapPin,
+  Plus,
+  Loader2,
 } from "lucide-react";
-import Image from "next/image";
+
 import locationImg from "@/images/location.png";
-import { useState } from "react";
+import { api } from "@/lib/api";
+import { useAppSelector } from "@/store/hooks";
 
-type AddressData = {
-  name: string;
-  phone: string;
-  address: string;
-  district: string;
-  city: string;
-};
+// ─── TYPES ───────────────────────────────────────────────────────────────────
+interface AddressBookItem {
+  addressUuid: string;
+  fullName: string;
+  mobileNo: string;
+  addressLabel?: string;
+  addressLine1: string;
+  addressLine2?: string;
+  deliveryInstructions?: string;
+  isDefault: boolean;
+  isActive: boolean;
+  districtID: number;
+  policeStationID: number;
+  updatedAt?: string;
+}
 
+interface AddressListResponse {
+  statusCode: number;
+  status: string;
+  message: string;
+  count: number;
+  data: AddressBookItem[];
+}
+
+interface AreaItem {
+  areaID: number;
+  areaName: string;
+}
+
+interface DistrictItem {
+  distID: number;
+  districtName: string;
+  area: AreaItem[];
+}
+
+interface AreaListResponse {
+  statusCode: number;
+  status: string;
+  message: string;
+  count: number;
+  data: DistrictItem[];
+}
+
+interface AlterAddressResponse {
+  statusCode: number;
+  status: string;
+  message: string;
+  data: {
+    addressId: number;
+    addressUuid: string;
+    updatedAt?: string;
+    createdAt?: string;
+  };
+}
+
+// ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
 const DeliveryAddress = () => {
-  const [show, setShow] = useState(false);
-  const [showPopup, setShowPopup] = useState(false);
-  const [showAddressForm, setShowAddressForm] = useState(false);
-  const [form, setForm] = useState<AddressData>({
-    name: "",
-    phone: "",
-    address: "",
-    district: "",
-    city: "",
+  const queryClient = useQueryClient();
+  const { user, token, apiKey } = useAppSelector((state) => state.auth);
+
+  // Ensure Authorization header always has Bearer prefix
+  const authHeader = token
+    ? token.startsWith("Bearer ")
+      ? token
+      : `Bearer ${token}`
+    : "";
+
+  // States
+  const [expandedUuid, setExpandedUuid] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingAddress, setEditingAddress] = useState<AddressBookItem | null>(
+    null,
+  );
+
+  // Form States
+  const [fullName, setFullName] = useState("");
+  const [mobileNo, setMobileNo] = useState("");
+  const [addressLabel, setAddressLabel] = useState("Home");
+  const [addressLine1, setAddressLine1] = useState("");
+  const [addressLine2, setAddressLine2] = useState("");
+  const [deliveryInstructions, setDeliveryInstructions] = useState("");
+  const [isDefault, setIsDefault] = useState(false);
+  const [districtID, setDistrictID] = useState<number>(0);
+  const [policeStationID, setPoliceStationID] = useState<number>(0);
+
+  // 1. Fetch Area List (Districts and Thanas/Areas) from API
+  const { data: areaList, isLoading: isAreaLoading } =
+    useQuery<AreaListResponse>({
+      queryKey: ["areaList"],
+      queryFn: async () => {
+        return api.get<AreaListResponse>("area-list", {
+          headers: {
+            "X-API-Key": apiKey || "",
+            Authorization: authHeader,
+          },
+        });
+      },
+    });
+
+  // 2. Fetch Address List
+  const { data: addressList, isLoading: isListLoading } =
+    useQuery<AddressListResponse>({
+      queryKey: ["addressList", apiKey],
+      queryFn: async () => {
+        return api.get<AddressListResponse>("address-list", {
+          headers: {
+            "X-API-Key": apiKey || "",
+            Authorization: authHeader,
+          },
+        });
+      },
+      enabled: !!apiKey && !!token,
+    });
+
+  // 3. Save Address Mutation (Add or Edit)
+  const { mutate: saveAddress, isPending: isSaving } = useMutation({
+    mutationFn: async (payload: {
+      uuid?: string;
+      data: Partial<AddressBookItem>;
+      isEdit: boolean;
+    }) => {
+      const endpoint = payload.isEdit
+        ? `alter-address-book/${payload.uuid}`
+        : "new-address-book";
+
+      return api.post<AlterAddressResponse>(endpoint, payload.data, {
+        headers: {
+          "X-API-Key": apiKey || "",
+          Authorization: authHeader,
+        },
+      });
+    },
+    onSuccess: (res) => {
+      toast.success(res.message || "Address book updated successfully!");
+      queryClient.invalidateQueries({ queryKey: ["addressList"] });
+      closeModal();
+    },
+    onError: (err: any) => {
+      try {
+        const parsed = JSON.parse(err.message);
+        if (parsed.errors && parsed.errors.length > 0) {
+          parsed.errors.forEach((e: string) => toast.error(e));
+        } else {
+          toast.error(parsed.message || "Failed to save address.");
+        }
+      } catch {
+        toast.error("Something went wrong.");
+      }
+    },
   });
 
-  const DISTRICTS = ["Dhaka", "Chittagong", "Sylhet", "Rajshahi", "Khulna"];
-  const CITIES = ["Dhaka", "Mirpur", "Uttara", "Gulshan", "Bashundhara"];
+  // 4. Delete Address (Hard Delete via API)
+  const { mutate: deleteAddress } = useMutation({
+    mutationFn: async (uuid: string) => {
+      return api.delete<AlterAddressResponse>(`address-delete/${uuid}`, {
+        headers: {
+          "X-API-Key": apiKey || "",
+          Authorization: authHeader,
+        },
+      });
+    },
+    onSuccess: (res: any) => {
+      toast.success(res.message || "Address deleted successfully.");
+      queryClient.invalidateQueries({ queryKey: ["addressList"] });
+    },
+    onError: (err: any) => {
+      try {
+        const parsed = JSON.parse(err.message);
+        toast.error(parsed.message || "Failed to delete address.");
+      } catch {
+        toast.error("Something went wrong while deleting.");
+      }
+    },
+  });
 
-  const handleChange = (field: keyof AddressData, value: string) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
+  // State for custom delete confirmation modal
+  const [deletingUuid, setDeletingUuid] = useState<string | null>(null);
+
+  const handleDeleteClick = (uuid: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDeletingUuid(uuid);
   };
 
-  const handleClear = () => {
-    setForm({ name: "", phone: "", address: "", district: "", city: "" });
+  // Handle District Change to Reset Thana Selection
+  const handleDistrictChange = (id: number) => {
+    setDistrictID(id);
+    setPoliceStationID(0); // Reset Thana
   };
+
+  // Open Modal for New Address
+  const openAddModal = () => {
+    setEditingAddress(null);
+    setFullName("");
+    setMobileNo("");
+    setAddressLabel("Home");
+    setAddressLine1("");
+    setAddressLine2("");
+    setDeliveryInstructions("");
+    setIsDefault(false);
+    setDistrictID(0);
+    setPoliceStationID(0);
+    setIsModalOpen(true);
+  };
+
+  // Open Modal for Updating Address
+  const openEditModal = (item: AddressBookItem, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingAddress(item);
+    setFullName(item.fullName);
+    setMobileNo(item.mobileNo);
+    setAddressLabel(item.addressLabel || "Home");
+    setAddressLine1(item.addressLine1);
+    setAddressLine2(item.addressLine2 || "");
+    setDeliveryInstructions(item.deliveryInstructions || "");
+    setIsDefault(item.isDefault);
+    setDistrictID(item.districtID);
+    setPoliceStationID(item.policeStationID);
+    setIsModalOpen(true);
+  };
+
+  // Close Modal
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setEditingAddress(null);
+  };
+
+  // Form Submit Handler
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!fullName.trim() || !mobileNo.trim() || !addressLine1.trim()) {
+      toast.error("Please fill all required fields.");
+      return;
+    }
+
+    const isEdit = !!editingAddress;
+    const payloadData = {
+      fullName,
+      mobileNo,
+      addressLabel,
+      addressLine1,
+      addressLine2: addressLine2 || "",
+      deliveryInstructions: deliveryInstructions || "",
+      isDefault,
+      isActive: true,
+      districtID: districtID || 0,
+      policeStationID: policeStationID || 0,
+    };
+
+    saveAddress({
+      uuid: editingAddress?.addressUuid,
+      data: payloadData,
+      isEdit,
+    });
+  };
+
+  // Active Addresses Filter
+  const activeAddresses =
+    addressList?.data?.filter((addr) => addr.isActive) || [];
+
+  // Selected District object from API data
+  const selectedDistrictObj = areaList?.data?.find(
+    (d) => d.distID === districtID,
+  );
 
   return (
-    <div>
-      <div
-        className="relative mb-3 bg-[#F7F7F7] dark:bg-[#393430] py-4 px-5 rounded-xl border border-gray-100 flex items-center justify-between cursor-pointer"
-        onClick={() => setShow(!show)}
+    <div className="w-full">
+      {isListLoading || isAreaLoading ? (
+        <div className="flex flex-col items-center justify-center py-10">
+          <Loader2 className="animate-spin text-yellow-600 mb-2" size={24} />
+          <p className="text-sm text-gray-400">
+            Loading addresses and areas...
+          </p>
+        </div>
+      ) : activeAddresses.length === 0 ? (
+        <div className="bg-gray-50 dark:bg-[#23201d] rounded-2xl p-6 text-center border border-dashed border-gray-200 dark:border-gray-800">
+          <MapPin
+            className="mx-auto text-gray-400 dark:text-gray-600 mb-3"
+            size={32}
+          />
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            No saved addresses found. Add one below!
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {activeAddresses.map((addr) => {
+            const isExpanded = expandedUuid === addr.addressUuid;
+
+            // Look up Names from Area List API data dynamically
+            const districtName =
+              areaList?.data?.find((d) => d.distID === addr.districtID)
+                ?.districtName || "Unknown District";
+            const thanaName =
+              areaList?.data
+                ?.find((d) => d.distID === addr.districtID)
+                ?.area?.find((t) => t.areaID === addr.policeStationID)
+                ?.areaName || "Unknown Thana";
+
+            return (
+              <div
+                key={addr.addressUuid}
+                className="overflow-hidden bg-white dark:bg-[#23201d] rounded-2xl border border-gray-100 dark:border-gray-800 transition-all"
+              >
+                {/* Header Row */}
+                <div
+                  className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5"
+                  onClick={() =>
+                    setExpandedUuid(isExpanded ? null : addr.addressUuid)
+                  }
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-yellow-50 dark:bg-yellow-500/10 rounded-xl flex items-center justify-center shrink-0">
+                      <Image
+                        src={locationImg}
+                        alt="Location"
+                        width={24}
+                        height={24}
+                      />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-gray-800 dark:text-white">
+                          {addr.addressLabel || "Address"}
+                        </span>
+                        {addr.isDefault && (
+                          <span className="bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 text-[10px] px-2 py-0.5 rounded-full font-bold">
+                            Default
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-400 dark:text-gray-400 mt-0.5">
+                        {addr.addressLine1}{" "}
+                        {addr.addressLine2 ? `, ${addr.addressLine2}` : ""}
+                      </p>
+                    </div>
+                  </div>
+                  <ChevronRight
+                    className={`text-gray-400 transition-transform duration-200 ${isExpanded ? "rotate-90 text-yellow-600" : ""}`}
+                    size={18}
+                  />
+                </div>
+
+                {/* Details Section */}
+                {isExpanded && (
+                  <div className="px-5 pb-5 pt-3 border-t border-gray-100 dark:border-gray-800/60 bg-gray-50/50 dark:bg-black/10 flex flex-col md:flex-row md:justify-between items-start gap-4">
+                    <div className="text-xs text-gray-600 dark:text-gray-300 space-y-2.5">
+                      <div>
+                        <span className="font-semibold block text-gray-400">
+                          Recipient Name
+                        </span>
+                        <span className="text-sm font-medium text-gray-800 dark:text-white">
+                          {addr.fullName}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="font-semibold block text-gray-400">
+                          Phone Number
+                        </span>
+                        <span className="text-sm font-medium text-gray-800 dark:text-white">
+                          {addr.mobileNo}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="font-semibold block text-gray-400">
+                          Region
+                        </span>
+                        <span className="text-sm font-medium text-gray-800 dark:text-white">
+                          District: {districtName} | Thana: {thanaName}
+                        </span>
+                      </div>
+                      {addr.deliveryInstructions && (
+                        <div>
+                          <span className="font-semibold block text-gray-400">
+                            Delivery Instructions
+                          </span>
+                          <p className="italic text-gray-500 mt-0.5">
+                            {addr.deliveryInstructions}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex gap-2 w-full md:w-auto mt-2 md:mt-0">
+                      <button
+                        onClick={(e) => openEditModal(addr, e)}
+                        className="flex-1 md:flex-none flex items-center justify-center gap-1.5 px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 transition"
+                      >
+                        <Edit2 size={13} />
+                        Edit {activeAddresses.length}
+                      </button>
+                      {activeAddresses.length > 1 && (
+                        <button
+                          onClick={(e) =>
+                            handleDeleteClick(addr.addressUuid, e)
+                          }
+                          className="flex-1 md:flex-none flex items-center justify-center gap-1.5 px-4 py-2 border border-red-100 dark:border-red-900/30 rounded-xl text-xs font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 transition"
+                        >
+                          <Trash2 size={13} />
+                          Delete
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ── ADD ANOTHER TRIGGER ── */}
+      <button
+        onClick={openAddModal}
+        className="flex items-center gap-2 mt-4 px-4 py-2 bg-yellow-600 dark:bg-yellow-500/10 text-white dark:text-yellow-400 rounded-2xl text-sm font-bold hover:bg-yellow-700 transition duration-200 shadow-sm"
       >
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-[#F7F7F7] rounded-xl flex items-center justify-center border border-gray-100 text-red-500">
-            <Image src={locationImg} alt="Location" width={38} />
+        <Plus size={16} />
+        Add another address
+      </button>
+
+      {/* ── ADD/EDIT ADDRESS MODAL ── */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-[#1c1917] rounded-3xl w-full max-w-md shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-800">
+            {/* Top Stripe */}
+            <div className="h-1.5 w-full bg-gradient-to-r from-yellow-400 via-yellow-500 to-orange-500" />
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 pt-5 pb-2">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                {editingAddress ? "Update Address" : "Add Delivery Address"}
+              </h3>
+              <button
+                onClick={closeModal}
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+              >
+                <ChevronRight className="rotate-90 text-gray-400" size={16} />
+              </button>
+            </div>
+
+            {/* Form */}
+            <form
+              onSubmit={handleSubmit}
+              className="p-6 space-y-4 max-h-[75vh] overflow-y-auto"
+            >
+              {/* Recipient Full Name */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">
+                  Recipient Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Enter full name"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#282522] text-sm text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/20"
+                />
+              </div>
+
+              {/* Mobile Number */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">
+                  Mobile Number *
+                </label>
+                <input
+                  type="tel"
+                  required
+                  placeholder="e.g. 01700000000"
+                  value={mobileNo}
+                  onChange={(e) => setMobileNo(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#282522] text-sm text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/20"
+                />
+              </div>
+
+              {/* Address Label (Home / Office) */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                  Address Label
+                </label>
+                <div className="flex gap-2">
+                  {["Home", "Office", "Other"].map((lbl) => (
+                    <button
+                      key={lbl}
+                      type="button"
+                      onClick={() => setAddressLabel(lbl)}
+                      className={`flex-1 py-2 text-xs font-bold rounded-xl border transition-all duration-200 ${
+                        addressLabel === lbl
+                          ? "bg-yellow-500/10 border-yellow-500 text-yellow-600 dark:text-yellow-400 font-bold"
+                          : "border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-white/5 text-gray-500"
+                      }`}
+                    >
+                      {lbl}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* District & Thana (Side by Side) */}
+              <div className="grid grid-cols-2 gap-3">
+                {/* District Dropdown */}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">
+                    District
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={districtID}
+                      onChange={(e) =>
+                        handleDistrictChange(Number(e.target.value))
+                      }
+                      className="w-full appearance-none px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#282522] text-sm text-gray-700 dark:text-white focus:outline-none"
+                    >
+                      <option value={0}>Select District</option>
+                      {areaList?.data?.map((d) => (
+                        <option key={d.distID} value={d.distID}>
+                          {d.districtName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Thana Dropdown */}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 mb-1">
+                    Thana
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={policeStationID}
+                      disabled={!districtID}
+                      onChange={(e) =>
+                        setPoliceStationID(Number(e.target.value))
+                      }
+                      className="w-full appearance-none px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#282522] text-sm text-gray-700 dark:text-white focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <option value={0}>Select Thana</option>
+                      {selectedDistrictObj?.area.map((t) => (
+                        <option key={t.areaID} value={t.areaID}>
+                          {t.areaName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Address Line 1 */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">
+                  Address Line 1 *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="House no., street, block/area"
+                  value={addressLine1}
+                  onChange={(e) => setAddressLine1(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#282522] text-sm text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500/20"
+                />
+              </div>
+
+              {/* Address Line 2 */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">
+                  Address Line 2 (Optional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Apartment, floor, landmark"
+                  value={addressLine2}
+                  onChange={(e) => setAddressLine2(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#282522] text-sm text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none"
+                />
+              </div>
+
+              {/* Delivery Instructions */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">
+                  Delivery Instructions (Optional)
+                </label>
+                <textarea
+                  placeholder="e.g. Call before delivery, drop at reception"
+                  value={deliveryInstructions}
+                  onChange={(e) => setDeliveryInstructions(e.target.value)}
+                  rows={2}
+                  className="w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#282522] text-sm text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none"
+                />
+              </div>
+
+              {/* Default Address Checkbox */}
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="isDefault"
+                  checked={isDefault}
+                  onChange={(e) => setIsDefault(e.target.checked)}
+                  className="w-4 h-4 rounded text-yellow-600 focus:ring-yellow-500/20"
+                />
+                <label
+                  htmlFor="isDefault"
+                  className="text-xs text-gray-600 dark:text-gray-300 font-semibold cursor-pointer select-none"
+                >
+                  Set as default delivery address
+                </label>
+              </div>
+
+              {/* Submit / Cancel Buttons */}
+              <div className="flex gap-3 pt-3">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="flex-1 py-3 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-bold text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 transition"
+                >
+                  CANCEL
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="flex-1 py-3 rounded-xl bg-gray-900 text-white dark:bg-white dark:text-gray-900 text-xs font-bold tracking-wider hover:bg-gray-700 transition flex items-center justify-center gap-1.5"
+                >
+                  {isSaving && <Loader2 size={13} className="animate-spin" />}
+                  {editingAddress ? "UPDATE ADDRESS" : "ADD ADDRESS"}
+                </button>
+              </div>
+            </form>
           </div>
-          <div>
-            <h4 className="font-semibold text-gray-800 dark:text-white">
-              Dhaka
-            </h4>
-            <p className="text-sm text-gray-400 dark:text-gray-300">
-              Rd 7, Block A, Bashundhara
+        </div>
+      )}
+
+      {/* ── DELETE CONFIRMATION MODAL ── */}
+      {deletingUuid && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-[#1c1917] rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-800 p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-red-50 dark:bg-red-950/20 rounded-xl flex items-center justify-center text-red-500 shrink-0">
+                <Trash2 size={20} />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-gray-900 dark:text-white">
+                  Delete Address
+                </h3>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  This action cannot be undone.
+                </p>
+              </div>
+            </div>
+            <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+              Are you sure you want to permanently delete this delivery address
+              from your profile?
             </p>
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setDeletingUuid(null)}
+                className="flex-1 py-3 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-bold text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 transition"
+              >
+                CANCEL
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  deleteAddress(deletingUuid);
+                  setDeletingUuid(null);
+                }}
+                className="flex-1 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold tracking-wider transition"
+              >
+                DELETE
+              </button>
+            </div>
           </div>
         </div>
-        <ChevronRight
-          className={`md:block hidden text-[#222222] dark:text-white transition-all duration-300 ${show ? "rotate-90" : "rotate-none"}`}
-          size={20}
-        />
-        <DotSquareIcon
-          onClick={() => setShowPopup((prev) => !prev)}
-          className={`block md:hidden text-[#222222] dark:text-white transition-all duration-300`}
-          size={20}
-        />
-        {/* for mobile device */}
-        <div
-          className={`absolute z-10 -bottom-[70%] right-7 items-center gap-3 bg-white shadow-[0px_0px_14.4px_3px_#E9CCAE70] rounded-xl p-3 ${showPopup ? "block" : "hidden"} md:hidden`}
-        >
-          <div
-            onClick={() => {
-              setShowAddressForm(!showAddressForm);
-              setShowPopup(false);
-            }}
-            className="text-[#575757] flex items-center gap-2 px-2 rounded-md hover:bg-white transition-all cursor-pointer"
-          >
-            <EditIcon size={16} /> <span>Edit</span>
-          </div>
-          <hr className="border-t border-gray-200 my-2" />
-          <div className="text-[#575757] flex items-center gap-2 px-2 rounded-md hover:bg-white transition-all cursor-pointer">
-            <Delete size={16} className="text-red-600" /> <span>Delete</span>
-          </div>
-        </div>
-      </div>
-
-      {/* address details */}
-
-      {/* address form for mobile */}
-      <div
-        className={`space-y-4 ${showAddressForm ? "block" : "hidden"} md:hidden`}
-      >
-        {/* Name */}
-        <div>
-          <label className="block text-sm font-medium text-gray-800 dark:text-white mb-1">
-            Name
-          </label>
-          <input
-            type="text"
-            placeholder="Enter your name"
-            value={form.name}
-            onChange={(e) => handleChange("name", e.target.value)}
-            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#7B4F1E]/30 focus:border-[#7B4F1E]"
-          />
-        </div>
-
-        {/* Phone */}
-        <div>
-          <label className="block text-sm font-medium text-gray-800 dark:text-white mb-1">
-            Phone Number
-          </label>
-          <input
-            type="tel"
-            placeholder="Enter phone number"
-            value={form.phone}
-            onChange={(e) => handleChange("phone", e.target.value)}
-            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#7B4F1E]/30 focus:border-[#7B4F1E]"
-          />
-        </div>
-
-        {/* Address */}
-        <div>
-          <label className="block text-sm font-medium text-gray-800 dark:text-white mb-1">
-            Address
-          </label>
-          <input
-            type="text"
-            placeholder="Enter your full address"
-            value={form.address}
-            onChange={(e) => handleChange("address", e.target.value)}
-            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#7B4F1E]/30 focus:border-[#7B4F1E]"
-          />
-        </div>
-
-        {/* District */}
-        <div>
-          <label className="block text-sm font-medium text-gray-800 dark:text-white mb-1">
-            District
-          </label>
-          <div className="relative">
-            <select
-              value={form.district}
-              onChange={(e) => handleChange("district", e.target.value)}
-              className="w-full appearance-none px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#7B4F1E]/30 focus:border-[#7B4F1E]"
-            >
-              <option value="">Select district</option>
-              {DISTRICTS.map((d) => (
-                <option key={d} value={d}>
-                  {d}
-                </option>
-              ))}
-            </select>
-            <svg
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
-          </div>
-        </div>
-
-        {/* City */}
-        <div>
-          <label className="block text-sm font-medium text-gray-800 dark:text-white mb-1">
-            City
-          </label>
-          <div className="relative">
-            <select
-              value={form.city}
-              onChange={(e) => handleChange("city", e.target.value)}
-              className="w-full appearance-none px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#7B4F1E]/30 focus:border-[#7B4F1E]"
-            >
-              <option value="">Select city</option>
-              {CITIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-            <svg
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
-          </div>
-        </div>
-
-        {/* Buttons */}
-        <button
-          type="submit"
-          // disabled={isSubmitting}
-          className="w-full py-4 rounded-[20px] bg-gray-900 dark:bg-gray-300 text-white dark:text-black text-sm font-bold tracking-widest uppercase hover:bg-gray-700 dark:hover:bg-gray-400 transition-all duration-200 mt-4"
-        >
-          ADD ADDRESS
-          {/* {isSubmitting ? (
-          <span className="flex items-center justify-center gap-2">
-            <svg
-              className="animate-spin"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-            </svg>
-            Sending OTP...
-          </span>
-        ) : (
-          "SEND OTP"
-        )} */}
-        </button>
-      </div>
-
-      <div
-        className={`hidden mb-7 bg-[#F7F7F7] rounded-2xl p-5 pr-9 justify-between items-start ${show ? "opacity-100 md:flex" : "opacity-0 hidden"}`}
-      >
-        <div className="text-[#222222] font-medium space-y-5">
-          <div className="">
-            <h4 className="mb-2.5">Name</h4>
-            <h4 className="text-xl">Anika Rahnum</h4>
-          </div>
-          <div className="">
-            <h4 className="mb-2.5">Phone Number</h4>
-            <h4 className="text-xl">017373828292</h4>
-          </div>
-          <div className="">
-            <h4 className="mb-2.5">Address</h4>
-            <h4 className="text-xl">Block A, Bashundhara, Dhaka</h4>
-          </div>
-          <div className="">
-            <h4 className="mb-2.5">District</h4>
-            <h4 className="text-xl">Dhaka</h4>
-          </div>
-          <div className="">
-            <h4 className="mb-2.5">City</h4>
-            <h4 className="text-xl">Dhaka</h4>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <div className="text-[#575757] flex items-center gap-2 py-0.5 px-2 rounded-md hover:bg-white transition-all cursor-pointer">
-            <EditIcon size={16} /> <span>Edit</span>
-          </div>
-          <div className="text-[#575757] flex items-center gap-2 py-0.5 px-2 rounded-md hover:bg-white transition-all cursor-pointer">
-            <Delete size={16} className="text-red-600" /> <span>Delete</span>
-          </div>
-        </div>
-      </div>
-
-      {/* add onother */}
-      <div
-        className="flex items-center gap-1.5 cursor-pointer w-fit mt-4"
-        onClick={() => setShowAddressForm(!showAddressForm)}
-      >
-        <div className="p-0.5 bg-[#6D3F0E] dark:bg-white rounded-md">
-          {/* w-5 h-5 flex items-center justify-center */}
-          <StarIcon className="text-gray-300 dark:text-black " size={16} />
-        </div>
-        <span className="text-[#6D3F0E] font-semibold dark:text-white">
-          Add another
-        </span>
-      </div>
+      )}
     </div>
   );
 };

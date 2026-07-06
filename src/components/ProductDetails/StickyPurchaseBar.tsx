@@ -55,7 +55,7 @@ export default function StickyPurchaseBar({
 }: StickyPurchaseBarProps) {
   return (
     <div>
-      <div className="fixed md:bottom-0 bottom-23 left-0 right-0 z-50 bg-[#f5f5f7] dark:bg-[#3e3329] border-t border-gray-200 dark:border-gray-700/60 shadow-[0_-2px_12px_rgba(0,0,0,0.08)]">
+      <div className="fixed md:bottom-0 bottom-0 left-0 right-0 z-50 bg-[#f5f5f7] dark:bg-[#3e3329] border-t border-gray-200 dark:border-gray-700/60 shadow-[0_-2px_12px_rgba(0,0,0,0.08)]">
         <div className="max-w-350 mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-24 gap-4">
             <div className="hidden md:flex items-start gap-2 shrink-0">
@@ -114,7 +114,7 @@ export default function StickyPurchaseBar({
       <button
         onClick={onWhatsApp}
         aria-label="Contact via WhatsApp"
-        className="fixed md:bottom-10 bottom-20 mb-24 md:mb-0 right-4 z-50 w-12 h-12 bg-green-500 hover:bg-green-600 active:bg-green-700 text-white rounded-full flex items-center justify-center shadow-lg transition-colors duration-150"
+        className="fixed md:bottom-5 bottom-10 mb-24 md:mb-0 right-4 z-50 w-12 h-12 bg-green-500 hover:bg-green-600 active:bg-green-700 text-white rounded-full flex items-center justify-center shadow-lg transition-colors duration-150"
       >
         <WhatsAppIcon />
       </button>

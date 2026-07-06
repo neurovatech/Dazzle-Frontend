@@ -46,7 +46,7 @@ const QuickViewProductInfo: React.FC<ProductInfoProps> = ({
         </h1> */}
 
         <div className="flex flex-wrap items-center gap-2 text-sm pr-2 ">
-          <span className="text-gray-500">Availability:</span>
+          <span className="text-gray-500 dark:text-white">Availability:</span>
           <span
             className={`font-semibold ${inStock ? "text-emerald-600" : "text-red-500"}`}
           >
@@ -55,13 +55,13 @@ const QuickViewProductInfo: React.FC<ProductInfoProps> = ({
         </div>
 
         <div className="">
-          <span className="text-[#222222]">
-            Code: <span className="font-semibold text-[#222222]">#{code}</span>
+          <span className="text-[#222222] dark:text-white">
+            Code: <span className="font-semibold text-[#222222] dark:text-white">#{code}</span>
           </span>
         </div>
       </div>
 
-      <h1 className="text-xl sm:text-2xl font-bold text-[#222222] leading-snug">
+      <h1 className="text-xl sm:text-2xl font-bold text-[#222222] dark:text-white leading-snug">
         {title}
       </h1>
 
@@ -71,13 +71,13 @@ const QuickViewProductInfo: React.FC<ProductInfoProps> = ({
           <span className="text-[24px] font-extrabold text-[#B57908]">
             {formatPrice(price)}
           </span>
-          <span className="text-[16px] text-[#747474] line-through">
+          <span className="text-[16px] text-[#747474] dark:text-white line-through">
             {formatPrice(originalPrice)}
           </span>
         </div>
 
         <div className="flex items-center gap-4">
-          <span className="text-sm font-semibold text-[#222222]">
+          <span className="text-sm font-semibold text-[#222222] dark:text-white">
             Quantity :
           </span>
           <QuantitySelector defaultValue={1} />
@@ -85,7 +85,7 @@ const QuickViewProductInfo: React.FC<ProductInfoProps> = ({
       </div>
 
       {/* Stock + Warranty */}
-      <div className="space-y-1.5">
+      <div className="space-y-1.5 ">
         {/* <div className="flex flex-wrap items-center gap-2 text-sm">
           {stockNote && (
             <span className="flex items-center gap-1 text-[#222222] font-medium">

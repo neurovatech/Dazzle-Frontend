@@ -305,7 +305,7 @@ const PreOrderPage: React.FC = () => {
                 <span className="text-sm text-gray-600 dark:text-gray-400">
                   I accept{" "}
                   <Link
-                    href="/terms"
+                    href="/terms-conditions"
                     className="text-[#bd9961] dark:text-[#D4A97A] font-semibold underline underline-offset-2 hover:text-[#a8844f] transition-colors"
                   >
                     Terms & Conditions

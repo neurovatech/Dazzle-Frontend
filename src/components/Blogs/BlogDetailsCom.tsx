@@ -2,14 +2,6 @@ import React from "react";
 import Image from "next/image";
 import RelatedPosts from "./RelatedPosts";
 
-interface BlogPost {
-  id: number;
-  image: string;
-  category: string;
-  date: string;
-  title: string;
-  excerpt: string;
-}
 const CalendarIcon: React.FC = () => (
   <svg
     width="13"
@@ -26,81 +18,108 @@ const CalendarIcon: React.FC = () => (
   </svg>
 );
 
-const ArrowIcon: React.FC = () => (
-  <svg
-    width="12"
-    height="12"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="#facc15"
-    strokeWidth="2.5"
+interface BlogDetailsComProps {
+  post: any;
+}
+
+const Card = ({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) => (
+  <div
+    className={`rounded-2xl bg-[#F7F7F7] dark:bg-[#393430] dark:text-white! backdrop-blur-sm p-6 ${className}`}
   >
-    <path d="M5 12h14M12 5l7 7-7 7" />
-  </svg>
+    {children}
+  </div>
 );
 
-function BlogDetailsCom() {
-  const post = {
-    id: 1,
-    image:
-      "https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?w=600&q=80",
-    category: "Technology",
-    date: "20 December, 2025",
-    title: "iPhone 16 Pro Price BD (2025): Authentic Apple Flagship at Dazzle",
-    excerpt:
-      "Order the all-new iPhone 17 Series now at the best price in Bangladesh! Experience unmatched performance and innovation, designed to elevate every moment of your life. Get your device from the ..Order the all-new iPhone 17 Series now at the best price in Bangladesh! Experience unmatched performance and innovation, designed to elevate every moment of your life. Get your device from the .Order the all-new iPhone 17 Series now at the best price in Bangladesh! Experience unmatched performance and innovation, designed to elevate every moment of your life. Get your device from the . Order the all-new iPhone 17 Series now at the best price in Bangladesh! Experience unmatched performance and innovation, designed to elevate every moment of your life. Get your device from the . Order the all-new iPhone 17 Series now at the best price in Bangladesh! Experience unmatched performance and innovation, designed to elevate every moment of your life. Get your device from the . Order the all-new iPhone 17 Series now at the best price in Bangladesh! Experience unmatched performance and innovation, designed to elevate every moment of your life. Get your device from the . Order the all-new iPhone 17 Series now at the best price in Bangladesh! Experience unmatched performance and innovation, designed to elevate every moment of your life. Get your device from the . Order the all-new iPhone 17 Series now at the best price in Bangladesh! Experience unmatched performance and innovation, designed to elevate every moment of your life. Get your device from the .",
-  };
+function formatDate(dateString: string): string {
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  } catch {
+    return dateString;
+  }
+}
+
+function BlogDetailsCom({ post }: BlogDetailsComProps) {
+  const [metaDescription, articleHtml] = post.content.split("~separator~");
+  const thumbnailUrl = post.thumbnail?.[0]?.media_file ?? "/placeholder-blog.webp";
+
   return (
-    <div className="">
+    <div>
       {/* Image */}
-      <div className="overflow-hidden relative w-full h-[500px] group rounded-3xl">
+      <div className="overflow-hidden relative w-full h-[700px] group rounded-3xl">
         <Image
-          src={post.image}
-          alt={post.title}
+          src={thumbnailUrl}
+          alt={post.post_title}
           fill
           className="object-cover transition-transform duration-300 group-hover:scale-105 rounded-3xl"
         />
       </div>
 
       {/* Content */}
-      <div className="p-4">
-        {/* Meta */}
-        <div className="flex items-center gap-3 mb-2">
-          <span className="bg-yellow-400 text-white text-xs font-semibold px-3 py-0.5 rounded-full">
-            {post.category}
-          </span>
-          <span className="text-gray-400 text-xs flex items-center gap-1">
-            <CalendarIcon />
-            {post.date}
-          </span>
-        </div>
+      <div className="py-6 space-y-6">
+        {/* Meta + Title Card */}
+        <Card>
+          <div className="flex items-center gap-3 mb-3">
+            <span className="bg-yellow-400 text-white text-xs font-semibold px-3 py-0.5 rounded-full">
+              {post.post_category}
+            </span>
+            <span className="text-[#222] dark:text-gray-300 text-xs flex items-center gap-1">
+              <CalendarIcon />
+              {formatDate(post.published_at)}
+            </span>
+          </div>
 
-        {/* Title */}
-        <h3 className="font-semibold text-[20px] lg:text-[32px] text-gray-900 dark:text-white mb-2 leading-snug line-clamp-2">
-          {post.title}
-        </h3>
+          <h1 className="font-semibold text-[20px] lg:text-[32px] text-[#222] dark:text-white mb-2 leading-snug">
+            {post.post_title}
+          </h1>
 
-        {/* Excerpt */}
-        <p className="text-gray-500 dark:text-gray-300 text-xs mb-4 leading-relaxed">
-          {post.excerpt}
-        </p>
-        <p className="text-gray-500 dark:text-gray-300 text-xs mb-4 leading-relaxed">
-          {post.excerpt}
-        </p>
+          {metaDescription?.trim() && (
+            <p className="text-[#222] dark:text-gray-300 text-sm leading-relaxed">
+              {metaDescription.trim()}
+            </p>
+          )}
+        </Card>
 
-        <div className="">
+        {/* Article body Card */}
+        {articleHtml && (
+          <Card>
+  <article
+    className="text-[#222] dark:text-white
+               [&_h1]:text-[#222] [&_h1]:dark:text-white
+               [&_h2]:text-[#222] [&_h2]:dark:text-white
+               [&_h3]:text-[#222] [&_h3]:dark:text-white
+               [&_h4]:text-[#222] [&_h4]:dark:text-white
+               [&_p]:text-[#222] [&_p]:dark:text-gray-300
+               [&_li]:text-[#222] [&_li]:dark:text-gray-300
+               [&_span]:text-[#222] [&_span]:dark:text-gray-300!
+               [&_strong]:text-[#222] [&_strong]:dark:text-white
+               [&_td]:text-[#222] [&_td]:dark:text-black
+               [&_a]:text-indigo-600 [&_a]:dark:text-black
+               [&_table]:border [&_table]:border-gray-200 [&_table]:dark:border-[#4a443f]
+               [&_td]:border [&_td]:border-gray-200 [&_td]:dark:border-[#4a443f]
+               [&_td]:p-2"
+    dangerouslySetInnerHTML={{ __html: articleHtml }}
+  />
+</Card>
+        )}
+
+        {/* Related Posts Card */}
+        {/* <Card>
+          <h2 className="text-[#222] dark:text-white font-bold mb-4">
+            Related Posts
+          </h2>
           <RelatedPosts />
-        </div>
-
-        {/* Button */}
-        {/* <Link href={`/blogs/${post.category}`}
-        className="w-full flex items-center justify-between bg-gray-900 text-white text-xs font-medium px-4 py-2.5 rounded-lg hover:bg-gray-700 transition-colors"
-      >
-        Read More
-        <span className="w-6 h-6 rounded-full border border-yellow-400 flex items-center justify-center">
-          <ArrowIcon />
-        </span>
-      </Link> */}
+        </Card> */}
       </div>
     </div>
   );

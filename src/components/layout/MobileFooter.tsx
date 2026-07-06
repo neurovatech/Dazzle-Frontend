@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 type NavItem = {
   id: string;
@@ -182,6 +183,10 @@ const navItems: NavItem[] = [
 
 export default function MobileFooter() {
   const [active, setActive] = useState("home");
+  const pathname = usePathname();
+
+  const isProductDetail = /^\/product\/.+/.test(pathname);
+        if (isProductDetail) return null;
 
   const renderIcon = (id: string) => {
     const isActive = active === id;

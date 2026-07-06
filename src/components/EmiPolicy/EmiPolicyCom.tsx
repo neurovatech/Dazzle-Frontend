@@ -386,7 +386,7 @@ function EmiPolicyCom() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     queryFn: () => api.get<any>("/pages/emi-policy"),
   });
-  console.log("EMI Policy API Response:", data);
+
   
 
   return (

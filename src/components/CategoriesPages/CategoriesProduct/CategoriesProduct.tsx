@@ -1,25 +1,32 @@
-import GlobalTabs from "@/components/share/GlobalTabs";
-import Newest from "@/components/CategoriesPages/CategoriesProduct/Newest";
+import AllProducts from "@/components/CategoriesPages/CategoriesProduct/AllProducts";
 import FilterSidebar from "./FilterSidebar";
-import GlobalSelect from "@/components/ui/Select";
-// import { Select, Option } from "@/components/ui/Select";
+import { ProductItem } from "@/app/(public)/categories/[categorySlug]/page";
 
-function CategoriesProduct() {
-  const tabsData = [
-    {
-      label: "Newest",
-      content: <Newest />,
-    },
-    {
-      label: "Popular",
-      content: <Newest />,
-    },
-    {
-      label: "Olds",
-      content: <Newest />,
-    },
-  ];
+// ─── Types ────────────────────────────────────────────────────────────────────
 
+interface CategoriesProductProps {
+  categorySlug: string;
+  subCategorySlug?: string; // optional — only present on sub-category page
+  currentPage: number;
+  products: ProductItem[];
+  totalPages: number;
+  totalCount: number;
+  currentSort: string;
+  currentSearch: string;
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
+function CategoriesProduct({
+  categorySlug,
+  subCategorySlug,
+  currentPage,
+  products,
+  totalPages,
+  totalCount,
+  currentSort,
+  currentSearch,
+}: CategoriesProductProps) {
   return (
     <div>
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mt-6 items-stretch cursor-pointer md:px-12.5 px-4">
@@ -27,23 +34,16 @@ function CategoriesProduct() {
           <FilterSidebar />
         </div>
         <div className="lg:col-span-9 h-full">
-          <div className="flex justify-between pb-3">
-            <h3 className="font-bold text-lg"> IPhone </h3>
-
-            <GlobalSelect
-              fullWidth={false}
-              variant="pill"
-              size="sm"
-              options={[
-                { value: "all", label: "All Brand" },
-                { value: "week", label: "Apple" },
-                { value: "month", label: "Hp " },
-              ]}
-            />
-          </div>
-          <div className="flex justify-between">
-            <GlobalTabs tabs={tabsData} />
-          </div>
+          <AllProducts
+            categorySlug={categorySlug}
+            subCategorySlug={subCategorySlug}
+            currentPage={currentPage}
+            products={products}
+            totalPages={totalPages}
+            totalCount={totalCount}
+            currentSort={currentSort}
+            currentSearch={currentSearch}
+          />
         </div>
       </div>
     </div>

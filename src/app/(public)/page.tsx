@@ -1,13 +1,5 @@
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import type { Metadata } from "next";
-
-export const metadata: Metadata = {
-  title: "Best Mobile, Laptop & Gadget Shop in Bangladesh",
-  description:
-    "Dazzle is the premium multivendor eCommerce destination for smartphones, laptops, smartwatches, and gadget accessories in Bangladesh. Explore hot deals, flash sales, and top brands.",
-};
-
 import BannerSlider, {
   SlideItem,
 } from "@/components/HomePage/banner/Bannerslider";

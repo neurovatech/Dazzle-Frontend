@@ -50,13 +50,13 @@ function CategoriesCard({
     <div className="md:px-12.5 px-4">
       {/* ── Header ── */}
       <div className="flex justify-between items-center">
-        <h3 className="md:text-[32px] text-[18px] font-bold text-transparent bg-clip-text bg-[linear-gradient(90deg,#101518_0%,#E9CCAE_46.15%,#B57908_100%)] dark:text-white">
+        <h1 className="md:text-[32px] text-[18px] font-bold text-transparent bg-clip-text bg-[linear-gradient(90deg,#101518_0%,#E9CCAE_46.15%,#B57908_100%)] dark:text-white">
           Categories
-        </h3>
+        </h1>
         {seeAllBtn && (
           <Link
             href="/categories"
-            className="md:text-[20px] text-[14px] text-gray-700 hover:text-[#CB843B]! dark:text-white transition-colors duration-300"
+            className="text-sm font-medium text-primary hover:underline hover:text-[#CB843B]! dark:text-white transition-colors duration-300"
           >
             See all
           </Link>
@@ -97,7 +97,7 @@ function CategoriesCard({
                       }}
                     />
                   </div>
-                  <h5 className="lg:text-sm text-[10px] font-medium text-primary pt-2 text-center transition-colors duration-300 group-hover:text-[#CB843B]">
+                  <h2 className="lg:text-sm text-[10px] font-medium text-primary pt-2 text-center transition-colors duration-300 group-hover:text-[#CB843B]">
                     {hasName ? (
                       item.category_name
                     ) : (
@@ -105,7 +105,7 @@ function CategoriesCard({
                         No name
                       </span>
                     )}
-                  </h5>
+                  </h2>
                 </Link>
               );
             })}

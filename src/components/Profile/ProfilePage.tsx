@@ -163,7 +163,7 @@ const Profile: React.FC = () => {
 
           <div className="grid grid-cols-[280px_1fr] gap-8">
             {/* Sidebar */}
-            <div className="h-fit sticky top-6">
+            <div className="h-fit sticky top-6 z-99">
               <ProfileSideNav
                 activeLabel={activeLabel}
                 darkMode={darkMode}
@@ -173,7 +173,7 @@ const Profile: React.FC = () => {
               />
             </div>
 
-            <div>
+            <div className="">
               {!selectedOrder && !showOtp && (
                 <h1
                   className={`text-3xl font-bold text-gray-900 dark:text-white ${

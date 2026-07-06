@@ -11,6 +11,7 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export interface Brand {
+  is_active: boolean;
   id: string;
   label: string;
   logo: string;
@@ -30,8 +31,8 @@ async function BrandPage() {
       "/brands?order=1&page=1&limit=1000",
       { cache: "no-store" }
     );
-    const list = Array.isArray(res) ? res : res?.data ?? [];
 
+    const list = Array.isArray(res) ? res : res?.data ?? [];
     brands = list
       .filter((b) => b.is_active === true)
       .map((b) => ({
@@ -39,6 +40,8 @@ async function BrandPage() {
         label: String(b.brand_name ?? "Unknown Brand"),
         logo: b.thumbnail_img ? String(b.thumbnail_img) : "",
         slug: String(b.brand_slug ?? b.brand_name ?? ""),
+        is_active: Boolean(b.is_active),
+        is_featured: Boolean(b.is_featured),
       }));
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -47,6 +50,7 @@ async function BrandPage() {
       console.error("Error fetching warranty policy data:", error);
     }
   }
+
 
   return (
     <div className="flex flex-col flex-1 max-w-355 mx-auto">

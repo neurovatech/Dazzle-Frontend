@@ -1,35 +1,39 @@
 import * as yup from "yup";
 
-const phoneRegex = /^(\+?880|0)?1[3-9]\d{8}$/;
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 export const registerSchema = yup.object({
-  emailOrPhone: yup
+  userFullName: yup
     .string()
     .trim()
-    .required("Email or phone number is required")
-    .test(
-      "email-or-phone",
-      "Enter a valid email address or Bangladeshi phone number",
-      (value) => {
-        if (!value) return false;
-        return emailRegex.test(value) || phoneRegex.test(value);
-      }
-    ),
+    .required("User name is required"),
+
+  email: yup
+    .string()
+    .trim()
+    .required("Email is required")
+    .email("Enter a valid email address")
+    .matches(/^\S+$/, "Email must not contain spaces"),
+
+  mobile: yup
+    .string()
+    .trim()
+    .required("Phone number is required")
+    .matches(/^\d+$/, "Phone number must contain numbers only")
+    .matches(/^\S+$/, "Phone number must not contain spaces"),
 
   password: yup
     .string()
     .required("Password is required")
     .min(6, "Password must be at least 6 characters")
     .max(64, "Password must be at most 64 characters")
+    .matches(/^\S+$/, "Password must not contain spaces")
     .matches(/[A-Z]/, "Must contain at least one uppercase letter")
     .matches(/[a-z]/, "Must contain at least one lowercase letter")
-    .matches(/[0-9]/, "Must contain at least one number")
-    .matches(/[@$!%*?&#]/, "Must contain at least one special character (@$!%*?&#)"),
+    .matches(/[0-9]/, "Must contain at least one number"),
 
-  confirmPassword: yup
+  rePassword: yup
     .string()
     .required("Please confirm your password")
+    .matches(/^\S+$/, "Password must not contain spaces")
     .oneOf([yup.ref("password")], "Passwords do not match"),
 
   agreeToTerms: yup

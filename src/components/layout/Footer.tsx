@@ -1,4 +1,6 @@
 "use client";
+import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 import {
   FacebookIcon,
   InstragramIcon,
@@ -8,10 +10,29 @@ import {
 } from "@/icon";
 import GooglePlay from "@/images/googlePlay.png";
 import AppStore from "@/images/app_store.png";
+import Logo from "@/images/logo.png";
 import Image from "next/image";
 import Link from "next/link";
+import { api } from "@/lib/api";
+import { Loader2, CheckCircle2, XCircle } from "lucide-react";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 // import LatestBlog from "./LatestBlog";
 // import { usePathname } from "next/navigation";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface SubscribeResponse {
+  statusCode: number;
+  status: string;
+  message: string;
+  data?: {
+    email: string;
+    alreadyFound: boolean;
+    isSubscribed: boolean;
+    subscribedAt: string;
+  };
+  errors?: string[];
+}
 
 type FooterLink = {
   label: string;
@@ -34,7 +55,10 @@ const sections: FooterLinkSection[] = [
       { label: "Press Coverage", href: "/press-coverage" },
       { label: "Order Tracking", href: "/order-tracking" },
       { label: "Trade In", href: "/trade-in" },
-      { label: "Product Disclaimer Policy", href: "/product-disclaimer-policy" },
+      {
+        label: "Product Disclaimer Policy",
+        href: "/product-disclaimer-policy",
+      },
       { label: "Membership Policy", href: "/membership-policy" },
       { label: "Pre-Order Policy", href: "/pre-order-policy" },
     ],
@@ -65,12 +89,68 @@ const sections: FooterLinkSection[] = [
       { label: "Delivery Policy", href: "/delivery-policy" },
       { label: "EMI Policy", href: "/emi-policy" },
       { label: "Cancellation Policy", href: "/cancellation-policy" },
+      { label: "Newsletter", href: "/newsletter-unsubscribe" },
       // { label: "Others Policy", href: "/other-policy" },
     ],
   },
 ];
 
 export default function Footer() {
+  const [email, setEmail] = useState("");
+  const [apiErrors, setApiErrors] = useState<string[]>([]);
+  const [successMsg, setSuccessMsg] = useState("");
+
+  const { data: siteSettings } = useSiteSettings();
+
+  const { mutate: subscribe, isPending } = useMutation<
+    SubscribeResponse,
+    Error,
+    string
+  >({
+    mutationFn: (emailValue) =>
+      api.post<SubscribeResponse>("newsletter-subscribe", {
+        email: emailValue,
+        source: "website-footer",
+        userAgent:
+          typeof navigator !== "undefined" ? navigator.userAgent : undefined,
+      }),
+    onSuccess: (res) => {
+      setApiErrors([]);
+      if (res.statusCode === 200) {
+        setSuccessMsg(res.message || "Subscribed successfully!");
+        setEmail("");
+      } else if (res.errors?.length) {
+        setApiErrors(res.errors);
+      } else {
+        setApiErrors([res.message]);
+      }
+    },
+    onError: (err) => {
+      setSuccessMsg("");
+      try {
+        const parsed = JSON.parse(err.message);
+        if (parsed.errors?.length) {
+          setApiErrors(parsed.errors);
+        } else {
+          setApiErrors([parsed.message || "Something went wrong."]);
+        }
+      } catch {
+        setApiErrors(["Something went wrong."]);
+      }
+    },
+  });
+
+  const handleSubscribe = () => {
+    setApiErrors([]);
+    setSuccessMsg("");
+    const trimmed = email.trim();
+    if (!trimmed) {
+      setApiErrors(["Please enter your email address."]);
+      return;
+    }
+    subscribe(trimmed);
+  };
+
   // const pathname = usePathname();
   return (
     <div className="overflow-hidden">
@@ -101,13 +181,47 @@ export default function Footer() {
               </div>
               <input
                 type="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setApiErrors([]);
+                  setSuccessMsg("");
+                }}
+                onKeyDown={(e) => e.key === "Enter" && handleSubscribe()}
                 placeholder="Enter your email"
-                className="w-full px-3 py-4 text-sm outline-none"
+                disabled={isPending}
+                className="w-full px-3 py-4 text-sm outline-none bg-transparent disabled:opacity-60"
               />
-              <button className="m-1 rounded-xl  dark:bg-[#36291e] px-8 py-3 text-sm font-medium  transition hover:bg-black hover:text-white dark:text-white">
+              <button
+                onClick={handleSubscribe}
+                disabled={isPending}
+                className="m-1 rounded-xl dark:bg-[#36291e] px-8 py-3 text-sm font-medium transition hover:bg-black hover:text-white dark:text-white disabled:opacity-60 flex items-center gap-2 shrink-0"
+              >
+                {isPending && <Loader2 size={14} className="animate-spin" />}
                 Subscribe
               </button>
             </div>
+
+            {/* Feedback messages */}
+            {successMsg && (
+              <div className="mx-auto mt-3 flex max-w-2xl items-center gap-2 text-sm text-green-600 dark:text-green-400">
+                <CheckCircle2 size={15} className="shrink-0" />
+                {successMsg}
+              </div>
+            )}
+            {apiErrors.length > 0 && (
+              <div className="mx-auto mt-3 max-w-2xl">
+                {apiErrors.map((err, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-2 text-sm text-red-500 dark:text-red-400"
+                  >
+                    <XCircle size={14} className="shrink-0" />
+                    {err}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -118,26 +232,62 @@ export default function Footer() {
         <div className="-mt-30 rounded-t-4xl bg-[#101518] px-6 pb-8 pt-40 text-white md:px-10 lg:px-16">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-15 ">
             <div className="lg:col-span-3">
-              <h1 className="text-5xl font-bold tracking-tight">dazzle</h1>
+              {/* Footer Logo — fallback to local Logo if API not loaded yet */}
+              <Link href="/" className="">
+                {siteSettings?.footerLogo ? (
+                  <Image
+                    src={siteSettings.footerLogo}
+                    alt="Footer Logo"
+                    width={180}
+                    height={60}
+                    className="h-15 w-[70%] object-contain"
+                  />
+                ) : (
+                  <Image
+                    src={Logo}
+                    alt="Dazzle Logo"
+                    width={180}
+                    height={60}
+                    className="h-15 w-[70%] object-contain"
+                  />
+                )}
+              </Link>
               <p className="mt-6 text-sm leading-7 text-gray-300">
-                Looking for the best Apple products, the top smartphones and the
-                latest gadgets in the world of gadgets? Look no further than
-                Dazzle Mobile & Gadget Shop.
+                {siteSettings?.footerText
+                  ?.split(" ")
+                  .slice(0, 25)
+                  .join(" ")}
               </p>
 
               <div className="mt-6 flex gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full  bg-[#222222DB] text-sm cursor-pointer">
+                <Link
+                  href={siteSettings?.facebookUrl || "#"}
+                  target="_blank"
+                  className="flex h-12 w-12 items-center justify-center rounded-full  bg-[#222222DB] text-sm cursor-pointer"
+                >
                   <FacebookIcon />
-                </div>
-                <div className="flex h-12 w-12 items-center justify-center rounded-full  bg-[#222222DB] text-sm cursor-pointer">
+                </Link>
+                <Link
+                  href={siteSettings?.instagramUrl || "#"}
+                  target="_blank"
+                  className="flex h-12 w-12 items-center justify-center rounded-full  bg-[#222222DB] text-sm cursor-pointer"
+                >
                   <InstragramIcon />
-                </div>
-                <div className="flex h-12 w-12 items-center justify-center rounded-full  bg-[#222222DB] text-sm cursor-pointer">
+                </Link>
+                <Link
+                  href={siteSettings?.linkedinUrl || "#"}
+                  target="_blank"
+                  className="flex h-12 w-12 items-center justify-center rounded-full  bg-[#222222DB] text-sm cursor-pointer"
+                >
                   <LinkindIcon />
-                </div>
-                <div className="flex h-12 w-12 items-center justify-center rounded-full  bg-[#222222DB] text-sm cursor-pointer">
+                </Link>
+                <Link
+                  href={siteSettings?.youtubeUrl || "#"}
+                  target="_blank"
+                  className="flex h-12 w-12 items-center justify-center rounded-full  bg-[#222222DB] text-sm cursor-pointer"
+                >
                   <YouTubeIcon />
-                </div>
+                </Link>
               </div>
 
               <div className="mt-6">
@@ -193,8 +343,9 @@ export default function Footer() {
                     Contact
                   </h3>
                   <ul className="space-y-4 text-sm text-gray-300">
-                    <li>09638001122</li>
-                    <li>admin@dazzle.com.bd</li>
+                    <li>{siteSettings?.contactPhone}</li>
+                    <li>{siteSettings?.contactEmail}</li>
+                    <li>{siteSettings?.contactAddress}</li>
                     {/* exchange-policy */}
                     <li>
                       <Link
@@ -228,8 +379,7 @@ export default function Footer() {
             </div>
 
             <span className=" p-5 block lg:w-[50%] m-auto -mt-7.5 text-[#C6C6C6] ">
-              © {new Date().getFullYear()} Thanks From DazzleTM Ltd. | All
-              rights reserved
+              {siteSettings?.copyrightText}
             </span>
           </div>
         </div>

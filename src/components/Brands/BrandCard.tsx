@@ -14,6 +14,7 @@ function BrandCard({ brands }: { brands: Brand[] }) {
 
   const filteredBrands = useMemo(() => {
     return brands.filter((brand) => {
+      const isActive = brand.is_active === true;
       const matchesSearch = brand.label
         .toLowerCase()
         .includes(search.toLowerCase());
@@ -21,7 +22,8 @@ function BrandCard({ brands }: { brands: Brand[] }) {
         selectedLetter === "All"
           ? true
           : brand.label.toUpperCase().startsWith(selectedLetter);
-      return matchesSearch && matchesLetter;
+
+      return isActive && matchesSearch && matchesLetter;
     });
   }, [brands, search, selectedLetter]);
 
@@ -73,7 +75,7 @@ function BrandCard({ brands }: { brands: Brand[] }) {
           filteredBrands.map((brand) => (
             <Link
               key={brand.id}
-              href={`/brands/${brand.slug || brand.label}`}
+              href={`/brands/${brand.slug}`}
               className="
                 flex w-full flex-col items-center justify-center gap-2
                 py-4 px-2 rounded-xl border border-gray-200 dark:border-gray-700
@@ -87,6 +89,7 @@ function BrandCard({ brands }: { brands: Brand[] }) {
                     src={brand.logo}
                     alt={brand.label}
                     fill
+                    sizes="(max-width: 768px) 50vw, (max-width: 1024px) 20vw, 160px"
                     className="object-contain"
                   />
                 ) : (

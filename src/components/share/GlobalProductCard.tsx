@@ -16,6 +16,7 @@ interface ProductCardProps {
   price?: number;
   originalPrice?: number;
   isBestDeal?: boolean;
+  slug?: string;
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({
@@ -27,6 +28,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   price = 100000,
   originalPrice = 130000,
   isBestDeal = true,
+  slug,
 }) => {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
@@ -51,7 +53,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
         </div>
 
         {/* Product Image */}
-        <Link href={`/product/${title?.toLowerCase()}`} className="block">
+        <Link href={`/product/${slug || title?.toLowerCase().replace(/\s+/g, "-")}`} className="block">
           <div className="relative flex justify-center items-center mb-4 transition-all duration-500">
             {/* Background aura effect */}
             <div
@@ -126,9 +128,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
       <div className="p-4">
         {/* Title & Stock */}
-        <div className="mb-2 text-left flex">
-          <h3 className="text-[#575757] font-bold text-sm leading-snug line-clamp-2">
+        {/* <div className="mb-2 text-left flex">
+          <h3 className="text-[#575757] font-bold text-sm leading-snug ">
             {title?.length > 30 ? title.slice(0, 20) + "..." : title}
+
 
             <span
               className={`lg:text-xs text-[12px] font-bold mt-0.5 pl-1 lg:block ${
@@ -138,7 +141,24 @@ const ProductCard: React.FC<ProductCardProps> = ({
               {inStock ? "In Stock" : "Out of Stock"} {inStock}
             </span>
           </h3>
-        </div>
+        </div> */}
+
+        <div className="mb-2 text-left">
+  <h3
+    className="text-[#575757] font-bold text-sm leading-snug line-clamp-1"
+    title={title}
+  >
+    {title}
+  </h3>
+
+  <p
+    className={`text-xs font-bold mt-1 ${
+      inStock ? "text-green-500" : "text-red-400"
+    }`}
+  >
+    {inStock ? "In Stock" : "Out of Stock"}
+  </p>
+</div>
 
         {/* Price */}
         <div className="flex items-baseline gap-2 mb-4">

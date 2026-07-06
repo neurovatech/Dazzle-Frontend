@@ -72,32 +72,54 @@ export async function apiFetch<T = unknown>(
     }
   }
 
-  // 4. Perform the fetch request
+  // 4. Perform the fetch request with SSR retry for ECONNRESET
   const fetchConfig = {
     ...customOptions,
     headers,
   };
 
-  const response = await fetch(url, fetchConfig);
+  // SSR-এ network blip হলে max 2 বার retry করবে
+  const MAX_RETRIES = typeof window === "undefined" ? 2 : 0;
+  let lastError: unknown;
 
-  // 5. Handle response and errors
-  if (!response.ok) {
-    let errorData: { message?: string } = {};
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
-      const parsed = await response.json() as Record<string, unknown>;
-      errorData = { message: typeof parsed.message === "string" ? parsed.message : undefined };
-    } catch {
-      errorData = { message: response.statusText };
+      const response = await fetch(url, fetchConfig);
+
+      // 5. Handle response and errors
+      if (!response.ok) {
+        let errorData: Record<string, unknown> = {};
+        try {
+          errorData = (await response.json()) as Record<string, unknown>;
+        } catch {
+          errorData = { message: response.statusText };
+        }
+        throw new Error(JSON.stringify(errorData));
+      }
+
+      if (response.status === 204) {
+        return {} as T;
+      }
+
+      return response.json() as Promise<T>;
+    } catch (err) {
+      lastError = err;
+      const isConnReset =
+        err instanceof Error &&
+        (err.message.includes("ECONNRESET") ||
+          err.message.includes("fetch failed"));
+
+      // Retry শুধু ECONNRESET বা network error-এর জন্য, last attempt-এও fail করলে throw
+      if (!isConnReset || attempt === MAX_RETRIES) {
+        throw err;
+      }
+
+      // Retry-এর আগে সামান্য wait (300ms)
+      await new Promise((r) => setTimeout(r, 300));
     }
-    throw new Error(errorData.message || `Request failed with status ${response.status}`);
   }
 
-  // If response is empty (e.g. 204 No Content), return empty object/null
-  if (response.status === 204) {
-    return {} as T;
-  }
-
-  return response.json() as Promise<T>;
+  throw lastError;
 }
 
 // Convenient wrappers for HTTP methods
