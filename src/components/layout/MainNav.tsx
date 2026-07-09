@@ -10,7 +10,7 @@ import { useAppSelector } from "@/store/hooks";
 import { useUserProfile, getInitials } from "@/hooks/useUserProfile";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import NoImages from "@/images/no_images.png";
-
+import { Users } from 'lucide-react';
 
 export default function MainNav() {
   const token = useAppSelector((state) => state.auth.token);
@@ -65,23 +65,18 @@ export default function MainNav() {
                 href={token ? "/profile" : "/auth/login"}
                 className="w-13.5 h-13.5 rounded-xl bg-background flex items-center justify-center overflow-hidden hover:bg-background/95 transition-all duration-200"
               >
+                {/* DEB475 */}
                 {token ? (
-                  profileData?.avatarSrc ? (
+                  profileData?.userAvatar ? (
                     <Image
-                      src={profileData.avatarSrc}
+                      src={profileData.userAvatar}
                       alt={profileData?.userFullName || "User"}
                       width={54}
                       height={54}
                       className="w-full h-full object-cover rounded-xl"
                     />
                   ) : (
-                    <Image
-                      src={NoImages}
-                      alt="Default avatar"
-                      width={54}
-                      height={54}
-                      className="w-full h-full object-cover rounded-xl"
-                    />
+                        <UserIcon className="text-primary_color" />
                   )
                 ) : (
                   <UserIcon className="text-primary_color" />

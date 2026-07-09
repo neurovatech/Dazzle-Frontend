@@ -57,12 +57,12 @@ const LocationCard: React.FC<LocationCardProps> = ({ store }) => {
           />
 
           {/* Distance badge */}
-          <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-[#000000BA] backdrop-blur-sm text-xs font-medium px-2.5 py-1.5 rounded-lg shadow-sm">
+          {/* <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-[#000000BA] backdrop-blur-sm text-xs font-medium px-2.5 py-1.5 rounded-lg shadow-sm">
             <Image src={mapIcon} width={11} height={11} alt="" />
             <span className="text-white">
               {isEmpty(store.distance) ? "N/A" : store.distance}
             </span>
-          </div>
+          </div> */}
 
           {/* Map button */}
           <button
@@ -80,9 +80,6 @@ const LocationCard: React.FC<LocationCardProps> = ({ store }) => {
           <div>
             <h3 className="font-semibold text-[#222222] dark:text-white text-lg leading-tight h-12">
               {isEmpty(store.branchName) ? NA : store.branchName}{" "}
-              {!isEmpty(store.slug) && (
-                <span className="dark:text-gray-300">({store.slug})</span>
-              )}
             </h3>
 
             <p className="text-sm text-[#747474] dark:text-gray-400 mt-2 h-15">

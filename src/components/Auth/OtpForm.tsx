@@ -189,12 +189,12 @@ const OtpForm: React.FC = () => {
             <FacebookIcon />
           </button>
 
-          <button
+          {/* <button
             type="button"
             className="w-12 h-12 rounded-xl bg-[#222222DB] hover:bg-[#222222DB]/70 flex items-center justify-center transition-colors duration-200 shadow-sm"
           >
             <InstragramIcon />
-          </button>
+          </button> */}
         </div>
       </div>
 

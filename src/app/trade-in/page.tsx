@@ -1,9 +1,15 @@
 "use client";
-import { ChevronDown } from "lucide-react";
+
+import { ChevronDown, LogIn, ShieldCheck } from "lucide-react";
+import { useAppSelector } from "@/store/hooks";
+import Link from "next/link";
+import TradeInWizard from "@/components/TradeIn/TradeInWizard";
 import { useState } from "react";
 
 const TradeInPage = () => {
-  const [openIndex, setOpenIndex] = useState(0);
+  const token = useAppSelector((state) => state.auth.token);
+
+    const [openIndex, setOpenIndex] = useState(0);
 
   const steps = [
     "Provide device details and get a price quote",
@@ -31,45 +37,46 @@ const TradeInPage = () => {
     },
   ];
 
-  return (
-    <div className="bg-[#FFFBF6] md:bg-white md:dark:bg-[#302d29] font-sans p-5 pb-20 max-w-355 mx-auto">
-      <h1 className="text-3xl font-semibold text-[#101518] dark:text-white py-10 text-center">
-        Trade in your Device
-      </h1>
-      <div className="grid md:grid-cols-3 gap-8 mb-16">
-        <div>
-          <h2 className="text-[22px] font-medium mb-6">How it works</h2>
-          <div className="space-y-2">
-            {steps.map((step, index) => (
-              <div
-                key={index}
-                className="flex items-start gap-3 bg-[#EBEBEB] dark:bg-[#444] p-4 rounded-sm"
-              >
-                <div className="flex items-center justify-center bg-[#E9CCAE] rounded p-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-black" />
-                </div>
-                <p className="leading-tight">{step}</p>
-              </div>
-            ))}
-          </div>
-        </div>
 
-        <div className="md:col-span-2 bg-white dark:bg-[#302d29] p-12 rounded-sm shadow-sm border border-gray-100 flex flex-col items-center justify-center">
-          <h2 className="text-xl mb-10">Select category</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
-            {["Smart Phone", "Laptop", "Tablet", "Smart Watch"].map((cat) => (
-              <button
-                key={cat}
-                className="py-6 px-4 border border-gray-200 rounded hover:bg-gray-50 transition-colors bg-white dark:bg-[#302d29] dark:border-gray-600 dark:hover:bg-[#444]"
-              >
-                {cat}
-              </button>
-            ))}
+  // ── Not logged in ──────────────────────────────────────────────────────────
+  if (!token) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center px-4 py-20 max-w-355 mx-auto">
+        <div className="bg-white dark:bg-[#302d29] rounded-2xl shadow-sm border border-gray-100 dark:border-white/10 px-10 py-12 flex flex-col items-center gap-5 max-w-sm w-full text-center">
+          <div className="w-16 h-16 rounded-full bg-[#FFF8EC] dark:bg-[#3e2e1a] flex items-center justify-center">
+            <ShieldCheck size={28} className="text-[#6D3F0E]" />
           </div>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+            Login Required
+          </h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+            Please log in to your Dazzle account to access the Trade-In service
+            and get an instant quote for your device.
+          </p>
+          <Link
+            href="/auth/login"
+            className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#6D3F0E] hover:bg-[#5a3409] text-white text-sm font-semibold transition-colors"
+          >
+            <LogIn size={16} />
+            Please Login First
+          </Link>
+          <p className="text-xs text-gray-400 dark:text-gray-500">
+            Don&apos;t have an account?{" "}
+            <Link href="/auth/registration" className="text-[#6D3F0E] dark:text-[#d4a97a] hover:underline font-medium">
+              Register here
+            </Link>
+          </p>
         </div>
       </div>
+    );
+  }
 
-      <div className="pt-20">
+  // ── Logged in — full wizard ────────────────────────────────────────────────
+  return (
+    <div className="bg-white dark:bg-[#181614] min-h-screen">
+      <TradeInWizard />
+
+      <div className="pt-20 max-w-350 mx-auto px-4">
         <h2 className="text-2xl font-medium text-center mb-10">FAQ</h2>
         <div className="grid md:grid-cols-3 gap-8">
           <div className="bg-white dark:bg-[#302d29] p-6 rounded shadow-sm border border-gray-50 h-fit">
@@ -131,6 +138,7 @@ const TradeInPage = () => {
           </div>
         </div>
       </div>
+
     </div>
   );
 };

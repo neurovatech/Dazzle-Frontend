@@ -20,6 +20,9 @@ import {
   FeatureProductsSkeleton,
   LatestBlogSkeleton,
 } from "@/components/share/Skeletons";
+import { api } from "@/lib/api";
+
+
 
 // ── Below-the-fold: lazy (dynamic) imports ──
 const Newest = dynamic(() => import("@/components/HomePage/FlashSale/Newest"));
@@ -87,8 +90,37 @@ const electronicsSlides: SlideItem[] = [
   },
 ];
 
-export default function Home() {
+async function getHeroBanners(): Promise<SlideItem[]> {
+  try {
+    const res = await api.get<unknown>("/web-banner/home-banner", {
+      cache: "no-store",
+    });
 
+    let list: unknown[] = [];
+    const obj = res as Record<string, unknown>;
+    if (Array.isArray(obj?.data)) {
+      list = obj.data;
+    } else if (Array.isArray(res)) {
+      list = res as unknown[];
+    }
+
+    return list.map((item, index) => {
+      const b = item as Record<string, unknown>;
+      return {
+        id: index + 1,
+        title: b.title ? String(b.title) : "",
+        content: b.mediaInfo ? String(b.mediaInfo) : "",
+        imageUrl: String(b.imageURL ?? ""),
+      };
+    });
+  } catch (error) {
+    console.error("Error fetching hero banners in Home SSR:", error);
+    return [];
+  }
+}
+
+export default async function Home() {
+  const heroSlides = await getHeroBanners();
   const tabsData = [
     {
       label: "Newest",
@@ -108,13 +140,15 @@ export default function Home() {
     <div>
       {/* HERO SLIDER  */}
       <div className="flex flex-col flex-1 items-center max-w-355 mx-auto ">
-        <BannerSlider
-          slides={electronicsSlides}
-          autoplayDelay={4500}
-          navigation={true}
-          pagination={true}
-          slidesPerView={1.5}
-        />
+        {heroSlides.length > 0 && (
+          <BannerSlider
+            slides={heroSlides}
+            autoplayDelay={4500}
+            navigation={true}
+            pagination={true}
+            slidesPerView={1.5}
+          />
+        )}
       </div>
       <div className="hidden">
         <ShopSelector />

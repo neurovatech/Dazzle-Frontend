@@ -4,6 +4,7 @@ import createWebStorage from "redux-persist/lib/storage/createWebStorage";
 import authReducer from "./slices/authSlice";
 import profileReducer from "./slices/profileSlice";
 import siteSettingsReducer from "./slices/siteSettingsSlice";
+import wishlistReducer from "./slices/wishlistSlice";
 
 // ─── SSR-safe storage ─────────────────────────────────────────────────────────
 
@@ -47,12 +48,19 @@ const siteSettingsPersistConfig = {
   whitelist: ["data", "isFetched"],
 };
 
+const wishlistPersistConfig = {
+  key: "dazzle_wishlist",
+  storage,
+  whitelist: ["items"],
+};
+
 // ─── Root Reducer ─────────────────────────────────────────────────────────────
 
 const rootReducer = combineReducers({
-  auth: persistReducer(authPersistConfig, authReducer),
-  profile: persistReducer(profilePersistConfig, profileReducer),
+  auth:         persistReducer(authPersistConfig, authReducer),
+  profile:      persistReducer(profilePersistConfig, profileReducer),
   siteSettings: persistReducer(siteSettingsPersistConfig, siteSettingsReducer),
+  wishlist:     persistReducer(wishlistPersistConfig, wishlistReducer),
 });
 
 export type RootState = ReturnType<typeof rootReducer>;

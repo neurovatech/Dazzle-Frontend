@@ -22,6 +22,9 @@ import { useAppSelector } from "@/store/hooks";
 import { useUpdateUserInfo, getInitials } from "@/hooks/useUserProfile";
 import Image from "next/image";
 import NoImages from "@/images/no_images.png";
+import { Users } from 'lucide-react';
+import { UserIcon } from "@/icon";
+
 
 interface ProfileSideNavProps {
   activeLabel: ActiveLabel;
@@ -38,7 +41,6 @@ interface EditModalProps {
 }
 
 const EditProfileModal: React.FC<EditModalProps> = ({ onClose }) => {
-  // সরাসরি Redux store থেকে profile data
   const profileData = useAppSelector((state) => state.profile.data);
   const {
     mutate: updateUser,
@@ -103,7 +105,6 @@ const EditProfileModal: React.FC<EditModalProps> = ({ onClose }) => {
 
   const initials = fullName ? getInitials(fullName) : "?";
 
-  // blob: URL বা যেকোনো external URL — Next.js <Image> না দিয়ে <img> use করো
   const AvatarPreview = () => {
     if (avatarPreview) {
       return (
@@ -298,22 +299,16 @@ const ProfileSideNav: React.FC<ProfileSideNavProps> = ({
             <div className="bg-white rounded-lg w-[62px] h-[62px] flex justify-center items-center shadow-sm overflow-hidden shrink-0">
               {isLoading ? (
                 <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse" />
-              ) : profileData?.avatarSrc ? (
+              ) : profileData?.userAvatar ? (
                 <Image
-                  src={profileData.avatarSrc}
+                  src={profileData.userAvatar}
                   alt={profileData?.userFullName || "User"}
                   width={54}
                   height={54}
                   className="w-full h-full object-cover rounded-xl"
                 />
               ) : profileData?.userAvatar ? (
-                <Image
-                  src={NoImages}
-                  alt="Default avatar"
-                  width={54}
-                  height={54}
-                  className="w-full h-full object-cover rounded-xl"
-                />
+                <UserIcon className="text-primary_color" />
               ) : initials ? (
                 <span className="text-xl font-bold text-[#6D3F0E]">
                   {initials}
@@ -323,7 +318,6 @@ const ProfileSideNav: React.FC<ProfileSideNavProps> = ({
               )}
             </div>
 
-            {/* Name + mobile — Redux store থেকে */}
             <div>
               {isLoading ? (
                 <>
@@ -352,7 +346,7 @@ const ProfileSideNav: React.FC<ProfileSideNavProps> = ({
           </button>
         </div>
 
-        {/* Earning Points — Redux store থেকে */}
+
         <div
           className="p-0.5 mt-3 rounded-full cursor-pointer"
           style={{

@@ -20,34 +20,72 @@ import { useAppDispatch } from "@/store/hooks";
 import { setCredentials } from "@/store/slices/authSlice";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-interface LoginPayload { username: string; password: string; }
-interface LoginSuccessData { "x-api-key": string; Authorization: string; authorization: string; }
-interface LoginResponse { statusCode: number; status: "success" | "error"; message: string; data?: LoginSuccessData; errors?: string[]; }
+interface LoginPayload {
+  username: string;
+  password: string;
+}
+interface LoginSuccessData {
+  "x-api-key": string;
+  Authorization: string;
+  authorization: string;
+}
+interface LoginResponse {
+  statusCode: number;
+  status: "success" | "error";
+  message: string;
+  data?: LoginSuccessData;
+  errors?: string[];
+}
 
-interface OtpSendResponse { statusCode: number; status: "success" | "error"; message: string; data?: { mobile: string; tokenType: string; expireAt: string; }; errors?: string[]; }
-interface OtpVerifyResponse { statusCode: number; status: "success" | "error"; message: string; data?: {
-  authorization: any; "x-api-key": string; Authorization: string; 
-}; errors?: string[]; }
+interface OtpSendResponse {
+  statusCode: number;
+  status: "success" | "error";
+  message: string;
+  data?: { mobile: string; tokenType: string; expireAt: string };
+  errors?: string[];
+}
+interface OtpVerifyResponse {
+  statusCode: number;
+  status: "success" | "error";
+  message: string;
+  data?: {
+    authorization: any;
+    "x-api-key": string;
+    Authorization: string;
+  };
+  errors?: string[];
+}
 
 // ─── Yup Schemas for mobile OTP flow ─────────────────────────────────────────
 const mobileSchema = yup.object({
-  mobile: yup.string().required("Mobile number is required").matches(/^\S+$/, "Mobile must not contain spaces").matches(/^\d+$/, "Mobile must contain numbers only"),
+  mobile: yup
+    .string()
+    .required("Mobile number is required")
+    .matches(/^\S+$/, "Mobile must not contain spaces")
+    .matches(/^\d+$/, "Mobile must contain numbers only"),
 });
 type MobileSchema = yup.InferType<typeof mobileSchema>;
 
 const otpVerifySchema = yup.object({
-  otp: yup.string().required("OTP is required").matches(/^\d{6}$/, "OTP must be exactly 6 digits"),
+  otp: yup
+    .string()
+    .required("OTP is required")
+    .matches(/^\d{6}$/, "OTP must be exactly 6 digits"),
 });
 
 // ─── API Functions ────────────────────────────────────────────────────────────
 const loginUser = (p: LoginPayload) => api.post<LoginResponse>("user-login", p);
-const sendMobileOtp = (p: { mobile: string }) => api.post<OtpSendResponse>("login-mobile-otp", p);
-const verifyMobileOtp = (p: { mobile: string; otp: string }) => api.post<OtpVerifyResponse>("login-with-mobile", p);
+const sendMobileOtp = (p: { mobile: string }) =>
+  api.post<OtpSendResponse>("login-mobile-otp", p);
+const verifyMobileOtp = (p: { mobile: string; otp: string }) =>
+  api.post<OtpVerifyResponse>("login-with-mobile", p);
 
 // ═════════════════════════════════════════════════════════════════════════════
 // Mobile OTP Modal (2-step: phone → otp)
 // ═════════════════════════════════════════════════════════════════════════════
-interface MobileOtpModalProps { onClose: () => void; }
+interface MobileOtpModalProps {
+  onClose: () => void;
+}
 
 const RESEND_COOLDOWN = 120; // seconds
 
@@ -63,9 +101,15 @@ const MobileOtpModal: React.FC<MobileOtpModalProps> = ({ onClose }) => {
   const [resendTimer, setResendTimer] = useState(RESEND_COOLDOWN);
   const [canResend, setCanResend] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [mobileApiError, setMobileApiError] = useState("");
 
   // Mobile form
-  const { register, handleSubmit, formState: { errors }, setError: setMobileError } = useForm<MobileSchema>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setError: setMobileError,
+  } = useForm<MobileSchema>({
     resolver: yupResolver(mobileSchema) as never,
     mode: "onTouched",
   });
@@ -77,15 +121,26 @@ const MobileOtpModal: React.FC<MobileOtpModalProps> = ({ onClose }) => {
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = setInterval(() => {
       setResendTimer((prev) => {
-        if (prev <= 1) { clearInterval(timerRef.current!); setCanResend(true); return 0; }
+        if (prev <= 1) {
+          clearInterval(timerRef.current!);
+          setCanResend(true);
+          return 0;
+        }
         return prev - 1;
       });
     }, 1000);
   };
 
-  useEffect(() => { return () => { if (timerRef.current) clearInterval(timerRef.current); }; }, []);
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
 
-  const formatTimer = (s: number) => `${Math.floor(s / 60).toString().padStart(2, "0")}:${(s % 60).toString().padStart(2, "0")}`;
+  const formatTimer = (s: number) =>
+    `${Math.floor(s / 60)
+      .toString()
+      .padStart(2, "0")}:${(s % 60).toString().padStart(2, "0")}`;
 
   // ── Send OTP mutation ──────────────────────────────────────────────────────
   const { mutate: sendOtp, isPending: sendingOtp } = useMutation({
@@ -106,11 +161,25 @@ const MobileOtpModal: React.FC<MobileOtpModalProps> = ({ onClose }) => {
           const parsed = JSON.parse(error.message) as OtpSendResponse;
           if (parsed.errors?.length) {
             parsed.errors.forEach((e) => toast.error(e));
-            parsed.errors.forEach((e) => { if (e.toLowerCase().includes("mobile")) setMobileError("mobile", { message: e }); });
+            setMobileApiError(parsed.errors.join(", "));
+            parsed.errors.forEach((e) => {
+              if (
+                e.toLowerCase().includes("mobile") ||
+                e.toLowerCase().includes("phone")
+              ) {
+                setMobileError("mobile", { message: e });
+              }
+            });
           } else {
-            toast.error(parsed.message || "Failed to send OTP.");
+            const msg = parsed.message || "Failed to send OTP.";
+            toast.error(msg);
+            setMobileApiError(msg);
           }
-        } catch { toast.error(error.message || "Something went wrong."); }
+        } catch {
+          const msg = error.message || "Something went wrong.";
+          toast.error(msg);
+          setMobileApiError(msg);
+        }
       }
     },
   });
@@ -122,21 +191,23 @@ const MobileOtpModal: React.FC<MobileOtpModalProps> = ({ onClose }) => {
       if (response.statusCode === 200 && response.data) {
         toast.success("Login successful!");
         const authHeader = response.data.authorization;
-        dispatch(setCredentials({
-          user: {
-            usersCommuuid: "",
-            userFullName: "",
-            email: "",
-            emailVerifiedToken: "",
-            createdAt: "",
-          },
-          apiKey: response.data["x-api-key"],
-          token: authHeader,
-        }));
+        dispatch(
+          setCredentials({
+            user: {
+              usersCommuuid: "",
+              userFullName: "",
+              email: "",
+              emailVerifiedToken: "",
+              createdAt: "",
+            },
+            apiKey: response.data["x-api-key"],
+            token: authHeader,
+          }),
+        );
         onClose();
         const searchParams = new URLSearchParams(window.location.search);
         const redirectUrl = searchParams.get("redirect");
-        router.push("/")
+        router.push("/");
       } else {
         toast.error(response.message || "OTP verification failed.");
       }
@@ -149,7 +220,9 @@ const MobileOtpModal: React.FC<MobileOtpModalProps> = ({ onClose }) => {
           setOtpError(parsed.message || "Invalid OTP. Please try again.");
           setOtpDigits(Array(6).fill(""));
           setOtpValue("");
-        } catch { toast.error("OTP verification failed."); }
+        } catch {
+          toast.error("OTP verification failed.");
+        }
       }
     },
   });
@@ -163,7 +236,10 @@ const MobileOtpModal: React.FC<MobileOtpModalProps> = ({ onClose }) => {
 
   const handleOtpSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (otpValue.length !== 6) { setOtpError("Please enter the 6-digit OTP."); return; }
+    if (otpValue.length !== 6) {
+      setOtpError("Please enter the 6-digit OTP.");
+      return;
+    }
     verifyOtp({ mobile: sentMobile, otp: otpValue });
   };
 
@@ -173,7 +249,7 @@ const MobileOtpModal: React.FC<MobileOtpModalProps> = ({ onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-20 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div className="bg-white dark:bg-[#1c1917] rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden">
         {/* Gradient bar */}
         <div className="h-1.5 w-full bg-gradient-to-r from-yellow-400 via-yellow-500 to-orange-500" />
@@ -182,18 +258,27 @@ const MobileOtpModal: React.FC<MobileOtpModalProps> = ({ onClose }) => {
         <div className="flex items-center justify-between px-6 pt-5 pb-2">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-yellow-50 dark:bg-yellow-500/10 flex items-center justify-center">
-              {step === "mobile" ? <Phone size={17} className="text-yellow-500" /> : <Shield size={17} className="text-yellow-500" />}
+              {step === "mobile" ? (
+                <Phone size={17} className="text-yellow-500" />
+              ) : (
+                <Shield size={17} className="text-yellow-500" />
+              )}
             </div>
             <div>
               <h2 className="text-base font-bold text-gray-900 dark:text-white">
                 {step === "mobile" ? "Login with Phone" : "Enter OTP"}
               </h2>
               <p className="text-xs text-gray-400">
-                {step === "mobile" ? "We'll send a 6-digit code to your number" : `Code sent to ${sentMobile}`}
+                {step === "mobile"
+                  ? "We'll send a 6-digit code to your number"
+                  : `Code sent to ${sentMobile}`}
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">
+          <button
+            onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+          >
             <X size={16} className="text-gray-400" />
           </button>
         </div>
@@ -201,7 +286,13 @@ const MobileOtpModal: React.FC<MobileOtpModalProps> = ({ onClose }) => {
         <div className="px-6 pb-6 pt-3">
           {/* ── STEP 1: Mobile Input ── */}
           {step === "mobile" && (
-            <form onSubmit={handleSubmit((data) => sendOtp({ mobile: data.mobile }))} noValidate className="flex flex-col gap-4">
+            <form
+              onSubmit={handleSubmit((data) =>
+                sendOtp({ mobile: data.mobile }),
+              )}
+              noValidate
+              className="flex flex-col gap-4"
+            >
               <TextInput
                 label="Mobile Number"
                 placeholder="e.g. 01700000000"
@@ -213,41 +304,98 @@ const MobileOtpModal: React.FC<MobileOtpModalProps> = ({ onClose }) => {
                 disabled={sendingOtp}
                 className="w-full py-3.5 rounded-2xl bg-gray-900 text-white text-sm font-bold tracking-widest uppercase hover:bg-gray-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
               >
-                {sendingOtp ? (<><svg className="animate-spin" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>Sending OTP...</>) : "SEND OTP"}
+                {sendingOtp ? (
+                  <>
+                    <svg
+                      className="animate-spin"
+                      width="15"
+                      height="15"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                    </svg>
+                    Sending OTP...
+                  </>
+                ) : (
+                  "SEND OTP"
+                )}
               </button>
             </form>
           )}
 
           {/* ── STEP 2: OTP Verify ── */}
           {step === "otp" && (
-            <form onSubmit={handleOtpSubmit} noValidate className="flex flex-col items-center gap-5">
+            <form
+              onSubmit={handleOtpSubmit}
+              noValidate
+              className="flex flex-col items-center gap-5"
+            >
               {/* Info */}
               <div className="text-center">
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   Didn&apos;t get the code?{" "}
                   {canResend ? (
-                    <button type="button" onClick={handleResend} disabled={sendingOtp}
-                      className="text-yellow-500 font-semibold hover:text-yellow-600 transition-colors disabled:opacity-60">
+                    <button
+                      type="button"
+                      onClick={handleResend}
+                      disabled={sendingOtp}
+                      className="text-yellow-500 font-semibold hover:text-yellow-600 transition-colors disabled:opacity-60"
+                    >
                       {sendingOtp ? "Sending..." : "Resend OTP"}
                     </button>
                   ) : (
-                    <span className="text-yellow-500 font-semibold">Resend in {formatTimer(resendTimer)}</span>
+                    <span className="text-yellow-500 font-semibold">
+                      Resend in {formatTimer(resendTimer)}
+                    </span>
                   )}
                 </p>
               </div>
 
-              <OtpInput length={6} value={otpDigits} onChange={handleOtpChange} error={otpError} />
+              <OtpInput
+                length={6}
+                value={otpDigits}
+                onChange={handleOtpChange}
+                error={otpError}
+              />
 
               <button
                 type="submit"
                 disabled={verifyingOtp || otpValue.length < 6}
                 className="w-full py-3.5 rounded-2xl bg-gray-900 text-white text-sm font-bold tracking-widest uppercase hover:bg-gray-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
               >
-                {verifyingOtp ? (<><svg className="animate-spin" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>Verifying...</>) : "VERIFY & LOG IN"}
+                {verifyingOtp ? (
+                  <>
+                    <svg
+                      className="animate-spin"
+                      width="15"
+                      height="15"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                    </svg>
+                    Verifying...
+                  </>
+                ) : (
+                  "VERIFY & LOG IN"
+                )}
               </button>
 
-              <button type="button" onClick={() => { setStep("mobile"); setOtpDigits(Array(6).fill("")); setOtpValue(""); setOtpError(""); }}
-                className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors underline">
+              <button
+                type="button"
+                onClick={() => {
+                  setStep("mobile");
+                  setOtpDigits(Array(6).fill(""));
+                  setOtpValue("");
+                  setOtpError("");
+                }}
+                className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors underline"
+              >
                 ← Change phone number
               </button>
             </form>
@@ -266,7 +414,13 @@ const LoginForm: React.FC = () => {
   const dispatch = useAppDispatch();
   const [showMobileModal, setShowMobileModal] = useState(false);
 
-  const { register, handleSubmit, formState: { errors }, reset, setError } = useForm<LoginSchema>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+    setError,
+  } = useForm<LoginSchema>({
     resolver: yupResolver(loginSchema) as never,
     mode: "onTouched",
   });
@@ -277,22 +431,33 @@ const LoginForm: React.FC = () => {
       if (response.statusCode === 200 && response.status === "success") {
         toast.success("Login completed successfully!");
         if (response.data) {
-          const authHeader = response.data.authorization || response.data.Authorization;
-          dispatch(setCredentials({
-            user: { usersCommuuid: "", userFullName: "Verified User", email: variables.username, emailVerifiedToken: "", createdAt: new Date().toISOString() },
-            apiKey: response.data["x-api-key"],
-            token: authHeader,
-          }));
+          const authHeader =
+            response.data.authorization || response.data.Authorization;
+          dispatch(
+            setCredentials({
+              user: {
+                usersCommuuid: "",
+                userFullName: "Verified User",
+                email: variables.username,
+                emailVerifiedToken: "",
+                createdAt: new Date().toISOString(),
+              },
+              apiKey: response.data["x-api-key"],
+              token: authHeader,
+            }),
+          );
         }
         reset();
         // const redirectUrl = new URLSearchParams(window.location.search).get("redirect");
         // if (redirectUrl) { router.push(redirectUrl); } else { router.back(); }
-        const redirectUrl = new URLSearchParams(window.location.search).get("redirect");
-if (redirectUrl) {
-  router.push(redirectUrl);
-} else {
-  router.push("/");
-}
+        const redirectUrl = new URLSearchParams(window.location.search).get(
+          "redirect",
+        );
+        if (redirectUrl) {
+          router.push(redirectUrl);
+        } else {
+          router.push("/");
+        }
       } else {
         toast.error(response.message || "Failed to log in.");
       }
@@ -304,25 +469,36 @@ if (redirectUrl) {
           if (parsed.errors?.length) {
             parsed.errors.forEach((err) => toast.error(err));
             parsed.errors.forEach((err) => {
-              if (err.toLowerCase().includes("username")) setError("username", { message: err });
-              if (err.toLowerCase().includes("password")) setError("password", { message: err });
+              if (err.toLowerCase().includes("username"))
+                setError("username", { message: err });
+              if (err.toLowerCase().includes("password"))
+                setError("password", { message: err });
             });
           } else {
             toast.error(parsed.message || "Login failed.");
           }
-        } catch { toast.error(error.message || "Something went wrong."); }
+        } catch {
+          toast.error(error.message || "Something went wrong.");
+        }
       }
     },
   });
 
-  const onSubmit: SubmitHandler<LoginSchema> = (data) => mutate({ username: data.username, password: data.password });
+  const onSubmit: SubmitHandler<LoginSchema> = (data) =>
+    mutate({ username: data.username, password: data.password });
 
   return (
     <>
       {/* Mobile OTP Modal */}
-      {showMobileModal && <MobileOtpModal onClose={() => setShowMobileModal(false)} />}
+      {showMobileModal && (
+        <MobileOtpModal onClose={() => setShowMobileModal(false)} />
+      )}
 
-      <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-5">
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        noValidate
+        className="flex flex-col gap-5"
+      >
         <TextInput
           label="Username (Email / Mobile)"
           placeholder="Enter your email or phone number"
@@ -338,7 +514,10 @@ if (redirectUrl) {
             register={register("password")}
           />
           <div className="flex justify-end mt-1">
-            <Link href="/auth/forget-password" className="text-xs text-gray-500 dark:text-white dark:hover:text-yellow-600 hover:text-gray-900 transition-colors">
+            <Link
+              href="/auth/forget-password"
+              className="text-xs text-gray-500 dark:text-white dark:hover:text-yellow-600 hover:text-gray-900 transition-colors"
+            >
               Forget Password?
             </Link>
           </div>
@@ -359,23 +538,50 @@ if (redirectUrl) {
         >
           {isPending ? (
             <span className="flex items-center justify-center gap-2 dark:text-white">
-              <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
+              <svg
+                className="animate-spin"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+              </svg>
               Logging in...
             </span>
-          ) : "LOG IN"}
+          ) : (
+            "LOG IN"
+          )}
         </button>
 
         <p className="text-center text-sm text-gray-600 dark:text-white">
           Havent any account?{" "}
-          <Link href="/auth/registration" className="text-yellow-500 font-semibold hover:text-yellow-600 transition-colors">Sign Up</Link>
+          <Link
+            href="/auth/registration"
+            className="text-yellow-500 font-semibold hover:text-yellow-600 transition-colors"
+          >
+            Sign Up
+          </Link>
         </p>
 
         <div className="flex flex-col items-center gap-4">
           <p className="text-sm text-gray-500">Or</p>
           <div className="flex items-center gap-3">
-            <button type="button" className="w-12 h-12 rounded-xl bg-[#222222DB] hover:bg-[#222222DB]/70 flex items-center justify-center transition-colors duration-200 shadow-sm"><GoogleIcon /></button>
-            <button type="button" className="w-12 h-12 rounded-xl bg-[#222222DB] hover:bg-[#222222DB]/70 flex items-center justify-center transition-colors duration-200 shadow-sm"><FacebookIcon /></button>
-            <button type="button" className="w-12 h-12 rounded-xl bg-[#222222DB] hover:bg-[#222222DB]/70 flex items-center justify-center transition-colors duration-200 shadow-sm"><InstragramIcon /></button>
+            <button
+              type="button"
+              className="w-12 h-12 rounded-xl bg-[#222222DB] hover:bg-[#222222DB]/70 flex items-center justify-center transition-colors duration-200 shadow-sm"
+            >
+              <GoogleIcon />
+            </button>
+            <button
+              type="button"
+              className="w-12 h-12 rounded-xl bg-[#222222DB] hover:bg-[#222222DB]/70 flex items-center justify-center transition-colors duration-200 shadow-sm"
+            >
+              <FacebookIcon />
+            </button>
+            {/* <button type="button" className="w-12 h-12 rounded-xl bg-[#222222DB] hover:bg-[#222222DB]/70 flex items-center justify-center transition-colors duration-200 shadow-sm"><InstragramIcon /></button> */}
           </div>
         </div>
       </form>

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import BlogCard from "@/components/Blogs/BlogCard";
-import BlogCategoryFilter from "@/components/Blogs/BlogCategoryFilter";
 import Breadcrumb from "@/components/share/Breadcrumb";
 import { api } from "@/lib/api";
 import NoData from "@/components/ui/NoData";
@@ -11,6 +10,8 @@ export const metadata: Metadata = {
   description:
     "Stay updated with the latest technology trends, smartphone reviews, gadget comparisons, and laptop guides in Bangladesh at Dazzle.",
 };
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface BlogPost {
   uuid: string;
@@ -37,16 +38,24 @@ interface BlogCategory {
   thumbnail_img: string;
 }
 
+// ─── Config ───────────────────────────────────────────────────────────────────
+
 const PER_PAGE = 12;
 
-async function getBlogs(page: number, category?: string): Promise<BlogsResponse> {
+// ─── Data fetchers ────────────────────────────────────────────────────────────
+
+async function getBlogs(page: number, categoryUuid?: string): Promise<BlogsResponse> {
   try {
-    const categoryQuery = category ? `&category=${category}` : "";
-    const res = await api.get<unknown>(
-      `/blogs?page=${page}&datalimit=${PER_PAGE}${categoryQuery}`,
-      { cache: "no-store" },
-    );
+    // Build query — only add blog_cat_uuid when a category is selected
+    const qp = new URLSearchParams({
+      page: String(page),
+      datalimit: String(PER_PAGE),
+    });
+    if (categoryUuid) qp.set("blog_cat_uuid", categoryUuid);
+
+    const res = await api.get<unknown>(`/blogs?${qp.toString()}&isCareer=0`, { cache: "no-store" });
     const obj = res as Record<string, unknown>;
+
     return {
       data: Array.isArray(obj?.data) ? (obj.data as BlogPost[]) : [],
       totalCount: typeof obj?.totalCount === "number" ? (obj.totalCount as number) : 0,
@@ -70,6 +79,8 @@ async function getBlogCategories(): Promise<BlogCategory[]> {
   }
 }
 
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
 interface BlogPageProps {
   searchParams: Promise<{ page?: string; category?: string }>;
 }
@@ -77,8 +88,10 @@ interface BlogPageProps {
 async function BlogPage({ searchParams }: BlogPageProps) {
   const { page, category } = await searchParams;
   const currentPage = Math.max(1, Number(page) || 1);
+  const currentCategory = category ?? "all";
 
-  const [{ data: blogPosts, totalPages }, categories] = await Promise.all([
+  // category in URL = uuid of the blog category
+  const [{ data: blogPosts, totalPages, totalCount }, categories] = await Promise.all([
     getBlogs(currentPage, category),
     getBlogCategories(),
   ]);
@@ -86,16 +99,15 @@ async function BlogPage({ searchParams }: BlogPageProps) {
   const categoryOptions = [
     { value: "all", label: "All Categories" },
     ...categories.map((c) => ({
-      value: c.blog_category_slug,
+      value: c.uuid,
       label: c.blog_category,
     })),
   ];
 
   const breadcrumbItems = [
     { label: "Home", href: "/" },
-    { label: "Blogs", href: "#" },
+    { label: "Blogs", href: "/blogs" },
   ];
-
 
   const buildPageLink = (p: number) => {
     const params = new URLSearchParams();
@@ -104,20 +116,48 @@ async function BlogPage({ searchParams }: BlogPageProps) {
     return `/blogs?${params.toString()}`;
   };
 
-  console.log(categoryOptions, "categoryOptions")
+  const buildCategoryLink = (value: string) => {
+    const params = new URLSearchParams();
+    if (value !== "all") params.set("category", value);
+    params.set("page", "1");
+    return `/blogs?${params.toString()}`;
+  };
 
   return (
     <div className="flex flex-col flex-1 max-w-355 mx-auto lg:px-8 px-4">
       <Breadcrumb items={breadcrumbItems} />
 
-      <div className="flex justify-between pb-3">
-        <h3 className="lg:text-[32px] text-[20px] font-bold py-3 text-gray-900 dark:text-white">
-          Latest Blogs
-        </h3>
-
-        <BlogCategoryFilter options={categoryOptions} />
+      {/* Category filter buttons */}
+      <div className="flex flex-wrap gap-2">
+        {categoryOptions.map((option) => {
+          const isActive = currentCategory === option.value;
+          return (
+            <Link
+              key={option.value}
+              href={buildCategoryLink(option.value)}
+              className={`px-5! h-10 flex items-center rounded-full text-sm font-medium transition-colors border ${
+                isActive
+                  ? "bg-[#101828] text-white border-black"
+                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
+              }`}
+            >
+              {option.label}
+            </Link>
+          );
+        })}
       </div>
 
+      {/* Header */}
+      <div className="flex items-center justify-between py-3">
+        <h3 className="lg:text-[32px] text-[20px] font-bold text-gray-900 dark:text-white">
+          Latest Blogs
+        </h3>
+        {totalCount > 0 && (
+          <p className="text-sm text-gray-400">{totalCount.toLocaleString()} posts</p>
+        )}
+      </div>
+
+      {/* Posts grid */}
       {blogPosts.length === 0 ? (
         <NoData message="No blogs found at the moment." />
       ) : (
@@ -128,8 +168,9 @@ async function BlogPage({ searchParams }: BlogPageProps) {
             ))}
           </div>
 
+          {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 mb-10">
+            <div className="flex items-center justify-center gap-2 mb-10 flex-wrap">
               <Link
                 href={buildPageLink(currentPage - 1)}
                 aria-disabled={currentPage <= 1}
@@ -142,19 +183,29 @@ async function BlogPage({ searchParams }: BlogPageProps) {
                 Prev
               </Link>
 
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                <Link
-                  key={p}
-                  href={buildPageLink(p)}
-                  className={`px-3 py-1.5 rounded-md border text-sm ${
-                    p === currentPage
-                      ? "bg-black text-white border-black dark:bg-white dark:text-black dark:border-white"
-                      : "border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-                  }`}
-                >
-                  {p}
-                </Link>
-              ))}
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                // show max 5 pages around current
+                .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 2)
+                .map((p, idx, arr) => (
+                  <div key={idx}>
+                    {idx > 0 && arr[idx - 1] !== p - 1 && (
+                      <span key={`gap-${p}`} className="px-1 text-gray-400 text-sm">
+                        …
+                      </span>
+                    )}
+                    <Link
+                      key={p}
+                      href={buildPageLink(p)}
+                      className={`px-3 py-1.5 rounded-md border text-sm ${
+                        p === currentPage
+                          ? "bg-black text-white border-black dark:bg-white dark:text-black dark:border-white"
+                          : "border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      }`}
+                    >
+                      {p}
+                    </Link>
+                  </div>
+                ))}
 
               <Link
                 href={buildPageLink(currentPage + 1)}

@@ -1,6 +1,6 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import LocationCard from "./LocationCard";
-import { api } from "@/lib/api";
+import type { StoreTabItem } from "@/components/share/StorGlobalTabs";
 
 export interface StoreItem {
   uuid: string;
@@ -17,33 +17,36 @@ export interface StoreItem {
   description: string;
   thumbnailImg: string;
   distance?: string;
+  [key: string]: unknown; // allows StoreTabItem compatibility
 }
 
-interface LocationsPageProps {
-  districtId: number | null;
+// ─── Render card function — passed to StorGlobalTabs ─────────────────────────
+
+export function renderStoreCard(store: StoreTabItem): ReactNode {
+  return (
+    <LocationCard
+      key={store.uuid || store.branchName}
+      store={store as StoreItem}
+    />
+  );
 }
 
-const LocationsPage: React.FC<LocationsPageProps> = async ({ districtId }) => {
-  let stores: StoreItem[] = [];
+// ─── Render section function — passed to StorGlobalTabs ──────────────────────
 
-  try {
-    const url = districtId
-      ? `/stores?district_id=${districtId}`
-      : "/stores";
-
-    const res = await api.get<{ data: StoreItem[] }>(url, {
-      cache: "no-store",
-    });
-
-    stores = Array.isArray(res?.data) ? res.data : [];
-  } catch (error) {
-    console.error("Failed to fetch stores:", error);
-  }
-
+export function renderStoreSection(
+  stores: StoreTabItem[],
+  query: string,
+  renderCard: (store: StoreTabItem) => ReactNode
+): ReactNode {
   if (!stores.length) {
     return (
-      <div className="flex items-center justify-center py-16 text-gray-400">
-        No stores found.
+      <div className="flex flex-col items-center justify-center py-16 text-gray-400 gap-2">
+        <p className="font-medium">
+          {query ? `No stores found for "${query}"` : "No stores found."}
+        </p>
+        {query && (
+          <p className="text-sm text-gray-300">Try a different name or address.</p>
+        )}
       </div>
     );
   }
@@ -52,35 +55,34 @@ const LocationsPage: React.FC<LocationsPageProps> = async ({ districtId }) => {
 
   return (
     <div className="font-sans">
-      {/* Nearby Your Location */}
-      <section className="bg-[#5c3a1e] py-5 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-350 mx-auto">
-          <h2 className="text-white text-xl font-bold mb-6 tracking-tight">
-            Nearby Your Location
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {nearbyStores.map((store) => (
-              <LocationCard key={store.uuid || store.branchName} store={store} />
-            ))}
+      {/* Nearby Your Location — only show when not searching */}
+      {!query && (
+        <section className="bg-[#5c3a1e] py-5 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-350 mx-auto">
+            <h2 className="text-white text-xl font-bold mb-6 tracking-tight">
+              Nearby Your Location
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {nearbyStores.map((store) => renderCard(store))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
-      {/* Our Locations */}
+      {/* All / Search results */}
       <section className="py-12 sm:px-6 lg:px-8 max-w-350 mx-auto px-4">
         <div className="max-w-350 mx-auto">
           <h2 className="text-gray-900 dark:text-white text-xl font-bold mb-6 tracking-tight">
-            Our Locations
+            {query ? `Results for "${query}"` : "Our Locations"}
+            <span className="ml-2 text-base font-normal text-gray-400">
+              ({stores.length} store{stores.length !== 1 ? "s" : ""})
+            </span>
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {stores.map((store) => (
-              <LocationCard key={store.uuid || store.branchName} store={store} />
-            ))}
+            {stores.map((store) => renderCard(store))}
           </div>
         </div>
       </section>
     </div>
   );
-};
-
-export default LocationsPage;
+}

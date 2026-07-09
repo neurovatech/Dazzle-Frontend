@@ -196,7 +196,7 @@ button {
 
 .marquee-track {
   width: max-content;
-  animation: marquee-rtl 28s linear infinite;
+  animation: marquee-rtl 60s linear infinite;
 }
 
 @keyframes marquee-rtl {
@@ -217,4 +217,10 @@ button {
   .marquee-track {
     animation: none;
   }
+}
+
+/* ─── Skeleton shimmer animation ─────────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }

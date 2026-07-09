@@ -16,7 +16,7 @@ const urbanist = Urbanist({
   weight: ["300", "400", "500", "600", "700", "800", "900"],
   variable: "--font-urbanist",
 });
-
+const FALLBACK_ICON = "https://dazzle.sgp1.cdn.digitaloceanspaces.com/32680/logo.png";
 const FALLBACK_TITLE = "Best Mobile, Laptop and Gadget Shop In Bangladesh - Dazzle";
 const FALLBACK_DESCRIPTION =
   "Shop the best mobile phones, laptops, and gadgets in Bangladesh at Dazzle. Exclusive deals, genuine products, fast delivery.";
@@ -24,9 +24,13 @@ const FALLBACK_DESCRIPTION =
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSiteSettings();
 
+
   const title = settings.metaTitle || settings.siteTitle || FALLBACK_TITLE;
   const description = stripHtml(settings.metaDescription) || FALLBACK_DESCRIPTION;
   const siteName = settings.siteTitle || "Dazzle";
+
+  const logoUrl = settings.siteLogo || FALLBACK_ICON;
+  const iconUrl = settings.favicon || FALLBACK_ICON;
 
   return {
     title: {
@@ -36,21 +40,25 @@ export async function generateMetadata(): Promise<Metadata> {
     description,
     keywords: settings.metaKeywords || undefined,
     metadataBase: new URL("https://dazzle.com.bd"),
-    icons: settings.favicon ? { icon: settings.favicon } : undefined,
+    icons: {
+      icon: iconUrl,
+      shortcut: iconUrl,
+      apple: iconUrl,
+    },
     openGraph: {
       siteName,
       locale: "en_BD",
       type: "website",
       title,
       description,
-      images: settings.siteLogo ? [{ url: settings.siteLogo }] : undefined,
+      images: [{ url: logoUrl }],
     },
     twitter: {
       card: "summary_large_image",
       site: "@dazzlebd",
       title,
       description,
-      images: settings.siteLogo ? [settings.siteLogo] : undefined,
+      images: [logoUrl],
     },
   };
 }

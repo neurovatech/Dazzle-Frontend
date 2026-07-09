@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import BrandProduct from "@/components/Brands/BrandProduct";
+import { Suspense } from "react";
+import BrandProducts, { CategoryItem } from "@/components/Brands/BrandProduct";
 import Breadcrumb from "@/components/share/Breadcrumb";
 import { api } from "@/lib/api";
 
@@ -30,12 +31,19 @@ export interface ProductListResponse {
   data: ProductItem[];
 }
 
-interface PageProps {
-  params: Promise<{ slug: string }>;
-  searchParams: Promise<{ page?: string; sort?: string; search?: string }>;
+interface CategoryListResponse {
+  statusCode: number;
+  status: string;
+  found: boolean;
+  count: number;
+  data: CategoryItem[];
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+interface PageProps {
+  params: Promise<{ slug: string }>;
+}
+
+// ─── Config ───────────────────────────────────────────────────────────────────
 
 const LIMIT = 12;
 
@@ -46,26 +54,17 @@ function toTitleCase(slug: string): string {
     .join(" ");
 }
 
-// ─── Metadata (SEO + pagination) ──────────────────────────────────────────────
+// ─── SEO ──────────────────────────────────────────────────────────────────────
 
-export async function generateMetadata({
-  params,
-  searchParams,
-}: PageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const { page } = await searchParams;
   const brandName = toTitleCase(slug);
-  const currentPage = Number(page ?? 1);
-  const pageLabel = currentPage > 1 ? ` — Page ${currentPage}` : "";
-
   return {
-    title: `${brandName} Products${pageLabel} — Buy Online at Best Price in Bangladesh | Dazzle`,
-    description: `Shop the complete ${brandName} collection at Dazzle. Explore all ${brandName} products with the best prices, official warranty, and fast delivery across Bangladesh.${currentPage > 1 ? ` Viewing page ${currentPage}.` : ""}`,
-    alternates: {
-      canonical: `/brands/${slug}${currentPage > 1 ? `?page=${currentPage}` : ""}`,
-    },
+    title: `${brandName} Products — Buy Online at Best Price in Bangladesh | Dazzle`,
+    description: `Shop the complete ${brandName} collection at Dazzle. Best prices, official warranty, and fast delivery across Bangladesh.`,
+    alternates: { canonical: `/brands/${slug}` },
     openGraph: {
-      title: `${brandName} Products${pageLabel} | Dazzle`,
+      title: `${brandName} Products | Dazzle`,
       description: `Browse ${brandName} products at Dazzle — Bangladesh's premium tech store.`,
       url: `/brands/${slug}`,
     },
@@ -73,58 +72,43 @@ export async function generateMetadata({
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
+// No force-dynamic — categories are cached, initial products cached per brand.
+// Filter/page changes are handled fully client-side via React Query (no SSR re-render).
 
-export const dynamic = "force-dynamic";
+export default async function BrandDetailsPage({ params }: PageProps) {
+  const { slug }    = await params;
+  const brandName   = toTitleCase(slug);
 
-export default async function BrandDetailsPage({
-  params,
-  searchParams,
-}: PageProps) {
-  const { slug } = await params;
-  const { page, sort, search } = await searchParams;
+  // SSR fetch: categories (5 min cache) + page-1 all products (1 min cache)
+  // These give Google bots full content on first render → SEO intact
+  const [catResult, prodResult] = await Promise.allSettled([
+    api.get<CategoryListResponse>(`/brands/${slug}/categories`, {
+      next: { revalidate: 300 }, // 5 min
+    }),
+    api.get<ProductListResponse>(
+      `/products?${new URLSearchParams({
+        brandSlug: slug,
+        page:      "1",
+        limit:     String(LIMIT),
+      }).toString()}`,
+      { next: { revalidate: 60 } } // 1 min
+    ),
+  ]);
 
-  const currentPage = Math.max(1, Number(page ?? 1));
+  const categories: CategoryItem[] =
+    catResult.status === "fulfilled" && Array.isArray(catResult.value?.data)
+      ? catResult.value.data
+      : [];
 
-  // ── 1. Get authoritative brand name ──────────────────────────────────────────
-  const brandName = toTitleCase(slug);
-  console.log(slug, "brandName")
-  // ── 2. Fetch products for current page ───────────────────────────────────────
-  let productData: ProductListResponse = {
-    statusCode: 200,
-    status: "success",
-    found: false,
-    count: 0,
-    totalCount: 0,
-    page: currentPage,
-    limit: LIMIT,
-    totalPages: 1,
-    data: [],
-  };
+  const initialProductData: ProductListResponse =
+    prodResult.status === "fulfilled" && prodResult.value?.data
+      ? prodResult.value
+      : { statusCode: 200, status: "success", found: false, count: 0,
+          totalCount: 0, page: 1, limit: LIMIT, totalPages: 1, data: [] };
 
-  try {
-    const queryParams = new URLSearchParams({
-      brandSlug: slug,
-      page: String(currentPage),
-      limit: String(LIMIT),
-    });
-    if (sort) queryParams.set("sort", sort);
-    if (search) queryParams.set("search", search);
-
-    const res = await api.get<ProductListResponse>(
-      `/products?${queryParams.toString()}`,
-      { cache: "no-store" }
-    );
-    if (res && typeof res === "object" && "data" in res) {
-      productData = res;
-    }
-  } catch (error) {
-    console.error("Error fetching brand products:", error);
-  }
-
-  // ── 3. Breadcrumb ────────────────────────────────────────────────────────────
   const breadcrumbItems = [
-    { label: "Home", href: "/" },
-    { label: "Brands", href: "/brands" },
+    { label: "Home",    href: "/" },
+    { label: "Brands",  href: "/brands" },
     { label: brandName, href: `/brands/${slug}` },
   ];
 
@@ -133,15 +117,17 @@ export default async function BrandDetailsPage({
       <div className="md:px-12.5 px-4">
         <Breadcrumb items={breadcrumbItems} />
       </div>
-      <BrandProduct
-        brandSlug={slug}
-        currentPage={currentPage}
-        products={productData.data}
-        totalPages={productData.totalPages}
-        totalCount={productData.totalCount}
-        currentSort={sort ?? ""}
-        currentSearch={search ?? ""}
-      />
+
+      {/* BrandProducts renders category buttons + Suspense-wrapped product list */}
+      <Suspense>
+        <BrandProducts
+          brandSlug={slug}
+          categories={categories}
+          initialProducts={initialProductData.data}
+          initialTotalCount={initialProductData.totalCount}
+          initialTotalPages={initialProductData.totalPages}
+        />
+      </Suspense>
     </div>
   );
 }

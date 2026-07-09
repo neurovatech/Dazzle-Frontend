@@ -151,6 +151,8 @@ export default function Footer() {
     subscribe(trimmed);
   };
 
+  console.log(siteSettings?.footerText, "siteSettings");
+
   // const pathname = usePathname();
   return (
     <div className="overflow-hidden">
@@ -253,10 +255,7 @@ export default function Footer() {
                 )}
               </Link>
               <p className="mt-6 text-sm leading-7 text-gray-300">
-                {siteSettings?.footerText
-                  ?.split(" ")
-                  .slice(0, 25)
-                  .join(" ")}
+                {siteSettings?.footerText?.split(" ").slice(0, 25).join(" ")}
               </p>
 
               <div className="mt-6 flex gap-3">
@@ -346,16 +345,29 @@ export default function Footer() {
                     <li>{siteSettings?.contactPhone}</li>
                     <li>{siteSettings?.contactEmail}</li>
                     <li>{siteSettings?.contactAddress}</li>
-                    {/* exchange-policy */}
-                    <li>
-                      <Link
-                        href="/exchange-policy"
-                        className="transition hover:text-[#ba975f]"
-                      >
-                        Exchange Policy
-                      </Link>
-                    </li>
                   </ul>
+
+                  <div className="relative z-10 pt-3">
+                    <div
+                      className="h-[230px] overflow-y-auto pr-2 
+             scrollbar-thin scrollbar-thumb-gray-500 
+             scrollbar-track-gray-800 scrollbar-thumb-rounded-full"
+                    >
+                      <ul className="space-y-4 text-sm text-gray-300">
+                        {siteSettings?.footerText
+                          ?.split(/Branch\s*\d+\s*:/i)
+                          .filter((branch) => branch.trim() !== "")
+                          .map((branch, index) => (
+                            <li key={index}>
+                              <span className="font-medium text-white">
+                                Branch {index + 1}:
+                              </span>{" "}
+                              {branch.trim()}
+                            </li>
+                          ))}
+                      </ul>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

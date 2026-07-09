@@ -1,87 +1,69 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api";
 
-interface MarqueeItem {
-  icon: React.ReactNode;
-  text: string;
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface NewsItem {
+  newsUUID: string;
+  title: string;
+  linkUrl: string;
+  openNewTab: boolean;
 }
 
-const CalendarIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    className="w-4 h-4 sm:w-5 sm:h-5 inline-block"
-    fill="none"
-  >
-    {/* Calendar base */}
-    <rect
-      x="3"
-      y="4"
-      width="18"
-      height="17"
-      rx="2"
-      fill="#fff"
-      stroke="#d94f3d"
-      strokeWidth="1.5"
-    />
-    {/* Top bar */}
-    <rect x="3" y="4" width="18" height="6" rx="2" fill="#d94f3d" />
-    {/* Binding pins */}
-    <rect x="8" y="2" width="2" height="4" rx="1" fill="#b33a2a" />
-    <rect x="14" y="2" width="2" height="4" rx="1" fill="#b33a2a" />
-    {/* Grid dots */}
-    <rect x="7" y="13" width="2" height="2" rx="0.5" fill="#d94f3d" />
-    <rect x="11" y="13" width="2" height="2" rx="0.5" fill="#d94f3d" />
-    <rect x="15" y="13" width="2" height="2" rx="0.5" fill="#d94f3d" />
-    <rect x="7" y="17" width="2" height="2" rx="0.5" fill="#d94f3d" />
-    <rect x="11" y="17" width="2" height="2" rx="0.5" fill="#d94f3d" />
-  </svg>
-);
+interface NewsScrollResponse {
+  statusCode: number;
+  status: string;
+  found: boolean;
+  count: number;
+  data: NewsItem[];
+}
 
-const StarIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    className="w-4 h-4 sm:w-5 sm:h-5 inline-block"
-    fill="#f5c518"
-  >
-    <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
-  </svg>
-);
+// ─── Fallback static items (shown while loading or on error) ──────────────────
 
-const marqueeItems: MarqueeItem[] = [
-  { icon: <CalendarIcon />, text: "Since 2018" },
-  { icon: <StarIcon />, text: "5000+ Reviews" },
-  { icon: <CalendarIcon />, text: "Since 2018" },
-  { icon: <StarIcon />, text: "5000+ Reviews" },
-  { icon: <CalendarIcon />, text: "Since 2018" },
-  { icon: <StarIcon />, text: "5000+ Reviews" },
-  { icon: <CalendarIcon />, text: "Since 2018" },
-  { icon: <StarIcon />, text: "5000+ Reviews" },
+const FALLBACK_ITEMS: NewsItem[] = [
+  { newsUUID: "1", title: "🎉 Welcome to Dazzle Commerce",                    linkUrl: "/",                openNewTab: false },
+  { newsUUID: "2", title: "🔥 Mega Sale – Up to 70% OFF on Selected Products", linkUrl: "/offer",           openNewTab: false },
+  { newsUUID: "3", title: "🚚 Free Delivery on Orders Above ৳999",             linkUrl: "/delivery-policy", openNewTab: false },
+  { newsUUID: "4", title: "📱 Download the Dazzle Mobile App Today",           linkUrl: "/",                openNewTab: false },
+  { newsUUID: "5", title: "💳 Secure Payment with bKash, Nagad & Cards",       linkUrl: "/",                openNewTab: false },
 ];
 
+// ─── Component ────────────────────────────────────────────────────────────────
+
 export default function MarqueeBulletinBar() {
-  // Duplicate items to create seamless infinite loop
-  const repeated = [...marqueeItems, ...marqueeItems];
+  const { data: res } = useQuery<NewsScrollResponse>({
+    queryKey: ["newsScroll"],
+    queryFn: () => api.get<NewsScrollResponse>("news-scroll"),
+    staleTime: 10 * 60 * 1000, // 10 min
+  });
+
+  const items: NewsItem[] = res?.found && res.data?.length ? res.data : FALLBACK_ITEMS;
+  const repeated = [...items, ...items];
 
   return (
     <div className="relative w-full overflow-hidden select-none mb-2 py-3">
-      <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-16 sm:w-24 bg-linear-to-r from-light_bg  to-transparent" />
+      {/* Left fade */}
+      <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-16 sm:w-24 bg-linear-to-r from-light_bg to-transparent" />
+      {/* Right fade */}
       <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-16 sm:w-24 bg-linear-to-l from-light_bg to-transparent" />
 
       <div className="flex items-center marquee-track">
         {repeated.map((item, idx) => (
-          <div
-            key={idx}
-            className="flex items-center gap-1.5 sm:gap-2 px-5 sm:px-8 group whitespace-nowrap shrink-0 cursor-pointer justify-center border-r      border-[#E7E7E7]  dark:border-white/10"
+          <Link
+            key={`${item.newsUUID}-${idx}`}
+            href={item.linkUrl || "#"} 
+            target={item.openNewTab ? "_blank" : "_self"}
+            rel={item.openNewTab ? "noopener noreferrer" : undefined}
+            className="flex items-center gap-1.5 sm:gap-2 px-5 sm:px-8 group whitespace-nowrap shrink-0 cursor-pointer justify-center border-r border-[#E7E7E7] dark:border-white/10"
           >
-            <span className="shrink-0 pb-1">{item.icon}</span>
-
-            <span className="text-primary dark:text-white font-medium text-xs sm:text-sm group-hover:font-bold tracking-wide">
-              {item.text}
+            <span className="text-primary dark:text-white font-medium text-xs sm:text-sm group-hover:font-bold tracking-wide transition-all">
+              {item.title}
             </span>
-          </div>
+          </Link>
         ))}
       </div>
     </div>
