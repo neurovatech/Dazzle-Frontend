@@ -11,6 +11,7 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "i.pravatar.cc" },
       { protocol: "https", hostname: "dazzle.sgp1.cdn.digitaloceanspaces.com" },
       { protocol: "https", hostname: "dzl.sgp1.cdn.digitaloceanspaces.com" },
+      { protocol: "https", hostname: "store.storeimages.cdn-apple.com" },
     ],
   },
 };

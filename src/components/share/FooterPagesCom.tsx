@@ -20,6 +20,11 @@ interface PageResponse {
   data: PageData;
 }
 
+interface FooterPagesComProps {
+  endpoint: string; // e.g. "emi_policy", "pre_order_policy", "warranty_policy"
+  fallbackTitle?: string;
+}
+
 // ─── Card wrapper ─────────────────────────────────────────────────────────────
 
 const Card = ({
@@ -34,19 +39,18 @@ const Card = ({
   </div>
 );
 
-
-
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-function EmiPolicyCom() {
+function FooterPagesCom({ endpoint, fallbackTitle = "Policy" }: FooterPagesComProps) {
   const { data, isLoading } = useQuery<PageResponse>({
-    queryKey: ["page-emi-policy"],
+    queryKey: ["page", endpoint],
     staleTime: 30 * 60 * 1000, // 30 min — policy pages don't change often
-    queryFn:  () => api.get<PageResponse>("/pages/emi_policy"),
+    queryFn: () => api.get<PageResponse>(`/pages/${endpoint}`),
   });
+  console.log(data, "datadatadatadatadatadata")
 
   const pageContent = data?.data?.pageContent ?? null;
-  const pageTitle   = data?.data?.pageTitle   ?? "EMI Policy";
+  const pageTitle = data?.data?.pageTitle ?? fallbackTitle;
 
   return (
     <div>
@@ -86,7 +90,7 @@ function EmiPolicyCom() {
           />
         </Card>
       )}
- 
+
       <p className="mt-10 text-center text-xs text-gray-500 dark:text-gray-400">
         সর্বশেষ আপডেট: এপ্রিল ২০২৬
       </p>
@@ -94,4 +98,4 @@ function EmiPolicyCom() {
   );
 }
 
-export default EmiPolicyCom;
+export default FooterPagesCom;

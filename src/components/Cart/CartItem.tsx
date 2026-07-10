@@ -1,7 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
-
+import Image from "next/image";
 type CartItemProps = {
   id: number;
   brand: string;
@@ -11,8 +11,8 @@ type CartItemProps = {
   image: string;
   quantity: number;
   inStock: boolean;
-  onIncrease: (id: number) => void;
-  onDecrease: (id: number) => void;
+  onIncrease?: (id: number) => void;
+  onDecrease?: (id: number) => void;
 };
 
 export default function CartItem({
@@ -52,22 +52,16 @@ export default function CartItem({
         </button>
 
         {/* Product Image */}
-        <img
+        <Image
           src={image}
           alt={name}
+          fill
+          sizes="(max-width: 640px) 64px, 80px"
           className="
-            w-full
-            h-full
-            object-contain
-            p-2
-            transition-transform
-            duration-300
+            object-contain p-2
+            transition-transform duration-300
             group-hover:scale-105
           "
-          onError={(e) => {
-            (e.target as HTMLImageElement).src =
-              "https://placehold.co/80x80/f3f4f6/9ca3af?text=Product";
-          }}
         />
       </div>
 
@@ -75,15 +69,15 @@ export default function CartItem({
       <div className="flex-1 min-w-0">
         <p className="text-xs font-semibold text-[#E6A817]">{brand}</p>
 
-        <p className="text-sm text-gray-800  truncate">
+        <p className="text-sm text-gray-800 text-gray-800 dark:text-white  truncate">
           {name}
         </p>
 
-        <p className="text-base font-bold dark:text-black mt-1">
+        <p className="text-base font-bold text-gray-800 dark:text-white mt-1">
           ৳ {price}
         </p>
 
-        <p className="text-xs text-gray-400 dark:text-gray-500 line-through">
+        <p className="text-xs text-gray-400 text-gray-800 dark:text-white dark:text-gray-500 line-through">
           ৳ {originalPrice}
         </p>
       </div>
@@ -100,7 +94,7 @@ export default function CartItem({
         <div className="flex items-center gap-2">
           
           <button
-            onClick={() => onDecrease(id)}
+            onClick={() => onDecrease && onDecrease(id)}
             className="
               w-7 h-7
               rounded-full
@@ -120,7 +114,7 @@ export default function CartItem({
           </span>
 
           <button
-            onClick={() => onIncrease(id)}
+            onClick={() => onIncrease && onIncrease(id)}
             className="
               w-7 h-7
               rounded-full

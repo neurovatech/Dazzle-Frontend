@@ -53,20 +53,17 @@ function Bannerslider({
 
   if (!mounted) {
     return (
-      <div className="w-full pb-4 md:pb-6 pl-4">
+      <div className="w-full pb-4 md:pb-6 px-4 sm:px-6 md:px-8 lg:px-12">
         <div className="">
           <MarqueeBulletinBar />
         </div>
-        <div className="flex gap-4 sm:gap-5 md:gap-6 overflow-hidden w-full">
-          <div className="w-[66%] shrink-0 h-55 sm:h-75 md:h-121 animate-pulse bg-gray-200 dark:bg-zinc-800 rounded-[15px]" />
-          <div className="w-[34%] shrink-0 h-55 sm:h-75 md:h-121 animate-pulse bg-gray-200 dark:bg-zinc-800 rounded-[15px]" />
-        </div>
+        <div className="w-full h-55 sm:h-75 md:h-121 animate-pulse bg-gray-200 dark:bg-zinc-800 rounded-[15px]" />
       </div>
     );
   }
 
   return (
-    <div className="w-full pb-4 md:pb-6 pl-4">
+    <div className="w-full pb-4 md:pb-6 px-4 sm:px-6 md:px-8 lg:px-12">
       <div className="">
         <MarqueeBulletinBar />
       </div>
@@ -81,13 +78,15 @@ function Bannerslider({
             : undefined
         }
         scrollbar={{ draggable: true }}
+        slidesPerView={1.5}
+        spaceBetween={12}
         breakpoints={{
           640: {
-            slidesPerView: 1.2,
+            slidesPerView: 1,
             spaceBetween: 16,
           },
           768: {
-            slidesPerView: 1.5,
+            slidesPerView: 1,
             spaceBetween: 20,
           },
           1024: {
@@ -106,7 +105,7 @@ function Bannerslider({
                   alt={slide.title || `Slide ${slide.id}`}
                   fill
                   className="object-cover"
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 66vw, 50vw"
+                  sizes="100vw"
                   priority={slide.id === finalSlides[0]?.id}
                 />
               </div>

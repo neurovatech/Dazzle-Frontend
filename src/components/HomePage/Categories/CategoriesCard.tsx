@@ -66,7 +66,7 @@ function CategoriesCard({
       {/* ── Grid ── */}
       <div className="py-4">
         
-          <div className="grid gap-4 md:grid-cols-8 grid-cols-4">
+          <div className="grid gap-2 sm:gap-3 md:gap-4 grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8">
             {categories.map((item) => {
               const hasImage = !isEmpty(item.thumbnail_img);
               const hasName = !isEmpty(item.category_name);
@@ -84,20 +84,20 @@ function CategoriesCard({
                   href={href}
                   className="flex flex-col justify-center items-center group cursor-pointer"
                 >
-                  <div className="bg-[#F5F5F5] dark:bg-[#CB843B]/10 dark:group-hover:bg-white/10 p-5 rounded-4xl transition-all duration-300 group-hover:bg-[#CB843B]/10 group-hover:scale-105">
+                  <div className="bg-[#F5F5F5] dark:bg-[#CB843B]/10 dark:group-hover:bg-white/10 p-2 sm:p-3 md:p-4 lg:p-5 rounded-2xl sm:rounded-3xl lg:rounded-4xl transition-all duration-300 group-hover:bg-[#CB843B]/10 group-hover:scale-105">
                     <Image
                       src={hasImage ? item.thumbnail_img : NoImg}
                       width={100}
                       height={100}
                       alt={hasName ? item.category_name : "Category"}
-                      className="transition-transform duration-300 group-hover:scale-110"
+                      className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-auto lg:h-auto transition-transform duration-300 group-hover:scale-110"
                       onError={(e) => {
                         (e.currentTarget as HTMLImageElement).src =
                           (NoImg as any).src ?? NoImg.toString();
                       }}
                     />
                   </div>
-                  <h2 className="lg:text-sm text-[10px] font-medium text-primary pt-2 text-center transition-colors duration-300 group-hover:text-[#CB843B]">
+                  <h2 className="text-[9px] sm:text-[10px] lg:text-sm font-medium text-primary pt-1 sm:pt-2 text-center transition-colors duration-300 group-hover:text-[#CB843B] line-clamp-2 leading-tight">
                     {hasName ? (
                       item.category_name
                     ) : (

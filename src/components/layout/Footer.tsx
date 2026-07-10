@@ -165,237 +165,239 @@ export default function Footer() {
         pathname !== "/auth/otp" &&
         pathname !== "/auth/forget-password" && <LatestBlog />} */}
       <footer className="relative mt-10! max-w-355 mx-auto ">
-        {/* Newsletter */}
-        <div className="ml-3.75! mr-3.75!">
-          <div className="relative z-10  mx-auto! max-w-4xl rounded-[28px] bg-background px-6 py-8 shadow-lg md:px-10">
-            <div className="text-center">
-              <h2 className="lg:text-2xl text-sm font-semibold tracking-wide text-primary uppercase">
-                Subscribe To Our Newsletter
-              </h2>
-              <p className="mt-2 text-sm text-gray-500">
-                Get all the latest information on Events, Sales and Offers.
-              </p>
-            </div>
-
-            <div className="mx-auto mt-6 flex max-w-2xl overflow-hidden rounded-2xl border border-gray-200 bg-background sm:flex-row">
-              <div className="pl-4 pt-4.75">
-                <MassageIcon />
-              </div>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  setApiErrors([]);
-                  setSuccessMsg("");
-                }}
-                onKeyDown={(e) => e.key === "Enter" && handleSubscribe()}
-                placeholder="Enter your email"
-                disabled={isPending}
-                className="w-full px-3 py-4 text-sm outline-none bg-transparent disabled:opacity-60"
-              />
-              <button
-                onClick={handleSubscribe}
-                disabled={isPending}
-                className="m-1 rounded-xl dark:bg-[#36291e] px-8 py-3 text-sm font-medium transition hover:bg-black hover:text-white dark:text-white disabled:opacity-60 flex items-center gap-2 shrink-0"
-              >
-                {isPending && <Loader2 size={14} className="animate-spin" />}
-                Subscribe
-              </button>
-            </div>
-
-            {/* Feedback messages */}
-            {successMsg && (
-              <div className="mx-auto mt-3 flex max-w-2xl items-center gap-2 text-sm text-green-600 dark:text-green-400">
-                <CheckCircle2 size={15} className="shrink-0" />
-                {successMsg}
-              </div>
-            )}
-            {apiErrors.length > 0 && (
-              <div className="mx-auto mt-3 max-w-2xl">
-                {apiErrors.map((err, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center gap-2 text-sm text-red-500 dark:text-red-400"
-                  >
-                    <XCircle size={14} className="shrink-0" />
-                    {err}
-                  </div>
-                ))}
-              </div>
-            )}
+      {/* Newsletter */}
+      <div className="ml-3.75! mr-3.75!">
+        <div className="relative z-10 mx-auto! max-w-4xl rounded-[28px] bg-background px-4 py-6 sm:px-6 sm:py-8 shadow-lg md:px-10">
+          <div className="text-center">
+            <h2 className="text-sm sm:text-lg lg:text-2xl font-semibold tracking-wide text-primary uppercase">
+              Subscribe To Our Newsletter
+            </h2>
+            <p className="mt-2 text-sm text-gray-500">
+              Get all the latest information on Events, Sales and Offers.
+            </p>
           </div>
-        </div>
 
-        {/* <div className="absolute bottom-0 opacity-200 left-1/2 h-130 w-130 -translate-x-1/2 bg-[#463d34]/50 blur-3xl rounded-t-[200px]" /> */}
+          <div className="mx-auto mt-4 sm:mt-6 flex max-w-2xl overflow-hidden rounded-2xl border border-gray-200 bg-background">
+            <div className="pl-3 sm:pl-4 pt-4">
+              <MassageIcon />
+            </div>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setApiErrors([]);
+                setSuccessMsg("");
+              }}
+              onKeyDown={(e) => e.key === "Enter" && handleSubscribe()}
+              placeholder="Enter your email"
+              disabled={isPending}
+              className="w-full px-2 sm:px-3 py-3 sm:py-4 text-sm outline-none bg-transparent disabled:opacity-60"
+            />
+            <button
+              onClick={handleSubscribe}
+              disabled={isPending}
+              className="m-1 rounded-xl dark:bg-[#36291e] px-4 sm:px-8 py-2 sm:py-3 text-xs sm:text-sm font-medium transition hover:bg-black hover:text-white dark:text-white disabled:opacity-60 flex items-center gap-2 shrink-0"
+            >
+              {isPending && <Loader2 size={14} className="animate-spin" />}
+              Subscribe
+            </button>
+          </div>
 
-        <div className="absolute left-1/2 top-2/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[950px] rounded-full bg-[#E9CCAE] opacity-20 blur-[500px] pointer-events-none" />
-
-        <div className="-mt-30 rounded-t-4xl bg-[#101518] px-6 pb-8 pt-40 text-white md:px-10 lg:px-16">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-15 ">
-            <div className="lg:col-span-3">
-              {/* Footer Logo — fallback to local Logo if API not loaded yet */}
-              <Link href="/" className="">
-                {siteSettings?.footerLogo ? (
-                  <Image
-                    src={siteSettings.footerLogo}
-                    alt="Footer Logo"
-                    width={180}
-                    height={60}
-                    className="h-15 w-[70%] object-contain"
-                  />
-                ) : (
-                  <Image
-                    src={Logo}
-                    alt="Dazzle Logo"
-                    width={180}
-                    height={60}
-                    className="h-15 w-[70%] object-contain"
-                  />
-                )}
-              </Link>
-              <p className="mt-6 text-sm leading-7 text-gray-300">
-                {siteSettings?.footerText?.split(" ").slice(0, 25).join(" ")}
-              </p>
-
-              <div className="mt-6 flex gap-3">
-                <Link
-                  href={siteSettings?.facebookUrl || "#"}
-                  target="_blank"
-                  className="flex h-12 w-12 items-center justify-center rounded-full  bg-[#222222DB] text-sm cursor-pointer"
+          {/* Feedback messages */}
+          {successMsg && (
+            <div className="mx-auto mt-3 flex max-w-2xl items-center gap-2 text-sm text-green-600 dark:text-green-400">
+              <CheckCircle2 size={15} className="shrink-0" />
+              {successMsg}
+            </div>
+          )}
+          {apiErrors.length > 0 && (
+            <div className="mx-auto mt-3 max-w-2xl">
+              {apiErrors.map((err, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-2 text-sm text-red-500 dark:text-red-400"
                 >
-                  <FacebookIcon />
-                </Link>
-                <Link
-                  href={siteSettings?.instagramUrl || "#"}
-                  target="_blank"
-                  className="flex h-12 w-12 items-center justify-center rounded-full  bg-[#222222DB] text-sm cursor-pointer"
-                >
-                  <InstragramIcon />
-                </Link>
-                <Link
-                  href={siteSettings?.linkedinUrl || "#"}
-                  target="_blank"
-                  className="flex h-12 w-12 items-center justify-center rounded-full  bg-[#222222DB] text-sm cursor-pointer"
-                >
-                  <LinkindIcon />
-                </Link>
-                <Link
-                  href={siteSettings?.youtubeUrl || "#"}
-                  target="_blank"
-                  className="flex h-12 w-12 items-center justify-center rounded-full  bg-[#222222DB] text-sm cursor-pointer"
-                >
-                  <YouTubeIcon />
-                </Link>
-              </div>
-
-              <div className="mt-6">
-                <p className="mb-3 text-sm text-gray-300">Download Our App:</p>
-                <div className="flex gap-1">
-                  <Link href="/" className="">
-                    <Image
-                      className="border-2 border-[#282828] rounded-xl"
-                      src={AppStore}
-                      width={150}
-                      // height={100}
-                      alt="Picture of the author"
-                    />
-                  </Link>
-                  <Link href="/" className="">
-                    <Image
-                      src={GooglePlay}
-                      width={150}
-                      // height={300}
-                      alt="Picture of the author"
-                    />
-                  </Link>
+                  <XCircle size={14} className="shrink-0" />
+                  {err}
                 </div>
-              </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* <div className="absolute bottom-0 opacity-200 left-1/2 h-130 w-130 -translate-x-1/2 bg-[#463d34]/50 blur-3xl rounded-t-[200px]" /> */}
+
+      <div className="absolute left-1/2 top-2/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[950px] rounded-full bg-[#E9CCAE] opacity-20 blur-[500px] pointer-events-none" />
+
+      <div className="-mt-20 sm:-mt-30 rounded-t-4xl bg-[#101518] px-4 pb-8 pt-28 sm:pt-40 text-white sm:px-6 md:px-10 lg:px-16">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 sm:gap-10 lg:gap-15">
+          {/* FIX: was "lg:col-span-3" only — missing md:col-span made this
+              collapse to a single 1/12 track on iPad, squeezing every word
+              onto its own line. Added md:col-span-4 so it gets proper width
+              at the md breakpoint, then narrows to 3/12 at lg. */}
+          <div className="md:col-span-4 lg:col-span-3">
+            {/* Footer Logo — fallback to local Logo if API not loaded yet */}
+            <Link href="/" className="">
+              {siteSettings?.footerLogo ? (
+                <Image
+                  src={siteSettings.footerLogo}
+                  alt="Footer Logo"
+                  width={180}
+                  height={60}
+                  className="h-12 sm:h-15 w-[60%] sm:w-[70%] object-contain"
+                />
+              ) : (
+                <Image
+                  src={Logo}
+                  alt="Dazzle Logo"
+                  width={180}
+                  height={60}
+                  className="h-12 sm:h-15 w-[60%] sm:w-[70%] object-contain"
+                />
+              )}
+            </Link>
+            <p className="mt-6 text-sm leading-7 text-gray-300">
+              {siteSettings?.footerText?.split(" ").slice(0, 25).join(" ")}
+            </p>
+
+            <div className="mt-4 sm:mt-6 flex flex-wrap gap-2 sm:gap-3">
+              <Link
+                href={siteSettings?.facebookUrl || "#"}
+                target="_blank"
+                className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-[#222222DB] text-sm cursor-pointer"
+              >
+                <FacebookIcon />
+              </Link>
+              <Link
+                href={siteSettings?.instagramUrl || "#"}
+                target="_blank"
+                className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-[#222222DB] text-sm cursor-pointer"
+              >
+                <InstragramIcon />
+              </Link>
+              <Link
+                href={siteSettings?.linkedinUrl || "#"}
+                target="_blank"
+                className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-[#222222DB] text-sm cursor-pointer"
+              >
+                <LinkindIcon />
+              </Link>
+              <Link
+                href={siteSettings?.youtubeUrl || "#"}
+                target="_blank"
+                className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-[#222222DB] text-sm cursor-pointer"
+              >
+                <YouTubeIcon />
+              </Link>
             </div>
 
-            <div className="lg:col-span-9">
-              <div className="grid gap-10 lg:grid-cols-4 grid-cols-2">
-                {sections.map((section) => (
-                  <div className="relative z-10" key={section.title}>
-                    <h3 className="mb-5 border-b border-gray-800 pb-3 text-base font-medium">
-                      {section.title}
-                    </h3>
-                    <ul className="space-y-4 text-sm text-gray-300">
-                      {section.links.map((link) => (
-                        <li
-                          key={link.label}
-                          className="cursor-pointer transition hover:text-[#ba975f]"
-                        >
-                          <Link
-                            href={link.href}
-                            className="transition hover:text-[#ba975f]"
-                          >
-                            {link.label}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-                <div className="relative z-10">
+            <div className="mt-4 sm:mt-6">
+              <p className="mb-2 sm:mb-3 text-sm text-gray-300">Download Our App:</p>
+              <div className="flex flex-wrap gap-1 sm:gap-2">
+                <Link href="/" className="">
+                  <Image
+                    className="border-2 border-[#282828] rounded-xl"
+                    src={AppStore}
+                    width={130}
+                    alt="App Store"
+                  />
+                </Link>
+                <Link href="/" className="">
+                  <Image
+                    src={GooglePlay}
+                    width={130}
+                    alt="Google Play"
+                  />
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          <div className="md:col-span-8 lg:col-span-9">
+            <div className="grid gap-6 sm:gap-8 lg:gap-10 grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+              {sections.map((section) => (
+                <div className="relative z-10" key={section.title}>
                   <h3 className="mb-5 border-b border-gray-800 pb-3 text-base font-medium">
-                    Contact
+                    {section.title}
                   </h3>
                   <ul className="space-y-4 text-sm text-gray-300">
-                    <li>{siteSettings?.contactPhone}</li>
-                    <li>{siteSettings?.contactEmail}</li>
-                    <li>{siteSettings?.contactAddress}</li>
+                    {section.links.map((link) => (
+                      <li
+                        key={link.label}
+                        className="cursor-pointer transition hover:text-[#ba975f]"
+                      >
+                        <Link
+                          href={link.href}
+                          className="transition hover:text-[#ba975f]"
+                        >
+                          {link.label}
+                        </Link>
+                      </li>
+                    ))}
                   </ul>
+                </div>
+              ))}
+              <div className="relative z-10">
+                <h3 className="mb-5 border-b border-gray-800 pb-3 text-base font-medium">
+                  Contact
+                </h3>
+                <ul className="space-y-4 text-sm text-gray-300">
+                  <li>{siteSettings?.contactPhone}</li>
+                  <li>{siteSettings?.contactEmail}</li>
+                  <li>{siteSettings?.contactAddress}</li>
+                </ul>
 
-                  <div className="relative z-10 pt-3">
-                    <div
-                      className="h-[230px] overflow-y-auto pr-2 
-             scrollbar-thin scrollbar-thumb-gray-500 
-             scrollbar-track-gray-800 scrollbar-thumb-rounded-full"
-                    >
-                      <ul className="space-y-4 text-sm text-gray-300">
-                        {siteSettings?.footerText
-                          ?.split(/Branch\s*\d+\s*:/i)
-                          .filter((branch) => branch.trim() !== "")
-                          .map((branch, index) => (
-                            <li key={index}>
-                              <span className="font-medium text-white">
-                                Branch {index + 1}:
-                              </span>{" "}
-                              {branch.trim()}
-                            </li>
-                          ))}
-                      </ul>
-                    </div>
+                <div className="relative z-10 pt-3">
+                  <div
+                    className="h-[230px] overflow-y-auto pr-2 
+           scrollbar-thin scrollbar-thumb-gray-500 
+           scrollbar-track-gray-800 scrollbar-thumb-rounded-full"
+                  >
+                    <ul className="space-y-4 text-sm text-gray-300">
+                      {siteSettings?.footerText
+                        ?.split(/Branch\s*\d+\s*:/i)
+                        .filter((branch) => branch.trim() !== "")
+                        .map((branch, index) => (
+                          <li key={index}>
+                            <span className="font-medium text-white">
+                              Branch {index + 1}:
+                            </span>{" "}
+                            {branch.trim()}
+                          </li>
+                        ))}
+                    </ul>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-
-          <div className="md:mt-12 pt-6 text-center text-sm text-gray-400 relative z-10">
-            <div className="hidden md:block">
-              <svg
-                width="100%"
-                height="53"
-                viewBox="0 0 1324 53"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M1324 52.1508H975.046C971.67 51.9197 963.5 50.3784 963.5 44C963.5 37.6216 962.77 29.0408 961.695 25.8054C954.698 7.50232 928.396 1.30885 916.12 0.5H408.801C391.307 0.499791 363.225 9.16882 359.082 36.5515V46C359.082 49.1598 358 52.5 350.335 52.5C346.652 52.5 115.244 52.5 0 52.5"
-                  stroke="white"
-                  strokeOpacity="0.16"
-                />
-              </svg>
-            </div>
-
-            <span className=" p-5 block lg:w-[50%] m-auto -mt-7.5 text-[#C6C6C6] ">
-              {siteSettings?.copyrightText}
-            </span>
-          </div>
         </div>
-      </footer>
+
+        <div className="md:mt-12 pt-6 text-center text-sm text-gray-400 relative z-10">
+          <div className="hidden md:block">
+            <svg
+              width="100%"
+              height="53"
+              viewBox="0 0 1324 53"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M1324 52.1508H975.046C971.67 51.9197 963.5 50.3784 963.5 44C963.5 37.6216 962.77 29.0408 961.695 25.8054C954.698 7.50232 928.396 1.30885 916.12 0.5H408.801C391.307 0.499791 363.225 9.16882 359.082 36.5515V46C359.082 49.1598 358 52.5 350.335 52.5C346.652 52.5 115.244 52.5 0 52.5"
+                stroke="white"
+                strokeOpacity="0.16"
+              />
+            </svg>
+          </div>
+
+          <span className=" p-5 block lg:w-[50%] m-auto -mt-7.5 text-[#C6C6C6] ">
+            {siteSettings?.copyrightText}
+          </span>
+        </div>
+      </div>
+    </footer>
     </div>
   );
 }

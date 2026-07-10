@@ -329,7 +329,12 @@ export default function CartSidebar({
                 (useWalletSplit ? parseFloat(totalBill.replace(/,/g, "")) / 2 : 0)
               ).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
             </span>
+
+            
           </div>
+          <button className="bg-[#D4A97A] hover:bg-[#c89a6b]  text-white w-full font-medium py-2 px-4 rounded-lg transition">
+              Confirm Order
+            </button>
         </div>
       </div>
     </div>

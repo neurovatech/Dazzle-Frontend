@@ -75,7 +75,7 @@ export default async function OffersPage() {
           Latest Offers
         </h1>
 
-        {campaigns.length === 0 ? (
+        {campaigns?.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <p className="text-gray-400 text-sm">No active campaigns at the moment.</p>
             <p className="text-gray-300 text-xs mt-1">Check back soon for exciting deals!</p>

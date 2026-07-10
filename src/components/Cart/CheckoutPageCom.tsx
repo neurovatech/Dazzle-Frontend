@@ -8,8 +8,6 @@ import PaymentMethodModal from "./PaymentMethodModal";
 import AddCouponModal from "./AddCouponModal";
 import OrderSuccessModal from "./OrderSuccessModal";
 import Breadcrumb from "@/components/share/Breadcrumb";
-import { Cpu } from 'lucide-react';
-
 
 import Link from "next/link";
 
@@ -66,7 +64,7 @@ type ModalType =
 
 import { DeliveryOption } from "./CartSidebar";
 
-export default function CartPageCom() {
+export default function CheckoutPageCom() {
   const [items, setItems] = useState<CartItemType[]>(INITIAL_ITEMS);
   const [savedAddress, setSavedAddress] = useState<AddressData | null>(null);
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
@@ -76,16 +74,14 @@ export default function CartPageCom() {
   // 20 Client Requirements Checkout States
   const [selectedCurrency, setSelectedCurrency] = useState<string>("BDT");
   const [useWalletSplit, setUseWalletSplit] = useState<boolean>(false);
-  const [selectedDelivery, setSelectedDelivery] =
-    useState<DeliveryOption>("regular");
+  const [selectedDelivery, setSelectedDelivery] = useState<DeliveryOption>("regular");
   const [selectedStore, setSelectedStore] = useState<string>("banani");
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>(
-    "10:00 AM - 12:00 PM (Available)",
-  );
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>("10:00 AM - 12:00 PM (Available)");
 
   const breadcrumbItems = [
     { label: "Home", href: "/" },
-    { label: "Cart", href: "#" },
+    { label: "Cart", href: "/cart" },
+    { label: "Checkout", href: "#" },
   ];
 
   const handleIncrease = (id: number) =>
@@ -122,11 +118,7 @@ export default function CartPageCom() {
   };
 
   // Calculate pricing values based on current exchange rates and selections
-  const baseSubtotal = items.reduce(
-    (sum, item) =>
-      sum + parseFloat(item.price.replace(/,/g, "")) * item.quantity,
-    0,
-  );
+  const baseSubtotal = items.reduce((sum, item) => sum + parseFloat(item.price.replace(/,/g, "")) * item.quantity, 0);
   const baseDeliveryFees: Record<DeliveryOption, number> = {
     regular: 60,
     fast: 150,
@@ -163,76 +155,51 @@ export default function CartPageCom() {
         <Breadcrumb items={breadcrumbItems} />
 
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-          Shopping Cart <span className="text-[#E6A817]">({items.length})</span>
+          Checkout your cart 
         </h1>
 
-        <div className="w-full">
-          <div className="w-full">
+        <div className="flex flex-col lg:flex-row gap-6">
+          <div className="flex-1">
             <div className="bg-white dark:bg-[#1c1a17] rounded-2xl border border-gray-100 dark:border-gray-800  shadow-sm px-5 divide-y divide-gray-100">
               {items.map((item) => (
                 <CartItem
                   key={item.id}
                   {...item}
-                  onIncrease={handleIncrease}
-                  onDecrease={handleDecrease}
+                  // onIncrease={handleIncrease}
+                  // onDecrease={handleDecrease}
                 />
               ))}
             </div>
-
-            <div className="grid grid-cols-12 md:grid-cols-8 gap-4 mt-6">
-              <div className="md:col-span-3 col-span-12 md:col-start-6 rounded-2xl shadow-sm p-4 dark:bg-[#1C1A17]">
-                <div className="flex justify-between mb-2">
-                  <span className="text-sm text-gray-500 dark:text-white">
-                    Subtotal
-                  </span>
-                  <span className="text-sm text-gray-900 font-bold dark:text-white">
-                    {selectedCurrency} {subtotal}
-                  </span>
-                </div>
-                <hr className="border-dashed border-gray dark:border-white"></hr>
-
-                <div className="flex justify-between my-4">
-                  <span className="text-sm text-gray-500 dark:text-white">
-                    Delivery Fee
-                  </span>
-                  <span className="text-sm text-gray-900 font-bold dark:text-white">
-                    {selectedCurrency} {deliveryFee}
-                  </span>
-                </div>
-                <hr className="border-dashed border-gray dark:border-white"></hr>
-
-                <div className="flex justify-between my-4">
-                  <span className="text-sm text-gray-500 dark:text-white">
-                    Total
-                  </span>
-                  <span className="text-sm text-gray-900 dark:text-white font-bold">
-                    {selectedCurrency} {totalBill}
-                  </span>
-                </div>
-
-                <div className="flex justify-between mb-2 gap-4">
-  <div className="mt-4 w-full">
-    <Link
-      href="/"
-      className="w-full inline-flex items-center justify-center gap-2 text-sm font-medium text-white dark:text-white hover:text-[#c9911a] transition bg-[#D4A97A] dark:bg-[#FDF3E7] rounded-lg px-4 py-4"
-    >
-
-      Continue Shopping
-    </Link>
-  </div>
-  <div className="mt-4 w-full">
-    <Link
-      href="/checkout"
-      className="w-full inline-flex items-center justify-center gap-2 text-sm font-medium text-white dark:text-white hover:text-[#c9911a] transition bg-[#101518] dark:bg-[#FDF3E7] rounded-lg px-4 py-4"
-    >
-      Checkout
-    </Link>
-  </div>
-</div>
-              </div>
-            </div>
           </div>
 
+          {/* Right: Sidebar */}
+          <div className="w-full lg:w-80 xl:w-96">
+            <CartSidebar
+              subtotal={subtotal}
+              deliveryFee={deliveryFee}
+              totalBill={totalBill}
+              hasAddress={!!savedAddress}
+              paymentLabel={paymentLabel}
+              onAddressClick={handleAddressClick}
+              onPaymentClick={() => setModal("payment")}
+              onCouponClick={() => setModal("coupon")}
+              
+              // Converted options
+              selectedCurrency={selectedCurrency}
+              onCurrencyChange={setSelectedCurrency}
+              useWalletSplit={useWalletSplit}
+              onWalletSplitToggle={setUseWalletSplit}
+              walletBalance="5,000"
+              selectedDelivery={selectedDelivery}
+              onDeliveryChange={setSelectedDelivery}
+              selectedStore={selectedStore}
+              onStoreChange={setSelectedStore}
+              selectedTimeSlot={selectedTimeSlot}
+              onTimeSlotChange={setSelectedTimeSlot}
+            />
+
+            
+          </div>
         </div>
       </div>
 

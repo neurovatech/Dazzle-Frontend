@@ -21,7 +21,10 @@ interface ProductItem {
   regularPrice: number;
   discountedPrice: number;
   disRate: number;
-  thumbnails: { mediaFile: string }[] | null;
+  thumbnails:
+    | { fileUuid?: string; mediaFileUrl?: string }
+    | { mediaFile: string }[]
+    | null;
 }
 
 interface ProductListResponse {
@@ -169,18 +172,18 @@ function Product() {
   const totalCount = data?.totalCount ?? 0;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mt-6 items-start md:px-12.5 px-4 pb-12">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mt-4 sm:mt-6 items-start px-3 sm:px-4 md:px-6 lg:px-12 xl:px-14 pb-12">
       {/* ── Sidebar ── */}
-      <div className="lg:col-span-3 h-full md:block hidden">
+      <div className="lg:col-span-3 h-full hidden lg:block">
         <FilterSidebar />
       </div>
 
       {/* ── Product area ── */}
       <div className="lg:col-span-9">
         {/* Header row */}
-        <div className="flex flex-wrap items-center justify-between gap-3 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 py-2 sm:py-3">
           <div>
-            <h3 className="font-bold text-lg text-gray-900 dark:text-white">All Products</h3>
+            <h3 className="font-bold text-base sm:text-lg text-gray-900 dark:text-white">All Products</h3>
             {!isLoading && (
               <p className="text-xs text-gray-400 mt-0.5">
                 {totalCount.toLocaleString()} products found
@@ -188,20 +191,20 @@ function Product() {
             )}
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap w-full sm:w-auto">
             {/* Search */}
-            <div className="flex items-center gap-1.5 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 bg-white dark:bg-[#1E1B18]">
+            <div className="flex flex-1 sm:flex-none items-center gap-1.5 border border-gray-200 dark:border-white/10 rounded-xl px-2 sm:px-3 py-2 bg-white dark:bg-[#1E1B18]">
               <input
                 type="text"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                placeholder="Search products..."
-                className="text-sm outline-none bg-transparent text-gray-800 dark:text-white placeholder:text-gray-400 w-40"
+                placeholder="Search..."
+                className="text-sm outline-none bg-transparent text-gray-800 dark:text-white placeholder:text-gray-400 w-28 sm:w-36 md:w-40"
               />
               <button
                 onClick={handleSearch}
-                className="text-xs font-semibold text-[#6D3F0E] dark:text-[#d4a97a] hover:opacity-80 transition-opacity"
+                className="text-xs font-semibold text-[#6D3F0E] dark:text-[#d4a97a] hover:opacity-80 transition-opacity shrink-0"
               >
                 Go
               </button>
@@ -211,7 +214,7 @@ function Product() {
             <select
               value={sort}
               onChange={(e) => handleSortChange(e.target.value)}
-              className="text-sm border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 bg-white dark:bg-[#1E1B18] text-gray-800 dark:text-white outline-none focus:ring-2 focus:ring-[#6D3F0E]/30 transition appearance-none cursor-pointer"
+              className="text-sm border border-gray-200 dark:border-white/10 rounded-xl px-2 sm:px-3 py-2 bg-white dark:bg-[#1E1B18] text-gray-800 dark:text-white outline-none focus:ring-2 focus:ring-[#6D3F0E]/30 transition appearance-none cursor-pointer"
             >
               {SORT_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>{o.label}</option>
@@ -257,9 +260,16 @@ function Product() {
         {/* ── Product grid ── */}
         {!isLoading && !isError && products.length > 0 && (
           <>
-            <div className="grid md:grid-cols-4 grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
               {products.map((product) => {
-                const imgSrc = product.thumbnails?.[0]?.mediaFile || NoImg.src;
+                // Support both single-object thumbnails { mediaFileUrl } and array thumbnails [{ mediaFile }]
+                const thumbs = product.thumbnails;
+                const imgSrc =
+                  (thumbs && !Array.isArray(thumbs)
+                    ? (thumbs as { mediaFileUrl?: string }).mediaFileUrl
+                    : Array.isArray(thumbs) && thumbs.length > 0
+                      ? (thumbs as { mediaFile: string }[])[0]?.mediaFile
+                      : null) || NoImg.src;
                 const price = product.discountedPrice || product.regularPrice || 0;
                 const originalPrice = product.regularPrice || 0;
 

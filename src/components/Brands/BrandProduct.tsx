@@ -1,7 +1,8 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import FilterSidebar from "@/components/share/FilterSidebar";
 import BrandProductListClient from "@/components/Brands/BrandProductListClient";
 import type { ProductItem } from "@/app/(public)/brands/[slug]/page";
@@ -32,26 +33,69 @@ export default function BrandProducts({
   initialTotalCount,
   initialTotalPages,
 }: Props) {
-  const router       = useRouter();
-  const pathname     = usePathname();
   const searchParams = useSearchParams();
 
-  const currentCategorySlug = searchParams.get("category") ?? null;
+  const initialCategory = searchParams.get("category") ?? null;
+  const initialPage = Number(searchParams.get("page") ?? "1");
 
-  // Optimistic slug — highlights button instantly on click, no wait
-  const [optimisticSlug, setOptimisticSlug] = useState(currentCategorySlug);
+  const [activeCategory, setActiveCategory] = useState<string | null>(initialCategory);
+  const [activePage, setActivePage] = useState<number>(initialPage);
+
+  // Sync state if browser navigation (back/forward) happens via next/navigation
   useEffect(() => {
-    setOptimisticSlug(currentCategorySlug);
-  }, [currentCategorySlug]);
+    const category = searchParams.get("category") ?? null;
+    const page = Number(searchParams.get("page") ?? "1");
+    setActiveCategory(category);
+    setActivePage(page);
+  }, [searchParams]);
+
+  // Sync state if browser navigation (back/forward) happens via browser popstate
+  useEffect(() => {
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      setActiveCategory(params.get("category") ?? null);
+      setActivePage(Number(params.get("page") ?? "1"));
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   const navigate = (categorySlug: string | null) => {
-    setOptimisticSlug(categorySlug); // instant visual feedback
-    const qp = new URLSearchParams();
-    if (categorySlug) qp.set("category", categorySlug);
-    const qs = qp.toString();
-    // scroll: false — prevent page jump, React Query handles update
-    router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    setActiveCategory(categorySlug);
+    setActivePage(1); // Reset page to 1 on category change
+
+    const params = new URLSearchParams(window.location.search);
+    if (categorySlug) {
+      params.set("category", categorySlug);
+    } else {
+      params.delete("category");
+    }
+    params.delete("page");
+
+    const newQueryString = params.toString();
+    const newUrl = newQueryString ? `${window.location.pathname}?${newQueryString}` : window.location.pathname;
+
+    window.history.pushState(null, "", newUrl);
   };
+
+  const handlePageChange = (page: number) => {
+    setActivePage(page);
+
+    const params = new URLSearchParams(window.location.search);
+    if (page > 1) {
+      params.set("page", String(page));
+    } else {
+      params.delete("page");
+    }
+
+    const newQueryString = params.toString();
+    const newUrl = newQueryString ? `${window.location.pathname}?${newQueryString}` : window.location.pathname;
+
+    window.history.pushState(null, "", newUrl);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  
 
   return (
     <>
@@ -61,7 +105,7 @@ export default function BrandProducts({
         <button
           onClick={() => navigate(null)}
           className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-all duration-200 whitespace-nowrap ${
-            optimisticSlug === null
+            activeCategory === null
               ? "bg-[#6D3F0E] text-white border-[#6D3F0E]"
               : "border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:border-[#6D3F0E] hover:text-[#6D3F0E] dark:hover:text-[#d4a97a]"
           }`}
@@ -77,7 +121,7 @@ export default function BrandProducts({
               key={cat.uuid}
               onClick={() => navigate(cat.category_slug)}
               className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-all duration-200 whitespace-nowrap ${
-                optimisticSlug === cat.category_slug
+                activeCategory === cat.category_slug
                   ? "bg-[#6D3F0E] text-white border-[#6D3F0E]"
                   : "border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:border-[#6D3F0E] hover:text-[#6D3F0E] dark:hover:text-[#d4a97a]"
               }`}
@@ -98,6 +142,10 @@ export default function BrandProducts({
           <Suspense>
             <BrandProductListClient
               brandSlug={brandSlug}
+              categorySlug={activeCategory ?? undefined}
+              currentPage={activePage}
+              onPageChange={handlePageChange}
+              onClearFilter={() => navigate(null)}
               initialProducts={initialProducts}
               initialTotalCount={initialTotalCount}
               initialTotalPages={initialTotalPages}

@@ -94,7 +94,7 @@ function MostPopular({
         </Link>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-5 grid-cols-2 mt-5">
+      <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5 grid-cols-2 mt-5">
         {products.map((product, i) => (
           <div key={i}>
             <ProductCard key={i} {...product} />

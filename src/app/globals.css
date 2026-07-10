@@ -224,3 +224,55 @@ button {
   0%   { transform: translateX(-100%); }
   100% { transform: translateX(100%); }
 }
+
+/* ─── Responsive Utilities ────────────────────────────────────────────────── */
+
+/* Prevent horizontal overflow on all devices */
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+}
+
+/* Responsive section padding helper */
+.section-px {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+@media (min-width: 640px) {
+  .section-px {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+@media (min-width: 768px) {
+  .section-px {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+@media (min-width: 1024px) {
+  .section-px {
+    padding-left: 3rem;
+    padding-right: 3rem;
+  }
+}
+
+/* Better touch targets on mobile */
+@media (max-width: 639px) {
+  button, a {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Prevent image overflow */
+img {
+  max-width: 100%;
+}
+
+/* Mobile footer spacing (so content doesn't hide behind fixed bottom nav) */
+@media (max-width: 1023px) {
+  body {
+    padding-bottom: 4.5rem;
+  }
+}
+

@@ -139,7 +139,7 @@ export default async function Home() {
   return (
     <div>
       {/* HERO SLIDER  */}
-      <div className="flex flex-col flex-1 items-center max-w-355 mx-auto ">
+      <div className="flex flex-col flex-1 items-center max-w-355 mx-auto px-0 sm:px-0">
         {heroSlides.length > 0 && (
           <BannerSlider
             slides={heroSlides}
@@ -164,8 +164,8 @@ export default async function Home() {
       {/* Flash Sale */}
       <Suspense fallback={<FlashSaleSkeleton />}>
         <div className="bg-[#6D3F0E]">
-          <div className="flex flex-col flex-1  md:py-10 md:mt-10! max-w-355 mx-auto md:h-165">
-            <div className="md:px-12.5 px-4 pb-4">
+          <div className="flex flex-col flex-1 py-6 sm:py-8 md:py-10 mt-6 sm:mt-8 md:mt-10! max-w-355 mx-auto">
+            <div className="px-3 sm:px-4 md:px-6 lg:px-12 pb-4">
               <GlobalCountdown
                 title="Flash Sale"
                 targetDate="2026-06-10T23:59:59"
@@ -186,14 +186,14 @@ export default async function Home() {
 
       {/* Trending Now */}
       <Suspense fallback={<TrendingNowSkeleton />}>
-        <div className="flex flex-col flex-1  lg:*:pb-10  max-w-355 mx-auto md:h-135 ">
-          <div className="md:px-12.5 px-4">
-            <div className="flex items-center gap-6 pb-5 justify-between">
-              <h3 className="md:text-[32px] text-[20px] font-bold transition-colors text-transparent bg-clip-text bg-[linear-gradient(90deg,#101518_0%,#E9CCAE_46.15%,#B57908_100%)] dark:text-white">
+        <div className="flex flex-col flex-1 max-w-355 mx-auto">
+          <div className="px-3 sm:px-4 md:px-6 lg:px-12">
+            <div className="flex items-center gap-4 sm:gap-6 pb-4 sm:pb-5 justify-between pt-4 sm:pt-6">
+              <h3 className="text-[20px] sm:text-[24px] md:text-[32px] font-bold transition-colors text-transparent bg-clip-text bg-[linear-gradient(90deg,#101518_0%,#E9CCAE_46.15%,#B57908_100%)] dark:text-white">
                 Trending Now
               </h3>
               <Link
-                className="text-sm font-medium text-primary hover:underline"
+                className="text-sm font-medium text-primary hover:underline shrink-0"
                 href="/trending-now"
               >
                 See All
@@ -208,7 +208,7 @@ export default async function Home() {
       {/* Clip To Cart */}
       <Suspense fallback={<ClipToCartSkeleton />}>
         <div className="bg-[#E9CCAE] dark:bg-[#6d3f0e]">
-          <div className="flex flex-col flex-1  py-10 mt-10! max-w-355 mx-auto md:px-12.5 px-4 ">
+          <div className="flex flex-col flex-1 py-6 sm:py-8 md:py-10 mt-6 sm:mt-8 md:mt-10! max-w-355 mx-auto px-3 sm:px-4 md:px-6 lg:px-12">
             <ClipToCart />
           </div>
         </div>
@@ -231,10 +231,10 @@ export default async function Home() {
       {/* New Arrivals */}
       <Suspense fallback={<NewArrivalsSkeleton />}>
         <div className="bg-[#6D3F0E]">
-          <div className="flex flex-col flex-1  py-10 mt-10! max-w-355 mx-auto md:h-165">
-            <div className="md:px-12.5 px-4">
-              <div className="flex items-center gap-6 pb-5">
-                <h3 className="md:text-[32px] text-[20px] font-bold transition-colors text-white">
+          <div className="flex flex-col flex-1 py-6 sm:py-8 md:py-10 mt-6 sm:mt-8 md:mt-10! max-w-355 mx-auto">
+            <div className="px-3 sm:px-4 md:px-6 lg:px-12">
+              <div className="flex items-center gap-4 sm:gap-6 pb-4 sm:pb-5">
+                <h3 className="text-[20px] sm:text-[24px] md:text-[32px] font-bold transition-colors text-white">
                   New Arrivals
                 </h3>
               </div>
@@ -261,10 +261,10 @@ export default async function Home() {
       {/* Hot Deal of the Day */}
       <Suspense fallback={<HotDealSkeleton />}>
         <div className="bg-[#222222]">
-          <div className="flex flex-col flex-1  py-10 mt-10! max-w-355 mx-auto">
-            <div className="md:px-12.5 px-4">
-              <div className="flex items-center gap-6 pb-5">
-                <h3 className="md:text-[32px] text-[20px] font-bold transition-colors bg-linear-to-r from-white to-[#CB843B] text-transparent bg-clip-text hover:brightness-110 dark:text-white">
+          <div className="flex flex-col flex-1 py-6 sm:py-8 md:py-10 mt-6 sm:mt-8 md:mt-10! max-w-355 mx-auto">
+            <div className="px-3 sm:px-4 md:px-6 lg:px-12">
+              <div className="flex items-center gap-4 sm:gap-6 pb-4 sm:pb-5">
+                <h3 className="text-[20px] sm:text-[24px] md:text-[32px] font-bold transition-colors bg-linear-to-r from-white to-[#CB843B] text-transparent bg-clip-text hover:brightness-110 dark:text-white">
                   Hot Deal of the Day
                 </h3>
               </div>

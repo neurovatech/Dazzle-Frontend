@@ -1,7 +1,6 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import ProductCard from "@/components/share/GlobalProductCard";
 import ProductGridSkeleton from "@/components/Skeleton/ProductCardSkeleton";
@@ -62,6 +61,10 @@ function Pagination({ page, totalPages, onPageChange }: {
 
 interface Props {
   brandSlug: string;
+  categorySlug?: string;
+  currentPage: number;
+  onPageChange: (page: number) => void;
+  onClearFilter: () => void;
   initialProducts: ProductItem[];
   initialTotalCount: number;
   initialTotalPages: number;
@@ -71,27 +74,14 @@ interface Props {
 
 export default function BrandProductListClient({
   brandSlug,
+  categorySlug,
+  currentPage,
+  onPageChange,
+  onClearFilter,
   initialProducts,
   initialTotalCount,
   initialTotalPages,
 }: Props) {
-  const router       = useRouter();
-  const pathname     = usePathname();
-  const searchParams = useSearchParams();
-
-  const categorySlug = searchParams.get("category") ?? undefined;
-  const pageParam    = Number(searchParams.get("page") ?? "1");
-  const currentPage  = Math.max(1, pageParam);
-
-  const navigate = (catSlug: string | undefined, page: number) => {
-    const qp = new URLSearchParams();
-    if (catSlug) qp.set("category", catSlug);
-    if (page > 1) qp.set("page", String(page));
-    const qs = qp.toString();
-    router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
   const { data, isLoading, isPlaceholderData } = useQuery<ProductListResponse>({
     queryKey:        ["brand-products", brandSlug, categorySlug, currentPage],
     staleTime:       2 * 60 * 1000,
@@ -113,13 +103,15 @@ export default function BrandProductListClient({
   const totalCount = data?.totalCount ?? 0;
   const totalPages = data?.totalPages ?? 1;
 
+console.log(products, "productsproductsproductsproductsproductsproductsproductsproductsproductsproducts")
+
   return (
     <div>
       {/* Count + clear */}
       <p className="text-xs text-gray-400 mb-4 h-4">
         {!isLoading && `${totalCount.toLocaleString()} products found`}
         {!isLoading && categorySlug && (
-          <button onClick={() => navigate(undefined, 1)}
+          <button onClick={onClearFilter}
             className="ml-2 text-[#6D3F0E] dark:text-[#d4a97a] hover:underline"
           >Clear filter</button>
         )}
@@ -143,7 +135,7 @@ export default function BrandProductListClient({
               <div className="flex flex-col items-center justify-center py-16 gap-2">
                 <p className="text-sm text-gray-500 dark:text-gray-400">No products found.</p>
                 {categorySlug && (
-                  <button onClick={() => navigate(undefined, 1)}
+                  <button onClick={onClearFilter}
                     className="text-xs text-[#6D3F0E] dark:text-[#d4a97a] hover:underline"
                   >Show all products</button>
                 )}
@@ -160,7 +152,7 @@ export default function BrandProductListClient({
                     <ProductCard
                       key={product.productUuid}
                       productUuid={product.productUuid}
-                      image={imgSrc}
+                      image={product.thumbnails?.mediaFileUrl || NoImg.src}
                       title={product.productName}
                       price={price}
                       originalPrice={product.regularPrice || 0}
@@ -181,7 +173,7 @@ export default function BrandProductListClient({
       {/* Pagination */}
       {!isLoading && (
         <>
-          <Pagination page={currentPage} totalPages={totalPages} onPageChange={(p) => navigate(categorySlug, p)} />
+          <Pagination page={currentPage} totalPages={totalPages} onPageChange={onPageChange} />
           {products.length > 0 && (
             <p className="text-center text-xs text-gray-400 mt-3 mb-8">
               Page {currentPage} of {totalPages} — {products.length} of {totalCount.toLocaleString()} products

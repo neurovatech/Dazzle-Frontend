@@ -188,7 +188,7 @@ function FeatureProducts() {
         </Link>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-5 grid-cols-2 mt-5">
+      <div className="grid gap-3 sm:gap-4 grid-cols-2 grid-cols-2 md:grid-cols-3 lg:grid-cols-5 mt-5">
         {products.map((product, i) => (
           <div key={i}>
             <ProductCard key={i} {...product} />
@@ -196,8 +196,8 @@ function FeatureProducts() {
         ))}
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-12 gap-4 mt-6 items-stretch cursor-pointer">
-        <div className="lg:col-span-8 h-full">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 sm:gap-4 mt-6 items-stretch cursor-pointer">
+        <div className="sm:col-span-1 lg:col-span-8 h-full">
           <Image
             src={Banner}
             width={500}
@@ -208,7 +208,7 @@ function FeatureProducts() {
           />
         </div>
 
-        <div className="lg:col-span-4 h-full">
+        <div className="sm:col-span-1 lg:col-span-4 h-full">
           <Image
             src={Deals}
             width={500}
@@ -220,17 +220,17 @@ function FeatureProducts() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-6 grid-cols-2  justify-center mt-10 ">
+      <div className="grid gap-3 sm:gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 justify-center mt-8 sm:mt-10">
         {features.map((feature, i) => (
           <div
             key={i}
-            className="bg-white dark:bg-[#35291e] rounded-2xl w-full py-7 flex flex-col items-center gap-4 cursor-pointer transition-all duration-300 hover:-translate-y-0.5"
+            className="bg-white dark:bg-[#35291e] rounded-2xl w-full py-4 sm:py-6 lg:py-7 flex flex-col items-center gap-2 sm:gap-4 cursor-pointer transition-all duration-300 hover:-translate-y-0.5"
             style={{ boxShadow: "0px 6px 45px 25px #E9CCAE24" }}
           >
-            <div className="w-14 h-14 rounded-full bg-[#f5ede4] flex items-center justify-center">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-full bg-[#f5ede4] flex items-center justify-center">
               {feature.icon}
             </div>
-            <p className="text-center text-[#4a3f35] dark:text-white text-xs font-medium leading-snug px-2 whitespace-pre-line">
+            <p className="text-center text-[#4a3f35] dark:text-white text-[10px] sm:text-xs font-medium leading-snug px-1 sm:px-2 whitespace-pre-line">
               {feature.label}
             </p>
           </div>

@@ -112,6 +112,8 @@ export default async function BrandDetailsPage({ params }: PageProps) {
     { label: brandName, href: `/brands/${slug}` },
   ];
 
+  console.log(initialProductData, "initialProductsinitialProductsinitialProducts")
+
   return (
     <div className="flex flex-col flex-1 max-w-355 mx-auto">
       <div className="md:px-12.5 px-4">

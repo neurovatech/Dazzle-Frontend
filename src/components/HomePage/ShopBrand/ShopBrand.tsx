@@ -102,7 +102,7 @@ export default async function ShopBrand() {
         </Link>
       </div>
       <div className="p-4">
-        <div className="grid grid-cols-4 md:grid-cols-8 gap-4">
+        <div className="grid grid-cols-4 md:grid-cols-4 lg:grid-cols-4 gap-4">
           {brands?.map((item) => (
             <Link
               key={item.id}
@@ -127,7 +127,7 @@ export default async function ShopBrand() {
         </div>
       </div>
 
-      <div className="grid lg:gap-4 gap-2 md:grid-cols-5 grid-cols-2 mt-5">
+      <div className="grid lg:gap-4 gap-2 md:grid-cols-3 lg:grid-cols-5 grid-cols-2 mt-5">
         {products.map((product, i) => (
           <div key={i}>
             <ProductCard key={i} {...product} />
