@@ -6,10 +6,33 @@ import ProductCard from "@/components/share/GlobalProductCard";
 import ProductGridSkeleton from "@/components/Skeleton/ProductCardSkeleton";
 import NoImg from "@/images/no_images.png";
 import { api } from "@/lib/api";
-import type { ProductItem, ProductListResponse } from "@/app/(public)/brands/[slug]/page";
+// import type { ProductItem, ProductListResponse } from "@/app/(public)/brands/[slug]/page";
 
 const LIMIT = 12;
+export interface ProductItem {
+  productUuid: string;
+  productCode: string;
+  productName: string;
+  productSlug: string;
+  productBadge: string;
+  isTba: boolean;
+  regularPrice: number;
+  discountedPrice: number;
+  disRate: number;
+  thumbnails: { fileUuid: string; mediaFileUrl: string } | null;
+}
 
+export interface ProductListResponse {
+  statusCode: number;
+  status: string;
+  found: boolean;
+  count: number;
+  totalCount: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  data: ProductItem[];
+}
 // ─── Pagination ───────────────────────────────────────────────────────────────
 
 function Pagination({ page, totalPages, onPageChange }: {
@@ -146,7 +169,6 @@ console.log(products, "productsproductsproductsproductsproductsproductsproductsp
             {products.length > 0 && (
               <div className="grid md:grid-cols-4 grid-cols-2 lg:gap-4 gap-2">
                 {products.map((product) => {
-                  const imgSrc = product.thumbnails?.[0]?.mediaFile || NoImg.src;
                   const price  = product.discountedPrice || product.regularPrice || 0;
                   return (
                     <ProductCard
