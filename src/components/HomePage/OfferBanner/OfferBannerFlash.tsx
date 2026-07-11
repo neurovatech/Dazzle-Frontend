@@ -19,9 +19,10 @@ interface WebBannerResponse {
 
 interface OfferBannerProps {
   apiEndpoint?: string;
+  height?: string;
 }
 
-export default async function OfferBanner({ apiEndpoint }: OfferBannerProps) {
+export default async function OfferBannerFlash({ apiEndpoint, height }: OfferBannerProps) {
   let banners: WebBanner[] = [];
 
   try {
@@ -42,7 +43,7 @@ export default async function OfferBanner({ apiEndpoint }: OfferBannerProps) {
   return (
     <div className="grid md:grid-cols-2 grid-cols-2 md:gap-4 gap-2 py-6 cursor-pointer">
       {banners.map((banner, i) => (
-        <div key={i} className="overflow-hidden rounded-xl">
+        <div key={i} className="overflow-hidden rounded-xl lg:h-[385px]">
           <Image
             src={banner?.imageURL}
             width={500}

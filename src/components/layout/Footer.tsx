@@ -73,6 +73,7 @@ const sections: FooterLinkSection[] = [
       { label: "Feedback", href: "/feedback" },
       { label: "Sitemap", href: "/sitemap" },
       { label: "Affiliate Policy", href: "/affiliate-policy" },
+      { label: "Cookies Policy", href: "/cookies-policy" },
       { label: "Data Protection Policy", href: "/data-protection-policy" },
       { label: "Loyalty Program Policy", href: "/loyalty-program-policy" },
     ],
@@ -351,24 +352,25 @@ export default function Footer() {
 
                 <div className="relative z-10 pt-3">
                   <div
-                    className="h-[230px] overflow-y-auto pr-2 
-           scrollbar-thin scrollbar-thumb-gray-500 
-           scrollbar-track-gray-800 scrollbar-thumb-rounded-full"
-                  >
-                    <ul className="space-y-4 text-sm text-gray-300">
-                      {siteSettings?.footerText
-                        ?.split(/Branch\s*\d+\s*:/i)
-                        .filter((branch) => branch.trim() !== "")
-                        .map((branch, index) => (
-                          <li key={index}>
-                            <span className="font-medium text-white">
-                              Branch {index + 1}:
-                            </span>{" "}
-                            {branch.trim()}
-                          </li>
-                        ))}
-                    </ul>
-                  </div>
+  className="h-[230px] overflow-y-auto pr-2 
+    [&::-webkit-scrollbar]:hidden 
+    [-ms-overflow-style:none] 
+    [scrollbar-width:none]"
+>
+  <ul className="space-y-4 text-sm text-gray-300">
+    {siteSettings?.footerText
+      ?.split(/Branch\s*\d+\s*:/i)
+      .filter((branch) => branch.trim() !== "")
+      .map((branch, index) => (
+        <li key={index}>
+          <span className="font-medium text-white">
+            Branch {index + 1}:
+          </span>{" "}
+          {branch.trim()}
+        </li>
+      ))}
+  </ul>
+</div>
                 </div>
               </div>
             </div>

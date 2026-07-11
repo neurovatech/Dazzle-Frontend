@@ -66,9 +66,18 @@ button {
   }
 }
 
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 .animate-border-glow {
   background-size: 200% 200% !important;
   animation: border-move 2s linear infinite;
+  -webkit-animation: border-move 2s linear infinite;
 }
 
 .swiper-button-prev,

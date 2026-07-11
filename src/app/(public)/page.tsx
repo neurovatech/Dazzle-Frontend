@@ -22,10 +22,11 @@ import {
 } from "@/components/share/Skeletons";
 import { api } from "@/lib/api";
 
-
-
 // ── Below-the-fold: lazy (dynamic) imports ──
 const Newest = dynamic(() => import("@/components/HomePage/FlashSale/Newest"));
+const HotDealSectionCom = dynamic(
+  () => import("@/components/HomePage/HotDeal/HotDealSectionCom"),
+);
 const Popular = dynamic(
   () => import("@/components/HomePage/FlashSale/Popular"),
 );
@@ -33,14 +34,23 @@ const Olds = dynamic(() => import("@/components/HomePage/FlashSale/Olds"));
 const OfferBanner = dynamic(
   () => import("@/components/HomePage/OfferBanner/OfferBanner"),
 );
-const ClipToCart = dynamic(
-  () => import("@/components/HomePage/ClipToCart/ClipToCart"),
+const OfferBannerFlash = dynamic(
+  () => import("@/components/HomePage/OfferBanner/OfferBannerFlash"),
+);
+
+
+const ClipToCartSectionCom = dynamic(
+  () => import("@/components/HomePage/ClipToCart/ClipToCartSectionCom"),
 );
 const ShopBrand = dynamic(
   () => import("@/components/HomePage/ShopBrand/ShopBrand"),
 );
-const MostPopular = dynamic(
-  () => import("@/components/HomePage/MostPopular/MostPopular"),
+
+const NewArrivalsSectionCom = dynamic(
+  () => import("@/components/HomePage/NewArrivals/NewArrivalsSectionCom"),
+);
+const MostPopularSectionCom = dynamic(
+  () => import("@/components/HomePage/MostPopular/MostPopularSectionCom"),
 );
 const FeatureProducts = dynamic(
   () => import("@/components/HomePage/FeatureProducts/FeatureProducts"),
@@ -50,45 +60,6 @@ const ShopSelector = dynamic(
   () => import("@/components/HomePage/ShopSelector"),
 );
 
-// SLIDER DATA
-const electronicsSlides: SlideItem[] = [
-  {
-    id: 1,
-    title: "New Smartphones",
-    content: "Up to 50% off on latest models",
-    imageUrl: "/images/banner_1.png",
-  },
-  {
-    id: 2,
-    title: "Laptops & Computers",
-    content: "Powerful performance for professionals",
-    imageUrl: "/images/banner_2.png",
-  },
-  {
-    id: 3,
-    title: "Smart Watches",
-    content: "Track your fitness journey",
-    imageUrl: "/images/banner_1.png",
-  },
-  {
-    id: 4,
-    title: "New Smartphones",
-    content: "Up to 50% off on latest models",
-    imageUrl: "/images/banner_2.png",
-  },
-  {
-    id: 5,
-    title: "Laptops & Computers",
-    content: "Powerful performance for professionals",
-    imageUrl: "/images/banner_1.png",
-  },
-  {
-    id: 6,
-    title: "Smart Watches",
-    content: "Track your fitness journey",
-    imageUrl: "/images/banner_2.png",
-  },
-];
 
 async function getHeroBanners(): Promise<SlideItem[]> {
   try {
@@ -180,7 +151,7 @@ export default async function Home() {
       {/* Offer Banner */}
       <Suspense fallback={<OfferBannerSkeleton />}>
         <div className="flex flex-col flex-1 max-w-355 mx-auto md:px-12.5 px-4">
-          <OfferBanner />
+          <OfferBanner apiEndpoint="flash-sale-below" />
         </div>
       </Suspense>
 
@@ -209,7 +180,7 @@ export default async function Home() {
       <Suspense fallback={<ClipToCartSkeleton />}>
         <div className="bg-[#E9CCAE] dark:bg-[#6d3f0e]">
           <div className="flex flex-col flex-1 py-6 sm:py-8 md:py-10 mt-6 sm:mt-8 md:mt-10! max-w-355 mx-auto px-3 sm:px-4 md:px-6 lg:px-12">
-            <ClipToCart />
+            <ClipToCartSectionCom />
           </div>
         </div>
       </Suspense>
@@ -217,7 +188,7 @@ export default async function Home() {
       {/* Offer Banner */}
       <Suspense fallback={<OfferBannerSkeleton />}>
         <div className="flex flex-col flex-1 max-w-355 mx-auto md:px-12.5 px-4">
-          <OfferBanner />
+          <OfferBannerFlash apiEndpoint="clip-to-cart-below" />
         </div>
       </Suspense>
 
@@ -230,15 +201,26 @@ export default async function Home() {
 
       {/* New Arrivals */}
       <Suspense fallback={<NewArrivalsSkeleton />}>
-        <div className="bg-[#6D3F0E]">
-          <div className="flex flex-col flex-1 py-6 sm:py-8 md:py-10 mt-6 sm:mt-8 md:mt-10! max-w-355 mx-auto">
-            <div className="px-3 sm:px-4 md:px-6 lg:px-12">
-              <div className="flex items-center gap-4 sm:gap-6 pb-4 sm:pb-5">
-                <h3 className="text-[20px] sm:text-[24px] md:text-[32px] font-bold transition-colors text-white">
-                  New Arrivals
-                </h3>
+        <div>
+          <div className="bg-[#6D3F0E]">
+            <div className="flex flex-col flex-1 py-6 sm:py-8 md:py-10 mt-6 sm:mt-8 md:mt-10! max-w-355 mx-auto">
+              <div className="px-3 sm:px-4 md:px-6 lg:px-12">
+                <div className="flex items-center gap-4 sm:gap-6 pb-4 sm:pb-5 justify-between">
+                  <h3 className="text-[20px] sm:text-[24px] md:text-[32px] font-bold transition-colors text-white">
+                    New Arrivals
+                  </h3>
+
+                  <Link
+                  href="/new-arrivals"
+                  className="text-sm font-medium hover:underline text-white dark:text-white"
+                >
+                  See all
+                </Link>
+
+                </div>
+                <NewArrivalsSectionCom />
+                {/* <GlobalTabs tabs={tabsData} /> */}
               </div>
-              <GlobalTabs tabs={tabsData} />
             </div>
           </div>
         </div>
@@ -247,14 +229,14 @@ export default async function Home() {
       {/* Offer Banner */}
       <Suspense fallback={<OfferBannerSkeleton />}>
         <div className="flex flex-col flex-1 max-w-355 mx-auto md:px-12.5 px-4">
-          <OfferBanner />
+          <OfferBanner apiEndpoint="new-arrivals-below" />
         </div>
       </Suspense>
 
       {/* Most Popular */}
       <Suspense fallback={<MostPopularSkeleton />}>
         <div className="flex flex-col flex-1 max-w-355 mx-auto md:px-12.5">
-          <MostPopular />
+          <MostPopularSectionCom />
         </div>
       </Suspense>
 
@@ -263,12 +245,20 @@ export default async function Home() {
         <div className="bg-[#222222]">
           <div className="flex flex-col flex-1 py-6 sm:py-8 md:py-10 mt-6 sm:mt-8 md:mt-10! max-w-355 mx-auto">
             <div className="px-3 sm:px-4 md:px-6 lg:px-12">
-              <div className="flex items-center gap-4 sm:gap-6 pb-4 sm:pb-5">
+              <div className="flex items-center justify-between gap-4 sm:gap-6 pb-4 sm:pb-5">
                 <h3 className="text-[20px] sm:text-[24px] md:text-[32px] font-bold transition-colors bg-linear-to-r from-white to-[#CB843B] text-transparent bg-clip-text hover:brightness-110 dark:text-white">
                   Hot Deal of the Day
                 </h3>
+
+                <Link
+                  href="/hot-deal"
+                  className="text-sm font-medium hover:underline text-white dark:text-white"
+                >
+                  See all
+                </Link>
               </div>
-              <GlobalTabs tabs={tabsData} />
+              {/* <GlobalTabs tabs={tabsData} /> */}
+              <HotDealSectionCom />
             </div>
           </div>
         </div>

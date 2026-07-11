@@ -3,60 +3,113 @@ import ProductCard from "@/components/share/GlobalProductCard";
 import Banner from "@/images/o_banner.png";
 import Deals from "@/images/deals.png";
 import Image from "next/image";
+import { api } from "@/lib/api";
 
-function FeatureProducts() {
-  const products = [
-    {
-      title: "Apple AirPods Pro (2nd Gen)",
-      price: 100000,
-      originalPrice: 130000,
-      discount: 10,
-      badge: "Buy 2 Get 1",
-      isBestDeal: true,
-      inStock: true,
-      image: "/images/product.png",
-    },
-    {
-      title: "Samsung Galaxy Buds Pro Wireless Earbuds",
-      price: 75000,
-      originalPrice: 95000,
-      discount: 21,
-      badge: "Hot Sale",
-      isBestDeal: false,
-      inStock: true,
-      image: "/images/product.png",
-    },
-    {
-      title: "Sony WH-1000XM5 Noise Cancelling Headphones",
-      price: 120000,
-      originalPrice: 150000,
-      discount: 20,
-      badge: "Limited",
-      isBestDeal: true,
-      inStock: false,
-      image: "/images/product.png",
-    },
-    {
-      title: "Apple AirPods Pro (2nd Gen)",
-      price: 100000,
-      originalPrice: 130000,
-      discount: 10,
-      badge: "Buy 2 Get 1",
-      isBestDeal: true,
-      inStock: true,
-      image: "/images/product.png",
-    },
-    {
-      title: "Samsung Galaxy Buds Pro Wireless Earbuds",
-      price: 75000,
-      originalPrice: 95000,
-      discount: 21,
-      badge: "Hot Sale",
-      isBestDeal: false,
-      inStock: true,
-      image: "/images/product.png",
-    },
-  ];
+interface ShowcaseThumbnail {
+  fileUuid: string;
+  mediaFileUrl: string;
+}
+ 
+interface ShowcaseItem {
+  productUuid: string;
+  productCode: string;
+  productName: string;
+  productSlug: string;
+  productBadge: string;
+  isTba: boolean;
+  regularPrice: number;
+  discountedPrice: number;
+  disRate: number;
+  thumbnails: ShowcaseThumbnail;
+}
+ 
+interface ShowcaseItemsResponse {
+  statusCode: number;
+  status: string;
+  found: boolean;
+  count: number;
+  totalCount: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  data: ShowcaseItem[];
+}
+
+export interface ProductCardItem {
+  uuid: string;
+  title: string;
+  slug: string;
+  price: number;
+  originalPrice: number;
+  discount: number;
+  badge: string;
+  isBestDeal: boolean;
+  inStock: boolean;
+  image: string;
+}
+
+ 
+interface WebBanner {
+  bannerUUID: string;
+  imageURL: string;
+  mediaInfo: string;
+  openNewTab: boolean;
+}
+ 
+interface WebBannerResponse {
+  statusCode: number;
+  status: string;
+  found: boolean;
+  count: number;
+  data: WebBanner[];
+}
+
+
+
+
+export default async function FeatureProducts() {
+  let products: ProductCardItem[] = [];
+    let banners: WebBanner[] = [];
+ 
+  try {
+    const res = await api.get<ShowcaseItemsResponse>(
+      "/showcase-items?showcaseSlug=feature-products&limit=5",
+      { cache: "no-store" }
+    );
+ 
+    const list = Array.isArray(res?.data) ? res.data : [];
+ 
+    products = list.map((item) => ({
+      uuid: item.productUuid,
+      title: item.productName,
+      slug: item.productSlug,
+      price: item.discountedPrice,
+      originalPrice: item.regularPrice,
+      discount: Math.round(item.disRate),
+      badge: item.productBadge,
+      isBestDeal: item.disRate > 15, // adjust threshold as needed, API has no direct flag
+      inStock: !item.isTba,
+      image: item.thumbnails?.mediaFileUrl ?? "/images/product.png",
+    }));
+  } catch (error) {
+    console.error("Error fetching feature products SSR:", error);
+  }
+
+  try {
+    const bannerRes = await api.get<WebBannerResponse>(
+      "/web-banner/feature-products-below",
+      { cache: "no-store" }
+    );
+ 
+    banners = Array.isArray(bannerRes?.data) ? bannerRes.data : [];
+  } catch (error) {
+    console.error("Error fetching feature-products-below banners SSR:", error);
+  }
+ 
+  const [primaryBanner, secondaryBanner] = banners;
+
+ 
+
 
   const features = [
     {
@@ -181,7 +234,7 @@ function FeatureProducts() {
           Feature Products
         </h3>
         <Link
-          href="#"
+          href="/feature-product"
           className="text-sm font-medium text-primary hover:underline dark:text-white"
         >
           See all
@@ -196,31 +249,50 @@ function FeatureProducts() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 sm:gap-4 mt-6 items-stretch cursor-pointer">
-        <div className="sm:col-span-1 lg:col-span-8 h-full">
-          <Image
-            src={Banner}
-            width={500}
-            height={500}
-            alt="Offer banner"
-            loading="lazy"
-            className="w-full h-full object-cover rounded-xl transition-all duration-500 hover:shadow-lg"
-          />
+            {(primaryBanner || secondaryBanner) && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 sm:gap-4 mt-6 items-stretch cursor-pointer">
+          {primaryBanner && (
+            <div className="sm:col-span-1 lg:col-span-8 h-full">
+              <Link
+                href={primaryBanner.mediaInfo || "#"}
+                target={primaryBanner.openNewTab ? "_blank" : undefined}
+                rel={primaryBanner.openNewTab ? "noopener noreferrer" : undefined}
+              >
+                <Image
+                  src={primaryBanner.imageURL}
+                  width={500}
+                  height={500}
+                  alt="Offer banner"
+                  loading="lazy"
+                  className="w-full h-full object-cover rounded-xl transition-all duration-500 hover:shadow-lg"
+                />
+              </Link>
+            </div>
+          )}
+ 
+          {secondaryBanner && (
+            <div className="sm:col-span-1 lg:col-span-4 h-full">
+              <Link
+                href={secondaryBanner.mediaInfo || "#"}
+                target={secondaryBanner.openNewTab ? "_blank" : undefined}
+                rel={secondaryBanner.openNewTab ? "noopener noreferrer" : undefined}
+              >
+                <Image
+                  src={secondaryBanner.imageURL}
+                  width={500}
+                  height={500}
+                  alt="Offer banner"
+                  loading="lazy"
+                  className="w-full h-full object-cover rounded-xl transition-all duration-500 hover:shadow-lg"
+                />
+              </Link>
+            </div>
+          )}
         </div>
+      )}
 
-        <div className="sm:col-span-1 lg:col-span-4 h-full">
-          <Image
-            src={Deals}
-            width={500}
-            height={500}
-            alt="Offer banner"
-            loading="lazy"
-            className="w-full h-full object-cover rounded-xl transition-all duration-500 hover:shadow-lg"
-          />
-        </div>
-      </div>
 
-      <div className="grid gap-3 sm:gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 justify-center mt-8 sm:mt-10">
+      {/* <div className="grid gap-3 sm:gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 justify-center mt-8 sm:mt-10">
         {features.map((feature, i) => (
           <div
             key={i}
@@ -235,9 +307,7 @@ function FeatureProducts() {
             </p>
           </div>
         ))}
-      </div>
+      </div> */}
     </div>
   );
 }
-
-export default FeatureProducts;

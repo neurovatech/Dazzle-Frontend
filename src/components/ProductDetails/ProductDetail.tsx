@@ -236,9 +236,9 @@ const ProductDetail: React.FC = () => {
           <div className="lg:col-span-12">
             <GlobalTabs tabs={tabsData} />
           </div>
-          <div className="lg:col-span-12">
+          {/* <div className="lg:col-span-12">
               <MostPopular />
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

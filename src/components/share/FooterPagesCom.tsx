@@ -47,7 +47,6 @@ function FooterPagesCom({ endpoint, fallbackTitle = "Policy" }: FooterPagesComPr
     staleTime: 30 * 60 * 1000, // 30 min — policy pages don't change often
     queryFn: () => api.get<PageResponse>(`/pages/${endpoint}`),
   });
-  console.log(data, "datadatadatadatadatadata")
 
   const pageContent = data?.data?.pageContent ?? null;
   const pageTitle = data?.data?.pageTitle ?? fallbackTitle;
@@ -75,15 +74,46 @@ function FooterPagesCom({ endpoint, fallbackTitle = "Policy" }: FooterPagesComPr
           <article
             className="
               prose prose-sm lg:prose-base dark:prose-invert max-w-none
+              text-gray-700 dark:text-white
+
               [&_table]:w-full [&_table]:border-collapse [&_table]:text-sm
               [&_th]:border [&_th]:border-gray-200 dark:[&_th]:border-gray-600 [&_th]:p-3 [&_th]:bg-gray-100 dark:[&_th]:bg-gray-700 [&_th]:text-left
               [&_td]:border [&_td]:border-gray-200 dark:[&_td]:border-gray-600 [&_td]:p-3 [&_td]:text-center
-              [&_h1]:text-gray-900 dark:[&_h1]:text-white
-              [&_h2]:text-gray-900 dark:[&_h2]:text-white
-              [&_h3]:text-gray-800 dark:[&_h3]:text-gray-200
-              [&_p]:text-gray-700 dark:[&_p]:text-gray-300
-              [&_li]:text-gray-700 dark:[&_li]:text-gray-300
-              [&_strong]:text-gray-900 dark:[&_strong]:text-white
+
+              [&_h1]:text-gray-900 dark:[&_h1]:!text-white
+              [&_h2]:text-gray-900 dark:[&_h2]:!text-white
+              [&_h3]:text-gray-800 dark:[&_h3]:!text-white
+              [&_h4]:text-gray-800 dark:[&_h4]:!text-white
+              [&_h5]:text-gray-800 dark:[&_h5]:!text-white
+              [&_h6]:text-gray-800 dark:[&_h6]:!text-white
+
+              [&_p]:text-gray-700 dark:[&_p]:!text-white
+              [&_span]:dark:!text-white
+              [&_div]:dark:!text-white
+
+              [&_li]:text-gray-700 dark:[&_li]:!text-white
+              [&_ul]:text-gray-700 dark:[&_ul]:!text-white
+              [&_ol]:text-gray-700 dark:[&_ol]:!text-white
+              [&_li::marker]:text-gray-500 dark:[&_li::marker]:!text-white
+
+              [&_strong]:text-gray-900 dark:[&_strong]:!text-white
+              [&_b]:text-gray-900 dark:[&_b]:!text-white
+              [&_em]:text-gray-700 dark:[&_em]:!text-white
+              [&_i]:text-gray-700 dark:[&_i]:!text-white
+
+              [&_a]:text-blue-600 dark:[&_a]:!text-white dark:[&_a]:underline
+
+              [&_blockquote]:text-gray-700 dark:[&_blockquote]:!text-white
+              [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 dark:[&_blockquote]:border-gray-500
+
+              [&_th]:text-gray-900 dark:[&_th]:!text-white
+              [&_td]:text-gray-700 dark:[&_td]:!text-white
+
+              [&_code]:text-gray-800 dark:[&_code]:!text-white
+              [&_pre]:text-gray-800 dark:[&_pre]:!text-white
+
+              dark:[&_*]:!text-white
+
               overflow-x-auto
             "
             dangerouslySetInnerHTML={{ __html: pageContent }}
@@ -91,9 +121,9 @@ function FooterPagesCom({ endpoint, fallbackTitle = "Policy" }: FooterPagesComPr
         </Card>
       )}
 
-      <p className="mt-10 text-center text-xs text-gray-500 dark:text-gray-400">
+      {/* <p className="mt-10 text-center text-xs text-gray-500 dark:text-gray-400">
         সর্বশেষ আপডেট: এপ্রিল ২০২৬
-      </p>
+      </p> */}
     </div>
   );
 }

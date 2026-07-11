@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import Link from "next/link";
 import ProductCard from "@/components/share/GlobalProductCard";
@@ -17,88 +18,86 @@ import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 
-interface ClipToCartProps {
+interface ShowcaseThumbnail {
+  fileUuid: string;
+  mediaFileUrl: string;
+}
+
+interface ShowcaseItem {
+  productUuid: string;
+  productCode: string;
+  productName: string;
+  productSlug: string;
+  productBadge: string;
+  isTba: boolean;
+  regularPrice: number;
+  discountedPrice: number;
+  disRate: number;
+  thumbnails: ShowcaseThumbnail;
+}
+
+interface ShowcaseItemsResponse {
+  statusCode: number;
+  status: string;
+  found: boolean;
+  count: number;
+  totalCount: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  data: ShowcaseItem[];
+}
+
+export interface ProductCardItem {
+  uuid: string;
+  title: string;
+  slug: string;
+  price: number;
+  originalPrice: number;
+  discount: number;
+  badge: string;
+  isBestDeal: boolean;
+  inStock: boolean;
+  image: string;
+}
+
+interface WebBanner {
+  bannerUUID: string;
+  imageURL: string;
+  mediaInfo: string;
+  openNewTab: boolean;
+}
+
+interface WebBannerResponse {
+  statusCode: number;
+  status: string;
+  found: boolean;
+  count: number;
+  data: WebBanner[];
+}
+interface MostPopularProps {
+  products: ProductCardItem[];
+  banners: WebBanner[];
   autoplayDelay?: number;
   navigation?: boolean;
-  pagination?: boolean;
-  slidesPerView?: number;
 }
 
 function MostPopular({
-  // slides = [],
+  products,
+  banners,
   autoplayDelay = 3000,
   navigation = true,
-  pagination = true,
-}: ClipToCartProps) {
-  const products = [
-    {
-      title: "Apple AirPods Pro (2nd Gen)",
-      price: 100000,
-      originalPrice: 130000,
-      discount: 10,
-      badge: "Buy 2 Get 1",
-      isBestDeal: true,
-      inStock: true,
-      image: "/images/product.png",
-    },
-    {
-      title: "Samsung Galaxy Buds Pro Wireless Earbuds",
-      price: 75000,
-      originalPrice: 95000,
-      discount: 21,
-      badge: "Hot Sale",
-      isBestDeal: false,
-      inStock: true,
-      image: "/images/product.png",
-    },
-    {
-      title: "Sony WH-1000XM5 Noise Cancelling Headphones",
-      price: 120000,
-      originalPrice: 150000,
-      discount: 20,
-      badge: "Limited",
-      isBestDeal: true,
-      inStock: false,
-      image: "/images/product.png",
-    },
-    {
-      title: "Apple AirPods Pro (2nd Gen)",
-      price: 100000,
-      originalPrice: 130000,
-      discount: 10,
-      badge: "Buy 2 Get 1",
-      isBestDeal: true,
-      inStock: true,
-      image: "/images/product.png",
-    },
-    {
-      title: "Samsung Galaxy Buds Pro Wireless Earbuds",
-      price: 75000,
-      originalPrice: 95000,
-      discount: 21,
-      badge: "Hot Sale",
-      isBestDeal: false,
-      inStock: true,
-      image: "/images/product.png",
-    },
-  ];
+}: MostPopularProps) {
 
   return (
-    <div className=" px-4">
-      <div className="flex justify-between items-center ">
-        <h3 className="md:text-[32px] text-[20px] font-bold transition-colors text-transparent bg-clip-text bg-[linear-gradient(90deg,#101518_0%,#E9CCAE_46.15%,#B57908_100%)] dark:text-white">
-          Most Popular
-        </h3>
-        <Link href="#" className="">
-          See all
-        </Link>
-      </div>
+    <div>
 
       <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5 grid-cols-2 mt-5">
         {products.map((product, i) => (
-          <div key={i}>
-            <ProductCard key={i} {...product} />
-          </div>
+          <ProductCard
+            key={i}
+            {...product}
+          />
         ))}
       </div>
 
@@ -132,11 +131,11 @@ function MostPopular({
         }}
         className="mySwiper"
       >
-        {products.map((product, i) => (
+        {banners.map((banner, i) => (
           <SwiperSlide key={i}>
-            <Link href="#" className="">
+            <Link href={banner.mediaInfo || "#"} className="">
               <Image
-                src={Deals}
+                src={banner.imageURL}
                 width={500}
                 height={500}
                 alt="Offer banner"
@@ -147,36 +146,6 @@ function MostPopular({
         ))}
       </Swiper>
       </div>
-
-      {/* <div className="grid lg:gap-4 gap-2 md:grid-cols-3 grid-cols-3 mt-10">
-        <Link href="#" className="">
-          <Image
-            src={Deals}
-            width={500}
-            height={500}
-            alt="Offer banner"
-            className="w-full transition-all duration-500 hover:shadow-lg"
-          />
-        </Link>
-        <Link href="#" className="">
-          <Image
-            src={Deals}
-            width={500}
-            height={500}
-            alt="Offer banner"
-            className="w-full transition-all duration-500 hover:shadow-lg"
-          />
-        </Link>
-        <Link href="#" className="">
-          <Image
-            src={Deals}
-            width={500}
-            height={500}
-            alt="Offer banner"
-            className="w-full transition-all duration-500 hover:shadow-lg"
-          />
-        </Link>
-      </div> */}
     </div>
   );
 }
