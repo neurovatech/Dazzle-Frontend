@@ -168,7 +168,7 @@ export default function CartPageCom() {
 
         <div className="w-full">
           <div className="w-full">
-            <div className="bg-white dark:bg-[#1c1a17] rounded-2xl border border-gray-100 dark:border-gray-800  shadow-sm px-5 divide-y divide-gray-100">
+            <div className="bg-white dark:bg-[#1c1a17] rounded-2xl border border-gray-100 dark:border-gray-800  shadow-sm px-5 divide-y divide-gray-100 ">
               {items.map((item) => (
                 <CartItem
                   key={item.id}
@@ -179,57 +179,81 @@ export default function CartPageCom() {
               ))}
             </div>
 
-            <div className="grid grid-cols-12 md:grid-cols-8 gap-4 mt-6">
-              <div className="md:col-span-3 col-span-12 md:col-start-6 rounded-2xl shadow-sm p-4 dark:bg-[#1C1A17]">
+            {/* Bottom section: Promo code (left) + Totals (right) — flex-based, properly responsive */}
+            <div className="mt-6 flex flex-col md:flex-row md:justify-end gap-4">
+
+              {/* Promo Code & Gift Voucher */}
+              <div className="w-full md:w-80 lg:w-96  rounded-2xl space-y-3 border border-gray-100 dark:border-zinc-800 p-5 dark:bg-[#1C1A17] bg-white shadow-sm">
+                {/* Apply promo code */}
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    placeholder="Apply promo code"
+                    className="flex-1 min-w-0 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#D4A97A] text-gray-800 dark:text-white"
+                  />
+                  <button
+                    type="button"
+                    className="shrink-0 bg-[#E9DCCF] hover:bg-[#d8c7b8] text-gray-800 font-bold px-4 py-3 rounded-xl transition text-xs tracking-wider cursor-pointer"
+                  >
+                    APPLY
+                  </button>
+                </div>
+
+                {/* Gift Voucher */}
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    placeholder="Gift Voucher"
+                    className="flex-1 min-w-0 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#D4A97A] text-gray-800 dark:text-white"
+                  />
+                  <button
+                    type="button"
+                    className="shrink-0 bg-[#E9DCCF] hover:bg-[#d8c7b8] text-gray-800 font-bold px-4 py-3 rounded-xl transition text-xs tracking-wider cursor-pointer"
+                  >
+                    APPLY
+                  </button>
+                </div>
+              </div>
+
+              {/* Receipt Totals Box */}
+              <div className="w-full md:w-80 lg:w-96 rounded-2xl border border-gray-100 dark:border-zinc-800 p-5 dark:bg-[#1C1A17] bg-white shadow-sm">
                 <div className="flex justify-between mb-2">
-                  <span className="text-sm text-gray-500 dark:text-white">
-                    Subtotal
-                  </span>
+                  <span className="text-sm text-gray-500 dark:text-gray-300">Subtotal</span>
                   <span className="text-sm text-gray-900 font-bold dark:text-white">
-                     {subtotal} {selectedCurrency}
+                    {subtotal} {selectedCurrency}
                   </span>
                 </div>
-                <hr className="border-dashed border-gray dark:border-white"></hr>
+                <hr className="border-dashed border-gray-300 dark:border-gray-600" />
 
                 <div className="flex justify-between my-4">
-                  <span className="text-sm text-gray-500 dark:text-white">
-                    Discount
-                  </span>
+                  <span className="text-sm text-gray-500 dark:text-gray-300">Discount</span>
                   <span className="text-sm text-gray-900 font-bold dark:text-white">
-                    {/* {selectedCurrency} {deliveryFee} */}
                     10 {selectedCurrency}
                   </span>
                 </div>
-                <hr className="border-dashed border-gray dark:border-white"></hr>
+                <hr className="border-dashed border-gray-300 dark:border-gray-600" />
 
                 <div className="flex justify-between my-4">
-                  <span className="text-sm text-gray-500 dark:text-white">
-                    Total
-                  </span>
+                  <span className="text-sm text-gray-500 dark:text-gray-300">Total</span>
                   <span className="text-sm text-gray-900 dark:text-white font-bold">
-                  {totalBill}   {selectedCurrency} 
+                    {totalBill} {selectedCurrency}
                   </span>
                 </div>
 
-                <div className="flex justify-between mb-2 gap-4">
-  <div className="mt-4 w-full">
-    <Link
-      href="/"
-      className="w-full inline-flex items-center justify-center gap-2 text-sm font-medium text-white dark:text-white hover:text-[#c9911a] transition bg-[#D4A97A] dark:bg-[#FDF3E7] rounded-lg px-4 py-4"
-    >
-
-      Continue Shopping
-    </Link>
-  </div>
-  <div className="mt-4 w-full">
-    <Link
-      href="/checkout"
-      className="w-full inline-flex items-center justify-center gap-2 text-sm font-medium text-white dark:text-white hover:text-[#c9911a] transition bg-[#101518] dark:bg-[#FDF3E7] rounded-lg px-4 py-4"
-    >
-      Checkout
-    </Link>
-  </div>
-</div>
+                <div className="flex gap-3 mt-4">
+                  <Link
+                    href="/"
+                    className="flex-1 inline-flex items-center justify-center text-sm font-medium text-white hover:opacity-80 transition bg-[#D4A97A] rounded-lg px-3 py-3"
+                  >
+                    Continue Shopping
+                  </Link>
+                  <Link
+                    href="/checkout"
+                    className="flex-1 inline-flex items-center justify-center text-sm font-medium text-white hover:opacity-80 transition bg-[#101518] dark:bg-[#2a2420] rounded-lg px-3 py-3"
+                  >
+                    Checkout
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
