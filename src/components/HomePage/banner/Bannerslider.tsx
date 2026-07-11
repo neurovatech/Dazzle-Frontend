@@ -78,15 +78,11 @@ function Bannerslider({
             : undefined
         }
         scrollbar={{ draggable: true }}
-        slidesPerView={1.5}
+        slidesPerView={1}
         spaceBetween={12}
         breakpoints={{
-          640: {
-            slidesPerView: 1,
-            spaceBetween: 16,
-          },
           768: {
-            slidesPerView: 1,
+            slidesPerView: 1.5,
             spaceBetween: 20,
           },
           1024: {

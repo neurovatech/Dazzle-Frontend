@@ -186,17 +186,18 @@ export default function CartPageCom() {
                     Subtotal
                   </span>
                   <span className="text-sm text-gray-900 font-bold dark:text-white">
-                    {selectedCurrency} {subtotal}
+                     {subtotal} {selectedCurrency}
                   </span>
                 </div>
                 <hr className="border-dashed border-gray dark:border-white"></hr>
 
                 <div className="flex justify-between my-4">
                   <span className="text-sm text-gray-500 dark:text-white">
-                    Delivery Fee
+                    Discount
                   </span>
                   <span className="text-sm text-gray-900 font-bold dark:text-white">
-                    {selectedCurrency} {deliveryFee}
+                    {/* {selectedCurrency} {deliveryFee} */}
+                    10 {selectedCurrency}
                   </span>
                 </div>
                 <hr className="border-dashed border-gray dark:border-white"></hr>
@@ -206,7 +207,7 @@ export default function CartPageCom() {
                     Total
                   </span>
                   <span className="text-sm text-gray-900 dark:text-white font-bold">
-                    {selectedCurrency} {totalBill}
+                  {totalBill}   {selectedCurrency} 
                   </span>
                 </div>
 
