@@ -135,11 +135,12 @@ function Newest({
         loop={true} 
         pagination={pagination ? { clickable: true } : false}
         navigation={navigation}
-        autoplay={
-          autoplayDelay
-            ? { delay: autoplayDelay, disableOnInteraction: false }
-            : undefined
-        }
+        autoplay={false}
+        // autoplay={
+        //   autoplayDelay
+        //     ? { delay: autoplayDelay, disableOnInteraction: false }
+        //     : undefined
+        // }
         scrollbar={{ draggable: true }}
         slidesPerView={2}
         spaceBetween={6}

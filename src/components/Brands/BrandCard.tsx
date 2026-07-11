@@ -27,6 +27,8 @@ function BrandCard({ brands }: { brands: Brand[] }) {
     });
   }, [brands, search, selectedLetter]);
 
+  console.log("Filtered Brands:", filteredBrands); // Debugging log
+
   return (
     <div className="w-full py-4">
       {/* Top Filter Section */}
@@ -72,9 +74,9 @@ function BrandCard({ brands }: { brands: Brand[] }) {
       {/* Brand Grid */}
       <div className="grid md:grid-cols-6 grid-cols-2 lg:gap-4 gap-2">
         {filteredBrands.length > 0 ? (
-          filteredBrands.map((brand) => (
+          filteredBrands.map((brand, i) => (
             <Link
-              key={brand.id}
+              key={i}
               href={`/brands/${brand.slug}`}
               className="
                 flex w-full flex-col items-center justify-center gap-2
