@@ -145,7 +145,7 @@ export default async function Home() {
               <GlobalCountdown
                 title="Flash Sale"
                 targetDate="2026-06-10T23:59:59"
-                pagesLink="/sale"
+                pagesLink="/offer/limited-time-offer"
               />
               <FlashSaleSectionCom />
               {/* <GlobalTabs tabs={tabsData} /> */}
@@ -177,7 +177,8 @@ export default async function Home() {
               </Link>
             </div>
 
-            <GlobalTabs tabs={tabsData} />
+            {/* <GlobalTabs tabs={tabsData} /> */}
+            <FlashSaleSectionCom />
           </div>
         </div>
       </Suspense>
