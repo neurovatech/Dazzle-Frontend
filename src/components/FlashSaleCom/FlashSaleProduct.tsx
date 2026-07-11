@@ -1,7 +1,14 @@
 "use client";
+
 import ProductCard from "@/components/share/GlobalProductCard";
 import GlobalCountdown from "@/components/share/GlobalCountdown";
 import SortDropdown from "@/components/share/SortDropdown";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Autoplay, Navigation, Pagination } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
+
 export interface SlideItem {
   id: string | number;
   imageUrl?: string;
@@ -17,7 +24,12 @@ interface NewestProps {
   slidesPerView?: number;
 }
 
-function FlashSaleProduct({}: NewestProps) {
+function FlashSaleProduct({
+  autoplayDelay = 3500,
+  navigation = false,
+  pagination = true,
+  slidesPerView = 5,
+}: NewestProps) {
   const products = [
     {
       title: "Apple AirPods Pro (2nd Gen)",
@@ -104,27 +116,42 @@ function FlashSaleProduct({}: NewestProps) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 lg:gap-4 gap-2 mt-6 items-stretch cursor-pointer md:px-12.5 px-4">
       <div className="lg:col-span-8">
-        {" "}
         <h3>
           𝗨𝗽𝘁𝗼 𝟳𝟬% 𝗢𝗙𝗙 at 𝗗𝗮𝘇𝘇𝗹𝗲 𝗠𝗮𝗿𝘁😱 𝗕𝗿𝗮𝗻𝗱 𝗡𝗲𝘄 𝗥𝗲𝗽𝗹𝗮𝗰𝗲𝗺𝗲𝗻𝘁 𝗚𝘂𝗮𝗿𝗮𝗻𝘁𝗲𝗲🔥
-        </h3>{" "}
+        </h3>
       </div>
-      <div className="lg:col-span-4 ">
-        {" "}
-        <SortDropdown />{" "}
+      <div className="lg:col-span-4">
+        <SortDropdown />
       </div>
       <div className="lg:col-span-12 bg-[#6d3f0e] px-4 rounded-sm">
         <GlobalCountdown title="Flash Sale" targetDate="2026-06-10T23:59:59" />
       </div>
 
       <div className="lg:col-span-12 h-full">
-        <div className="grid md:grid-cols-5 grid-cols-2 lg:gap-4 gap-2">
+        <Swiper
+          modules={[Autoplay, Navigation, Pagination]}
+          spaceBetween={16}
+          slidesPerView={2}
+          navigation={navigation}
+          pagination={pagination ? { clickable: true } : false}
+          autoplay={
+            autoplayDelay
+              ? { delay: autoplayDelay, disableOnInteraction: false }
+              : false
+          }
+          breakpoints={{
+            640: { slidesPerView: 3, spaceBetween: 16 },
+            768: { slidesPerView: 4, spaceBetween: 16 },
+            1024: { slidesPerView: slidesPerView, spaceBetween: 16 },
+          }}
+          className="!pb-10"
+        >
           {products.map((product, i) => (
-            <div key={i}>
-              <ProductCard key={i} {...product} />
-            </div>
+            <SwiperSlide key={i} className="h-auto">
+              <ProductCard {...product} />
+            </SwiperSlide>
           ))}
-        </div>
+        </Swiper>
       </div>
     </div>
   );

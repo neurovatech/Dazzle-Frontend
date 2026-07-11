@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import { CartIcon, CompareIcon, FaireIcon } from "@/icon";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { toggleWishlist } from "@/store/slices/wishlistSlice";
@@ -44,6 +45,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const isWishlisted  = wishlistItems.some((i) => i.productUuid === itemId);
 
   const [addedToCart, setAddedToCart] = useState(false);
+  const [imgError, setImgError]       = useState(false);
 
   const handleAddToCart = () => {
     setAddedToCart(true);
@@ -70,14 +72,14 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
   const formatPrice = (val: number) => val > 0 ? "৳" + val.toLocaleString("en-IN") : "Price on Request";
 
-  const imgSrc = image || ProductImage.src;
+  const imgSrc = !image || imgError ? NoImg : image;
 
   return (
-    <div className="group relative bg-white rounded-2xl sm:rounded-3xl cursor-pointer w-full shadow-lg transition-all duration-500 hover:shadow-sm select-none">
-      <div className="bg-[#E7E7E7] p-2 sm:p-3 lg:p-4 pb-0! rounded-2xl sm:rounded-3xl">
+    <div className="group relative bg-white rounded-2xl sm:rounded-3xl cursor-pointer w-full h-full flex flex-col shadow-lg transition-all duration-500 hover:shadow-sm select-none">
+      <div className="bg-white p-2 sm:p-3 lg:p-4 pb-0! rounded-2xl sm:rounded-3xl">
 
         {/* Top Badges */}
-        <div className="flex justify-between items-start mb-2 sm:mb-3">
+        <div className="flex justify-between items-start mb-2 sm:mb-3 h-5 sm:h-6">
           {discount > 0 ? (
             <span className="bg-[#ff7575] text-white text-[9px] sm:text-xs font-bold px-1.5 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-md">
               {discount}%
@@ -90,9 +92,9 @@ const ProductCard: React.FC<ProductCardProps> = ({
           ) : <span />}
         </div>
 
-        {/* Product Image */}
+        {/* Product Image — fixed-height container keeps every card aligned */}
         <Link href={`/product/${slug || title?.toLowerCase().replace(/\s+/g, "-")}`} className="block">
-          <div className="relative flex justify-center items-center mb-2 sm:mb-4 transition-all duration-500">
+          <div className="relative flex justify-center items-center mb-2 sm:mb-4 h-32 sm:h-40 md:h-44 lg:h-48 transition-all duration-500">
             <div
               className="absolute inset-0 m-auto rounded-full pointer-events-none"
               style={{
@@ -103,13 +105,14 @@ const ProductCard: React.FC<ProductCardProps> = ({
                 filter: "blur(32px)", zIndex: 0,
               }}
             />
-            <div className="relative z-10 w-[70px] h-[80px] sm:w-[85px] sm:h-[95px] md:w-[90px] md:h-[105px] lg:w-[97px] lg:h-[126px] transition-transform duration-500 group-hover:scale-110 drop-shadow-xl">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+            <div className="relative z-10 w-full h-full transition-transform duration-500 group-hover:scale-110">
+              <Image
                 src={imgSrc}
                 alt={title || "Product image"}
-                className="w-full h-full object-contain"
-                onError={(e) => { (e.currentTarget as HTMLImageElement).src = NoImg.src; }}
+                fill
+                sizes="(max-width: 640px) 45vw, (max-width: 1024px) 25vw, 200px"
+                className="object-contain"
+                onError={() => setImgError(true)}
               />
             </div>
           </div>
@@ -117,12 +120,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
         {/* Action Row */}
         <div className="flex items-center justify-between">
-          {isBestDeal && (
-            <span className="flex items-center gap-1 bg-[#CB843B] text-white text-[9px] sm:text-xs font-semibold px-1.5 sm:px-2 lg:px-3 py-1 sm:py-1.5 rounded-full shadow-sm shrink-0">
-              <FaireIcon /> <span className="hidden sm:inline">Best Deal</span><span className="sm:hidden">Deal</span>
-            </span>
-          )}
-          <div className="flex gap-1 sm:gap-2 ml-auto bg-white p-2 sm:p-2.5 lg:p-3 -mr-1.5 sm:-mr-2 lg:-mr-4 rounded-tl-2xl sm:rounded-tl-3xl">
+          <div className="flex gap-1 sm:gap-2 ml-auto p-2 sm:p-2.5 lg:p-3 -mr-1.5 sm:-mr-2 lg:-mr-4 rounded-tl-2xl sm:rounded-tl-3xl">
             {/* Wishlist toggle */}
             <button
               onClick={handleWishlist}
@@ -153,31 +151,28 @@ const ProductCard: React.FC<ProductCardProps> = ({
         </div>
       </div>
 
-      <div className="p-2 sm:p-3 lg:p-4">
+      <div className="p-2 sm:p-3 lg:p-4 flex flex-col flex-1">
         {/* Title & Stock */}
-        <div className="mb-1 sm:mb-2 text-left">
+        <div className="mb-1 sm:mb-2 text-left h-9 sm:h-10">
           <h3 className="text-[#575757] font-bold text-[11px] sm:text-xs md:text-sm leading-snug line-clamp-2" title={title}>
             {title}
           </h3>
-          <p className={`text-[10px] sm:text-xs font-bold mt-0.5 sm:mt-1 ${inStock ? "text-green-500" : "text-red-400"}`}>
-            {inStock ? "In Stock" : "Out of Stock"}
-          </p>
         </div>
 
         {/* Price */}
         <div className="flex items-baseline gap-1 sm:gap-2 mb-2 sm:mb-4">
           <span className="text-gray-900 font-bold text-[12px] sm:text-sm md:text-base lg:text-lg xl:text-xl">
-            {formatPrice(originalPrice)}
+            {formatPrice(price)}
           </span>
           {originalPrice > 0 && originalPrice !== price && (
-            <span className="text-gray-400 text-[10px] sm:text-xs line-through">
-              {formatPrice(price)}
+            <span className="text-gray-400 text-[10px] sm:text-xs line-through">              
+            {formatPrice(originalPrice)}
             </span>
           )}
         </div>
 
         {/* Bottom Actions */}
-        <div className="flex gap-1 sm:gap-2">
+        <div className="flex gap-1 sm:gap-2 mt-auto">
           <button
             onClick={handleAddToCart}
             className={`flex-1 flex items-center justify-center gap-1 py-2 sm:py-2.5 px-1 sm:px-2 rounded-xl sm:rounded-2xl text-[9px] sm:text-[11px] lg:text-[12px] font-semibold border transition-all duration-300 active:scale-95 shadow-[0px_0px_8px_4px_#E9CCAE52] ${
