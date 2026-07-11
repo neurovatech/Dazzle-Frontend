@@ -395,7 +395,7 @@ export default function Footer() {
           </div>
 
           <span className=" p-5 block lg:w-[50%] m-auto -mt-7.5 text-[#C6C6C6] ">
-            {siteSettings?.copyrightText}
+            {siteSettings?.copyrightText} Test For CICD
           </span>
         </div>
       </div>
