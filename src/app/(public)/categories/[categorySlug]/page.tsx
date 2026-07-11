@@ -20,7 +20,7 @@ export interface ProductItem {
   regularPrice: number;
   discountedPrice: number;
   disRate: number;
-  thumbnails: { mediaFile: string }[] | null;
+  thumbnails: { fileUuid: string; mediaFileUrl: string } | null;
 }
 
 export interface ProductListResponse {

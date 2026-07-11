@@ -5,7 +5,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import FilterSidebar from "@/components/share/FilterSidebar";
 import BrandProductListClient from "@/components/Brands/BrandProductListClient";
-import type { ProductItem } from "@/app/(public)/brands/[slug]/page";
+// import type { ProductItem } from "@/app/(public)/brands/[slug]/page";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -22,6 +22,31 @@ interface Props {
   initialProducts: ProductItem[];
   initialTotalCount: number;
   initialTotalPages: number;
+}
+
+export interface ProductItem {
+  productUuid: string;
+  productCode: string;
+  productName: string;
+  productSlug: string;
+  productBadge: string;
+  isTba: boolean;
+  regularPrice: number;
+  discountedPrice: number;
+  disRate: number;
+  thumbnails: { fileUuid: string; mediaFileUrl: string } | null;
+}
+
+export interface ProductListResponse {
+  statusCode: number;
+  status: string;
+  found: boolean;
+  count: number;
+  totalCount: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  data: ProductItem[];
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────

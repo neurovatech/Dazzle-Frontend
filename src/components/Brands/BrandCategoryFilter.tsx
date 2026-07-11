@@ -124,7 +124,7 @@ export default function BrandCategoryFilter({
         <>
           <div className="grid md:grid-cols-4 grid-cols-2 lg:gap-4 gap-2">
             {products.map((product) => {
-              const imgSrc = product.thumbnails?.[0]?.mediaFile || NoImg.src;
+              const imgSrc = product.thumbnails?.mediaFileUrl || NoImg.src;
               const price  = product.discountedPrice || product.regularPrice || 0;
               return (
                 <ProductCard
