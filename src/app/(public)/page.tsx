@@ -49,6 +49,11 @@ const ShopBrand = dynamic(
 const NewArrivalsSectionCom = dynamic(
   () => import("@/components/HomePage/NewArrivals/NewArrivalsSectionCom"),
 );
+
+const FlashSaleSectionCom = dynamic(
+  () => import("@/components/HomePage/FlashSale/FlashSaleSectionCom"),
+);
+
 const MostPopularSectionCom = dynamic(
   () => import("@/components/HomePage/MostPopular/MostPopularSectionCom"),
 );
@@ -142,7 +147,8 @@ export default async function Home() {
                 targetDate="2026-06-10T23:59:59"
                 pagesLink="/sale"
               />
-              <GlobalTabs tabs={tabsData} />
+              <FlashSaleSectionCom />
+              {/* <GlobalTabs tabs={tabsData} /> */}
             </div>
           </div>
         </div>
