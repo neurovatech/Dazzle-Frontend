@@ -264,13 +264,13 @@ export default function ExplorePanel({
               }}
               className="flex items-center gap-3 px-5 py-3.5 text-sm text-[#222222] hover:bg-[#E9CCAE33] active:bg-[#E9CCAE66] transition-colors"
             >
-              {brand.logo && (
+              {/* {brand.logo && (
                 <BrandLogo
                   logo={brand.logo}
                   label={brand.label}
                   className="h-5 w-auto object-contain"
                 />
-              )}
+              )} */}
               <span className="font-medium">{brand.label}</span>
             </Link>
           ))}

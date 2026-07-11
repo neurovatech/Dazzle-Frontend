@@ -5,6 +5,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import FilterSidebar from "@/components/share/FilterSidebar";
 import BrandProductListClient from "@/components/Brands/BrandProductListClient";
+import { SlidersHorizontal, X } from "lucide-react";
 // import type { ProductItem } from "@/app/(public)/brands/[slug]/page";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -65,6 +66,8 @@ export default function BrandProducts({
 
   const [activeCategory, setActiveCategory] = useState<string | null>(initialCategory);
   const [activePage, setActivePage] = useState<number>(initialPage);
+
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   // Sync state if browser navigation (back/forward) happens via next/navigation
   useEffect(() => {
@@ -162,6 +165,14 @@ export default function BrandProducts({
           <FilterSidebar />
         </div>
 
+        <button
+          onClick={() => setIsFilterOpen(true)}
+          className="md:hidden flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold border border-gray-200 dark:border-white/10 text-white dark:text-gray-300 shrink-0 bg-[#6d3f0e] w-[40%]"
+        >
+          <SlidersHorizontal size={16} />
+          Filter
+        </button>
+
         <div className="lg:col-span-9">
           {/* React Query client list — filter/page changes never trigger SSR */}
           <Suspense>
@@ -177,6 +188,34 @@ export default function BrandProducts({
             />
           </Suspense>
         </div>
+
+        {isFilterOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setIsFilterOpen(false)}
+          />
+
+          {/* Bottom sheet */}
+          <div className="absolute bottom-0 left-0 right-0 max-h-[85vh] bg-white dark:bg-gray-900 rounded-t-2xl overflow-y-auto animate-in slide-in-from-bottom duration-300">
+            <div className="sticky top-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white">Filter</h3>
+              <button
+                onClick={() => setIsFilterOpen(false)}
+                className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-white/10"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="p-4">
+              <FilterSidebar />
+            </div>
+          </div>
+        </div>
+      )}
+
       </div>
     </>
   );
