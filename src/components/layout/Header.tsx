@@ -56,38 +56,35 @@ export default async function Header() {
   let apiSubCategories: ApiCategory[] = [];
 
   try {
-    const response = await api.get<ApiResponse>("/categories/child", {
-      cache: "no-store",
-    });
+  const response = await api.get<ApiResponse>("/categories/child", {
+    cache: "no-store",
+  });
 
-    console.log(response?.data, "response?.data")
+  if (response?.data) {
+    const cats = Array.isArray(response.data) ? response.data : [];
 
-    if (response?.data) {
-      const cats = Array.isArray(response.data.category) ? response.data.category : [];
-      const subCats = Array.isArray(response.data.subCategory) ? response.data.subCategory : [];
-
-      apiCategories = cats
-        .filter((cat) => cat.is_active)
-        .map((cat) => ({
-          ...cat,
-          child: (cat.child ?? []).filter((brand) => brand.is_active),
-        }));
-
-      apiSubCategories = subCats
-        .filter((sub) => sub.is_active)
-        .map((sub) => ({
-          uuid: sub.uuid,
-          category_name: sub.sub_category_name,
-          category_slug: sub.sub_category_slug,
-          thumbnail_img: sub.thumbnail_img,
-          is_featured: sub.is_featured,
-          is_active: sub.is_active,
-          child: (sub.child ?? []).filter((brand) => brand.is_active),
-        }));
-    }
-  } catch (err) {
-    console.error("[Header] categories/brands fetch failed:", err);
+    apiCategories = cats
+      .filter((cat) => cat.is_active)
+      .map((cat) => ({
+        ...cat,
+        child: (cat.child ?? []).filter((sub: any) => sub.is_active),
+      }));
+    apiSubCategories = cats
+      .flatMap((cat) => cat.child ?? [])
+      .filter((sub: any) => sub.is_active)
+      .map((sub: any) => ({
+        uuid: sub.uuid,
+        category_name: sub.sub_category_name,
+        category_slug: sub.sub_category_slug,
+        thumbnail_img: sub.thumbnail_img,
+        is_featured: sub.is_featured,
+        is_active: sub.is_active,
+        child: [],
+      }));
   }
+} catch (err) {
+  console.error("[Header] categories/brands fetch failed:", err);
+}
 
   try {
     const response = await api.get<ApiResponse>("/categories/brands", {
@@ -124,8 +121,8 @@ export default async function Header() {
 
   const explorAllData = [...apiBrands, ...apiSubBrands]
 
-  console.log(apiBrands, "111111111111");
-  console.log(apiSubBrands, "apiCategoriesapiCategories");
+  console.log(apiCategories, "apiCategoriesapiCategories");
+  console.log(apiCategories, "apiSubCategories");
   
 
   return (

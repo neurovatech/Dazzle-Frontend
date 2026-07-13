@@ -3,14 +3,17 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { categoryNavItems } from "./types";
-import type { ApiCategory } from "./Header";
+// import { categoryNavItems } from "./types";
+// import type { ApiCategory } from "./Header";
 
 interface Props {
-  categories?: ApiCategory[];
+  categories?: any;
 }
 
 export default function CategoryNavList({ categories }: Props) {
+
+  console.log(categories, "apiSubCategories");
+
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeLeft, setActiveLeft] = useState<number>(0);
   const [dropdownWidth, setDropdownWidth] = useState<number>(0);
@@ -24,7 +27,7 @@ export default function CategoryNavList({ categories }: Props) {
   const [showRightArrow, setShowRightArrow] = useState(false);
 
   const normalizedItems = categories && categories.length > 0
-    ? categories.map((cat) => ({
+    ? categories.map((cat:any) => ({
         id: cat.uuid,
         name: cat.category_name,
         slug: cat.category_slug || cat.category_name.toLowerCase().replace(/\s+/g, "-"),
@@ -34,9 +37,9 @@ export default function CategoryNavList({ categories }: Props) {
           slug: sub.brand_slug || sub.sub_category_slug || (sub.brand_name || sub.sub_category_name || "").toLowerCase().replace(/\s+/g, "-"),
         })),
       }))
-    : categoryNavItems;
+    : [];
 
-  const activeItem = normalizedItems.find((item) => item.id === activeId);
+  const activeItem = normalizedItems.find((item:any) => item.id === activeId);
 
   const chunkArray = (
     arr: { id: string; name: string; slug: string }[],
@@ -179,7 +182,7 @@ export default function CategoryNavList({ categories }: Props) {
             className="w-full overflow-x-auto flex items-center scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden py-0.5 px-1"
           >
             <ul className="hidden md:inline-flex items-center gap-1 list-none">
-              {normalizedItems.map((item) => {
+              {normalizedItems.map((item:any) => {
                 const isActive = activeId === item.id;
                 const hasSubmenu = item.submenu && item.submenu.length > 0;
 
