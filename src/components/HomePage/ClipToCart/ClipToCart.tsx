@@ -349,6 +349,8 @@ function ClipToCart({
     return null; // or a friendly empty state
   }
 
+  console.log(products, "productsproductsproductsproductsproducts")
+
   return (
     <div>
       {/* Header */}
@@ -404,9 +406,9 @@ function ClipToCart({
                 </div> */}
 
                 {/* Fixed-height media box → keeps every card aligned */}
-                <div className="relative w-full h-32 sm:h-40 md:h-44 rounded-md overflow-hidden bg-gray-100 dark:bg-black/20">
+                <div className="relative w-full h-75 max-[450px]:h-50 rounded-md overflow-hidden bg-gray-100 dark:bg-black/20">
                   <Image
-                    src={product.image}
+                    src={`${product?.clipThumbnail}`}
                     alt={product.title}
                     fill
                     sizes="(max-width: 768px) 50vw, 20vw"

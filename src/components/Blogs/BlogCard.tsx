@@ -44,7 +44,7 @@ const BlogCard: React.FC<{ post: BlogPost }> = ({ post }) => {
     <div className="group flex flex-col h-full rounded-xl overflow-hidden border border-gray-100 dark:border-[#1b1b1b] shadow-sm hover:shadow-md transition-shadow bg-white dark:bg-[#1b1b1b] duration-300">
       <Link
         href={`/blogs/${post.post_slug}`}
-        className="overflow-hidden relative w-full h-44"
+        className="overflow-hidden relative w-full h-75"
       >
         <Image
           src={imgSrc}

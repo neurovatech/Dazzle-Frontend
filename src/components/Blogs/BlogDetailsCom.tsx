@@ -57,7 +57,7 @@ function BlogDetailsCom({ post }: BlogDetailsComProps) {
   return (
     <div>
       {/* Image */}
-      <div className="overflow-hidden relative w-full h-[700px] group rounded-3xl">
+      <div className="overflow-hidden relative w-full max-[450px]:h-[310px]  h-[700px] group rounded-3xl">
         <Image
           src={thumbnailUrl}
           alt={post.post_title}
