@@ -4,10 +4,10 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { categoryNavItems } from "./types";
-import type { ApiChildCategory } from "./Header";
+import type { ApiCategory } from "./Header";
 
 interface Props {
-  categories?: ApiChildCategory[];
+  categories?: ApiCategory[];
 }
 
 export default function CategoryNavList({ categories }: Props) {
@@ -28,10 +28,10 @@ export default function CategoryNavList({ categories }: Props) {
         id: cat.uuid,
         name: cat.category_name,
         slug: cat.category_slug || cat.category_name.toLowerCase().replace(/\s+/g, "-"),
-        submenu: (cat.child ?? []).map((sub) => ({
+        submenu: (cat.child ?? []).map((sub: any) => ({
           id: sub.uuid,
-          name: sub.sub_category_name,
-          slug: sub.sub_category_slug || sub.sub_category_name.toLowerCase().replace(/\s+/g, "-"),
+          name: sub.brand_name || sub.sub_category_name,
+          slug: sub.brand_slug || sub.sub_category_slug || (sub.brand_name || sub.sub_category_name || "").toLowerCase().replace(/\s+/g, "-"),
         })),
       }))
     : categoryNavItems;

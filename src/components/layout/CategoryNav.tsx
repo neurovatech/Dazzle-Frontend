@@ -4,14 +4,14 @@ import { ChevronDownIcon } from "@/icon";
 import ExplorePanel from "./ExplorePanel";
 import CategoryNavList from "./CategoryNavList";
 import { exploreCategories } from "./types";
-import type { ApiCategory, ApiChildCategory } from "./Header";
+import type { ApiCategory } from "./Header";
 
 interface Props {
   categories?: ApiCategory[];
-  childCategories?: ApiChildCategory[];
+  subCategories?: ApiCategory[];
 }
 
-export default function CategoryNav({ categories, childCategories }: Props) {
+export default function CategoryNav({ categories, subCategories }: Props) {
   const [exploreOpen, setExploreOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState(
     categories && categories.length > 0
@@ -20,6 +20,7 @@ export default function CategoryNav({ categories, childCategories }: Props) {
   );
   const [selectedBrand, setSelectedBrand] = useState("");
   const navRef = useRef<HTMLDivElement>(null);
+
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -32,7 +33,12 @@ export default function CategoryNav({ categories, childCategories }: Props) {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  const panelCategories = categories && categories.length > 0 ? categories : exploreCategories;
+  const combinedCategories = [
+    ...(categories ?? []),
+    ...(subCategories ?? []),
+  ];
+
+  const panelCategories = combinedCategories.length > 0 ? combinedCategories : exploreCategories;
 
   const panelProps = {
     categories: panelCategories,
@@ -62,7 +68,7 @@ export default function CategoryNav({ categories, childCategories }: Props) {
             />
           </div>
           <div className="w-px h-6 bg-gray-200 dark:bg-white/10" />
-          <CategoryNavList categories={childCategories} />
+          <CategoryNavList categories={categories} />
         </div>
       </div>
     </div>

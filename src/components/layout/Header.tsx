@@ -25,15 +25,6 @@ export interface ApiCategory {
   child: ApiBrand[];
 }
 
-interface ApiResponse {
-  statusCode: number;
-  status: string;
-  found: boolean;
-  count: number;
-  data: ApiCategory[];
-}
-
-// ─── API Types (categories/child) ────────────────────────────────────────────
 export interface ApiSubCategory {
   uuid: string;
   sub_category_name: string;
@@ -41,30 +32,24 @@ export interface ApiSubCategory {
   thumbnail_img: string;
   is_featured: boolean;
   is_active: boolean;
+  child: ApiBrand[];
 }
 
-export interface ApiChildCategory {
-  uuid: string;
-  category_name: string;
-  category_slug: string;
-  thumbnail_img: string;
-  is_featured: boolean;
-  is_active: boolean;
-  child: ApiSubCategory[];
-}
-
-interface ApiChildResponse {
+interface ApiResponse {
   statusCode: number;
   status: string;
   found: boolean;
   count: number;
-  data: ApiChildCategory[];
+  data: {
+    category: ApiCategory[];
+    subCategory?: ApiSubCategory[];
+  };
 }
 
 // ─── Main Header (Server Component) ──────────────────────────────────────────
 export default async function Header() {
   let apiCategories: ApiCategory[] = [];
-  let apiChildCategories: ApiChildCategory[] = [];
+  let apiSubCategories: ApiCategory[] = [];
 
   // 1. Fetch categories with brands
   try {
@@ -72,37 +57,31 @@ export default async function Header() {
       cache: "no-store",
     });
 
-  
-    
+    if (response?.data) {
+      const cats = Array.isArray(response.data.category) ? response.data.category : [];
+      const subCats = Array.isArray(response.data.subCategory) ? response.data.subCategory : [];
 
-    if (response?.data && Array.isArray(response.data)) {
-      apiCategories = response.data
+      apiCategories = cats
         .filter((cat) => cat.is_active)
         .map((cat) => ({
           ...cat,
           child: (cat.child ?? []).filter((brand) => brand.is_active),
         }));
-    }
-  } catch (err) {
-    console.error("[Header] categories/brands fetch failed:", err);
-  }
 
-  // 2. Fetch categories with subcategories
-  try {
-    const responseChild = await api.get<ApiChildResponse>("/categories/child", {
-      cache: "no-store",
-    });
-
-    if (responseChild?.data && Array.isArray(responseChild.data)) {
-      apiChildCategories = responseChild.data
-        .filter((cat) => cat.is_active)
-        .map((cat) => ({
-          ...cat,
-          child: (cat.child ?? []).filter((sub) => sub.is_active),
+      apiSubCategories = subCats
+        .filter((sub) => sub.is_active)
+        .map((sub) => ({
+          uuid: sub.uuid,
+          category_name: sub.sub_category_name,
+          category_slug: sub.sub_category_slug,
+          thumbnail_img: sub.thumbnail_img,
+          is_featured: sub.is_featured,
+          is_active: sub.is_active,
+          child: (sub.child ?? []).filter((brand) => brand.is_active),
         }));
     }
   } catch (err) {
-    console.error("[Header] categories/child fetch failed:", err);
+    console.error("[Header] categories/brands fetch failed:", err);
   }
 
   return (
@@ -117,8 +96,8 @@ export default async function Header() {
     >
       <TopBar />
       <MainNav />
-      <CategoryNav categories={apiCategories} childCategories={apiChildCategories} />
-      <MobileHeader categories={apiCategories} />
+      <CategoryNav categories={apiCategories} subCategories={apiSubCategories} />
+      <MobileHeader categories={[...apiCategories, ...apiSubCategories]} />
     </header>
   );
 }

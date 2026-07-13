@@ -216,7 +216,7 @@ export default function ExplorePanel({
 
   if (!isOpen) return null;
   const normalizedCategories = normalizeCategories(categories);
-  console.log("API Response for categories/brands:", normalizedCategories);
+  
   const activeCat = normalizedCategories.find(
     (c) => c.label === activeCategory,
   );
@@ -253,28 +253,29 @@ export default function ExplorePanel({
           </span>
         </div>
 
-        <div className="flex flex-col py-2">
-          {mobileActiveCat.children.map((brand) => (
-            <Link
-              key={brand.uuid || brand.label}
-              href={`/brands/${brand.brand_slug || brand.label.toLowerCase()}`}
-              onClick={() => {
-                onSelectBrand(brand.label);
-                onClose();
-              }}
-              className="flex items-center gap-3 px-5 py-3.5 text-sm text-[#222222] hover:bg-[#E9CCAE33] active:bg-[#E9CCAE66] transition-colors"
-            >
-              {/* {brand.logo && (
-                <BrandLogo
-                  logo={brand.logo}
-                  label={brand.label}
-                  className="h-5 w-auto object-contain"
-                />
-              )} */}
-              <span className="font-medium">{brand.label}</span>
-            </Link>
-          ))}
-        </div>
+        <div className="grid grid-cols-3 gap-3 py-2 px-4">
+  {mobileActiveCat.children.map((brand) => (
+    <Link
+      key={brand.uuid || brand.label}
+      href={`/brands/${brand.brand_slug || brand.label.toLowerCase()}`}
+      onClick={() => {
+        onSelectBrand(brand.label);
+        onClose();
+      }}
+      className="flex flex-col items-center justify-center rounded-lg p-3 text-center text-sm text-[#222222] hover:bg-[#E9CCAE33] active:bg-[#E9CCAE66] transition-colors border border-[#2222]"
+    >
+      {/* {brand.logo && (
+        <BrandLogo
+          logo={brand.logo}
+          label={brand.label}
+          className="h-8 w-auto object-contain mb-2"
+        />
+      )} */}
+
+      <span className="font-medium">{brand.label}</span>
+    </Link>
+  ))}
+</div>
       </div>
     );
   }
@@ -371,7 +372,7 @@ export default function ExplorePanel({
                 : "text-[#222222] hover:bg-gray-50 dark:hover:bg-[#E9CCAE66]/20 dark:text-gray-300"
             }`}
           >
-            <span className="flex items-center gap-3">
+            <span className="flex items-center gap-1">
               {/* {renderCategoryIcon(cat.icon)} */}
               {cat.category_images ? (
                 <Image
