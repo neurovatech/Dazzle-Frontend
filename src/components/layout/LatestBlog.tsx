@@ -90,7 +90,7 @@ async function LatestBlog() {
         </h3>
         <Link
           href="/blogs"
-          className="text-sm font-medium text-primary hover:underline dark:text-white"
+          className="text-sm font-medium text-primary  bg-orange-50 border-orange-200 px-4 py-2 rounded-[10px] dark:text-[#2e2b28]  hover:underline hover:text-[#CB843B]! transition-colors duration-300 "
         >
           See all
         </Link>

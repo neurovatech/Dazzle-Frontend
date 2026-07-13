@@ -97,7 +97,7 @@ export default async function ShopBrand() {
           {" "}
           Shop by Brand{" "}
         </h3>
-        <Link href="/brands" className="">
+        <Link href="/brands" className="text-sm font-medium text-primary  bg-orange-50 border-orange-200 px-4 py-2 rounded-[10px] dark:text-[#2e2b28]  hover:underline hover:text-[#CB843B]! transition-colors duration-300 ">
           See all
         </Link>
       </div>

@@ -107,7 +107,7 @@ export default async function MostPopularSectionCom() {
           <h3 className="md:text-[32px] text-[20px] font-bold transition-colors text-transparent bg-clip-text bg-[linear-gradient(90deg,#101518_0%,#E9CCAE_46.15%,#B57908_100%)] dark:text-white">
             Most Popular
           </h3>
-          <Link href="/most-popular" className="">
+          <Link href="/most-popular" className="text-sm font-medium text-primary  bg-orange-50 border-orange-200 px-4 py-2 rounded-[10px] dark:text-[#2e2b28]  hover:underline hover:text-[#CB843B]! transition-colors duration-300 ">
             See all
           </Link>
         </div>
