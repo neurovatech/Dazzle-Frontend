@@ -15,11 +15,12 @@ interface SpecGroup {
 
 interface ProductSpecificationsProps {
   groups: SpecGroup[];
+  description?: string;
 }
 
-const ProductSpecifications: React.FC<ProductSpecificationsProps> = () => {
+const ProductSpecifications: React.FC<ProductSpecificationsProps> = ({ groups: propGroups, description }) => {
   const [open, setOpen] = useState(true);
-  const groups: SpecGroup[] = [
+  const fallbackGroups: SpecGroup[] = [
     {
       title: "Body",
       items: [
@@ -54,6 +55,9 @@ const ProductSpecifications: React.FC<ProductSpecificationsProps> = () => {
       ],
     },
   ];
+
+  const groups = propGroups && propGroups.length > 0 ? propGroups : fallbackGroups;
+
   return (
     <div className="w-full">
       {/* Header */}
@@ -106,7 +110,7 @@ const ProductSpecifications: React.FC<ProductSpecificationsProps> = () => {
         </div>
       )}
 
-      <DescriptionProductDetails groups={[]} />
+      <DescriptionProductDetails description={description} />
     </div>
   );
 };

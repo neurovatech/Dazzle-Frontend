@@ -251,7 +251,7 @@ export default function Footer() {
               <Link href="/" className="">
                 {siteSettings?.footerLogo ? (
                   <Image
-                    src={siteSettings.footerLogo}
+                    src="https://dazzle.sgp1.cdn.digitaloceanspaces.com/site/header-logo-white.svg"
                     alt="Footer Logo"
                     width={180}
                     height={60}
@@ -259,7 +259,7 @@ export default function Footer() {
                   />
                 ) : (
                   <Image
-                    src={Logo}
+                    src="https://dazzle.sgp1.cdn.digitaloceanspaces.com/site/header-logo-white.svg"
                     alt="Dazzle Logo"
                     width={180}
                     height={60}

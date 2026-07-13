@@ -48,14 +48,18 @@ interface ApiResponse {
 
 // ─── Main Header (Server Component) ──────────────────────────────────────────
 export default async function Header() {
+  let apiBrands: ApiCategory[] = [];
+  let apiSubBrands: ApiCategory[] = [];
+
   let apiCategories: ApiCategory[] = [];
   let apiSubCategories: ApiCategory[] = [];
 
-  // 1. Fetch categories with brands
   try {
-    const response = await api.get<ApiResponse>("/categories/brands", {
+    const response = await api.get<ApiResponse>("/categories/child", {
       cache: "no-store",
     });
+
+    console.log(response?.data, "response?.data")
 
     if (response?.data) {
       const cats = Array.isArray(response.data.category) ? response.data.category : [];
@@ -84,6 +88,41 @@ export default async function Header() {
     console.error("[Header] categories/brands fetch failed:", err);
   }
 
+  try {
+    const response = await api.get<ApiResponse>("/categories/brands", {
+      cache: "no-store",
+    });
+
+    if (response?.data) {
+      const cats = Array.isArray(response.data.category) ? response.data.category : [];
+      const subCats = Array.isArray(response.data.subCategory) ? response.data.subCategory : [];
+
+      apiBrands = cats
+        .filter((cat) => cat.is_active)
+        .map((cat) => ({
+          ...cat,
+          child: (cat.child ?? []).filter((brand) => brand.is_active),
+        }));
+
+      apiSubBrands = subCats
+        .filter((sub) => sub.is_active)
+        .map((sub) => ({
+          uuid: sub.uuid,
+          category_name: sub.sub_category_name,
+          category_slug: sub.sub_category_slug,
+          thumbnail_img: sub.thumbnail_img,
+          is_featured: sub.is_featured,
+          is_active: sub.is_active,
+          child: (sub.child ?? []).filter((brand) => brand.is_active),
+        }));
+    }
+  } catch (err) {
+    console.error("[Header] categories/brands fetch failed:", err);
+  }
+
+  console.log(apiCategories, "apiCategoriesapiCategories");
+  
+
   return (
     <header
       className="w-full font-sans transition-colors duration-300 sticky top-0 z-50 rounded-b-[20px] md:px-4 px-2 dark:bg-[#1a1a1a] dark:text-white"
@@ -97,7 +136,7 @@ export default async function Header() {
       <TopBar />
       <MainNav />
       <CategoryNav categories={apiCategories} subCategories={apiSubCategories} />
-      <MobileHeader categories={[...apiCategories, ...apiSubCategories]} />
+      <MobileHeader categories={[...apiBrands, ...apiSubBrands]} />
     </header>
   );
 }

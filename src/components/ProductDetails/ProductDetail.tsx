@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import React, { useState } from "react";
 import ProductBadges from "./ProductBadges";
@@ -10,30 +11,31 @@ import ContactOptions from "./ContactOptions";
 import IPHONE_ORANGE from "@/images/oreng_i.png";
 
 import CheckAvailability from "./CheckAvailability";
-import ProductAddOn from "./AddOn";
 import ProductCard from "./ProductCrad";
 import ProductSpecifications from "./ProductSpecifications";
 import GlobalTabs from "@/components/share/GlobalTabs";
-import MostPopular from "@/components/HomePage/MostPopular/MostPopular";
 import Breadcrumb from "@/components/share/Breadcrumb";
 import MarqueeBulletinBar from "@/components/HomePage/MarqueeBulletinBar";
 import StickyPurchaseBar from "./StickyPurchaseBar";
+import type { ProductApiData } from "@/app/(public)/product/[productSlug]/page";
 
-
-const IPHONE_WHITE =
+// ── Static fallback images ──────────────────────────────────────────
+const FALLBACK_WHITE =
   "https://dazzle.com.bd/_next/image?url=https%3A%2F%2Fdazzle.sgp1.cdn.digitaloceanspaces.com%2F75552%2FiPhone-17-Pro-Max-Pro-Price-in-Bangladesh-(2).jpg&w=1080&q=75";
 
-const IPHONE_BLACK =
+const FALLBACK_BLACK =
   "https://dazzle.com.bd/_next/image?url=https%3A%2F%2Fdazzle.sgp1.cdn.digitaloceanspaces.com%2F75551%2FiPhone-17-Pro-Max-Pro-Price-in-Bangladesh-(1).jpg&w=1080&q=75";
 
-const IMAGES = [IPHONE_ORANGE.src, IPHONE_WHITE, IPHONE_BLACK];
-const COLOR_OPTIONS = [
+const FALLBACK_IMAGES = [IPHONE_ORANGE.src, FALLBACK_WHITE, FALLBACK_BLACK];
+
+const FALLBACK_COLOR_OPTIONS = [
   { label: "", value: "desert", image: IPHONE_ORANGE.src },
-  { label: "", value: "natural", image: IPHONE_WHITE },
-  { label: "", value: "black", image: IPHONE_BLACK },
+  { label: "", value: "natural", image: FALLBACK_WHITE },
+  { label: "", value: "black", image: FALLBACK_BLACK },
 ];
 
-const products = [
+// ── Fallback related products ────────────────────────────────────────
+const FALLBACK_PRODUCTS = [
   {
     image:
       "https://dazzle.com.bd/_next/image?url=https%3A%2F%2Fdazzle.sgp1.cdn.digitaloceanspaces.com%2F48522%2FiPhone-14-Price-in-Bangladesh-Yellow.jpg&w=640&q=75",
@@ -60,34 +62,112 @@ const products = [
   },
 ];
 
-const ProductDetail: React.FC = () => {
+// ── Component ────────────────────────────────────────────────────────
+interface ProductDetailProps {
+  product: ProductApiData | null;
+}
+
+const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
+
+
+  // ── Derive image list from API or fallback ──────────────────────
+  const images: string[] =
+    product?.thumbnails && product.thumbnails.length > 0
+      ? product.thumbnails.map((img) => img.mediaFileUrl || img.mediafileUrl || "")
+      : product?.thumbnailImg
+        ? [product.thumbnailImg]
+        : FALLBACK_IMAGES;
+
+  // ── Color variants from API or fallback ────────────────────────
+  const colorGroup = product?.variants?.find(
+    (g) => g.variantType && g.variantType.toLowerCase() === "color"
+  );
+  const colorOptions =
+    colorGroup && colorGroup.options && colorGroup.options.length > 0
+      ? colorGroup.options.map((opt: any) => ({
+          label: opt.value,
+          value: opt.value.toLowerCase().replace(/\s+/g, "-"),
+          image: images[0] ?? IPHONE_ORANGE.src,
+        }))
+      : FALLBACK_COLOR_OPTIONS;
+
+  // ── Other variant groups from API or fallback ──────────────────
+  const otherVariantGroups =
+    product?.variants
+      ?.filter((g) => g.variantType && g.variantType.toLowerCase() !== "color")
+      .map((g) => ({
+        label: g.variantType,
+        type: "text" as const,
+        options: g.options.map((opt: any) => ({
+          label: opt.value,
+          value: opt.uuid,
+        })),
+      })) ?? [
+      {
+        label: "Region",
+        type: "text" as const,
+        options: [
+          { label: "JP/MEA Dual e sim", value: "jp-mea" },
+          { label: "Global (Sim + e Sim)", value: "global" },
+          { label: "HK/CH Duel Sim", value: "hk-ch" },
+        ],
+      },
+      {
+        label: "Storage",
+        type: "text" as const,
+        options: [
+          { label: "256GB", value: "256" },
+          { label: "512GB", value: "512" },
+          { label: "1TB", value: "1tb" },
+        ],
+      },
+    ];
+
+  // ── Pricing ───────────────────────────────────────────────────
+  const price = product?.discountedPrice ?? 100000;
+  const originalPrice = product?.regularPrice ?? 130000;
+
+  // ── Badges from API ────────────────────────────────────────────
+  const VALID_COLORS = ["pink", "purple", "green", "orange"] as const;
+  type BadgeColor = (typeof VALID_COLORS)[number];
+  const badgeList: { label: string; color: BadgeColor }[] =
+    product?.badges && product.badges.length > 0
+      ? product.badges.map((b) => ({
+          label: b.label,
+          color: (VALID_COLORS.includes(b.color as BadgeColor) ? b.color : "pink") as BadgeColor,
+        }))
+      : [
+          { label: "10%", color: "pink" as const },
+          { label: "Buy 2 Get 1", color: "purple" as const },
+        ];
+
+  // ── Specs tabs from API ────────────────────────────────────────
+  const specGroups = product?.specifications ?? [];
+  const tabsData = [
+    {
+      label: "Specifications",
+      content: <ProductSpecifications groups={specGroups} />,
+    },
+  ];
+
+  // ── Breadcrumb ────────────────────────────────────────────────
+  const breadcrumbItems = [
+    { label: "Home", href: "/" },
+    { label: "Categories", href: "/categories" },
+    {
+      label: product?.productName ?? "Product",
+      href: `/product/${product?.productSlug ?? ""}`,
+    },
+  ];
+
+  // ── Color variant state ──────────────────────────────────────
   const [selectedColor, setSelectedColor] = useState(0);
 
   const handleVariantChange = (selected: Record<string, string>) => {
     const colorValue = selected["Color"];
-    const index = COLOR_OPTIONS.findIndex((opt) => opt.value === colorValue);
+    const index = colorOptions.findIndex((opt:any) => opt.value === colorValue);
     if (index !== -1) setSelectedColor(index);
   };
-  const breadcrumbItems = [
-    { label: "Home", href: "/" },
-    { label: "Categories", href: "/categories" },
-    { label: "Apple airpods pro (2nd gen)", href: "/categories/apple airpods pro (2nd gen)" },
-  ];
-
-  const tabsData = [
-    {
-      label: "Newest",
-      content: <ProductSpecifications groups={[]} />,
-    },
-    {
-      label: "Popular",
-      content: <ProductSpecifications groups={[]} />,
-    },
-    {
-      label: "Olds",
-      content: <ProductSpecifications groups={[]} />,
-    },
-  ];
 
   return (
     <div className="min-h-screen font-sans">
@@ -99,46 +179,46 @@ const ProductDetail: React.FC = () => {
 
       <div className="max-w-350 mx-auto lg:px-4 px-2 pb-16">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* ── Left column: Image Gallery ── */}
           <div className="lg:col-span-5">
-            <div className=" rounded-2xl shadow-sm p-5 sticky top-6 transition-colors duration-200">
-            <ProductImageGallery
-              images={IMAGES}
-              selected={selectedColor}
-              onSelect={setSelectedColor}
-              badges={
-                <ProductBadges
-                  badges={[
-                    { label: "10%", color: "pink" },
-                    { label: "Buy 2 Get 1", color: "purple" },
-                  ]}
-                />
-              }
-            />
+            <div className="rounded-2xl shadow-sm p-5 sticky top-6 transition-colors duration-200">
+              <ProductImageGallery
+                images={images}
+                selected={selectedColor}
+                onSelect={setSelectedColor}
+                badges={<ProductBadges badges={badgeList} />}
+              />
 
-            <div className=" grid-cols-2 lg:grid-cols-3 gap-2 mt-5 hidden lg:grid">
-              {products.map((product, index) => (
-                <ProductCard key={index} {...product} />
-              ))}
-            </div>
+              <div className="grid-cols-2 lg:grid-cols-3 gap-2 mt-5 hidden lg:grid">
+                {FALLBACK_PRODUCTS.map((prod, index) => (
+                  <ProductCard key={index} {...prod} />
+                ))}
+              </div>
 
-            <div className=" hidden lg:block space-y-6 pt-2">
-              <ContactOptions />
-            </div>
+              <div className="hidden lg:block space-y-6 pt-2">
+                <ContactOptions />
+              </div>
             </div>
           </div>
 
+          {/* ── Right column: Product Info ── */}
           <div className="lg:col-span-7">
             <ProductInfo
-              title="Belkin USB C 7 in 1 Multiport Adaptor"
-              brand="Apple"
-              code="5598678"
-              inStock={true}
-              stockNote="Please Hurry! Only 21 left in stock"
-              warrantyNote="1 Year Official Warranty Support Except USA Variant"
-              stats={{ soldLastHours: 1, reviewCount: 217, viewingNow: 12 }}
-              price={100000}
-              originalPrice={130000}
-              emiFrom={3000}
+              title={product?.productName ?? "Product"}
+              brand={product?.brandName ?? "Brand"}
+              code={product?.productCode ?? "N/A"}
+              inStock={""}
+              stockNote={""}
+              warrantyNote={""}
+              stats={{
+                soldLastHours: "",
+                reviewCount: "",
+                viewingNow: "",
+              }}
+              price={price}
+              originalPrice={originalPrice}
+              description={product?.description}
+              alldata={product}
             />
 
             <div className="border border-[#e7e7e7] dark:border-[#4a3f36] bg-[#f7f7f7] dark:bg-[#3e3329] text-black dark:text-white rounded-2xl p-4 mt-4">
@@ -147,35 +227,12 @@ const ProductDetail: React.FC = () => {
                   {
                     label: "Color",
                     type: "color",
-                    options: COLOR_OPTIONS,
+                    options: colorOptions,
                   },
                 ]}
                 onChange={handleVariantChange}
               />
-              <ProductVariants
-                groups={[
-                  {
-                    label: "Region",
-                    type: "text",
-                    options: [
-                      { label: "JP/MEA Dual e sim", value: "jp-mea" },
-                      { label: "Global (Sim + e Sim)", value: "global" },
-                      { label: "HK/CH Duel Sim", value: "hk-ch" },
-                      { label: "#Samsung", value: "samsung" },
-                    ],
-                  },
-                  {
-                    label: "Storage",
-                    type: "text",
-                    options: [
-                      { label: "256GB", value: "256" },
-                      { label: "512GB", value: "512" },
-                      { label: "1TB", value: "1tb" },
-                      { label: "2TB", value: "2tb" },
-                    ],
-                  },
-                ]}
-              />
+              <ProductVariants groups={otherVariantGroups} />
             </div>
 
             <div className="pt-5">
@@ -216,29 +273,26 @@ const ProductDetail: React.FC = () => {
               <CheckAvailability />
             </div>
 
-            <div className="">
-              <ProductAddOn />
-            </div>
 
+
+            {/* Mobile: related products + contact */}
             <div className="lg:col-span-5">
-              <div className=" grid-cols-2 lg:grid-cols-3 gap-2 mt-5 grid lg:hidden">
-                {products.map((product, index) => (
-                  <ProductCard key={index} {...product} />
+              <div className="grid-cols-2 lg:grid-cols-3 gap-2 mt-5 grid lg:hidden">
+                {FALLBACK_PRODUCTS.map((prod, index) => (
+                  <ProductCard key={index} {...prod} />
                 ))}
               </div>
 
-              <div className=" grid lg:hidden space-y-6 pt-2">
+              <div className="grid lg:hidden space-y-6 pt-2">
                 <ContactOptions />
               </div>
             </div>
           </div>
 
+          {/* ── Full width: Specs Tabs ── */}
           <div className="lg:col-span-12">
             <GlobalTabs tabs={tabsData} />
           </div>
-          {/* <div className="lg:col-span-12">
-              <MostPopular />
-          </div> */}
         </div>
       </div>
     </div>

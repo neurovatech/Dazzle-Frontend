@@ -61,7 +61,7 @@ export default async function SubCategoriesPage({ params, searchParams }: PagePr
   const categoryName = toTitleCase(categorySlug);
   const subCategoryName = toTitleCase(subCategorySlug);
 
-  // ── Fetch products: products?page=1&limit=12&categorySlug=phones&subCategorySlug=iphone ──
+  // ── Fetch products: /products?categorySlug=phones&subCategorySlug=iphone ──
   let productData: ProductListResponse = {
     statusCode: 200,
     status: "success",
@@ -74,26 +74,22 @@ export default async function SubCategoriesPage({ params, searchParams }: PagePr
     data: [],
   };
 
-  try {
-    const queryParams = new URLSearchParams({
-      page: String(currentPage),
-      limit: String(LIMIT),
-      categorySlug,
-      subCategorySlug,
-    });
-    if (sort) queryParams.set("sort", sort);
-    if (search) queryParams.set("search", search);
+try {
+  const queryParams = new URLSearchParams();
+  queryParams.set("categorySlug", categorySlug);
+  queryParams.set("subCategorySlug", subCategorySlug);
 
-    const res = await api.get<ProductListResponse>(
-      `/products?${queryParams.toString()}`,
-      { cache: "no-store" }
-    );
-    if (res && typeof res === "object" && "data" in res) {
-      productData = res;
-    }
-  } catch (error) {
-    console.error("Error fetching sub-category products:", error);
+  const url = `/products?${queryParams.toString()}`;
+  
+  const res = await api.get<ProductListResponse>(url, { cache: "no-store" });
+  
+  console.log("[SubCategoriesPage] Fetching:", res); // ← check server logs
+  if (res && typeof res === "object" && "data" in res) {
+    productData = res;
   }
+} catch (error) {
+  console.error("Error fetching sub-category products:", error);
+}
 
   // ── Breadcrumb ────────────────────────────────────────────────────────────────
   const breadcrumbItems = [

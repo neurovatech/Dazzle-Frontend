@@ -15,11 +15,11 @@ interface SpecGroup {
   items: SpecItem[];
 }
 
-interface ProductSpecificationsProps {
-  groups: SpecGroup[];
+interface DescriptionProps {
+  description?: string;
 }
 
-const DescriptionProductDetails: React.FC<ProductSpecificationsProps> = () => {
+const DescriptionProductDetails: React.FC<DescriptionProps> = ({ description }) => {
   const [open, setOpen] = useState(true);
   const cards = [
     {
@@ -74,29 +74,38 @@ const DescriptionProductDetails: React.FC<ProductSpecificationsProps> = () => {
       {/* Groups */}
       {open && (
         <div className="flex flex-col gap-4">
-          <Image
-            src={ProductBanner}
-            width={500}
-            height={500}
-            alt="Picture of the author"
-            className="w-full object-cover"
-          />
+          {description ? (
+            <div 
+              className="prose dark:prose-invert max-w-none text-sm text-gray-800 dark:text-gray-205 p-5 bg-[#F7F7F7] dark:bg-[#1a1613] rounded-2xl border border-gray-200 dark:border-[#3a2f28] leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: description }}
+            />
+          ) : (
+            <>
+              <Image
+                src={ProductBanner}
+                width={500}
+                height={500}
+                alt="Picture of the author"
+                className="w-full object-cover"
+              />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4">
-            {cards.map((card, i) => (
-              <div
-                key={i}
-                className={`rounded-2xl p-6 h-full ${card?.wrapper}`}
-              >
-                <h2 className="text-[17px] font-bold text-gray-900 leading-snug mb-3">
-                  {card.title}
-                </h2>
-                <p className="text-sm text-gray-400 leading-relaxed">
-                  {card.description}
-                </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4">
+                {cards.map((card, i) => (
+                  <div
+                    key={i}
+                    className={`rounded-2xl p-6 h-full ${card?.wrapper}`}
+                  >
+                    <h2 className="text-[17px] font-bold text-gray-900 leading-snug mb-3">
+                      {card.title}
+                    </h2>
+                    <p className="text-sm text-gray-400 leading-relaxed">
+                      {card.description}
+                    </p>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </>
+          )}
         </div>
       )}
     </div>

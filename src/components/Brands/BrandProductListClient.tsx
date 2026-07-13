@@ -182,7 +182,7 @@ console.log(products, "productsproductsproductsproductsproductsproductsproductsp
                       badge={product.productBadge || undefined}
                       inStock={!product.isTba}
                       isBestDeal={product.disRate > 0}
-                      slug={product.productSlug || product.productUuid}
+                      slug={product.productSlug}
                     />
                   );
                 })}
