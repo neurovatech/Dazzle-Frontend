@@ -5,10 +5,12 @@ import Image from "next/image";
 import { CartIcon, CompareIcon, FaireIcon } from "@/icon";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { toggleWishlist } from "@/store/slices/wishlistSlice";
+import { addToCart } from "@/store/slices/cartSlice";
 import ProductImage from "@/images/product.png";
 import NoImg from "@/images/no_images.png";
 import Link from "next/link";
 import ProductQuicView from "@/components/ProductDetails/ProductQuicView";
+import toast from "react-hot-toast";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -48,6 +50,21 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const [imgError, setImgError]       = useState(false);
 
   const handleAddToCart = () => {
+    // Dispatch to Redux store
+    dispatch(
+      addToCart({
+        id: itemId,
+        name: title || "Product",
+        brand: "",
+        image: image || "",
+        price: price,
+        originalPrice: originalPrice,
+        quantity: 1,
+        inStock: inStock,
+        slug: slug || "",
+      })
+    );
+    toast.success(`Added to cart! 🛒`);
     setAddedToCart(true);
     setTimeout(() => setAddedToCart(false), 2000);
   };

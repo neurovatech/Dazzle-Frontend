@@ -1,5 +1,8 @@
 "use client";
 import QuantitySelector from "./QuantitySelector";
+import { useAppDispatch } from "@/store/hooks";
+import { addToCart } from "@/store/slices/cartSlice";
+import toast from "react-hot-toast";
 
 const StoreIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -31,28 +34,66 @@ const WhatsAppIcon = () => (
 );
 
 interface StickyPurchaseBarProps {
+  // Product data for adding to cart
+  productId?: string;
+  productName?: string;
+  productImage?: string;
+  productPrice?: number;
+  productOriginalPrice?: number;
+  productSlug?: string;
+  // Shared quantity — controlled from parent (ProductDetail)
+  qty?: number;
+  onQtyChange?: (val: number) => void;
+  // Display props
   price?: string;
   monthlyPrice?: string;
   monthlyDuration?: string;
   storeAvailabilityHref?: string;
   expressDeliveryText?: string;
   standardDeliveryText?: string;
-  onAddToCart?: () => void;
   onExploreFinancing?: () => void;
   onWhatsApp?: () => void;
 }
 
 export default function StickyPurchaseBar({
+  productId,
+  productName,
+  productImage,
+  productPrice,
+  productOriginalPrice,
+  productSlug,
+  qty = 1,
+  onQtyChange,
   price = "৳ 3,399",
   monthlyPrice = "৳ 142/mo.",
   monthlyDuration = "24 months",
   storeAvailabilityHref = "#",
   expressDeliveryText = "Express Delivery in 4 hrs – Dhaka",
   standardDeliveryText = "Standard Delivery: Get in 1–3 days",
-  onAddToCart,
   onExploreFinancing,
   onWhatsApp,
 }: StickyPurchaseBarProps) {
+  const dispatch = useAppDispatch();
+
+  // No local qty state — uses shared qty from parent
+  const handleAddToCart = () => {
+    if (!productId) return;
+    dispatch(
+      addToCart({
+        id: productId,
+        name: productName || "Product",
+        brand: "",
+        image: productImage || "",
+        price: productPrice || 0,
+        originalPrice: productOriginalPrice || 0,
+        quantity: qty,
+        inStock: true,
+        slug: productSlug || "",
+      })
+    );
+    toast.success(`${productName || "Product"} added to cart! 🛒`);
+  };
+
   return (
     <div>
       <div className="fixed md:bottom-0 bottom-0 left-0 right-0 z-50 bg-[#f5f5f7] dark:bg-[#3e3329] border-t border-gray-200 dark:border-gray-700/60 shadow-[0_-2px_12px_rgba(0,0,0,0.08)]">
@@ -100,9 +141,11 @@ export default function StickyPurchaseBar({
 
             <div className="flex-1" />
 
-            <QuantitySelector defaultValue={1} />
+            {/* Quantity — controlled by shared parent state */}
+            <QuantitySelector value={qty} onChange={(val) => onQtyChange?.(val)} />
+
             <button
-              onClick={onAddToCart}
+              onClick={handleAddToCart}
               className="shrink-0 px-6 sm:px-8 py-3 bg-[#E9CCAE] hover:bg-[#D4B89A] active:bg-[#C0A486] text-black text-sm sm:text-base font-semibold rounded-full transition-colors duration-150 whitespace-nowrap shadow-sm"
             >
               Add to cart

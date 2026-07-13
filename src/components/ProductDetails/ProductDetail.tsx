@@ -160,6 +160,10 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
   // ── Color variant state ──────────────────────────────────────
   const [selectedColor, setSelectedColor] = useState(0);
 
+  // ── Shared quantity state — single source of truth for both
+  //    ProductInfo (top) and StickyPurchaseBar (bottom) ──────────
+  const [qty, setQty] = useState(1);
+
   const handleVariantChange = (selected: Record<string, string>) => {
     const colorValue = selected["Color"];
     const index = colorOptions.findIndex((opt:any) => opt.value === colorValue);
@@ -172,7 +176,17 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
         <MarqueeBulletinBar />
         <Breadcrumb items={breadcrumbItems} />
       </div>
-      <StickyPurchaseBar />
+      <StickyPurchaseBar
+        productId={product?.productUuid}
+        productName={product?.productName}
+        productImage={images[0]}
+        productPrice={product?.discountedPrice}
+        productOriginalPrice={product?.regularPrice}
+        productSlug={product?.productSlug}
+        price={product?.discountedPrice ? `BDT ${product.discountedPrice.toLocaleString()}` : "৳ 0"}
+        qty={qty}
+        onQtyChange={setQty}
+      />
 
       <div className="max-w-350 mx-auto lg:px-4 px-2 pb-16">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -217,6 +231,8 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
               originalPrice={originalPrice}
               description={product?.description}
               alldata={product}
+              qty={qty}
+              onQtyChange={setQty}
             />
 
             <div className="border border-[#e7e7e7] dark:border-[#4a3f36] bg-[#f7f7f7] dark:bg-[#3e3329] text-black dark:text-white rounded-2xl p-4 mt-4">

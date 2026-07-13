@@ -11,6 +11,7 @@ import { useUserProfile, getInitials } from "@/hooks/useUserProfile";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import NoImages from "@/images/no_images.png";
 import { Users } from 'lucide-react';
+import { useEffect, useRef, useState } from "react";
 
 export default function MainNav() {
   const token = useAppSelector((state) => state.auth.token);
@@ -21,6 +22,23 @@ export default function MainNav() {
   const { data: siteSettings } = useSiteSettings();
   console.log(profileData, "profileData");
   const siteLogo = siteSettings?.siteLogo || Logo;
+
+  // Redux থেকে cart item count নেওয়া
+  const cartItems = useAppSelector((state) => state.cart.items);
+  const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
+
+  // Bounce animation state — cart-এ নতুন item যোগ হলে bounce করবে
+  const [bounce, setBounce] = useState(false);
+  const prevCount = useRef(cartCount);
+  useEffect(() => {
+    if (cartCount > prevCount.current) {
+      setBounce(true);
+      const t = setTimeout(() => setBounce(false), 600);
+      prevCount.current = cartCount;
+      return () => clearTimeout(t);
+    }
+    prevCount.current = cartCount;
+  }, [cartCount]);
 
   return (
     <div className="border-b border-white/5">
@@ -91,9 +109,27 @@ export default function MainNav() {
 
               <Link
                 href="/cart"
-                className="w-13.5 h-13.5 rounded-xl bg-background flex items-center justify-center text-primary_color hover:bg-background/95 transition-all duration-200"
+                className="relative w-13.5 h-13.5 rounded-xl bg-background flex items-center justify-center text-primary_color hover:bg-background/95 transition-all duration-200"
               >
-                <CartIcon />
+                <span className={bounce ? "animate-bounce" : ""}>
+                  <CartIcon />
+                </span>
+                {cartCount > 0 && (
+                  <span
+                    className={`
+                      absolute -top-1.5 -right-1.5
+                      min-w-[20px] h-5 px-1
+                      bg-[#E6A817] text-white
+                      text-[10px] font-extrabold
+                      rounded-full
+                      flex items-center justify-center
+                      shadow-md
+                      ${bounce ? "animate-bounce" : ""}
+                    `}
+                  >
+                    {cartCount > 99 ? "99+" : cartCount}
+                  </span>
+                )}
               </Link>
             </div>
 

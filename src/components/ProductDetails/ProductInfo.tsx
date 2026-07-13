@@ -15,10 +15,14 @@ import {
   Users,
   Clock,
   Flame,
+  ShoppingCart,
 } from "lucide-react";
 import { WarrantyIcon, SwapIcon, FaireIcon, StarIcon, EyeIcon } from "@/icon";
 import QuantitySelector from "./QuantitySelector";
 import GlobalModal from "@/components/share/GlobalModal";
+import { useAppDispatch } from "@/store/hooks";
+import { addToCart } from "@/store/slices/cartSlice";
+import toast from "react-hot-toast";
 
 type StockStatus = "in_stock" | "overselling" | "pre_order" | "eol";
 
@@ -51,11 +55,34 @@ export default function ProductInfo({
   alldata,
   brand_slug,
   originalPrice: baseOriginalPrice,
+  qty,
+  onQtyChange,
 }: any) {
   // Stock Status derived from inStock prop
   const stockStatus: StockStatus = inStock ? "in_stock" : "eol";
 
   console.log(alldata, "alldata")
+
+  // Redux dispatch
+  const dispatch = useAppDispatch();
+
+  // Add to Cart handler — uses shared qty from parent
+  const handleAddToCart = () => {
+    dispatch(
+      addToCart({
+        id: alldata?.productUuid || alldata?.id || code,
+        name: title,
+        brand: brand,
+        image: alldata?.thumbnailImg || alldata?.thumbnail || alldata?.image || "",
+        price: alldata?.discountedPrice || basePrice,
+        originalPrice: alldata?.regularPrice || baseOriginalPrice,
+        quantity: qty ?? 1,
+        inStock: inStock,
+        slug: alldata?.productSlug || "",
+      })
+    );
+    toast.success(`${title} added to cart! 🛒`);
+  };
 
   // Admin profit meter hidden state
   const [showProfitMeter, setShowProfitMeter] = useState(false);
@@ -280,8 +307,21 @@ export default function ProductInfo({
             <span className="font-bold text-gray-700 dark:text-gray-300">
               Quantity:
             </span>
-            <QuantitySelector defaultValue={1} />
+            <QuantitySelector
+              value={qty ?? 1}
+              onChange={(val) => onQtyChange?.(val)}
+            />
           </div>
+          </div>
+          {/* Add to Cart Button */}
+          <div className="mt-4">
+            <button
+              onClick={handleAddToCart}
+              className="flex items-center gap-2 bg-[#B57908] hover:bg-[#9a6507] active:scale-95 text-white font-bold px-6 py-3 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg"
+            >
+              <ShoppingCart size={18} />
+              Add to Cart
+            </button>
           </div>
           {/* {isPreorder && (
             <span className="block text-xs text-gray-500">

@@ -5,6 +5,7 @@ import authReducer from "./slices/authSlice";
 import profileReducer from "./slices/profileSlice";
 import siteSettingsReducer from "./slices/siteSettingsSlice";
 import wishlistReducer from "./slices/wishlistSlice";
+import cartReducer from "./slices/cartSlice";
 
 // ─── SSR-safe storage ─────────────────────────────────────────────────────────
 
@@ -54,6 +55,13 @@ const wishlistPersistConfig = {
   whitelist: ["items"],
 };
 
+// cart — localStorage-এ persist থাকবে (page reload-এও cart থাকবে)
+const cartPersistConfig = {
+  key: "dazzle_cart",
+  storage,
+  whitelist: ["items"],
+};
+
 // ─── Root Reducer ─────────────────────────────────────────────────────────────
 
 const rootReducer = combineReducers({
@@ -61,6 +69,7 @@ const rootReducer = combineReducers({
   profile:      persistReducer(profilePersistConfig, profileReducer),
   siteSettings: persistReducer(siteSettingsPersistConfig, siteSettingsReducer),
   wishlist:     persistReducer(wishlistPersistConfig, wishlistReducer),
+  cart:         persistReducer(cartPersistConfig, cartReducer),
 });
 
 export type RootState = ReturnType<typeof rootReducer>;
