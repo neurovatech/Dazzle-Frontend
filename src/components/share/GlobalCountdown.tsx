@@ -84,7 +84,7 @@ const GlobalCountdown: React.FC<CountdownProps> = ({
   return (
     <div className="w-full flex md:flex-row gap-4 lg:py-6 py-4 justify-between items-center">
       <div className="flex md:flex-row gap-4">
-        <h2 className="md:text-[32px] text-[14px] font-bold text-white hover:text-[#CB843B]">
+        <h2 className="md:text-[32px] text-[18px]  font-bold text-white hover:text-[#CB843B]">
           {title}
         </h2>
 
@@ -103,7 +103,7 @@ const GlobalCountdown: React.FC<CountdownProps> = ({
       </div>
 
       {pagesLink && (
-        <Link className="text-white font-medium text-primary hover:underline" href={pagesLink}>
+        <Link className="text-sm font-medium text-primary  bg-orange-50 border-orange-200 px-4 py-2 rounded-[10px] dark:text-[#2e2b28]  hover:underline hover:text-[#CB843B]! transition-colors duration-300 " href={pagesLink}>
           See All
         </Link>
       )}

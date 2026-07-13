@@ -80,14 +80,14 @@ button {
   -webkit-animation: border-move 2s linear infinite;
 }
 
-.swiper-button-prev,
+/* .swiper-button-prev,
 .swiper-button-next {
   display: none;
 }
 .i_slider .swiper-button-prev,
 .i_slider .swiper-button-next {
   display: none !important;
-}
+} */
 
 .gradient-text {
   background: linear-gradient(90deg, #e9ccae, #e0e361 43%, #cb843b);

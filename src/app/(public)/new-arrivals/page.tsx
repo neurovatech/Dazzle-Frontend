@@ -62,7 +62,7 @@ export default async function FeatureProductsPages() {
    
     try {
       const res = await api.get<ShowcaseItemsResponse>(
-         "/showcase-items?showcaseSlug=new-arrivals",
+         "/products?latest=1",
         { cache: "no-store" }
       );
    

@@ -49,9 +49,11 @@ export default async function NewArrivalsSectionCom() {
 
   try {
     const res = await api.get<ShowcaseItemsResponse>(
-      "/showcase-items?showcaseSlug=hot-deal",
+      "/products?latest=1",
       { cache: "no-store" }
     );
+
+    console.log(res, "9999999999999999999")
 
     const list = Array.isArray(res?.data) ? res.data : [];
 

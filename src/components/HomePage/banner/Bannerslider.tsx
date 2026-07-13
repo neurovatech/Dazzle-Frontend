@@ -74,7 +74,11 @@ function Bannerslider({
         navigation={navigation}
         autoplay={
           autoplayDelay
-            ? { delay: autoplayDelay, disableOnInteraction: false }
+            ? { 
+                delay: autoplayDelay, 
+                disableOnInteraction: false,
+                reverseDirection: true, // 👈 this reverses the slide direction
+              }
             : undefined
         }
         scrollbar={{ draggable: true }}

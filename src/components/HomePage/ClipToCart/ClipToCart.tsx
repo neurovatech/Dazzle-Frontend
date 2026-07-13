@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Play,
   X,
@@ -22,90 +23,73 @@ import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface ApiProduct {
+  productUuid: string;
+  productCode: string;
+  productName: string;
+  productSlug: string;
+  productBadge: string;
+  isTba: boolean;
+  regularPrice: number;
+  discountedPrice: number;
+  disRate: number;
+  thumbnails: {
+    fileUuid: string;
+    mediaFileUrl: string;
+  };
+  // 👇 video clip lives here, not at the top level
+  clipInfo?: {
+    clipThumbnail: string;
+    clipUrl: string;
+  };
+}
+
+interface ApiResponse {
+  statusCode: number;
+  status: string;
+  found: boolean;
+  count: number;
+  totalCount: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  data: ApiProduct[];
+}
 
 interface Product {
   id: string;
   title: string;
   image: string;
+  productSlug: string;
   videoUrl?: string;
-  price?: string;
+  clipThumbnail?: string;
+  regularPrice?: number;
+  discountedPrice?: number;
 }
 
-const products: Product[] = [
-  {
-    id: "1",
-    title: "Apple AirPods Pro (2nd Gen)",
-    image: "./images/card_images.jpg",
-    videoUrl: "https://www.w3schools.com/html/mov_bbb.mp4",
-    price: "৳1,00,000",
-  },
-  {
-    id: "2",
-    title: "Sony WH-1000XM5 Headphones",
-    image: "./images/card_images_2.png",
-    videoUrl: "https://www.w3schools.com/html/movie.mp4",
-    price: "৳1,00,000",
-  },
-  {
-    id: "3",
-    title: "Samsung Galaxy Buds Pro",
-    image: "./images/card_images.jpg",
-    videoUrl: "https://www.w3schools.com/html/mov_bbb.mp4",
-    price: "৳1,00,000",
-  },
-  {
-    id: "4",
-    title: "Bose QuietComfort 45",
-    image: "./images/card_images_2.png",
-    videoUrl: "https://www.w3schools.com/html/movie.mp4",
-    price: "৳1,00,000",
-  },
-  {
-    id: "5",
-    title: "JBL Tune 760NC",
-    image: "./images/card_images.jpg",
-    videoUrl: "https://www.w3schools.com/html/mov_bbb.mp4",
-    price: "$99",
-  },
-  {
-    id: "6",
-    title: "Beats Studio Pro 000",
-    image: "./images/card_images_2.png",
-    videoUrl: "https://www.youtube.com/embed/PHz_Y5iBLaY",
-    price: "৳1,00,000",
-  },
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-  {
-    id: "7",
-    title: "Sennheiser Momentum 4",
-    image: "./images/card_images.jpg",
-    videoUrl: "https://www.youtube.com/shorts/PHz_Y5iBLaY?feature=share",
-    price: "৳1,00,000",
-  },
-  {
-    id: "8",
-    title: "Audio-Technica ATH-M50x",
-    image: "./images/card_images.jpg",
-    videoUrl: "https://www.w3schools.com/html/movie.mp4",
-    price: "$149",
-  },
-  {
-    id: "9",
-    title: "Jabra Evolve2 85",
-    image: "./images/card_images.jpg",
-    videoUrl: "https://www.w3schools.com/html/mov_bbb.mp4",
-    price: "৳1,00,000",
-  },
-];
+const isEmpty = (value: string | null | undefined): boolean =>
+  !value || value.trim() === "";
+
+const formatPrice = (value?: number) =>
+  typeof value === "number" ? `৳${value.toLocaleString("en-BD")}` : undefined;
 
 // ─── Reel Modal ────────────────────────────────────────────────────────────────
 function ReelModal({
   isOpen,
   initialIndex,
+  products,
   onClose,
 }: {
   isOpen: boolean;
   initialIndex: number;
+  products: Product[];
   onClose: () => void;
 }) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
@@ -114,12 +98,10 @@ function ReelModal({
   const videoRef = useRef<HTMLVideoElement>(null);
   const touchStartY = useRef<number | null>(null);
 
-  // sync index when modal opens
   useEffect(() => {
     if (isOpen) setCurrentIndex(initialIndex);
   }, [isOpen, initialIndex]);
 
-  // restart video when slide changes
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.load();
@@ -127,7 +109,6 @@ function ReelModal({
     }
   }, [currentIndex]);
 
-  // lock body scroll
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -141,13 +122,12 @@ function ReelModal({
 
   const goPrev = useCallback(() => {
     setCurrentIndex((i) => (i - 1 + products.length) % products.length);
-  }, []);
+  }, [products.length]);
 
   const goNext = useCallback(() => {
     setCurrentIndex((i) => (i + 1) % products.length);
-  }, []);
+  }, [products.length]);
 
-  // keyboard navigation
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!isOpen) return;
@@ -159,7 +139,6 @@ function ReelModal({
     return () => window.removeEventListener("keydown", onKey);
   }, [isOpen, goPrev, goNext, onClose]);
 
-  // mobile swipe
   const onTouchStart = (e: React.TouchEvent) => {
     touchStartY.current = e.touches[0].clientY;
   };
@@ -176,13 +155,13 @@ function ReelModal({
     setAddedIds((prev) => new Set(prev).add(id));
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || products.length === 0) return null;
 
   const product = products[currentIndex];
+  const hasVideo = !isEmpty(product.videoUrl);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-      {/* Close */}
       <button
         onClick={onClose}
         className="absolute top-4 right-4 z-50 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-all"
@@ -190,7 +169,6 @@ function ReelModal({
         <X className="w-5 h-5" />
       </button>
 
-      {/* Desktop: Prev arrow */}
       <button
         onClick={goPrev}
         className="hidden md:flex absolute left-6 top-1/2 -translate-y-1/2 z-50 w-12 h-12 items-center justify-center rounded-full bg-white/10 hover:bg-white/25 text-white transition-all hover:scale-110"
@@ -198,7 +176,6 @@ function ReelModal({
         <ChevronUp className="w-6 h-6" />
       </button>
 
-      {/* Desktop: Next arrow */}
       <button
         onClick={goNext}
         className="hidden md:flex absolute right-6 top-1/2 -translate-y-1/2 z-50 w-12 h-12 items-center justify-center rounded-full bg-white/10 hover:bg-white/25 text-white transition-all hover:scale-110"
@@ -206,42 +183,47 @@ function ReelModal({
         <ChevronDown className="w-6 h-6" />
       </button>
 
-      {/* Reel card */}
       <div
-        className="relative w-full max-w-[400px] mx-4 md:mx-0 rounded-2xl overflow-hidden shadow-2xl"
+        className="relative w-full max-w-[600px] mx-4 md:mx-0 rounded-2xl overflow-hidden shadow-2xl"
         style={{ height: "min(85vh, 720px)" }}
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
       >
-        {/* Video */}
-        <video
-          ref={videoRef}
-          key={product.id}
-          src={product.videoUrl}
-          className="w-full h-full object-cover"
-          autoPlay
-          loop
-          muted={muted}
-          playsInline
-          poster={product.image}
-        />
+        {hasVideo ? (
+          <video
+            ref={videoRef}
+            key={product.id}
+            src={product.videoUrl}
+            className="w-full h-full object-cover"
+            autoPlay
+            loop
+            muted={muted}
+            playsInline
+            poster={product.clipThumbnail || product.image}
+          />
+        ) : (
+          <img
+            src={product.image}
+            alt={product.title}
+            className="w-full h-full object-cover"
+          />
+        )}
 
-        {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20 pointer-events-none" />
 
-        {/* Top: mute button */}
-        <button
-          onClick={() => setMuted((m) => !m)}
-          className="absolute top-4 left-4 w-9 h-9 flex items-center justify-center rounded-full bg-black/40 text-white hover:bg-black/60 transition-all"
-        >
-          {muted ? (
-            <VolumeX className="w-4 h-4" />
-          ) : (
-            <Volume2 className="w-4 h-4" />
-          )}
-        </button>
+        {hasVideo && (
+          <button
+            onClick={() => setMuted((m) => !m)}
+            className="absolute top-4 left-4 w-9 h-9 flex items-center justify-center rounded-full bg-black/40 text-white hover:bg-black/60 transition-all"
+          >
+            {muted ? (
+              <VolumeX className="w-4 h-4" />
+            ) : (
+              <Volume2 className="w-4 h-4" />
+            )}
+          </button>
+        )}
 
-        {/* Mobile swipe indicator dots */}
         <div className="absolute top-4 left-1/2 -translate-x-1/2 flex gap-1 md:hidden">
           {products.map((_, i) => (
             <span
@@ -255,40 +237,38 @@ function ReelModal({
           ))}
         </div>
 
-        {/* Bottom info */}
         <div className="absolute bottom-0 left-0 right-0 p-5">
-          {/* Counter */}
           <p className="text-white/50 text-xs mb-1 font-medium tracking-widest uppercase">
             {currentIndex + 1} / {products.length}
           </p>
 
-          {/* Title */}
           <h3 className="text-white font-bold text-lg leading-tight mb-1 drop-shadow-lg">
             {product.title}
           </h3>
 
-          {/* Price */}
-          {product.price && (
-            <p className="text-[#CB843B] font-bold text-xl mb-4">
-              {product.price}
-            </p>
+          {(product.discountedPrice || product.regularPrice) && (
+            <div className="flex items-center gap-2 mb-4">
+              <p className="text-[#CB843B] font-bold text-xl">
+                {formatPrice(product.discountedPrice ?? product.regularPrice)}
+              </p>
+              {product.discountedPrice &&
+                product.regularPrice &&
+                product.discountedPrice < product.regularPrice && (
+                  <p className="text-white/50 text-sm line-through">
+                    {formatPrice(product.regularPrice)}
+                  </p>
+                )}
+            </div>
           )}
 
-          {/* Add to cart */}
-          <button
-            onClick={() => handleAddToCart(product.id)}
-            className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all duration-300 ${
-              addedIds.has(product.id)
-                ? "bg-green-500 text-white scale-95"
-                : "bg-[#CB843B] hover:bg-[#b8722e] text-white hover:scale-[1.02] active:scale-95"
-            }`}
+          <Link
+            href={`/product/${product.productSlug}`}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all duration-300 bg-[#CB843B] hover:bg-[#b8722e] text-white hover:scale-[1.02] active:scale-95"
           >
-            <CartIcon className="w-4 h-4" />
-            {addedIds.has(product.id) ? "Added to Cart ✓" : "Add to Cart"}
-          </button>
+            See Details
+          </Link>
         </div>
 
-        {/* Mobile swipe hint (first open only) */}
         <div className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col gap-2 md:hidden">
           <button
             onClick={goPrev}
@@ -321,10 +301,53 @@ function ClipToCart({
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
+  const { data, isLoading } = useQuery<ApiResponse>({
+    queryKey: ["showcase-clip-to-cart"],
+    staleTime: 5 * 60 * 1000, // 5 min
+    queryFn: () =>
+      api.get<ApiResponse>("/showcase-items?showcaseSlug=clip-to-cart"),
+  });
+
+  const products: Product[] =
+    data?.data?.map((item) => ({
+      id: item.productUuid,
+      title: item.productName,
+      productSlug: item.productSlug,
+      image: item.thumbnails?.mediaFileUrl ?? "",
+      videoUrl: item.clipInfo?.clipUrl,
+      clipThumbnail: item.clipInfo?.clipThumbnail,
+      regularPrice: item.regularPrice,
+      discountedPrice: item.discountedPrice,
+    })) ?? [];
+
   const handleOpenModal = (index: number) => {
     setSelectedIndex(index);
     setModalOpen(true);
   };
+
+  if (isLoading) {
+    return (
+      <div>
+        <div className="flex justify-between items-center gap-6 pb-5">
+          <h3 className="md:text-[32px] text-[20px] font-bold text-transparent bg-clip-text bg-[linear-gradient(90deg,#222222_0%,#965C20_43.27%,#693B0C_100%)] dark:text-white">
+            Clip to Cart
+          </h3>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-4">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div
+              key={i}
+              className="animate-pulse bg-gray-100 dark:bg-[#2e2b28] rounded-lg h-[220px]"
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (!isLoading && products.length === 0) {
+    return null; // or a friendly empty state
+  }
 
   return (
     <div>
@@ -333,18 +356,18 @@ function ClipToCart({
         <h3 className="md:text-[32px] text-[20px] font-bold text-transparent bg-clip-text bg-[linear-gradient(90deg,#222222_0%,#965C20_43.27%,#693B0C_100%)] dark:text-white">
           Clip to Cart
         </h3>
-        <Link
+        {/* <Link
           href="#"
-          className="md:text-[20px] text-[14px] text-gray-700 hover:text-[#CB843B] dark:text-white transition-colors duration-300"
+          className="text-sm font-medium text-primary  bg-orange-50 border-orange-200 px-4 py-2 rounded-[10px] dark:text-[#2e2b28]  hover:underline hover:text-[#CB843B]! transition-colors duration-300"
         >
           See all
-        </Link>
+        </Link> */}
       </div>
 
       {/* Swiper */}
       <Swiper
         modules={[Navigation, Pagination, Scrollbar, A11y, Autoplay]}
-        loop={true}
+        loop={products.length > 5}
         pagination={pagination ? { clickable: true } : false}
         navigation={navigation}
         autoplay={
@@ -362,44 +385,74 @@ function ClipToCart({
         }}
         className="mySwiper"
       >
-        {products.map((product, i) => (
-          <SwiperSlide key={product.id}>
-            <div
-              className="group bg-white dark:bg-[#2e2b28] rounded-lg shadow-md p-4 relative transition-all duration-500 hover:shadow-2xl cursor-pointer"
-              onClick={() => handleOpenModal(i)}
-            >
-              {/* Cart badge */}
-              <div className="w-10 h-10 flex items-center justify-center rounded-full bg-[#101518] dark:bg-white absolute right-3 top-3 z-10">
-                <CartIcon className="w-5 h-5 text-[#E9CCAE] dark:text-black" />
-              </div>
+        {products.map((product, i) => {
+          const hasVideo = !isEmpty(product.videoUrl);
+          const hasDiscount =
+            product.discountedPrice &&
+            product.regularPrice &&
+            product.discountedPrice < product.regularPrice;
 
-              {/* Thumbnail */}
-              <img
-                src={product.image}
-                alt={product.title}
-                className="w-full object-cover rounded-md"
-              />
+          return (
+            <SwiperSlide key={product.id}>
+              <div
+                className="group bg-white dark:bg-[#2e2b28] rounded-lg shadow-md p-4 relative transition-all duration-500 hover:shadow-2xl cursor-pointer h-full w-full flex flex-col"
+                onClick={() => handleOpenModal(i)}
+              >
+                {/* Cart badge */}
+                {/* <div className="w-10 h-10 flex items-center justify-center rounded-full bg-[#101518] dark:bg-white absolute right-3 top-3 z-10">
+                  <CartIcon className="w-5 h-5 text-[#E9CCAE] dark:text-black" />
+                </div> */}
 
-              {/* Play button */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                <div className="w-[56px] h-[56px] rounded-full flex items-center justify-center backdrop-blur-md bg-white/30 border border-white/40 shadow-lg group-hover:scale-110 transition-transform duration-300">
-                  <Play className="w-5 h-5 text-white fill-white" />
+                {/* Fixed-height media box → keeps every card aligned */}
+                <div className="relative w-full h-32 sm:h-40 md:h-44 rounded-md overflow-hidden bg-gray-100 dark:bg-black/20">
+                  <Image
+                    src={product.image}
+                    alt={product.title}
+                    fill
+                    sizes="(max-width: 768px) 50vw, 20vw"
+                    className="object-cover"
+                  />
+
+                  {/* Play button — only shows if this item actually has a video */}
+                  {hasVideo && (
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                      <div className="w-[56px] h-[56px] rounded-full flex items-center justify-center backdrop-blur-md bg-white/30 border border-white/40 shadow-lg group-hover:scale-110 transition-transform duration-300">
+                        <Play className="w-5 h-5 text-white fill-white" />
+                      </div>
+                    </div>
+                  )}
                 </div>
+
+                {/* Product title */}
+                <p className="mt-3 text-xs font-medium text-gray-700 dark:text-white line-clamp-2 leading-tight min-h-[32px]">
+                  {product.title}
+                </p>
+
+                {/* Price */}
+                {(product.discountedPrice || product.regularPrice) && (
+                  <div className="mt-1 flex items-center gap-2">
+                    <span className="text-sm font-bold text-[#CB843B]">
+                      {formatPrice(
+                        product.discountedPrice ?? product.regularPrice
+                      )}
+                    </span>
+                    {hasDiscount && (
+                      <span className="text-xs text-gray-400 line-through">
+                        {formatPrice(product.regularPrice)}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
-
-              {/* Product title */}
-              <p className="mt-3 text-xs font-medium text-gray-700 dark:text-white line-clamp-2 leading-tight">
-                {product.title}
-              </p>
-            </div>
-          </SwiperSlide>
-        ))}
+            </SwiperSlide>
+          );
+        })}
       </Swiper>
-
 
       <ReelModal
         isOpen={modalOpen}
         initialIndex={selectedIndex}
+        products={products}
         onClose={() => setModalOpen(false)}
       />
     </div>
