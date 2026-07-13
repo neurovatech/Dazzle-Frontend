@@ -8,7 +8,7 @@ import ProductVariants from "./ProductVariants";
 import ProductColorVariants from "./ProductColorVariants";
 import DazzleCare from "./DazzleCare";
 import ContactOptions from "./ContactOptions";
-import IPHONE_ORANGE from "@/images/oreng_i.png";
+import IPHONE_ORANGE from "@/images/no_images.png";
 
 import CheckAvailability from "./CheckAvailability";
 import ProductCard from "./ProductCrad";
@@ -20,11 +20,9 @@ import StickyPurchaseBar from "./StickyPurchaseBar";
 import type { ProductApiData } from "@/app/(public)/product/[productSlug]/page";
 
 // ── Static fallback images ──────────────────────────────────────────
-const FALLBACK_WHITE =
-  "https://dazzle.com.bd/_next/image?url=https%3A%2F%2Fdazzle.sgp1.cdn.digitaloceanspaces.com%2F75552%2FiPhone-17-Pro-Max-Pro-Price-in-Bangladesh-(2).jpg&w=1080&q=75";
+const FALLBACK_WHITE =  "/images/no_images.png";
 
-const FALLBACK_BLACK =
-  "https://dazzle.com.bd/_next/image?url=https%3A%2F%2Fdazzle.sgp1.cdn.digitaloceanspaces.com%2F75551%2FiPhone-17-Pro-Max-Pro-Price-in-Bangladesh-(1).jpg&w=1080&q=75";
+const FALLBACK_BLACK = "/images/no_images.png";;
 
 const FALLBACK_IMAGES = [IPHONE_ORANGE.src, FALLBACK_WHITE, FALLBACK_BLACK];
 
@@ -137,8 +135,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
           color: (VALID_COLORS.includes(b.color as BadgeColor) ? b.color : "pink") as BadgeColor,
         }))
       : [
-          { label: "10%", color: "pink" as const },
-          { label: "Buy 2 Get 1", color: "purple" as const },
+          { label: "0%", color: "pink" as const },
         ];
 
   // ── Specs tabs from API ────────────────────────────────────────
@@ -205,7 +202,8 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
           <div className="lg:col-span-7">
             <ProductInfo
               title={product?.productName ?? "Product"}
-              brand={product?.brandName ?? "Brand"}
+              brand={product?.brandName ?? ""}
+              brand_slug={product?.brandSlug ?? ""}
               code={product?.productCode ?? "N/A"}
               inStock={""}
               stockNote={""}
@@ -232,10 +230,10 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
                 ]}
                 onChange={handleVariantChange}
               />
-              <ProductVariants groups={otherVariantGroups} />
+              {/* <ProductVariants groups={otherVariantGroups} /> */}
             </div>
 
-            <div className="pt-5">
+            <div className="pt-5 hidden">
               <DazzleCare
                 options={[
                   {

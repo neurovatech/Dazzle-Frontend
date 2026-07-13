@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import Link from "next/link";
 import Image from "next/image";
@@ -16,7 +17,7 @@ import {
 } from "@/icon";
 import type { CategoryItem } from "./types";
 
-// ─── API Types ────────────────────────────────────────────────────────────────
+// ─── Shared API Types (mirrors Header.tsx) ────────────────────────────────────
 
 export interface ApiBrand {
   uuid: string;
@@ -37,6 +38,7 @@ export interface ApiCategory {
   child: ApiBrand[];
 }
 
+// Accept either shape
 type RawCategory = ApiCategory | CategoryItem;
 
 // ─── Normalised Internal Types ────────────────────────────────────────────────
@@ -78,7 +80,8 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   isMobile?: boolean;
-  categories: RawCategory[];
+  // Accept both ApiCategory[] and CategoryItem[] and mixed arrays
+  categories: RawCategory[] | ApiCategory[];
   activeCategory: string;
   selectedBrand: string;
   onHoverCategory: (label: string) => void;
@@ -87,7 +90,7 @@ interface Props {
 
 // ─── Type Guard ───────────────────────────────────────────────────────────────
 
-function isApiCategory(cat: RawCategory): cat is ApiCategory {
+function isApiCategory(cat: RawCategory | ApiCategory): cat is ApiCategory {
   return "category_name" in cat;
 }
 
@@ -128,9 +131,11 @@ function renderCategoryIcon(icon: CategoryIconName | React.ReactNode) {
   return icon;
 }
 
-function normalizeCategories(raw: RawCategory[]): NormalizedCategory[] {
+function normalizeCategories(
+  raw: (RawCategory | ApiCategory)[]
+): NormalizedCategory[] {
   return raw.map((cat) => {
-    // ── API format ──
+    // ── API format (from /categories/brands or /categories/child) ──
     if (isApiCategory(cat)) {
       return {
         uuid: cat.uuid,
@@ -151,14 +156,16 @@ function normalizeCategories(raw: RawCategory[]): NormalizedCategory[] {
       };
     }
 
+    // ── Static CategoryItem format ──
+    const ci = cat as CategoryItem;
     return {
       uuid: "",
-      label: cat.label,
-      category_slug: cat.label.toLowerCase().replace(/\s+/g, "-"),
-      icon: cat.icon,
+      label: ci.label,
+      category_slug: ci.label.toLowerCase().replace(/\s+/g, "-"),
+      icon: ci.icon,
       is_active: true,
       is_featured: false,
-      children: (cat.children ?? []).map((child, idx) => ({
+      children: (ci.children ?? []).map((child, idx) => ({
         uuid: String(idx),
         label: child.label,
         brand_slug: child.label.toLowerCase().replace(/\s+/g, "-"),
@@ -209,14 +216,15 @@ export default function ExplorePanel({
   selectedBrand: _selectedBrand,
   onHoverCategory,
   onSelectBrand,
-}: Props) {
+}: any) {
   const [mobileSubCategory, setMobileSubCategory] = useState<string | null>(
     null,
   );
 
   if (!isOpen) return null;
+
   const normalizedCategories = normalizeCategories(categories);
-  
+
   const activeCat = normalizedCategories.find(
     (c) => c.label === activeCategory,
   );
@@ -236,46 +244,36 @@ export default function ExplorePanel({
             <ChevronLeft size={16} />
           </button>
           <span className="flex items-center gap-2 font-semibold text-sm text-primary dark:text-black">
-            {/* {renderCategoryIcon(mobileActiveCat.icon)} */}
             {mobileActiveCat.category_images ? (
-                    <Image
-                      src={mobileActiveCat.category_images}
-                      alt={mobileActiveCat.label}
-                      width={20}
-                      height={20}
-                      className="object-contain"
-                    />
-                  ) : (
-                    renderCategoryIcon(mobileActiveCat.icon)
-                  )}
-
+              <Image
+                src={mobileActiveCat.category_images}
+                alt={mobileActiveCat.label}
+                width={20}
+                height={20}
+                className="object-contain"
+              />
+            ) : (
+              renderCategoryIcon(mobileActiveCat.icon)
+            )}
             {mobileActiveCat.label}
           </span>
         </div>
 
         <div className="grid grid-cols-3 gap-3 py-2 px-4">
-  {mobileActiveCat.children.map((brand) => (
-    <Link
-      key={brand.uuid || brand.label}
-      href={`/brands/${brand.brand_slug || brand.label.toLowerCase()}`}
-      onClick={() => {
-        onSelectBrand(brand.label);
-        onClose();
-      }}
-      className="flex flex-col items-center justify-center rounded-lg p-3 text-center text-sm text-[#222222] hover:bg-[#E9CCAE33] active:bg-[#E9CCAE66] transition-colors border border-[#2222]"
-    >
-      {/* {brand.logo && (
-        <BrandLogo
-          logo={brand.logo}
-          label={brand.label}
-          className="h-8 w-auto object-contain mb-2"
-        />
-      )} */}
-
-      <span className="font-medium">{brand.label}</span>
-    </Link>
-  ))}
-</div>
+          {mobileActiveCat.children.map((brand) => (
+            <Link
+              key={brand.uuid || brand.label}
+              href={`/brands/${brand.brand_slug || brand.label.toLowerCase()}`}
+              onClick={() => {
+                onSelectBrand(brand.label);
+                onClose();
+              }}
+              className="flex flex-col items-center justify-center rounded-lg p-3 text-center text-sm text-[#222222] hover:bg-[#E9CCAE33] active:bg-[#E9CCAE66] transition-colors border border-[#2222]"
+            >
+              <span className="font-medium">{brand.label}</span>
+            </Link>
+          ))}
+        </div>
       </div>
     );
   }
@@ -306,17 +304,17 @@ export default function ExplorePanel({
                   className="flex items-center justify-between px-5 py-3.5 text-sm font-medium text-[#222222] hover:bg-[#E9CCAE33] active:bg-[#E9CCAE66] transition-colors"
                 >
                   <span className="flex items-center gap-3">
-                   {cat.category_images ? (
-                    <Image
-                      src={cat.category_images}
-                      alt={cat.label}
-                      width={20}
-                      height={20}
-                      className="object-contain"
-                    />
-                  ) : (
-                    renderCategoryIcon(cat.icon)
-                  )}
+                    {cat.category_images ? (
+                      <Image
+                        src={cat.category_images}
+                        alt={cat.label}
+                        width={20}
+                        height={20}
+                        className="object-contain"
+                      />
+                    ) : (
+                      renderCategoryIcon(cat.icon)
+                    )}
                     {cat.label}
                   </span>
                   <ChevronRight size={16} className="text-gray-400" />
@@ -357,7 +355,6 @@ export default function ExplorePanel({
   }
 
   // ── Desktop ───────────────────────────────────────────────────────────────
-  console.log("API Response for categories/brands:", activeCat);
   return (
     <div className="absolute z-999 top-full left-0 mt-2 bg-white dark:bg-[#393430] border border-gray-100 rounded-2xl shadow-2xl flex overflow-hidden w-[580px] max-h-[420px]">
       {/* Category sidebar */}
@@ -373,7 +370,6 @@ export default function ExplorePanel({
             }`}
           >
             <span className="flex items-center gap-1">
-              {/* {renderCategoryIcon(cat.icon)} */}
               {cat.category_images ? (
                 <Image
                   src={cat.category_images}

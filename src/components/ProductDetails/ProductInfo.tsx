@@ -49,6 +49,7 @@ export default function ProductInfo({
   stats,
   price: basePrice,
   alldata,
+  brand_slug,
   originalPrice: baseOriginalPrice,
 }: any) {
   // Stock Status derived from inStock prop
@@ -137,7 +138,7 @@ export default function ProductInfo({
         <div className="flex items-center gap-1.5">
           <span className="text-gray-500 dark:text-white">By:</span>
           <Link
-            href="#"
+            href={`/brands/${brand_slug}`}
             className="text-[#B57908] dark:text-[#D4A97A] hover:underline font-semibold"
           >
             {brand}
@@ -262,7 +263,8 @@ export default function ProductInfo({
           <span className="block text-xs font-bold text-gray-500 uppercase tracking-wider">
             Minimum Booking price BDT {alldata?.minBookingPrice.toLocaleString()}
           </span>
-          <div className="flex gap-2.5 items-center">
+          <div className="flex justify-between">
+            <div className="flex gap-2.5 items-center">
             <span className="text-[28px] font-extrabold text-[#B57908] dark:text-[#D4A97A]">
               BDT {alldata?.discountedPrice.toLocaleString()}
             </span>
@@ -272,6 +274,14 @@ export default function ProductInfo({
             <span className="bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 font-extrabold text-xs px-2.5 py-0.5 rounded-md">
               {/* {discount}% OFF */}
             </span>
+          </div>
+
+          <div className="flex items-center gap-3 mt-3 lg:mt-0">
+            <span className="font-bold text-gray-700 dark:text-gray-300">
+              Quantity:
+            </span>
+            <QuantitySelector defaultValue={1} />
+          </div>
           </div>
           {/* {isPreorder && (
             <span className="block text-xs text-gray-500">
@@ -331,12 +341,7 @@ export default function ProductInfo({
         </div>
 
         {/* Quantity Select */}
-        <div className="flex items-center gap-3 mt-3 lg:mt-0">
-          <span className="font-bold text-gray-700 dark:text-gray-300">
-            Quantity:
-          </span>
-          <QuantitySelector defaultValue={1} />
-        </div>
+        
       </div>
 
       {/* ── Competitor Live Price Comparison ── */}

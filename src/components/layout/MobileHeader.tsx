@@ -10,7 +10,7 @@ import {
   CloseIcon,
 } from "@/icon";
 import ExplorePanel from "./ExplorePanel";
-import Logo from "@/images/logo.png";
+
 import SearchBar from "@/components/search/SearchBar";
 import { exploreCategories } from "./types";
 import type { ApiCategory } from "./Header";
@@ -22,6 +22,8 @@ interface Props {
 }
 
 export default function MobileHeader({ categories }: Props) {
+
+
   const token = useAppSelector((state) => state.auth.token);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState(
@@ -59,6 +61,8 @@ export default function MobileHeader({ categories }: Props) {
     onHoverCategory: setActiveCategory,
     onSelectBrand: setSelectedBrand,
   };
+
+  console.log(panelProps, "panelPropspanelPropspanelProps")
 
   return (
     <div className="md:hidden p-3" ref={menuRef}>

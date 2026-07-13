@@ -86,7 +86,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
             </span>
           ) : <span />}
           {badge ? (
-            <span className="bg-[linear-gradient(93.36deg,#222222_-28.88%,#6D3F0E_93.21%)] text-white text-[9px] sm:text-xs font-bold px-1.5 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-md max-w-[45%] truncate">
+            <span className="bg-[linear-gradient(93.36deg,#222222_-28.88%,#6D3F0E_93.21%)] text-white text-[9px] sm:text-xs font-bold px-1.5 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-md max-w-[80%]">
               {badge}
             </span>
           ) : <span />}

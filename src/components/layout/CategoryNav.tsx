@@ -9,13 +9,14 @@ import type { ApiCategory } from "./Header";
 interface Props {
   categories?: ApiCategory[];
   subCategories?: ApiCategory[];
+  explorAllData?: ApiCategory[];
 }
 
-export default function CategoryNav({ categories, subCategories }: Props) {
+export default function CategoryNav({ categories, subCategories, explorAllData }: Props) {
   const [exploreOpen, setExploreOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState(
-    categories && categories.length > 0
-      ? categories[0].category_name
+    explorAllData && explorAllData.length > 0
+      ? explorAllData[0].category_name
       : (exploreCategories[0]?.label ?? "")
   );
   const [selectedBrand, setSelectedBrand] = useState("");
@@ -38,10 +39,10 @@ export default function CategoryNav({ categories, subCategories }: Props) {
     ...(subCategories ?? []),
   ];
 
-  const panelCategories = combinedCategories.length > 0 ? combinedCategories : exploreCategories;
+  const panelCategories = combinedCategories.length > 0 ? explorAllData : exploreCategories;
 
   const panelProps = {
-    categories: panelCategories,
+    categories: explorAllData,
     activeCategory,
     selectedBrand,
     onHoverCategory: setActiveCategory,

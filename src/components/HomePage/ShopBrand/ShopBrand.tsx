@@ -109,12 +109,12 @@ export default async function ShopBrand() {
               href={item.slug}
               className="flex flex-col items-center"
             >
-              <div className="w-full aspect-square flex items-center justify-center bg-[#F5F5F5] dark:bg-[#CB843B]/10 rounded-4xl p-4 transition-all duration-300 hover:bg-[#CB843B]/10 hover:scale-105">
+              <div className="w-full aspect-square flex items-center justify-center bg-[#F5F5F5] dark:bg-[#CB843B]/10 rounded-4xl p-1 md:p-4 transition-all duration-300 hover:bg-[#CB843B]/10 hover:scale-105">
                 <Image
                   src={item.logo}
                   alt={item.label}
-                  width={80}
-                  height={80}
+                  width={160}
+                  height={160}
                   className="w-full h-full object-contain transition-transform duration-300 hover:scale-110"
                 />
               </div>

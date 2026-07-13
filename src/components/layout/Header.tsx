@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import BgImages from "@/images/header-bg.png";
 import TopBar from "./TopBar";
 import MainNav from "./MainNav";
@@ -48,8 +49,8 @@ interface ApiResponse {
 
 // ─── Main Header (Server Component) ──────────────────────────────────────────
 export default async function Header() {
-  let apiBrands: ApiCategory[] = [];
-  let apiSubBrands: ApiCategory[] = [];
+  let apiBrands:any = [];
+  let apiSubBrands:any = [];
 
   let apiCategories: ApiCategory[] = [];
   let apiSubCategories: ApiCategory[] = [];
@@ -93,6 +94,7 @@ export default async function Header() {
       cache: "no-store",
     });
 
+
     if (response?.data) {
       const cats = Array.isArray(response.data.category) ? response.data.category : [];
       const subCats = Array.isArray(response.data.subCategory) ? response.data.subCategory : [];
@@ -120,7 +122,10 @@ export default async function Header() {
     console.error("[Header] categories/brands fetch failed:", err);
   }
 
-  console.log(apiCategories, "apiCategoriesapiCategories");
+  const explorAllData = [...apiBrands, ...apiSubBrands]
+
+  console.log(apiBrands, "111111111111");
+  console.log(apiSubBrands, "apiCategoriesapiCategories");
   
 
   return (
@@ -135,8 +140,8 @@ export default async function Header() {
     >
       <TopBar />
       <MainNav />
-      <CategoryNav categories={apiCategories} subCategories={apiSubCategories} />
-      <MobileHeader categories={[...apiBrands, ...apiSubBrands]} />
+      <CategoryNav categories={apiCategories} subCategories={apiSubCategories} explorAllData={explorAllData} />
+      {/* <MobileHeader categories={[...apiBrands, ...apiSubBrands]} /> */}
     </header>
   );
 }
