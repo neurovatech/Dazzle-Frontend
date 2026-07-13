@@ -416,7 +416,7 @@ function ClipToCart({
                   {/* Play button — only shows if this item actually has a video */}
                   {hasVideo && (
                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                      <div className="w-[56px] h-[56px] rounded-full flex items-center justify-center backdrop-blur-md bg-white/30 border border-white/40 shadow-lg group-hover:scale-110 transition-transform duration-300">
+                      <div className="w-[56px] h-[56px] rounded-full flex items-center justify-center backdrop-blur-md bg-black/30 border border-black/40 shadow-lg group-hover:scale-110 transition-transform duration-300">
                         <Play className="w-5 h-5 text-white fill-white" />
                       </div>
                     </div>

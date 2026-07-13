@@ -28,7 +28,13 @@ export default function MainNav() {
         <div className="hidden md:flex items-center gap-6 py-4">
           <Link href="/" className="shrink-0 mr-2">
             <div className="text-3xl flex font-black text-white tracking-tighter leading-none">
-              <Image src={siteLogo} width={130} height={30} alt="Dazzle logo" />
+              <Image
+    src="https://dazzle.sgp1.cdn.digitaloceanspaces.com/site/header-logo-white.svg"
+    width={130}
+    height={30}
+    alt="Dazzle logo"
+    priority
+  />
             </div>
           </Link>
 
