@@ -106,7 +106,7 @@ export default async function ShopBrand() {
           {brands?.map((item) => (
             <Link
               key={item.id}
-              href={item.slug}
+              href={`/brands/${item.slug}`}
               className="flex flex-col items-center"
             >
               <div className="w-full aspect-square flex items-center justify-center bg-[#F5F5F5] dark:bg-[#CB843B]/10 rounded-4xl p-1 md:p-4 transition-all duration-300 hover:bg-[#CB843B]/10 hover:scale-105">

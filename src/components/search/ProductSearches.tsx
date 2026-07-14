@@ -1,111 +1,33 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 import Image from "next/image";
+import Link from "next/link";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api";
 
-// --- Mock Data ---
-const mockProducts = [
-  {
-    id: 1,
-    name: "Belkin USB C 7 in 1 Multiport Ada...",
-    status: "In Stock",
-    price: "৳1,00,000",
-    oldPrice: "৳1,30,000",
-    image: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=80&h=80&fit=crop",
-  },
-  {
-    id: 2,
-    name: "Belkin USB C 7 in 1 Multiport Ada...",
-    status: "In Stock",
-    price: "৳1,00,000",
-    oldPrice: "৳1,30,000",
-    image: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=80&h=80&fit=crop",
-  },
-  {
-    id: 3,
-    name: "Belkin USB C 7 in 1 Multiport Ada...",
-    status: "In Stock",
-    price: "৳1,00,000",
-    oldPrice: "৳1,30,000",
-    image: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=80&h=80&fit=crop",
-  },
-  {
-    id: 4,
-    name: "Belkin USB C 7 in 1 Multiport Ada...",
-    status: "In Stock",
-    price: "৳1,00,000",
-    oldPrice: "৳1,30,000",
-    image: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=80&h=80&fit=crop",
-  },
-  {
-    id: 5,
-    name: "Belkin USB C 7 in 1 Multiport Ada...",
-    status: "In Stock",
-    price: "৳1,00,000",
-    oldPrice: "৳1,30,000",
-    image: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=80&h=80&fit=crop",
-  },
-  {
-    id: 6,
-    name: "Belkin USB C 7 in 1 Multiport Ada...",
-    status: "In Stock",
-    price: "৳1,00,000",
-    oldPrice: "৳1,30,000",
-    image: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=80&h=80&fit=crop",
-  },
-  {
-    id: 7,
-    name: "Belkin USB C 7 in 1 Multiport Ada...",
-    status: "In Stock",
-    price: "৳1,00,000",
-    oldPrice: "৳1,30,000",
-    image: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=80&h=80&fit=crop",
-  },
-  {
-    id: 8,
-    name: "Belkin USB C 7 in 1 Multiport Ada...",
-    status: "In Stock",
-    price: "৳1,00,000",
-    oldPrice: "৳1,30,000",
-    image: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=80&h=80&fit=crop",
-  },
-  {
-    id: 9,
-    name: "Belkin USB C 7 in 1 Multiport Ada...",
-    status: "In Stock",
-    price: "৳1,00,000",
-    oldPrice: "৳1,30,000",
-    image: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=80&h=80&fit=crop",
-  },
-];
+// ── API Response Types (আপনার JSON structure অনুযায়ী) ──
+interface ProductDocument {
+  id: string;
+  productName: string;
+  productSlug: string;
+  categoryName: string;
+  categorySlug: string;
+  thumbnailsUrl: string;
+  regularPrice: number;
+  discountedPrice: number;
+  disRate: number;
+  isStockAvailable: boolean;
+}
 
-const categoryTags = [
-  "#iPhone 17 pro max",
-  "#Macbook pro",
-  "#Samsung s ultra 7",
-  "#Samsung",
-];
+interface ProductHit {
+  document: ProductDocument;
+}
 
-const brands = [
-  {
-    name: "Apple",
-    image: "https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg",
-  },
-  {
-    name: "Samsung",
-    image: "https://upload.wikimedia.org/wikipedia/commons/2/24/Samsung_Logo.svg",
-  },
-  {
-    name: "Laptops",
-    image: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=60&h=60&fit=crop",
-  },
-  {
-    name: "Smart-watch",
-    image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=60&h=60&fit=crop",
-  },
-  {
-    name: "Laptops",
-    image: "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=60&h=60&fit=crop",
-  },
-];
+interface SearchApiResponse {
+  found: number;
+  hits: ProductHit[];
+}
 
 interface ProductSearchesProps {
   query?: string;
@@ -118,82 +40,139 @@ export default function ProductSearches({
   onSelectCategory,
   onSeeAll,
 }: ProductSearchesProps) {
-  const handleCategory = (tag: string) =>
-    onSelectCategory?.(tag.replace("#", ""));
+  // ক্যাটাগরি সিলেক্ট করলে সেই slug এখানে সেভ হবে
+  const [selectedCategorySlug, setSelectedCategorySlug] = useState<string | null>(null);
+
+  // query পরিবর্তন হলে আগের category selection রিসেট হবে
+  useEffect(() => {
+    setSelectedCategorySlug(null);
+  }, [query]);
+
+  const isCategoryMode = !!selectedCategorySlug;
+
+  const { data, isLoading } = useQuery<SearchApiResponse>({
+    queryKey: ["product-search", query, selectedCategorySlug],
+    queryFn: () =>
+      isCategoryMode
+        ? api.get<SearchApiResponse>(
+            `/product/search?categorySlug=${selectedCategorySlug}&page=1&perPage=20`
+          )
+        : api.get<SearchApiResponse>(
+            `/product/search?keyword=${encodeURIComponent(query ?? "")}&page=1&perPage=20`
+          ),
+    enabled: isCategoryMode || !!query,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const products = data?.hits ?? [];
+  const totalProducts = data?.found ?? 0;
+
+  // ── categoryName ডুপ্লিকেট ছাড়া বের করা ──
+  const categories = Array.from(
+    new Map(
+      products.map((p) => [
+        p.document.categoryName,
+        { name: p.document.categoryName, slug: p.document.categorySlug },
+      ])
+    ).values()
+  );
+
+  // ── একই ক্যাটাগরিতে দ্বিতীয়বার ক্লিক করলে টগল হয়ে ফিরে যাবে ──
+  const handleCategoryClick = (slug: string, name: string) => {
+    if (selectedCategorySlug === slug) {
+      setSelectedCategorySlug(null);
+      onSelectCategory?.("");
+    } else {
+      setSelectedCategorySlug(slug);
+      onSelectCategory?.(name);
+    }
+  };
+
+  const formatPrice = (price: number) => `৳${price.toLocaleString("en-BD")}`;
 
   return (
     <div className="flex flex-col sm:flex-row h-full">
-      {/* ── Left: Categories + Brands ── */}
+      {/* ── Left: Categories ── */}
       <div className="w-full sm:w-[220px] lg:w-[260px] shrink-0 p-4 sm:p-5 border-b sm:border-b-0 sm:border-r border-gray-100">
-        {/* Category Tags */}
-        <p className="text-sm font-semibold text-gray-800 dark:text-white mb-3">Categries</p>
-        <div className="flex flex-wrap gap-2 mb-6">
-          {categoryTags.map((tag, i) => (
+        <p className="text-sm font-semibold text-gray-800 dark:text-white mb-3">Categories</p>
+        <div className="flex flex-col gap-2 items-start">
+          {isLoading && (
+            <p className="text-xs text-gray-400">Loading...</p>
+          )}
+          {!isLoading && categories.length === 0 && (
+            <p className="text-xs text-gray-400">No categories found</p>
+          )}
+          {categories.map((cat, i) => (
             <button
               key={i}
-              onClick={() => handleCategory(tag)}
-              className="px-3 py-1.5 text-xs sm:text-sm text-gray-600 dark:text-white border border-gray-200 rounded-lg hover:border-[#D4A97A] hover:text-[#b8864e] transition-colors"
+              onClick={() => handleCategoryClick(cat.slug, cat.name)}
+              className={`px-3 py-1.5 text-xs sm:text-sm border rounded-lg transition-colors ${
+                selectedCategorySlug === cat.slug
+                  ? "border-[#D4A97A] text-[#b8864e] bg-[#D4A97A]/10"
+                  : "text-gray-600 dark:text-white border-gray-200 hover:border-[#D4A97A] hover:text-[#b8864e]"
+              }`}
             >
-              {tag}
-            </button>
-          ))}
-        </div>
-
-        {/* Choose From Brands */}
-        <p className="text-sm font-semibold text-gray-800 dark:text-white mb-3">Choose From Brands</p>
-        <div className="flex flex-wrap gap-x-4 gap-y-4">
-          {brands.map((brand, i) => (
-            <button
-              key={i}
-              className="flex flex-col items-center gap-1.5 group"
-            >
-              <div className="w-14 h-14 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden hover:border-[#D4A97A] transition-colors">
-                <Image
-                  src={brand.image}
-                  alt={brand.name}
-                  width={56}
-                  height={56}
-                  className="w-full h-full object-contain p-2"
-                  unoptimized
-                />
-              </div>
-              <span className="text-xs text-gray-600 dark:text-white group-hover:text-[#b8864e] transition-colors">
-                {brand.name}
-              </span>
+              {cat.name}
             </button>
           ))}
         </div>
       </div>
 
+      {/* ── Right: Products ── */}
       <div className="flex-1 p-4 sm:p-5 flex flex-col min-h-0">
-        <p className="text-sm font-semibold text-gray-800 mb-3 dark:text-white">Products</p>
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-sm font-semibold text-gray-800 dark:text-white">Products</p>
+          <p className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-300">
+            Total Products: {totalProducts}
+          </p>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 flex-1 overflow-y-auto">
-          {mockProducts.map((product) => (
-            <div
+          {isLoading && (
+            <p className="text-xs text-gray-400 col-span-2">Loading...</p>
+          )}
+          {!isLoading && products.length === 0 && (
+            <p className="text-xs text-gray-400 col-span-2">No products found</p>
+          )}
+          {products.map(({ document: product }) => (
+            <Link
               key={product.id}
+              href={`/product/${product.productSlug}`}
               className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer transition-colors group/prod border border-transparent hover:border-gray-100"
             >
               <div className="w-14 h-14 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden shrink-0">
                 <Image
-                  src={product.image}
-                  alt={product.name}
+                  src={product.thumbnailsUrl}
+                  alt={product.productName}
                   width={56}
                   height={56}
                   className="w-full h-full object-cover"
+                  unoptimized
                 />
               </div>
-              {/* Details */}
               <div className="min-w-0">
                 <p className="text-xs text-gray-700 dark:text-white font-medium truncate group-hover/prod:text-[#b8864e] transition-colors leading-snug">
-                  {product.name}
+                  {product.productName}
                 </p>
-                <p className="text-xs text-green-500 font-medium mt-0.5">{product.status}</p>
+                <p
+                  className={`text-xs font-medium mt-0.5 ${
+                    product.isStockAvailable ? "text-green-500" : "text-red-500"
+                  }`}
+                >
+                  {product.isStockAvailable ? "In Stock" : "Out of Stock"}
+                </p>
                 <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                  <span className="text-sm font-bold text-gray-800 dark:text-white">{product.price}</span>
-                  <span className="text-xs text-gray-400 line-through">{product.oldPrice}</span>
+                  <span className="text-sm font-bold text-gray-800 dark:text-white">
+                    {formatPrice(product.discountedPrice)}
+                  </span>
+                  {product.regularPrice > product.discountedPrice && (
+                    <span className="text-xs text-gray-400 line-through">
+                      {formatPrice(product.regularPrice)}
+                    </span>
+                  )}
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
 

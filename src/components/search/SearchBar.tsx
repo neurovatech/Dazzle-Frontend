@@ -59,9 +59,9 @@ export default function SearchBar() {
           fixed left-2 right-2 top-auto
           sm:absolute sm:left-0 sm:right-auto sm:w-full sm:min-w-170
           mt-2 sm:mt-0 sm:top-[calc(100%+8px)]
-          bg-white dark:bg-[#2e2b28]  rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-600 z-50
+          bg-white dark:bg-[#2e2b28]  rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-600
           max-h-[80vh] overflow-y-auto
-          transition-all duration-300 ease-in-out
+          transition-all duration-300 ease-in-out z-999
           ${
             isFocused
               ? "opacity-100 translate-y-0 pointer-events-auto"
