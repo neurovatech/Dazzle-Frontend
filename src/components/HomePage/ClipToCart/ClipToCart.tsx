@@ -349,8 +349,6 @@ function ClipToCart({
     return null; // or a friendly empty state
   }
 
-  console.log(products, "productsproductsproductsproductsproducts")
-
   return (
     <div>
       {/* Header */}

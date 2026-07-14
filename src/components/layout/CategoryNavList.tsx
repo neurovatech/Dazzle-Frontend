@@ -12,7 +12,6 @@ interface Props {
 
 export default function CategoryNavList({ categories }: Props) {
 
-  console.log(categories, "apiSubCategories");
 
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeLeft, setActiveLeft] = useState<number>(0);

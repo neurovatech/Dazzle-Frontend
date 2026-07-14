@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import Image from "next/image";
 
 interface VariantOption {
   label: string;
@@ -32,7 +33,7 @@ const ProductColorVariants: React.FC<ProductVariantsProps> = ({ groups, onChange
   return (
     <div className="">
       {groups.map((group) => (
-        <div key={group.label} className="space-y-2 flex gap-3 lg:px-5">
+        <div key={group.label} className="space-y-2 flex gap-3 lg:px-5 border-b border-[#e7e7e7] pb-5">
           <p className="text-sm font-semibold text-[#222222] pt-2.5 dark:text-white">{group.label} : </p>
           <div className="flex flex-wrap gap-2">
             {group.options.map((opt) => {
@@ -51,11 +52,15 @@ const ProductColorVariants: React.FC<ProductVariantsProps> = ({ groups, onChange
                   `}
                 >
                   {group.type === "color" && opt.image && (
-                    <img
-                      src={opt.image}
-                      alt={opt.label}
-                      className="w-7 h-7 rounded-lg object-contain bg-white border border-gray-100"
-                    />
+                    <div className="relative w-7 h-7 rounded-lg overflow-hidden bg-white border border-gray-100">
+                      <Image
+                        src={opt.image}
+                        alt={opt.label}
+                        fill
+                        sizes="28px"
+                        className="object-contain"
+                      />
+                    </div>
                   )}
                   {/* <span>{opt.label}</span> */}
                 </button>

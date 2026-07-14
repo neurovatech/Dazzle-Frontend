@@ -26,7 +26,6 @@ type ModalType =
   | "coupon";
 
 export default function CartPageCom() {
-  // Redux cart state থেকে items নেওয়া হচ্ছে
   const cartItems = useAppSelector((state) => state.cart.items);
 
   const [savedAddress, setSavedAddress] = useState<AddressData | null>(null);
@@ -65,7 +64,6 @@ export default function CartPageCom() {
     book: "Book Product",
   };
 
-  // Redux cart items থেকে subtotal calculate করা
   const baseSubtotal = cartItems.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0,
@@ -99,6 +97,7 @@ export default function CartPageCom() {
     minimumFractionDigits: 0,
     maximumFractionDigits: selectedCurrency === "BDT" ? 0 : 2,
   });
+
 
   return (
     <div className="flex flex-col flex-1 max-w-355 mx-auto">

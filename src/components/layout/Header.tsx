@@ -120,9 +120,6 @@ export default async function Header() {
   }
 
   const explorAllData = [...apiBrands, ...apiSubBrands]
-
-  console.log(apiCategories, "apiCategoriesapiCategories");
-  console.log(apiCategories, "apiSubCategories");
   
 
   return (
@@ -138,7 +135,7 @@ export default async function Header() {
       <TopBar />
       <MainNav />
       <CategoryNav categories={apiCategories} subCategories={apiSubCategories} explorAllData={explorAllData} />
-      {/* <MobileHeader categories={[...apiBrands, ...apiSubBrands]} /> */}
+      <MobileHeader categories={[...apiBrands, ...apiSubBrands]} />
     </header>
   );
 }

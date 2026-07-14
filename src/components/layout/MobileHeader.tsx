@@ -62,7 +62,6 @@ export default function MobileHeader({ categories }: Props) {
     onSelectBrand: setSelectedBrand,
   };
 
-  console.log(panelProps, "panelPropspanelPropspanelProps")
 
   return (
     <div className="md:hidden p-3" ref={menuRef}>

@@ -21,7 +21,6 @@ export default async function TermsConditions() {
       "/pages/terms-condition",
       { cache: "no-store" },
     );
-    // console.log("Terms and Conditions Page - Data fetched successfully:", res);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     const isExpectedNotFound = /not found/i.test(message);

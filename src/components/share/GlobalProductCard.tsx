@@ -211,8 +211,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
             ) : (
               <>
                 <CartIcon className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 shrink-0" />
-                <span className="hidden sm:inline">Add to Cart</span>
-                <span className="sm:hidden">Cart</span>
+                <span className="">Add to Cart</span>
               </>
             )}
           </button>

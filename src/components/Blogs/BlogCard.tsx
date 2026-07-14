@@ -38,7 +38,6 @@ const BlogCard: React.FC<{ post: BlogPost }> = ({ post }) => {
     year: "numeric",
   });
 
-  console.log(post, "postpostpostpostpost");
 
   return (
     <div className="group flex flex-col h-full rounded-xl overflow-hidden border border-gray-100 dark:border-[#1b1b1b] shadow-sm hover:shadow-md transition-shadow bg-white dark:bg-[#1b1b1b] duration-300">

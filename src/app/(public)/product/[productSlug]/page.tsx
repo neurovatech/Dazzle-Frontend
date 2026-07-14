@@ -85,8 +85,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       next: { revalidate: 3600 },
     } as RequestInit);
 
-    console.log(res, "resresresresres")
-
     if (res?.found && res?.data) {
       const p = res.data;
       return {

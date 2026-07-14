@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 import Link from "next/link";
 import Image from "next/image";
@@ -20,14 +21,13 @@ export default function MainNav() {
     ? getInitials(profileData.userFullName)
     : null;
   const { data: siteSettings } = useSiteSettings();
-  console.log(profileData, "profileData");
+
   const siteLogo = siteSettings?.siteLogo || Logo;
 
-  // Redux থেকে cart item count নেওয়া
-  const cartItems = useAppSelector((state) => state.cart.items);
-  const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
 
-  // Bounce animation state — cart-এ নতুন item যোগ হলে bounce করবে
+  const cartItems = useAppSelector((state) => state.cart.items);
+  const cartCount = cartItems.length;
+
   const [bounce, setBounce] = useState(false);
   const prevCount = useRef(cartCount);
   useEffect(() => {

@@ -170,6 +170,8 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
     if (index !== -1) setSelectedColor(index);
   };
 
+
+
   return (
     <div className="min-h-screen font-sans">
       <div className="max-w-350 mx-auto lg:px-4 px-2">
@@ -246,7 +248,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
                 ]}
                 onChange={handleVariantChange}
               />
-              {/* <ProductVariants groups={otherVariantGroups} /> */}
+              <ProductVariants groups={otherVariantGroups} />
             </div>
 
             <div className="pt-5 hidden">

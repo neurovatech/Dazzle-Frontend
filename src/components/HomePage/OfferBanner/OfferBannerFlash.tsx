@@ -30,7 +30,6 @@ export default async function OfferBannerFlash({ apiEndpoint, height }: OfferBan
       `/web-banner/${apiEndpoint}`,
       { cache: "no-store" },
     );
-    console.log("bannerRes", bannerRes);
 
     banners = Array.isArray(bannerRes?.data) ? bannerRes.data : [];
   } catch (error) {

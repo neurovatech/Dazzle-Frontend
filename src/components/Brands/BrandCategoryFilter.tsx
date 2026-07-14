@@ -86,7 +86,6 @@ export default function BrandCategoryFilter({
     router.push(qs ? `${pathname}?${qs}` : pathname);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
-  console.log(products, "productData.data")
   return (
     <div>
       {/* Product count */}

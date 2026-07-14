@@ -37,7 +37,6 @@ export const getSiteSettings = cache(async (): Promise<SiteSettings> => {
     const res = await api.get<{ data: SiteSettings }>("/site-settings", {
       cache: "no-store",
     });
-    // console.log("Fetched site settings:", res.data);
     return res.data ?? {};
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

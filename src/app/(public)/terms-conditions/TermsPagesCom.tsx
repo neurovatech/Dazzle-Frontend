@@ -5,7 +5,6 @@ import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 function TermsPagesCom() {
   const { data: siteSettings, isLoading } = useSiteSettings();
-  console.log(siteSettings, "siteSettings")
 
   if (isLoading) {
     return <div className="text-[#222] dark:text-white">Loading...</div>;

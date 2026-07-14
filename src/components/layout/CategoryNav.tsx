@@ -14,7 +14,6 @@ interface Props {
 
 export default function CategoryNav({ categories, subCategories, explorAllData }: Props) {
 
-  console.log(categories, "categoriescategoriescategories")
   const [exploreOpen, setExploreOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState(
     explorAllData && explorAllData.length > 0

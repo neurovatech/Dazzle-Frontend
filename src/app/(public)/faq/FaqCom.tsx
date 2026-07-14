@@ -144,7 +144,6 @@ export default function FaqCom() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     queryFn: () => api.get<any>("/pages/faq"),
   });
-  console.log("FAQ API Response:", data);
 
   return (
     <div className="bg-[#FFFBF6] md:bg-white dark:bg-[#2E2B28] font-sans md:p-0 p-5 mb-20">

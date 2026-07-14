@@ -29,7 +29,6 @@ export default async function OfferBanner({ apiEndpoint }: OfferBannerProps) {
       `/web-banner/${apiEndpoint}`,
       { cache: "no-store" },
     );
-    console.log("bannerRes", bannerRes);
 
     banners = Array.isArray(bannerRes?.data) ? bannerRes.data : [];
   } catch (error) {

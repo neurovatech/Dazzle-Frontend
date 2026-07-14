@@ -126,8 +126,6 @@ export default function BrandProductListClient({
   const totalCount = data?.totalCount ?? 0;
   const totalPages = data?.totalPages ?? 1;
 
-console.log(products, "productsproductsproductsproductsproductsproductsproductsproductsproductsproducts")
-
   return (
     <div>
       {/* Count + clear */}

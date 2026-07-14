@@ -48,7 +48,6 @@ async function getBlogs(){
       `/blogs?page=1&datalimit=3&isCareer=0`,
       { cache: "no-store" },
     );
-    console.log(res, "res")
     const obj = res as Record<string, unknown>;
     return {
       data: Array.isArray(obj?.data) ? (obj.data as BlogPost[]) : [],

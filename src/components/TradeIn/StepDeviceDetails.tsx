@@ -35,8 +35,6 @@ export default function StepDeviceDetails({ selection, onConditionSelect, onRemo
   const conditions  = variantDetail?.tradeInConditions ?? [];
   const attributes  = variantDetail?.tradeInAttributes ?? [];
 
-  console.log(conditions, "conditions");
-
   const formatPrice = (p: number) => "৳" + p.toLocaleString("en-IN");
 
   // Auto-open first condition

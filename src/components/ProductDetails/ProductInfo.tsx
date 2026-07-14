@@ -61,7 +61,6 @@ export default function ProductInfo({
   // Stock Status derived from inStock prop
   const stockStatus: StockStatus = inStock ? "in_stock" : "eol";
 
-  console.log(alldata, "alldata")
 
   // Redux dispatch
   const dispatch = useAppDispatch();

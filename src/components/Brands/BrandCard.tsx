@@ -27,8 +27,6 @@ function BrandCard({ brands }: { brands: Brand[] }) {
     });
   }, [brands, search, selectedLetter]);
 
-  console.log("Filtered Brands:", filteredBrands); // Debugging log
-
   return (
     <div className="w-full py-4">
       {/* Top Filter Section */}
