@@ -20,10 +20,10 @@ import {
 import { WarrantyIcon, SwapIcon, FaireIcon, StarIcon, EyeIcon } from "@/icon";
 import QuantitySelector from "./QuantitySelector";
 import GlobalModal from "@/components/share/GlobalModal";
-import { useAppDispatch } from "@/store/hooks";
+import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { addToCart } from "@/store/slices/cartSlice";
 import toast from "react-hot-toast";
-
+import { toggleWishlist } from "@/store/slices/wishlistSlice";
 type StockStatus = "in_stock" | "overselling" | "pre_order" | "eol";
 
 interface ProductInfoProps {
@@ -90,6 +90,11 @@ export default function ProductInfo({
   const [isComparing, setIsComparing] = useState(false);
   const [compareResult, setCompareResult] = useState<any>(null);
 
+  const productId = alldata?.productUuid || alldata?.uuid || alldata?.id || code || "";
+
+const wishlistItems = useAppSelector((state) => state.wishlist.items);
+const isWishlisted = wishlistItems.some((i) => i.productUuid === productId);
+
   // Pricing computations according to Stock Status
   // If Pre-order, only charge 5% booking deposit fee
   // const isPreorder = stockStatus === "pre_order";
@@ -111,6 +116,29 @@ export default function ProductInfo({
       });
     }, 1500);
   };
+
+    const handleWishlist = () => {
+  dispatch(
+    toggleWishlist({
+      productUuid: productId,
+      productName: title || "",
+      productSlug: alldata?.productSlug || "",
+      image: alldata?.thumbnailImg || alldata?.thumbnail || alldata?.image || "",
+      price: alldata?.discountedPrice || 0,
+      originalPrice: alldata?.regularPrice || 0,
+      discount: 0,
+      badge: "",
+      inStock,
+      isBestDeal: false,
+      addedAt: new Date().toISOString(),
+    })
+  );
+};
+  //  price: alldata?.discountedPrice || basePrice,
+  //       originalPrice: alldata?.regularPrice || baseOriginalPrice,
+  //       quantity: qty ?? 1,
+  //       inStock: inStock,
+  //       slug: alldata?.productSlug || "",
 
 
 
@@ -143,11 +171,9 @@ export default function ProductInfo({
           )} */}
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        {/* <div className="flex items-center gap-2 shrink-0">
           {[
-            <Heart key="1" size={16} className="text-[#B57908]" />,
-            <SwapIcon key="2" color="#B57908" width={16} height={16} />,
-            <Share2 key="3" size={16} className="text-[#B57908]" />,
+            
           ].map((Icon, i) => (
             <button
               key={i}
@@ -156,6 +182,38 @@ export default function ProductInfo({
               {Icon}
             </button>
           ))}
+        </div> */}
+        <div className="flex gap-4">
+          <button
+              onClick={handleWishlist}
+              className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full border flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 ${
+                isWishlisted
+                  ? "bg-red-50 border-red-300"
+                  : "bg-white border-gray-200 hover:border-red-300"
+              }`}
+              aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+            >
+              <Heart
+                size={16}
+                className={`transition-colors duration-200 ${
+                  isWishlisted
+                    ? "text-red-500 fill-red-500"
+                    : "text-[#B57908] fill-none"
+                }`}
+              />
+            </button>
+
+
+        <button
+              className="w-10 h-10 border border-[#EEEEEE] dark:border-gray-700 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-[#1A1A1A] transition-colors"
+            >
+              <SwapIcon key="2" color="#B57908" width={16} height={16} />
+            </button>
+        <button
+              className="w-10 h-10 border border-[#EEEEEE] dark:border-gray-700 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-[#1A1A1A] transition-colors"
+            >
+              <Share2 key="3" size={16} className="text-[#B57908]" />
+            </button>
         </div>
       </div>
 
@@ -289,7 +347,7 @@ export default function ProductInfo({
           <span className="block text-xs font-bold text-gray-500 uppercase tracking-wider">
             Minimum Booking price BDT {alldata?.minBookingPrice.toLocaleString()}
           </span>
-          <div className="flex justify-between">
+          <div className="flex flex-col md:flex-row justify-between">
             <div className="flex gap-2.5 items-center">
             <span className="text-[28px] font-extrabold text-[#B57908] dark:text-[#D4A97A]">
               BDT {alldata?.discountedPrice.toLocaleString()}
@@ -302,7 +360,7 @@ export default function ProductInfo({
             </span>
           </div>
 
-          <div className="flex items-center gap-3 mt-3 lg:mt-0">
+          <div className="flex items-center gap-3 mt-3 lg:mt-0 mb-3 md:mb-0">
             <span className="font-bold text-gray-700 dark:text-gray-300">
               Quantity:
             </span>
@@ -313,7 +371,7 @@ export default function ProductInfo({
           </div>
           </div>
           {/* Add to Cart Button */}
-          <div className="mt-4">
+          {/* <div className="mt-4">
             <button
               onClick={handleAddToCart}
               className="flex items-center gap-2 bg-[#B57908] hover:bg-[#9a6507] active:scale-95 text-white font-bold px-6 py-3 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg"
@@ -321,7 +379,7 @@ export default function ProductInfo({
               <ShoppingCart size={18} />
               Add to Cart
             </button>
-          </div>
+          </div> */}
           {/* {isPreorder && (
             <span className="block text-xs text-gray-500">
               Remaining BDT{Math.round(basePrice * 0.95).toLocaleString()} payable

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 
 interface Badge {
@@ -6,7 +7,7 @@ interface Badge {
 }
 
 interface ProductBadgesProps {
-  badges: Badge[];
+  badges: any;
 }
 
 const colorMap: Record<Badge["color"], string> = {
@@ -19,10 +20,10 @@ const colorMap: Record<Badge["color"], string> = {
 const ProductBadges: React.FC<ProductBadgesProps> = ({ badges }) => {
   return (
     <div className="flex flex-wrap gap-2 justify-between ">
-      {badges.map((badge, i) => (
+      {badges.map((badge:any, i:number) => (
         <span
           key={i}
-          className={`text-[11px] font-bold px-2.5 py-1 rounded-full tracking-wide ${colorMap[badge.color]}`}
+          className={`text-[11px] font-bold px-2.5 py-1 rounded-full tracking-wide`}
         >
           {badge.label}
         </span>

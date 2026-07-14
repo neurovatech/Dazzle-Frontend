@@ -215,7 +215,13 @@ const ProductCard: React.FC<ProductCardProps> = ({
               </>
             )}
           </button>
-          <ProductQuicView />
+          <ProductQuicView
+              slug={slug}
+              productUuid={itemId}
+              title={title}
+              price={price}
+              image={image}
+            />
         </div>
       </div>
     </div>

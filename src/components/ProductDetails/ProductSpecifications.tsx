@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import React, { useState } from "react";
 import { ChevronUp, ChevronDown } from "lucide-react";
@@ -15,7 +16,7 @@ interface SpecGroup {
 
 interface ProductSpecificationsProps {
   groups: SpecGroup[];
-  description?: string;
+  description?: any;
 }
 
 const ProductSpecifications: React.FC<ProductSpecificationsProps> = ({ groups: propGroups, description }) => {

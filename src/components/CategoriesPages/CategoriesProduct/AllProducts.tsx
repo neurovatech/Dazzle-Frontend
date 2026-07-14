@@ -225,6 +225,7 @@ function AllProducts({
               return (
                 <ProductCard
                   key={product.productUuid}
+                  productUuid={product.productUuid}
                   image={imgSrc}
                   title={product.productName}
                   price={price}

@@ -17,6 +17,7 @@ import GlobalTabs from "@/components/share/GlobalTabs";
 import Breadcrumb from "@/components/share/Breadcrumb";
 import MarqueeBulletinBar from "@/components/HomePage/MarqueeBulletinBar";
 import StickyPurchaseBar from "./StickyPurchaseBar";
+import PriceAvailability from "./PriceAvailability";
 import type { ProductApiData } from "@/app/(public)/product/[productSlug]/page";
 
 // ── Static fallback images ──────────────────────────────────────────
@@ -140,10 +141,11 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
 
   // ── Specs tabs from API ────────────────────────────────────────
   const specGroups = product?.specifications ?? [];
+  const productData:any = product?.description ?? [];
   const tabsData = [
     {
       label: "Specifications",
-      content: <ProductSpecifications groups={specGroups} />,
+      content: <ProductSpecifications  groups={specGroups} description={product?.description}  />,
     },
   ];
 
@@ -169,6 +171,8 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
     const index = colorOptions.findIndex((opt:any) => opt.value === colorValue);
     if (index !== -1) setSelectedColor(index);
   };
+
+
 
 
 
@@ -286,7 +290,10 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
             </div>
 
             <div className="">
-              <CheckAvailability />
+              <CheckAvailability product={product} />
+            </div>
+            <div className="">
+              <PriceAvailability product={product} />
             </div>
 
 

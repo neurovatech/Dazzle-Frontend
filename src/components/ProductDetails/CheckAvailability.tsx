@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import React, { useState } from "react";
 import { CheckHome } from "@/icon";
@@ -26,7 +27,7 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
   return R * c; // Distance in km
 }
 
-export default function CheckAvailability() {
+export default function CheckAvailability({product}: any) {
   const [isOpen, setIsOpen] = useState(false);
   const [userCoords, setUserCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [isLocating, setIsLocating] = useState(false);
@@ -85,10 +86,12 @@ export default function CheckAvailability() {
     ""
   );
 
+
+
   return (
     <div className="lg:flex gap-3 my-6">
       {/* Check Availability Button */}
-      <button
+      {/* <button
         onClick={() => setIsOpen(true)}
         className="flex-1 w-full mb-4 lg:mb-0 flex items-center justify-between gap-2 bg-linear-to-r from-orange-600 to-orange-500 text-white font-semibold text-sm px-4 py-3 rounded-xl shadow-sm hover:opacity-90 transition-opacity cursor-pointer"
       >
@@ -97,6 +100,31 @@ export default function CheckAvailability() {
             <CheckHome />
           </span>
           <span>Check Availability (Branch stock)</span>
+        </div>
+
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-4 h-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2.5}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
+      </button> */}
+      <button
+        className="flex-1 w-full mb-4 lg:mb-0 flex items-center justify-between gap-2 bg-linear-to-r from-orange-600 to-orange-500 text-white font-semibold text-sm px-4 py-3 rounded-xl shadow-sm hover:opacity-90 transition-opacity cursor-pointer"
+      >
+        <div className="flex items-center gap-2">
+          <span className="bg-white rounded-lg p-1.5">
+            <CheckHome />
+          </span>
+          <div className="flex flex-col items-start">
+            <span>Minimum Booking</span>
+            <span> {product?.minBookingPrice} BDT</span>
+          </div>
+
         </div>
 
         <svg
@@ -132,7 +160,10 @@ export default function CheckAvailability() {
               />
             </svg>
           </span>
-          <span>Exchange</span>
+          <div className="flex flex-col items-start">
+            <span>Purchase Points</span>
+            <span> {product?.purchasePoints} Points</span>
+          </div>
         </div>
         <svg
           xmlns="http://www.w3.org/2000/svg"

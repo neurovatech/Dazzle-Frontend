@@ -142,7 +142,9 @@ export default function StickyPurchaseBar({
             <div className="flex-1" />
 
             {/* Quantity — controlled by shared parent state */}
-            <QuantitySelector value={qty} onChange={(val) => onQtyChange?.(val)} />
+            <div className="hidden md:block">
+              <QuantitySelector value={qty} onChange={(val) => onQtyChange?.(val)} />
+            </div>
 
             <button
               onClick={handleAddToCart}

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 import React, { useState, useEffect } from "react";
 import { Minus, Plus } from "lucide-react";
@@ -49,7 +50,7 @@ const QuantitySelector: React.FC<QuantitySelectorProps> = ({
         <Minus size={14} className="dark:text-black" />
       </button>
 
-      <div className="w-10 h-9 flex items-center justify-center text-sm font-bold text-gray-800 select-none">
+      <div className="w-10 h-9 flex items-center justify-center text-sm font-bold text-gray-800 select-none ">
         {qty}
       </div>
 

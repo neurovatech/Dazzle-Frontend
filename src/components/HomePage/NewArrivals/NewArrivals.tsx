@@ -72,6 +72,8 @@ function NewArrivals({
         {products.map((product, i) => (
           <SwiperSlide key={i}>
             <ProductCard
+              productUuid={product.uuid}
+              slug={product.slug}
               title={product.title}
               price={product.price}
               originalPrice={product.originalPrice}

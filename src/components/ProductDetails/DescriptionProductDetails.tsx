@@ -75,10 +75,51 @@ const DescriptionProductDetails: React.FC<DescriptionProps> = ({ description }) 
       {open && (
         <div className="flex flex-col gap-4">
           {description ? (
-            <div 
-              className="prose dark:prose-invert max-w-none text-sm text-gray-800 dark:text-gray-205 p-5 bg-[#F7F7F7] dark:bg-[#1a1613] rounded-2xl border border-gray-200 dark:border-[#3a2f28] leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: description }}
-            />
+            <div
+  className="
+    prose dark:prose-invert max-w-none text-sm 
+    text-gray-800 dark:text-gray-100 
+    p-5 bg-[#F7F7F7] dark:bg-[#1a1613] 
+    rounded-2xl border border-gray-200 dark:border-[#3a2f28] 
+    leading-relaxed
+
+    [&_h1]:text-gray-900 dark:[&_h1]:text-white!
+    [&_h2]:text-gray-900 dark:[&_h2]:text-white!
+    [&_h3]:text-gray-800 dark:[&_h3]:!text-white
+    [&_h4]:text-gray-800 dark:[&_h4]:!text-white
+    [&_h5]:text-gray-800 dark:[&_h5]:!text-white
+    [&_h6]:text-gray-800 dark:[&_h6]:text-white!
+
+    [&_p]:text-gray-700 dark:[&_p]:!text-gray-200
+    [&_span]:dark:!text-gray-200
+    [&_div]:dark:!text-gray-200
+
+    [&_li]:text-gray-700 dark:[&_li]:!text-gray-200
+    [&_ul]:text-gray-700 dark:[&_ul]:!text-gray-200
+    [&_ol]:text-gray-700 dark:[&_ol]:!text-gray-200
+    [&_li::marker]:text-gray-500 dark:[&_li::marker]:!text-gray-200
+
+    [&_strong]:text-gray-900 dark:[&_strong]:!text-white
+    [&_b]:text-gray-900 dark:[&_b]:!text-white
+    [&_em]:text-gray-700 dark:[&_em]:!text-gray-200
+    [&_i]:text-gray-700 dark:[&_i]:!text-gray-200
+
+    [&_a]:text-blue-600 dark:[&_a]:!text-[#D4A97A] dark:[&_a]:underline
+
+    [&_blockquote]:text-gray-700 dark:[&_blockquote]:!text-gray-200
+    [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 dark:[&_blockquote]:border-gray-500
+
+    [&_table]:w-full [&_table]:border-collapse [&_table]:text-sm
+    [&_th]:border [&_th]:border-gray-200 [&_th]:p-3 [&_th]:bg-gray-100 [&_th]:text-left [&_th]:!text-gray-900
+    [&_td]:border [&_td]:border-gray-200 [&_td]:p-3 [&_td]:!text-gray-700
+
+    [&_code]:text-gray-800 dark:[&_code]:!text-gray-200
+    [&_pre]:text-gray-800 dark:[&_pre]:!text-gray-200
+
+    overflow-x-auto
+  "
+  dangerouslySetInnerHTML={{ __html: description }}
+/>
           ) : (
             <>
               <Image

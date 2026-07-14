@@ -70,9 +70,7 @@ export default function MobileHeader({ categories }: Props) {
         <Link href="/" className="shrink-0 mr-2">
           <div className="text-3xl flex font-black text-white tracking-tighter leading-none">
             <Image src="https://dazzle.sgp1.cdn.digitaloceanspaces.com/site/header-logo-white.svg" width={130} height={30} alt="Dazzle logo" />
-            <sup className="text-[10px] font-normal align-super ml-0.5 text-white">
-              ™
-            </sup>
+
           </div>
         </Link>
 

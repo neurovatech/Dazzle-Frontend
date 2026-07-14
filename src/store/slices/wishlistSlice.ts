@@ -9,10 +9,10 @@ export interface WishlistItem {
   image: string;
   price: number;
   originalPrice: number;
-  discount: number;
-  badge: string;
+  discount?: number;
+  badge?: string;
   inStock: boolean;
-  isBestDeal: boolean;
+  isBestDeal?: boolean;
   addedAt: string; // ISO date
 }
 
