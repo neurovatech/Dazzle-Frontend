@@ -78,7 +78,6 @@ export default function SearchBar() {
         {hasQuery && (
           <ProductSearches
             query={query}
-            onSelectCategory={(cat) => setQuery(cat)}
           />
         )}
       </div>
