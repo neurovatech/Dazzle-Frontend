@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { ChevronLeft } from "lucide-react";
+import { addRecentSearch } from "./RecentSearches";
 
 // ── Search API types (keyword search — /product/search) ────────────
 interface ProductDocument {
@@ -77,6 +78,7 @@ function ProductRow({ product }: { product: NormalizedProduct }) {
   return (
     <Link
       href={`/product/${product.productSlug}`}
+      onClick={() => addRecentSearch(product.productName)}
       className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer transition-colors group/prod border border-transparent hover:border-gray-100"
     >
       <div className="w-14 h-14 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden shrink-0">

@@ -1,7 +1,7 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import { SearchIcon } from "@/icon";
-import RecentSearches from "./RecentSearches";
+import RecentSearches, { addRecentSearch } from "./RecentSearches";
 import ProductSearches from "./ProductSearches";
 
 export default function SearchBar() {
@@ -24,6 +24,19 @@ export default function SearchBar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Save to recent searches when user presses Enter
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && query.trim()) {
+      addRecentSearch(query.trim());
+    }
+  };
+
+  // When user picks a recent/trending term, save it and set as query
+  const handleSelectTerm = (term: string) => {
+    addRecentSearch(term);
+    setQuery(term);
+  };
+
   return (
     <div ref={wrapperRef} className="flex-1 relative">
       {/* ── Input ── */}
@@ -36,6 +49,7 @@ export default function SearchBar() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setIsFocused(true)}
+          onKeyDown={handleKeyDown}
           placeholder="Search for the item"
           className="w-full bg-background dark:text-[#ffffff] text-gray-800 placeholder-gray-400 rounded-[10px] px-5 pl-11 py-2.5 text-sm outline-none border border-transparent focus:border-[#D4A97A]/50 transition-all duration-200 lg:h-13.5 h-10"
         />
@@ -50,16 +64,12 @@ export default function SearchBar() {
       </div>
 
       {/* ── Dropdown Panel ── */}
-      {/*
-        Mobile  : fixed to viewport edges (left-0 right-0), max-h with overflow-y-auto
-        Desktop : absolute, anchored to the input, min-w matches content
-      */}
       <div
         className={`
           fixed left-2 right-2 top-auto
-          sm:absolute sm:left-0 sm:right-auto sm:w-full sm:min-w-170
+          sm:absolute sm:left-0 sm:right-auto sm:w-full sm:min-w-205
           mt-2 sm:mt-0 sm:top-[calc(100%+8px)]
-          bg-white dark:bg-[#2e2b28]  rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-600
+          bg-white dark:bg-[#2e2b28] rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-600
           max-h-[80vh] overflow-y-auto
           transition-all duration-300 ease-in-out z-999
           ${
@@ -69,16 +79,14 @@ export default function SearchBar() {
           }
         `}
       >
-        {/* STATE 1 — no query: Recent + Trending + Liked Brands */}
+        {/* STATE 1 — no query: Recent Searches + Trending */}
         {!hasQuery && (
-          <RecentSearches onSelectTerm={(term) => setQuery(term)} />
+          <RecentSearches onSelectTerm={handleSelectTerm} />
         )}
 
         {/* STATE 2 — has query: Products + Categories */}
         {hasQuery && (
-          <ProductSearches
-            query={query}
-          />
+          <ProductSearches query={query} />
         )}
       </div>
     </div>
