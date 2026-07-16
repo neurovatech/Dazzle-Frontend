@@ -1,11 +1,12 @@
 "use client";
-import React, { useState } from "react";
+import React from "react";
 import Image from "next/image";
 
 interface VariantOption {
   label: string;
   value: string;
   image?: string;
+  disabled?: boolean;
 }
 
 interface VariantGroup {
@@ -14,55 +15,75 @@ interface VariantGroup {
   options: VariantOption[];
 }
 
-interface ProductVariantsProps {
+interface ProductColorVariantsProps {
   groups: VariantGroup[];
+  // Parent-controlled selected values
+  selectedValues?: Record<string, string>;
   onChange?: (selected: Record<string, string>) => void;
 }
 
-const ProductColorVariants: React.FC<ProductVariantsProps> = ({ groups, onChange }) => {
-  const [selected, setSelected] = useState<Record<string, string>>(() =>
-    Object.fromEntries(groups.map((g) => [g.label, g.options[0]?.value ?? ""]))
-  );
-
+const ProductColorVariants: React.FC<ProductColorVariantsProps> = ({
+  groups,
+  selectedValues = {},
+  onChange,
+}) => {
   const handleSelect = (label: string, value: string) => {
-    const next = { ...selected, [label]: value };
-    setSelected(next);
+    const next = { ...selectedValues, [label]: value };
     onChange?.(next);
   };
 
   return (
-    <div className="">
+    <div>
       {groups.map((group) => (
-        <div key={group.label} className="space-y-2 flex gap-3 lg:px-5 border-b border-[#e7e7e7] pb-5">
-          <p className="text-sm font-semibold text-[#222222] pt-2.5 dark:text-white">{group.label} : </p>
-          <div className="flex flex-wrap gap-2">
+        <div
+          key={group.label}
+          className="flex gap-3 lg:px-5 border-b border-[#e7e7e7] dark:border-[#4a3f36] pb-5"
+        >
+          <p className="text-sm font-semibold text-[#222222] dark:text-white pt-2.5 shrink-0">
+            {group.label} :
+          </p>
+          <div className="flex flex-wrap gap-2 pt-1">
             {group.options.map((opt) => {
-              const isActive = selected[group.label] === opt.value;
+              const isActive = selectedValues[group.label] === opt.value;
+              const isDisabled = opt.disabled === true;
               return (
                 <button
                   key={opt.value}
-                  onClick={() => handleSelect(group.label, opt.value)}
-                  className={`flex items-center gap-1.5 transition-all duration-150 rounded-xl border-2 font-medium text-sm
+                  onClick={() => !isDisabled && handleSelect(group.label, opt.value)}
+                  disabled={isDisabled}
+                  title={opt.label}
+                  className={`flex flex-col items-center gap-1 transition-all duration-150 rounded-xl border-2 p-1.5 font-medium text-xs
                     ${
                       isActive
-                        ? "border-orange-500 bg-orange-50 text-orange-700 shadow-sm"
-                        : "border-gray-200 dark:border-[#4a3f36] bg-white text-gray-600 hover:border-gray-400"
+                        ? "border-orange-500 bg-orange-50 shadow-sm"
+                        : isDisabled
+                          ? "border-gray-100 bg-gray-50 opacity-40 cursor-not-allowed"
+                          : "border-gray-200 dark:border-[#4a3f36] bg-white hover:border-gray-400"
                     }
-                    ${group.type === "color" ? "p-1.5" : "px-3 py-1.5"}
                   `}
                 >
-                  {group.type === "color" && opt.image && (
-                    <div className="relative w-7 h-7 rounded-lg overflow-hidden bg-white border border-gray-100">
+                  {/* Color thumbnail image */}
+                  {opt.image && (
+                    <div className="relative w-8 h-8 rounded-lg overflow-hidden bg-white border border-gray-100">
                       <Image
                         src={opt.image}
                         alt={opt.label}
                         fill
-                        sizes="28px"
+                        sizes="32px"
                         className="object-contain"
                       />
                     </div>
                   )}
-                  {/* <span>{opt.label}</span> */}
+                  {/* Color name label */}
+                  <span
+                    className={`text-[10px] leading-tight max-w-[56px] text-center truncate ${
+                      isActive
+                        ? "text-orange-700"
+                        : "text-gray-500 dark:text-gray-300"
+                    }`}
+                  >
+                    {opt.label}
+                  </span>
                 </button>
               );
             })}

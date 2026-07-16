@@ -81,46 +81,110 @@ interface ConsolidatedVariant {
 }
 
 // ── consolidateVariants ─────────────────────────────────────────────
+// API structure: প্রতিটি variantUuid এর জন্য multiple rows আসে,
+// একটি row = একটি attributeGroup (Color, Storage, Region/Variant)
+// সব rows merge করে একটি complete variant তৈরি করতে হয়
 function consolidateVariants(rows: VariantRow[]): {
   groups: string[];
   variants: ConsolidatedVariant[];
 } {
-  const purchasableRows = rows.filter(
+  if (!rows || rows.length === 0) return { groups: [], variants: [] };
+
+  // Step 1: active rows শুধু নাও (isTba=false, isActive=true)
+  const activeRows = rows.filter(
     (row) =>
       row.isActive &&
       !row.isTba &&
-      row.retailUnitSale > 0 &&
-      row.attributeGroup &&
-      row.attribute
+      row.attributeGroup?.trim() &&
+      row.attribute?.trim()
   );
 
+  // Step 2: unique group names collect করো (order preserved)
   const groupNames = new Map<string, string>();
-  purchasableRows.forEach((row) => {
+  activeRows.forEach((row) => {
     const key = row.attributeGroup.trim().toLowerCase();
     if (!groupNames.has(key)) groupNames.set(key, row.attributeGroup.trim());
   });
   const groups = [...groupNames.values()];
 
+  // Step 3: UUID per group — price/name/thumbnail আছে এমন rows থেকে নাও
+  // প্রতিটি UUID এর জন্য একটি ConsolidatedVariant তৈরি করো
   const variantMap = new Map<string, ConsolidatedVariant>();
-  purchasableRows.forEach((row) => {
-    const existing = variantMap.get(row.variantUuid) ?? {
-      id: row.variantUuid,
-      name: row.variantName,
-      mrp: row.mrpUnitSale,
-      price: row.retailUnitSale,
-      thumbnailUrl: row.thumbnailUrl ?? "",
-      attributes: {} as Record<string, string>,
-    };
-    const group = groupNames.get(row.attributeGroup.trim().toLowerCase())!;
-    existing.attributes[group] = row.attribute;
-    variantMap.set(row.variantUuid, existing);
+
+  activeRows.forEach((row) => {
+    const uuid = row.variantUuid;
+    if (!variantMap.has(uuid)) {
+      variantMap.set(uuid, {
+        id: uuid,
+        name: row.variantName ?? "",
+        mrp: 0,
+        price: 0,
+        thumbnailUrl: "",
+        attributes: {},
+      });
+    }
+
+    const existing = variantMap.get(uuid)!;
+    const groupKey = groupNames.get(row.attributeGroup.trim().toLowerCase())!;
+
+    // attribute set করো
+    existing.attributes[groupKey] = row.attribute.trim();
+
+    // price — যেকোনো row থেকে নাও যেখানে price > 0
+    if (row.retailUnitSale > 0 && existing.price === 0) {
+      existing.price = row.retailUnitSale;
+      existing.mrp = row.mrpUnitSale;
+    }
+
+    // thumbnail — যেকোনো row থেকে নাও যেখানে আছে
+    if (row.thumbnailUrl?.trim() && !existing.thumbnailUrl) {
+      existing.thumbnailUrl = row.thumbnailUrl.trim();
+    }
+
+    // variantName — blank হলে skip করো
+    if (row.variantName?.trim() && !existing.name) {
+      existing.name = row.variantName.trim();
+    }
   });
 
-  const variants = [...variantMap.values()].filter((v) =>
-    groups.every((g) => v.attributes[g])
+  // Step 4: সব groups এর attribute আছে এমন variants রাখো
+  // price = 0 হলেও রাখো — কিছু UUID এর price অন্য row এ থাকতে পারে
+  const variants = [...variantMap.values()].filter(
+    (v) => groups.every((g) => v.attributes[g]?.trim())
   );
 
-  return { groups, variants };
+  // Step 5: price = 0 এমন variants এর জন্য
+  // একই Color+Region combination এর অন্য variant থেকে price নাও
+  variants.forEach((v) => {
+    if (v.price === 0) {
+      // same color এবং region আছে এমন অন্য variant থেকে price নাও
+      const nonStorageGroups = groups.filter(
+        (g) => g.toLowerCase() !== "storage"
+      );
+      const donor = variants.find(
+        (other) =>
+          other.id !== v.id &&
+          other.price > 0 &&
+          nonStorageGroups.every((g) => other.attributes[g] === v.attributes[g])
+      );
+      if (donor) {
+        v.price = donor.price;
+        v.mrp = donor.mrp;
+      }
+    }
+  });
+
+  // Step 6: এখনো price = 0 হলে বাদ দাও
+  const finalVariants = variants.filter((v) => v.price > 0);
+
+  // Step 7: variantName blank হলে attributes থেকে build করো
+  finalVariants.forEach((v) => {
+    if (!v.name) {
+      v.name = groups.map((g) => v.attributes[g]).join(" ");
+    }
+  });
+
+  return { groups, variants: finalVariants };
 }
 
 // ── Component ───────────────────────────────────────────────────────
@@ -141,6 +205,8 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
     enabled: !!product?.productUuid,
     staleTime: 10 * 60 * 1000,
   });
+
+  console.log(variantApiData, "variantApiDatavariantApiDatavariantApiData")
 
   // ── Consolidate ────────────────────────────────────────────────
   const { groups, variants } = useMemo(
@@ -180,13 +246,17 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
           .every(([g, val]) => v.attributes[g] === val)
     );
 
-  // ── Group options ──────────────────────────────────────────────
+  // ── Group options — filter out empty/undefined values ────────
   const groupOptions = useMemo(
     () =>
       Object.fromEntries(
         groups.map((group) => [
           group,
-          [...new Set(variants.map((v) => v.attributes[group]))],
+          [...new Set(
+            variants
+              .map((v) => v.attributes[group])
+              .filter((val): val is string => !!val && val.trim() !== "")
+          )],
         ])
       ),
     [groups, variants]
@@ -195,22 +265,32 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
   const colorGroupName = groups.find((g) => g.toLowerCase() === "color");
   const otherGroupNames = groups.filter((g) => g.toLowerCase() !== "color");
 
-  // Base images from product API
+  // ── Base images from product API ──────────────────────────────
   const baseImages: string[] =
     product?.thumbnails && product.thumbnails.length > 0
-      ? product.thumbnails.map((img) => img.mediaFileUrl || img.mediafileUrl || "")
+      ? product.thumbnails.map((img) => img.mediaFileUrl || img.mediafileUrl || "").filter(Boolean)
       : product?.thumbnailImg
         ? [product.thumbnailImg]
         : FALLBACK_IMAGES;
 
-  // Put selected variant thumbnail first
-  const images: string[] =
-    selectedVariant?.thumbnailUrl
-      ? [
-          selectedVariant.thumbnailUrl,
-          ...baseImages.filter((i) => i !== selectedVariant.thumbnailUrl),
-        ]
-      : baseImages;
+  // ── Images filtered by selected color ─────────────────────────
+  // thumbnailUrl blank হলে baseImages ব্যবহার করো
+  const images: string[] = useMemo(() => {
+    if (!colorGroupName || !selectedAttrs[colorGroupName]) return baseImages;
+
+    const selectedColorVal = selectedAttrs[colorGroupName];
+
+    // variant API তে thumbnail আছে কিনা দেখো
+    const colorVariantImages = variants
+      .filter((v) => v.attributes[colorGroupName] === selectedColorVal && v.thumbnailUrl)
+      .map((v) => v.thumbnailUrl);
+
+    const uniqueColorImages = [...new Set(colorVariantImages)];
+
+    // thumbnail পাওয়া গেলে সেগুলো দাও, না হলে baseImages
+    return uniqueColorImages.length > 0 ? uniqueColorImages : baseImages;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [colorGroupName, selectedAttrs, variants, baseImages]);
 
   // ── Color variant groups for ProductColorVariants ──────────────
   const colorVariantGroups = colorGroupName
@@ -218,12 +298,16 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
         {
           label: colorGroupName,
           type: "color" as const,
-          options: (groupOptions[colorGroupName] ?? []).map((val) => {
-            const match = variants.find((v) => v.attributes[colorGroupName] === val);
+          options: (groupOptions[colorGroupName] ?? []).map((val, idx) => {
+            // thumbnailUrl আছে এমন variant খোঁজো, না থাকলে baseImages[idx] fallback
+            const match = variants.find(
+              (v) => v.attributes[colorGroupName] === val && v.thumbnailUrl
+            );
+            const fallbackImg = baseImages[idx] || baseImages[0] || IPHONE_ORANGE.src;
             return {
               label: val,
               value: val,
-              image: match?.thumbnailUrl || images[0] || IPHONE_ORANGE.src,
+              image: match?.thumbnailUrl || fallbackImg,
               disabled: !isOptionAvailable(colorGroupName, val),
             };
           }),
@@ -287,15 +371,9 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
   const handleVariantChange = (group: string, value: string) => {
     if (!isOptionAvailable(group, value)) return;
     setSelectedAttrs((prev) => ({ ...prev, [group]: value }));
-
+    // Reset gallery to first image whenever color changes
     if (group.toLowerCase() === "color") {
-      const match = variants.find((v) => v.attributes[group] === value);
-      if (match?.thumbnailUrl) {
-        const idx = images.indexOf(match.thumbnailUrl);
-        setSelectedColor(idx >= 0 ? idx : 0);
-      } else {
-        setSelectedColor(0);
-      }
+      setSelectedColor(0);
     }
   };
 
@@ -370,6 +448,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
                 {colorVariantGroups.length > 0 && (
                   <ProductColorVariants
                     groups={colorVariantGroups}
+                    selectedValues={selectedAttrs}
                     onChange={(sel) =>
                       Object.entries(sel).forEach(([g, v]) => handleVariantChange(g, v))
                     }
