@@ -371,8 +371,43 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
         }))
       : [{ label: "0%", color: "pink" as const }];
 
-  // ── Specs tabs ─────────────────────────────────────────────────
-  const specGroups = product?.specifications ?? [];
+  // ── Fetch specifications from dedicated API ────────────────────
+  const { data: specApiData } = useQuery({
+    queryKey: ["product-specification", product?.productUuid],
+    queryFn: () =>
+      api.get<{
+        statusCode: number;
+        found: boolean;
+        data: {
+          specGroupUuid: string;
+          groupName: string;
+          groupSlug: string;
+          productSpecifications: {
+            specUuid: string;
+            specification: string;
+            specificationValue: string;
+          }[];
+        }[];
+      }>(`/product-specification/${product!.productUuid}`),
+    enabled: !!product?.productUuid,
+    staleTime: 10 * 60 * 1000,
+  });
+
+  // Map API response → ProductSpecifications props shape
+  const specGroups = useMemo(() => {
+    const apiGroups = specApiData?.data;
+    if (apiGroups && apiGroups.length > 0) {
+      return apiGroups.map((group) => ({
+        title: group.groupName,
+        items: group.productSpecifications.map((spec) => ({
+          label: spec.specification,
+          value: spec.specificationValue,
+        })),
+      }));
+    }
+    // Fallback: product API এর specifications (যদি থাকে)
+    return product?.specifications ?? [];
+  }, [specApiData, product?.specifications]);
   const tabsData = [
     {
       label: "Specifications",
