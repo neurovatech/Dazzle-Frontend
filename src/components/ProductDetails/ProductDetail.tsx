@@ -81,34 +81,62 @@ interface ConsolidatedVariant {
 }
 
 // ── consolidateVariants ─────────────────────────────────────────────
-// API structure: প্রতিটি variantUuid এর জন্য multiple rows আসে,
+// API structure: প্রতিটি variantUuid এর জন্য multiple rows আসে
 // একটি row = একটি attributeGroup (Color, Storage, Region/Variant)
-// সব rows merge করে একটি complete variant তৈরি করতে হয়
+// সমস্যা: dirty data — group name case মিলে না, duplicate/legacy UUIDs আছে
 function consolidateVariants(rows: VariantRow[]): {
   groups: string[];
   variants: ConsolidatedVariant[];
 } {
   if (!rows || rows.length === 0) return { groups: [], variants: [] };
 
-  // Step 1: active rows শুধু নাও (isTba=false, isActive=true)
-  const activeRows = rows.filter(
-    (row) =>
-      row.isActive &&
-      !row.isTba &&
-      row.attributeGroup?.trim() &&
-      row.attribute?.trim()
-  );
+  // ── Step 1: Group name normalize করো ──────────────────────────
+  // "storage" → "Storage", "region" → "Region/Variant", "region/variant" → "Region/Variant"
+  const normalizeGroup = (raw: string): string => {
+    const lower = raw.trim().toLowerCase();
+    if (lower === "color") return "Color";
+    if (lower === "storage") return "Storage";
+    if (lower.startsWith("region")) return "Region/Variant";
+    // Title case fallback
+    return raw.trim().replace(/\b\w/g, (c) => c.toUpperCase());
+  };
 
-  // Step 2: unique group names collect করো (order preserved)
-  const groupNames = new Map<string, string>();
-  activeRows.forEach((row) => {
-    const key = row.attributeGroup.trim().toLowerCase();
-    if (!groupNames.has(key)) groupNames.set(key, row.attributeGroup.trim());
+  // Attribute value normalize — "256" → "256GB" etc.
+  const normalizeAttr = (group: string, value: string): string => {
+    const v = value.trim();
+    if (group === "Storage") {
+      // "256" → "256GB", "256gb" → "256GB" ইত্যাদি
+      if (/^\d+$/.test(v)) return v + "GB";
+      return v.toUpperCase().replace(/\s+/g, "");
+    }
+    return v;
+  };
+
+  // ── Step 2: Active rows filter + normalize ─────────────────────
+  const activeRows = rows
+    .filter(
+      (row) =>
+        row.isActive &&
+        !row.isTba &&
+        row.attributeGroup?.trim() &&
+        row.attribute?.trim()
+    )
+    .map((row) => ({
+      ...row,
+      _normGroup: normalizeGroup(row.attributeGroup),
+      _normAttr: normalizeAttr(normalizeGroup(row.attributeGroup), row.attribute),
+    }));
+
+  // ── Step 3: Canonical group names (order: Color → Storage → Region/Variant)
+  const groupOrder = ["Color", "Storage", "Region/Variant"];
+  const foundGroups = new Set(activeRows.map((r) => r._normGroup));
+  const groups = groupOrder.filter((g) => foundGroups.has(g));
+  // Unknown groups append করো
+  activeRows.forEach((r) => {
+    if (!groups.includes(r._normGroup)) groups.push(r._normGroup);
   });
-  const groups = [...groupNames.values()];
 
-  // Step 3: UUID per group — price/name/thumbnail আছে এমন rows থেকে নাও
-  // প্রতিটি UUID এর জন্য একটি ConsolidatedVariant তৈরি করো
+  // ── Step 4: variantMap build করো ──────────────────────────────
   const variantMap = new Map<string, ConsolidatedVariant>();
 
   activeRows.forEach((row) => {
@@ -125,10 +153,11 @@ function consolidateVariants(rows: VariantRow[]): {
     }
 
     const existing = variantMap.get(uuid)!;
-    const groupKey = groupNames.get(row.attributeGroup.trim().toLowerCase())!;
 
-    // attribute set করো
-    existing.attributes[groupKey] = row.attribute.trim();
+    // attribute set — পরে আসা value overwrites শুধু যদি আগেরটা blank
+    if (!existing.attributes[row._normGroup]) {
+      existing.attributes[row._normGroup] = row._normAttr;
+    }
 
     // price — যেকোনো row থেকে নাও যেখানে price > 0
     if (row.retailUnitSale > 0 && existing.price === 0) {
@@ -136,51 +165,50 @@ function consolidateVariants(rows: VariantRow[]): {
       existing.mrp = row.mrpUnitSale;
     }
 
-    // thumbnail — যেকোনো row থেকে নাও যেখানে আছে
+    // thumbnail
     if (row.thumbnailUrl?.trim() && !existing.thumbnailUrl) {
       existing.thumbnailUrl = row.thumbnailUrl.trim();
     }
 
-    // variantName — blank হলে skip করো
+    // variantName
     if (row.variantName?.trim() && !existing.name) {
       existing.name = row.variantName.trim();
     }
   });
 
-  // Step 4: সব groups এর attribute আছে এমন variants রাখো
-  // price = 0 হলেও রাখো — কিছু UUID এর price অন্য row এ থাকতে পারে
-  const variants = [...variantMap.values()].filter(
-    (v) => groups.every((g) => v.attributes[g]?.trim())
+  // ── Step 5: সব defined groups এর attribute আছে এমন variants ──
+  const completeVariants = [...variantMap.values()].filter((v) =>
+    groups.every((g) => v.attributes[g]?.trim())
   );
 
-  // Step 5: price = 0 এমন variants এর জন্য
-  // একই Color+Region combination এর অন্য variant থেকে price নাও
-  variants.forEach((v) => {
-    if (v.price === 0) {
-      // same color এবং region আছে এমন অন্য variant থেকে price নাও
-      const nonStorageGroups = groups.filter(
-        (g) => g.toLowerCase() !== "storage"
-      );
-      const donor = variants.find(
-        (other) =>
-          other.id !== v.id &&
-          other.price > 0 &&
-          nonStorageGroups.every((g) => other.attributes[g] === v.attributes[g])
-      );
-      if (donor) {
-        v.price = donor.price;
-        v.mrp = donor.mrp;
-      }
+  // ── Step 6: price=0 variants এর জন্য same Color+Region donor থেকে price নাও
+  // (512GB variants এর price আলাদা হবে ভবিষ্যতে, এখন 256GB এর price দিয়ে fallback)
+  const nonStorageGroups = groups.filter((g) => g !== "Storage");
+
+  completeVariants.forEach((v) => {
+    if (v.price > 0) return;
+
+    const donor = completeVariants.find(
+      (other) =>
+        other.id !== v.id &&
+        other.price > 0 &&
+        nonStorageGroups.every(
+          (g) => other.attributes[g] === v.attributes[g]
+        )
+    );
+    if (donor) {
+      v.price = donor.price;
+      v.mrp = donor.mrp;
     }
   });
 
-  // Step 6: এখনো price = 0 হলে বাদ দাও
-  const finalVariants = variants.filter((v) => v.price > 0);
+  // ── Step 7: এখনো price=0 হলে বাদ দাও ─────────────────────────
+  const finalVariants = completeVariants.filter((v) => v.price > 0);
 
-  // Step 7: variantName blank হলে attributes থেকে build করো
+  // ── Step 8: variantName blank হলে attributes থেকে build করো ──
   finalVariants.forEach((v) => {
     if (!v.name) {
-      v.name = groups.map((g) => v.attributes[g]).join(" ");
+      v.name = groups.map((g) => v.attributes[g]).filter(Boolean).join(" ");
     }
   });
 
