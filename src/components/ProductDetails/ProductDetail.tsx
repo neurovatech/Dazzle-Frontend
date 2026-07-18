@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
@@ -263,7 +264,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
   // ── Base images from product API ──────────────────────────────
   const baseImages: string[] =
     product?.thumbnails && product.thumbnails.length > 0
-      ? product.thumbnails.map((img) => img.mediaFileUrl || img.mediafileUrl || "").filter(Boolean)
+      ? product.thumbnails.map((img:any) => img.mediaFileUrl || img.mediafileUrl || "").filter(Boolean)
       : product?.thumbnailImg
         ? [product.thumbnailImg]
         : [];
