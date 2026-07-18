@@ -405,6 +405,9 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
     }
   };
 
+
+  console.log(product, "productproductproduct")
+
   return (
     <div className="min-h-screen font-sans">
       <div className="max-w-350 mx-auto lg:px-4 px-2">
@@ -588,7 +591,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
               <h2 className="text-lg font-bold text-gray-800 dark:text-white px-4 mb-3">
                 Related Products
               </h2>
-              <RelatedProductSectionCom categorySlug={product.categorySlug} />
+              <RelatedProductSectionCom categorySlug={product.brandSlug} />
             </div>
           )}
 

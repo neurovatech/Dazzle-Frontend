@@ -192,26 +192,31 @@ export default function CategoryNavList({ categories }: Props) {
                     onMouseEnter={(e) => handleMouseEnter(e, item.id)}
                     onMouseLeave={handleMouseLeave}
                   >
-                    <button className="flex dark:bg-light_bg items-center gap-1 text-sm text-primary font-bold hover:text-[#222222] dark:hover:text-[#ba975f] whitespace-nowrap px-3 py-1.5 rounded-lg transition-colors duration-150">
-                      {item.name}
-                      {hasSubmenu && (
-                        <svg
-                          className={`w-3.5 h-3.5 transition-transform duration-300 ease-in-out ${
-                            isActive ? "rotate-180" : "rotate-0"
-                          }`}
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M19 9l-7 7-7-7"
-                          />
-                        </svg>
-                      )}
-                    </button>
+                    
+  <Link
+    href={`/categories/${item.slug}`}
+    prefetch={false}
+    className="flex dark:bg-light_bg items-center gap-1 text-sm text-primary font-bold hover:text-[#222222] dark:hover:text-[#ba975f] whitespace-nowrap px-3 py-1.5 rounded-lg transition-colors duration-150 no-underline"
+  >
+    {item.name}
+    {hasSubmenu && (
+      <svg
+        className={`w-3.5 h-3.5 transition-transform duration-300 ease-in-out ${
+          isActive ? "rotate-180" : "rotate-0"
+        }`}
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M19 9l-7 7-7-7"
+        />
+      </svg>
+    )}
+  </Link>
                   </li>
                 );
               })}

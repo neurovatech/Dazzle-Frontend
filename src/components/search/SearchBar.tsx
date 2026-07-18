@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { SearchIcon } from "@/icon";
 import RecentSearches, { addRecentSearch } from "./RecentSearches";
 import ProductSearches from "./ProductSearches";
@@ -8,6 +9,7 @@ export default function SearchBar() {
   const [isFocused, setIsFocused] = useState(false);
   const [query, setQuery] = useState("");
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   const hasQuery = query.trim().length > 0;
 
@@ -24,17 +26,22 @@ export default function SearchBar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Save to recent searches when user presses Enter
+  // Navigate to search page on Enter
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && query.trim()) {
-      addRecentSearch(query.trim());
+      const term = query.trim();
+      addRecentSearch(term);
+      setIsFocused(false);
+      router.push(`/search?q=${encodeURIComponent(term)}`);
     }
   };
 
-  // When user picks a recent/trending term, save it and set as query
+  // When user picks a recent/trending term → navigate to search page
   const handleSelectTerm = (term: string) => {
     addRecentSearch(term);
     setQuery(term);
+    setIsFocused(false);
+    router.push(`/search?q=${encodeURIComponent(term)}`);
   };
 
   return (
@@ -79,12 +86,9 @@ export default function SearchBar() {
           }
         `}
       >
-        {/* STATE 1 — no query: Recent Searches + Trending */}
         {!hasQuery && (
           <RecentSearches onSelectTerm={handleSelectTerm} />
         )}
-
-        {/* STATE 2 — has query: Products + Categories */}
         {hasQuery && (
           <ProductSearches query={query} />
         )}

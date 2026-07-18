@@ -356,9 +356,9 @@ export default function ExplorePanel({
 
   // ── Desktop ───────────────────────────────────────────────────────────────
   return (
-    <div className="absolute z-999 top-full left-0 mt-2 bg-white dark:bg-[#393430] border border-gray-100 rounded-2xl shadow-2xl flex overflow-hidden w-[580px] max-h-[420px]">
+    <div className="absolute z-999 top-full left-0 mt-2 bg-white dark:bg-[#393430] border border-gray-100 dark:border-[#222] rounded-2xl shadow-2xl flex overflow-hidden w-[580px] max-h-[420px]">
       {/* Category sidebar */}
-      <div className="w-53.75 shrink-0 border-r border-gray-100 overflow-y-auto p-2">
+      <div className="w-53.75 shrink-0 border-r border-gray-100 dark:border-[#222] overflow-y-auto p-2">
         {normalizedCategories.map((cat) => (
           <button
             key={cat.uuid || cat.label}
@@ -399,14 +399,14 @@ export default function ExplorePanel({
                 onSelectBrand(brand.label);
                 onClose();
               }}
-              className="flex flex-col items-center justify-center gap-2 py-4 px-2 rounded-xl border border-gray-200 hover:border-[#D4A97A]"
+              className="flex flex-col items-center justify-center gap-2 py-4 px-2 rounded-xl border bg-white border-gray-200 hover:border-[#D4A97A]"
             >
               <BrandLogo
                 logo={brand.logo}
                 label={brand.label}
                 className="h-8 w-auto object-contain"
               />
-              <span className="text-[11px] text-black dark:text-gray-300 font-medium">
+              <span className="text-[11px] text-black   font-medium">
                 {brand.label}
               </span>
             </Link>

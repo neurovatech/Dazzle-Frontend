@@ -62,7 +62,7 @@ export default function RelatedProductSectionCom({ categorySlug }: RelatedProduc
     queryKey: ["related-products", categorySlug],
     queryFn: () =>
       api.get<ProductListResponse>(
-        `/products?page=1&limit=8&categorySlug=${categorySlug ?? ""}`
+        `/products?brandSlug=${categorySlug ?? ""}`
       ),
     enabled: !!categorySlug,
     staleTime: 5 * 60 * 1000,
