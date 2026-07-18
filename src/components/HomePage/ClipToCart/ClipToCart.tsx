@@ -184,7 +184,7 @@ function ReelModal({
       </button>
 
       <div
-        className="relative w-full max-w-[600px] mx-4 md:mx-0 rounded-2xl overflow-hidden shadow-2xl"
+        className="relative w-full max-w-150 mx-4 md:mx-0 rounded-2xl overflow-hidden shadow-2xl"
         style={{ height: "min(85vh, 720px)" }}
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
@@ -202,10 +202,13 @@ function ReelModal({
             poster={product.clipThumbnail || product.image}
           />
         ) : (
-          <img
+          <Image
             src={product.image}
             alt={product.title}
-            className="w-full h-full object-cover"
+            fill
+            sizes="(max-width: 768px) 100vw, 600px"
+            className="object-cover"
+            priority
           />
         )}
 
@@ -238,6 +241,16 @@ function ReelModal({
         </div>
 
         <div className="absolute bottom-0 left-0 right-0 p-5">
+          <div className="relative w-[60px] h-[60px] mb-[10px] rounded-[2px] overflow-hidden">
+  <Image
+    src={product.image}
+    alt={product.title}
+    fill
+    sizes="60px"
+    className="object-cover"
+  />
+</div>
+
           <p className="text-white/50 text-xs mb-1 font-medium tracking-widest uppercase">
             {currentIndex + 1} / {products.length}
           </p>
@@ -319,6 +332,8 @@ function ClipToCart({
       regularPrice: item.regularPrice,
       discountedPrice: item.discountedPrice,
     })) ?? [];
+
+  console.log(products, "productsproductsproducts");
 
   const handleOpenModal = (index: number) => {
     setSelectedIndex(index);
@@ -433,7 +448,7 @@ function ClipToCart({
                   <div className="mt-1 flex items-center gap-2">
                     <span className="text-sm font-bold text-[#CB843B]">
                       {formatPrice(
-                        product.discountedPrice ?? product.regularPrice
+                        product.discountedPrice ?? product.regularPrice,
                       )}
                     </span>
                     {hasDiscount && (
