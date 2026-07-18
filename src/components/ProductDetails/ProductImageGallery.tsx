@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 import React, { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
@@ -63,7 +64,6 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
     return () => window.removeEventListener("keydown", handler);
   }, [lightboxOpen, lightboxPrev, lightboxNext]);
 
-  // Lightbox এ thumbnail click করলে main selected ও sync করো
   const handleLightboxThumbClick = (i: number) => {
     setLightboxIndex(i);
     handleSelect(i);
@@ -81,13 +81,13 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
           onClick={() => openLightbox(selected)}
         >
           {badges && (
-            <div className="absolute top-3 z-10 flex flex-col gap-1.5 w-full justify-between">
-              {badges}
+            <div className="absolute top-3 z-10 left-0 flex flex-col gap-1.5 justify-start  bg-[#ff7575] text-white text-[9px] sm:text-xs font-bold px-1.5 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-md">
+              {badges} %
             </div>
           )}
 
           {/* Zoom hint overlay */}
-          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-200 z-10 rounded-2xl flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/0  transition-colors duration-200 z-10 rounded-2xl flex items-center justify-center">
             <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-white/80 dark:bg-black/50 rounded-full p-2 shadow">
               <ZoomIn size={20} className="text-gray-600 dark:text-gray-300" />
             </div>

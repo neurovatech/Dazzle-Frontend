@@ -31,7 +31,7 @@ const ProductVariants: React.FC<ProductVariantsProps> = ({
       {groups.map((group) => (
         <div
           key={group.label}
-          className="space-y-2 flex gap-3 my-5 lg:px-5 pt-[10px] dark:border-[#4a3f36]"
+          className="space-y-2 flex gap-3 my-3 lg:px-5 pt-[10px] dark:border-[#4a3f36]"
         >
           <p className="text-sm font-semibold text-[#222222] pt-2.5 dark:text-white">
             {group.label}:

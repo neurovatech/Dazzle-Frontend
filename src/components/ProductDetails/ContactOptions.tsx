@@ -1,10 +1,35 @@
 import React from "react";
 import { MessageCircle, Phone } from "lucide-react";
 
-const ContactOptions: React.FC = () => {
+interface ContactOptionsProps {
+  whatsappNumber?: string; // e.g. "8801XXXXXXXXX" (no + or spaces)
+  messengerUsername?: string; // e.g. "yourpageusername" or numeric page id
+  phoneNumber?: string; // e.g. "+8801XXXXXXXXX"
+}
+
+const ContactOptions: React.FC<ContactOptionsProps> = ({
+  whatsappNumber = "8801700000000",
+  messengerUsername = "yourpagename",
+  phoneNumber = "+8801700000000",
+}) => {
+  const handleWhatsApp = () => {
+    const message = encodeURIComponent("Hi, I'm interested in your product.");
+    window.open(`https://wa.me/${whatsappNumber}?text=${message}`, "_blank", "noopener,noreferrer");
+  };
+
+  const handleMessenger = () => {
+    window.open(`https://m.me/${messengerUsername}`, "_blank", "noopener,noreferrer");
+  };
+
+  const handleCall = () => {
+    // tel: links work best when navigated in the same tab (esp. on mobile)
+    window.location.href = `tel:${phoneNumber}`;
+  };
+
   const options = [
     {
       label: "WhatsApp Us",
+      onClick: handleWhatsApp,
       icon: (
         <svg
           width="26"
@@ -60,6 +85,7 @@ const ContactOptions: React.FC = () => {
     },
     {
       label: "Messenger",
+      onClick: handleMessenger,
       icon: (
         <svg
           width="26"
@@ -102,6 +128,7 @@ const ContactOptions: React.FC = () => {
     },
     {
       label: "Call Us",
+      onClick: handleCall,
       icon: (
         <svg
           width="19"
@@ -125,11 +152,13 @@ const ContactOptions: React.FC = () => {
       <h4 className="text-[20px] font-bold text-[#222222] dark:text-white tracking-wider">
         Also Order From
       </h4>
-      <div className="grid grid-cols-3 gap-2 ]">
+      <div className="grid grid-cols-3 gap-2">
         {options.map((opt) => (
           <button
             key={opt.label}
-            className={`flex flex-col items-center justify-center gap-1.5 rounded-2xl transition-colors ${opt.bg} py-[30px]`}
+            type="button"
+            onClick={opt.onClick}
+            className={`flex flex-col items-center justify-center gap-1.5 rounded-2xl transition-colors ${opt.bg} py-[30px] cursor-pointer hover:opacity-80`}
           >
             {opt.icon}
             <span className="text-[14px] font-semibold text-[#222222] dark:text-white">

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import QuantitySelector from "./QuantitySelector";
 import { useAppDispatch } from "@/store/hooks";
@@ -45,7 +46,8 @@ interface StickyPurchaseBarProps {
   qty?: number;
   onQtyChange?: (val: number) => void;
   // Display props
-  price?: string;
+  price?: any;
+  isUnavailable?: boolean;
   monthlyPrice?: string;
   monthlyDuration?: string;
   storeAvailabilityHref?: string;
@@ -65,8 +67,9 @@ export default function StickyPurchaseBar({
   qty = 1,
   onQtyChange,
   price = "৳ 3,399",
+  isUnavailable = false,
   monthlyPrice = "৳ 142/mo.",
-  monthlyDuration = "24 months",
+  monthlyDuration = "12 months",
   storeAvailabilityHref = "#",
   expressDeliveryText = "Express Delivery in 4 hrs – Dhaka",
   standardDeliveryText = "Standard Delivery: Get in 1–3 days",
@@ -77,7 +80,7 @@ export default function StickyPurchaseBar({
 
   // No local qty state — uses shared qty from parent
   const handleAddToCart = () => {
-    if (!productId) return;
+    if (!productId || isUnavailable) return;
     dispatch(
       addToCart({
         id: productId,
@@ -124,19 +127,23 @@ export default function StickyPurchaseBar({
 
             <div className="hidden md:block w-px h-8 bg-gray-300 shrink-0" />
             <div className="flex flex-col justify-center shrink-0">
-              <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white leading-tight">
-                {price}
+              <p className={`text-xl sm:text-2xl font-bold leading-tight ${isUnavailable ? "text-gray-400 dark:text-gray-500" : "text-gray-900 dark:text-white"}`}>
+                {isUnavailable  ? "Not in stock" :  `${price} BDT` } 
               </p>
-              <p className="text-xs sm:text-sm text-gray-600 mt-0.5 dark:text-white/90">
-                or {monthlyPrice} for {monthlyDuration}
-              </p>
-              <button
-                onClick={onExploreFinancing}
-                className="flex items-center gap-0.5 text-xs sm:text-sm text-[#af7e4a] font-semibold hover:underline mt-0.5 w-fit"
-              >
-                Explore financing options
-                <ChevronRightIcon />
-              </button>
+              {!isUnavailable && (
+                <>
+                  <p className="text-xs sm:text-sm text-gray-600 mt-0.5 dark:text-white/90">
+                    {Math.round((price ?? 0) / 12).toLocaleString()}  for {monthlyDuration}
+                  </p>
+                  <button
+                    onClick={onExploreFinancing}
+                    className="flex items-center gap-0.5 text-xs sm:text-sm text-[#af7e4a] font-semibold hover:underline mt-0.5 w-fit"
+                  >
+                    Explore financing options
+                    <ChevronRightIcon />
+                  </button>
+                </>
+              )}
             </div>
 
             <div className="flex-1" />
@@ -148,9 +155,14 @@ export default function StickyPurchaseBar({
 
             <button
               onClick={handleAddToCart}
-              className="shrink-0 px-6 sm:px-8 py-3 bg-[#E9CCAE] hover:bg-[#D4B89A] active:bg-[#C0A486] text-black text-sm sm:text-base font-semibold rounded-full transition-colors duration-150 whitespace-nowrap shadow-sm"
+              disabled={isUnavailable}
+              className={`shrink-0 px-6 sm:px-8 py-3 text-sm sm:text-base font-semibold rounded-full transition-colors duration-150 whitespace-nowrap shadow-sm
+                ${isUnavailable
+                  ? "bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-60"
+                  : "bg-[#E9CCAE] hover:bg-[#D4B89A] active:bg-[#C0A486] text-black cursor-pointer"
+                }`}
             >
-              Add to cart
+              {isUnavailable ? "Not Available" : "Add to cart"}
             </button>
           </div>
         </div>

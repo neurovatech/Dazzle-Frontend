@@ -64,8 +64,8 @@ export default function PriceAvailability({ product }: any) {
             </span>
           </span>
           <span className="text-[#767676] text-xs bg-gray-100 px-0.5">
-            EMI begin at BDT 3,611 per month
-          </span>
+  EMI begin at BDT {Math.round((product?.regularPrice ?? 0) / 12).toLocaleString()} per month
+</span>
         </div>
       </button>
     </div>

@@ -73,7 +73,7 @@ export default function CartItem({
         <div className="flex-1 min-w-0">
           <p className="text-xs font-semibold text-[#E6A817]">{brand}</p>
 
-          <p className="text-sm text-gray-800 dark:text-white truncate">
+          <p className="text-sm text-gray-800 dark:text-white ">
             {name}
           </p>
 

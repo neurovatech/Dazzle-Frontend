@@ -20,12 +20,9 @@ import StickyPurchaseBar from "./StickyPurchaseBar";
 import PriceAvailability from "./PriceAvailability";
 import { api } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
-import type { ProductApiData } from "@/app/(public)/product/[productSlug]/page";
+// import type { ProductApiData } from "@/app/(public)/product/[productSlug]/page";
+import RelatedProductSectionCom from "./RelatedProducts/RelatedProductSectionCom"
 
-// ── Static fallback images ──────────────────────────────────────────
-const FALLBACK_IMAGES = [IPHONE_ORANGE.src, "/images/no_images.png"];
-
-// ── Fallback related products ───────────────────────────────────────
 const FALLBACK_PRODUCTS = [
   {
     image: "https://dazzle.com.bd/_next/image?url=https%3A%2F%2Fdazzle.sgp1.cdn.digitaloceanspaces.com%2F48522%2FiPhone-14-Price-in-Bangladesh-Yellow.jpg&w=640&q=75",
@@ -49,8 +46,6 @@ const FALLBACK_PRODUCTS = [
     originalPrice: "৳1,30,000",
   },
 ];
-
-// ── Variant API types ───────────────────────────────────────────────
 interface VariantRow {
   variantUuid: string;
   variantName: string;
@@ -80,39 +75,30 @@ interface ConsolidatedVariant {
   attributes: Record<string, string>;
 }
 
-// ── consolidateVariants ─────────────────────────────────────────────
-// API structure: প্রতিটি variantUuid এর জন্য multiple rows আসে
-// একটি row = একটি attributeGroup (Color, Storage, Region/Variant)
-// সমস্যা: dirty data — group name case মিলে না, duplicate/legacy UUIDs আছে
 function consolidateVariants(rows: VariantRow[]): {
   groups: string[];
   variants: ConsolidatedVariant[];
 } {
   if (!rows || rows.length === 0) return { groups: [], variants: [] };
 
-  // ── Step 1: Group name normalize করো ──────────────────────────
-  // "storage" → "Storage", "region" → "Region/Variant", "region/variant" → "Region/Variant"
   const normalizeGroup = (raw: string): string => {
     const lower = raw.trim().toLowerCase();
     if (lower === "color") return "Color";
     if (lower === "storage") return "Storage";
+    if (lower === "ram & storage" || lower === "ram&storage" || lower === "ram and storage") return "RAM & Storage";
     if (lower.startsWith("region")) return "Region/Variant";
     // Title case fallback
     return raw.trim().replace(/\b\w/g, (c) => c.toUpperCase());
   };
 
-  // Attribute value normalize — "256" → "256GB" etc.
   const normalizeAttr = (group: string, value: string): string => {
     const v = value.trim();
     if (group === "Storage") {
-      // "256" → "256GB", "256gb" → "256GB" ইত্যাদি
       if (/^\d+$/.test(v)) return v + "GB";
       return v.toUpperCase().replace(/\s+/g, "");
     }
     return v;
   };
-
-  // ── Step 2: Active rows filter + normalize ─────────────────────
   const activeRows = rows
     .filter(
       (row) =>
@@ -127,16 +113,12 @@ function consolidateVariants(rows: VariantRow[]): {
       _normAttr: normalizeAttr(normalizeGroup(row.attributeGroup), row.attribute),
     }));
 
-  // ── Step 3: Canonical group names (order: Color → Storage → Region/Variant)
-  const groupOrder = ["Color", "Storage", "Region/Variant"];
+  const groupOrder = ["Color", "Storage", "RAM & Storage", "Region/Variant"];
   const foundGroups = new Set(activeRows.map((r) => r._normGroup));
   const groups = groupOrder.filter((g) => foundGroups.has(g));
-  // Unknown groups append করো
   activeRows.forEach((r) => {
     if (!groups.includes(r._normGroup)) groups.push(r._normGroup);
   });
-
-  // ── Step 4: variantMap build করো ──────────────────────────────
   const variantMap = new Map<string, ConsolidatedVariant>();
 
   activeRows.forEach((row) => {
@@ -153,48 +135,35 @@ function consolidateVariants(rows: VariantRow[]): {
     }
 
     const existing = variantMap.get(uuid)!;
-
-    // attribute set — পরে আসা value overwrites শুধু যদি আগেরটা blank
     if (!existing.attributes[row._normGroup]) {
       existing.attributes[row._normGroup] = row._normAttr;
     }
 
-    // price — যেকোনো row থেকে নাও যেখানে price > 0
     if (row.retailUnitSale > 0 && existing.price === 0) {
       existing.price = row.retailUnitSale;
       existing.mrp = row.mrpUnitSale;
     }
 
-    // thumbnail
     if (row.thumbnailUrl?.trim() && !existing.thumbnailUrl) {
       existing.thumbnailUrl = row.thumbnailUrl.trim();
     }
-
-    // variantName
     if (row.variantName?.trim() && !existing.name) {
       existing.name = row.variantName.trim();
     }
   });
 
-  // ── Step 5: সব defined groups এর attribute আছে এমন variants ──
   const completeVariants = [...variantMap.values()].filter((v) =>
     groups.every((g) => v.attributes[g]?.trim())
   );
-
-  // ── Step 6: price=0 variants এর জন্য same Color+Region donor থেকে price নাও
-  // (512GB variants এর price আলাদা হবে ভবিষ্যতে, এখন 256GB এর price দিয়ে fallback)
-  const nonStorageGroups = groups.filter((g) => g !== "Storage");
+  const nonStorageGroups = groups.filter((g) => g !== "Storage" && g !== "RAM & Storage");
 
   completeVariants.forEach((v) => {
     if (v.price > 0) return;
-
     const donor = completeVariants.find(
       (other) =>
         other.id !== v.id &&
         other.price > 0 &&
-        nonStorageGroups.every(
-          (g) => other.attributes[g] === v.attributes[g]
-        )
+        nonStorageGroups.every((g) => other.attributes[g] === v.attributes[g])
     );
     if (donor) {
       v.price = donor.price;
@@ -202,10 +171,7 @@ function consolidateVariants(rows: VariantRow[]): {
     }
   });
 
-  // ── Step 7: এখনো price=0 হলে বাদ দাও ─────────────────────────
-  const finalVariants = completeVariants.filter((v) => v.price > 0);
-
-  // ── Step 8: variantName blank হলে attributes থেকে build করো ──
+  const finalVariants = completeVariants;
   finalVariants.forEach((v) => {
     if (!v.name) {
       v.name = groups.map((g) => v.attributes[g]).filter(Boolean).join(" ");
@@ -215,17 +181,20 @@ function consolidateVariants(rows: VariantRow[]): {
   return { groups, variants: finalVariants };
 }
 
-// ── Component ───────────────────────────────────────────────────────
+
 interface ProductDetailProps {
-  product: ProductApiData | null;
+  product: any | null;
 }
 
 const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
   const [qty, setQty] = useState(1);
   const [selectedAttrs, setSelectedAttrs] = useState<Record<string, string>>({});
   const [selectedColor, setSelectedColor] = useState(0);
+  const [emiOpen, setEmiOpen] = useState(false);
 
-  // ── Fetch variants ─────────────────────────────────────────────
+  console.log(product, "productproductproductproductproduct")
+
+
   const { data: variantApiData } = useQuery<VariantApiResponse>({
     queryKey: ["product-variants", product?.productUuid],
     queryFn: () =>
@@ -242,7 +211,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
     [variantApiData]
   );
 
-  // Auto-select first option per group on load
   useEffect(() => {
     if (groups.length === 0) return;
     const initial: Record<string, string> = {};
@@ -253,7 +221,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
     setSelectedAttrs(initial);
   }, [groups, variants]);
 
-  // ── Selected variant ───────────────────────────────────────────
   const selectedVariant: ConsolidatedVariant | null = useMemo(() => {
     if (groups.length === 0 || Object.keys(selectedAttrs).length < groups.length)
       return null;
@@ -264,7 +231,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
     );
   }, [groups, variants, selectedAttrs]);
 
-  // ── Availability check ─────────────────────────────────────────
+
   const isOptionAvailable = (group: string, option: string) =>
     variants.some(
       (v) =>
@@ -274,7 +241,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
           .every(([g, val]) => v.attributes[g] === val)
     );
 
-  // ── Group options — filter out empty/undefined values ────────
+
   const groupOptions = useMemo(
     () =>
       Object.fromEntries(
@@ -299,23 +266,17 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
       ? product.thumbnails.map((img) => img.mediaFileUrl || img.mediafileUrl || "").filter(Boolean)
       : product?.thumbnailImg
         ? [product.thumbnailImg]
-        : FALLBACK_IMAGES;
+        : [];
 
-  // ── Images filtered by selected color ─────────────────────────
-  // thumbnailUrl blank হলে baseImages ব্যবহার করো
   const images: string[] = useMemo(() => {
     if (!colorGroupName || !selectedAttrs[colorGroupName]) return baseImages;
 
     const selectedColorVal = selectedAttrs[colorGroupName];
-
-    // variant API তে thumbnail আছে কিনা দেখো
     const colorVariantImages = variants
       .filter((v) => v.attributes[colorGroupName] === selectedColorVal && v.thumbnailUrl)
       .map((v) => v.thumbnailUrl);
 
     const uniqueColorImages = [...new Set(colorVariantImages)];
-
-    // thumbnail পাওয়া গেলে সেগুলো দাও, না হলে baseImages
     return uniqueColorImages.length > 0 ? uniqueColorImages : baseImages;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [colorGroupName, selectedAttrs, variants, baseImages]);
@@ -327,15 +288,14 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
           label: colorGroupName,
           type: "color" as const,
           options: (groupOptions[colorGroupName] ?? []).map((val, idx) => {
-            // thumbnailUrl আছে এমন variant খোঁজো, না থাকলে baseImages[idx] fallback
             const match = variants.find(
               (v) => v.attributes[colorGroupName] === val && v.thumbnailUrl
             );
-            const fallbackImg = baseImages[idx] || baseImages[0] || IPHONE_ORANGE.src;
+            // const fallbackImg = baseImages[idx] || baseImages[0] || IPHONE_ORANGE.src;
             return {
               label: val,
               value: val,
-              image: match?.thumbnailUrl || fallbackImg,
+              image: match?.thumbnailUrl ,
               disabled: !isOptionAvailable(colorGroupName, val),
             };
           }),
@@ -354,16 +314,20 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
     })),
   }));
 
-  // ── Pricing ────────────────────────────────────────────────────
-  const price = selectedVariant?.price ?? product?.discountedPrice ?? 100000;
-  const originalPrice = selectedVariant?.mrp ?? product?.regularPrice ?? 130000;
+  // ── Pricing — variant price > 0 হলে সেটা নাও, নাহলে product API এর price ──
+  const price = (selectedVariant?.price && selectedVariant.price > 0)
+    ? selectedVariant.price
+    : (product?.discountedPrice ?? 0);
+  const originalPrice = (selectedVariant?.mrp && selectedVariant.mrp > 0)
+    ? selectedVariant.mrp
+    : (product?.regularPrice ?? 0);
 
   // ── Badges ─────────────────────────────────────────────────────
   const VALID_COLORS = ["pink", "purple", "green", "orange"] as const;
   type BadgeColor = (typeof VALID_COLORS)[number];
   const badgeList: { label: string; color: BadgeColor }[] =
     product?.badges && product.badges.length > 0
-      ? product.badges.map((b) => ({
+      ? product.badges.map((b:any) => ({
           label: b.label,
           color: (VALID_COLORS.includes(b.color as BadgeColor)
             ? b.color
@@ -448,15 +412,17 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
       </div>
 
       <StickyPurchaseBar
-        productId={product?.productUuid}
+        productId={selectedVariant?.id ?? product?.productUuid}
         productName={selectedVariant?.name ?? product?.productName}
         productImage={images[0]}
         productPrice={price}
         productOriginalPrice={originalPrice}
         productSlug={product?.productSlug}
-        price={price ? `BDT ${price.toLocaleString()}` : "৳ 0"}
+        price={price > 0 ? price : "Price on request"}
         qty={qty}
         onQtyChange={setQty}
+        isUnavailable={price === 0}
+        onExploreFinancing={() => setEmiOpen(true)}
       />
 
       <div className="max-w-350 mx-auto lg:px-4 px-2 pb-16">
@@ -464,12 +430,12 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
 
           {/* ── Left: Image Gallery ── */}
           <div className="lg:col-span-5">
-            <div className="rounded-2xl shadow-sm p-5 sticky top-6 transition-colors duration-200">
+            <div className="rounded-2xl shadow-sm p-5 sticky top-6 transition-colors duration-200  dark:bg-[#3e3329]">
               <ProductImageGallery
                 images={images}
                 selected={selectedColor}
                 onSelect={setSelectedColor}
-                badges={<ProductBadges badges={badgeList} />}
+                badges={product?.disRate}
               />
               <div className="grid-cols-2 lg:grid-cols-3 gap-2 mt-5 hidden lg:grid">
                 {FALLBACK_PRODUCTS.map((prod, index) => (
@@ -477,7 +443,13 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
                 ))}
               </div>
               <div className="hidden lg:block space-y-6 pt-2">
-                <ContactOptions />
+                <ContactOptions
+  whatsappNumber="09638001122
+"
+  messengerUsername="https://www.facebook.com/dazzlebangladesh/"
+  phoneNumber="+09638001122
+"
+/>
               </div>
             </div>
           </div>
@@ -485,7 +457,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
           {/* ── Right: Product Info + Variants ── */}
           <div className="lg:col-span-7">
             <ProductInfo
-              title={selectedVariant?.name ?? product?.productName ?? "Product"}
+              title={product?.productName}
               brand={product?.brandName ?? ""}
               brand_slug={product?.brandSlug ?? ""}
               code={product?.productCode ?? "N/A"}
@@ -503,6 +475,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
               }}
               qty={qty}
               onQtyChange={setQty}
+              selectedVariant={selectedVariant}
             />
 
             {/* Variant selector */}
@@ -530,12 +503,20 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
                       {selectedVariant.name}
                     </p>
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-base font-extrabold text-[#B57908]">
-                        BDT {selectedVariant.price.toLocaleString()}
-                      </span>
-                      {selectedVariant.mrp > selectedVariant.price && (
-                        <span className="text-sm text-gray-400 line-through">
-                          BDT {selectedVariant.mrp.toLocaleString()}
+                      {selectedVariant.price > 0 ? (
+                        <>
+                          <span className="text-base font-extrabold text-[#B57908]">
+                            BDT {selectedVariant.price.toLocaleString()}
+                          </span>
+                          {selectedVariant.mrp > selectedVariant.price && (
+                            <span className="text-sm text-gray-400 line-through">
+                              BDT {selectedVariant.mrp.toLocaleString()}
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        <span className="text-xs font-semibold text-red-500 bg-red-50 dark:bg-red-950/30 px-2 py-1 rounded-lg">
+                          Not in stock
                         </span>
                       )}
                     </div>
@@ -576,13 +557,17 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
             </div>
 
             <div>
-              <CheckAvailability product={product} />
+              <CheckAvailability
+                product={product}
+                currentPrice={price}
+                externalEmiOpen={emiOpen}
+                onExternalEmiClose={() => setEmiOpen(false)}
+              />
             </div>
             <div>
               <PriceAvailability product={product} />
             </div>
 
-            {/* Mobile: related products + contact */}
             <div className="lg:col-span-5">
               <div className="grid-cols-2 lg:grid-cols-3 gap-2 mt-5 grid lg:hidden">
                 {FALLBACK_PRODUCTS.map((prod, index) => (
@@ -595,7 +580,17 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
             </div>
           </div>
 
-          {/* ── Full width: Specs Tabs ── */}
+
+          {/* ── Related Products ── */}
+          {product?.categorySlug && (
+            <div className="lg:col-span-12">
+              <h2 className="text-lg font-bold text-gray-800 dark:text-white px-4 mb-3">
+                Related Products
+              </h2>
+              <RelatedProductSectionCom categorySlug={product.categorySlug} />
+            </div>
+          )}
+
           <div className="lg:col-span-12">
             <GlobalTabs tabs={tabsData} />
           </div>

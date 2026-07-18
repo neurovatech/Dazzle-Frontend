@@ -19,7 +19,6 @@ import {
 } from "lucide-react";
 import { WarrantyIcon, SwapIcon, FaireIcon, StarIcon, EyeIcon } from "@/icon";
 import QuantitySelector from "./QuantitySelector";
-import GlobalModal from "@/components/share/GlobalModal";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { addToCart } from "@/store/slices/cartSlice";
 import toast from "react-hot-toast";
@@ -57,30 +56,39 @@ export default function ProductInfo({
   originalPrice: baseOriginalPrice,
   qty,
   onQtyChange,
+  selectedVariant,  
 }: any) {
-  // Stock Status derived from inStock prop
-  const stockStatus: StockStatus = inStock ? "in_stock" : "eol";
 
+  const stockStatus: StockStatus = inStock ? "in_stock" : "eol";
+  const variantPrice = selectedVariant?.price ?? 0;
+  const productPrice = alldata?.discountedPrice ?? basePrice ?? 0;
+  const effectivePrice = variantPrice > 0 ? variantPrice : productPrice;
+  const isVariantUnavailable = effectivePrice === 0;
 
   // Redux dispatch
   const dispatch = useAppDispatch();
-
-  // Add to Cart handler — uses shared qty from parent
   const handleAddToCart = () => {
+    if (isVariantUnavailable) return;
+    const cartName = selectedVariant?.name || title;
+    // Variant attributes string (e.g. "Black | 256GB | JP/MEA")
+    const variantStr = selectedVariant
+      ? Object.values(selectedVariant.attributes ?? {}).join(" | ")
+      : "";
+
     dispatch(
       addToCart({
-        id: alldata?.productUuid || alldata?.id || code,
-        name: title,
+        id: selectedVariant?.id || alldata?.productUuid || alldata?.id || code,
+        name: variantStr ? `${cartName}` : cartName,
         brand: brand,
-        image: alldata?.thumbnailImg || alldata?.thumbnail || alldata?.image || "",
-        price: alldata?.discountedPrice || basePrice,
-        originalPrice: alldata?.regularPrice || baseOriginalPrice,
+        image: alldata?.thumbnailImg || alldata?.thumbnail || alldata?.image || selectedVariant?.thumbnailUrl || "",
+        price: effectivePrice,
+        originalPrice: alldata?.regularPrice || baseOriginalPrice || 0,
         quantity: qty ?? 1,
-        inStock: inStock,
+        inStock: !isVariantUnavailable,
         slug: alldata?.productSlug || "",
       })
     );
-    toast.success(`${title} added to cart! 🛒`);
+    toast.success(`${cartName} added to cart! 🛒`);
   };
 
   // Admin profit meter hidden state
@@ -94,16 +102,6 @@ export default function ProductInfo({
 
 const wishlistItems = useAppSelector((state) => state.wishlist.items);
 const isWishlisted = wishlistItems.some((i) => i.productUuid === productId);
-
-  // Pricing computations according to Stock Status
-  // If Pre-order, only charge 5% booking deposit fee
-  // const isPreorder = stockStatus === "pre_order";
-  // const displayPrice = isPreorder ? Math.round(basePrice * 0.05) : basePrice;
-  // const originalPrice = isPreorder
-  //   ? Math.round(baseOriginalPrice * 0.05)
-  //   : baseOriginalPrice;
-
-  // Competitor Price scraper simulation
   const handlePriceComparison = () => {
     setIsComparing(true);
     setCompareResult(null);
@@ -134,22 +132,20 @@ const isWishlisted = wishlistItems.some((i) => i.productUuid === productId);
     })
   );
 };
-  //  price: alldata?.discountedPrice || basePrice,
-  //       originalPrice: alldata?.regularPrice || baseOriginalPrice,
-  //       quantity: qty ?? 1,
-  //       inStock: inStock,
-  //       slug: alldata?.productSlug || "",
-
-
-
-  // const discount = Math.round(
-  //   ((originalPrice - displayPrice) / originalPrice) * 100,
-  // );
 
   return (
     <div className="space-y-5 text-gray-800 dark:text-gray-100">
-      {/* Title + Wishlist / Share */}
+      <div className="flex gap-3">
+          <span className="text-gray-500 dark:text-white">By:</span>
+          <Link
+            href={`/brands/${brand_slug}`}
+            className="text-[#B57908] dark:text-[#D4A97A] hover:underline font-semibold"
+          >
+            {brand}
+          </Link>
+        </div>
       <div className="flex items-start justify-between gap-3">
+        
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-[#222222] dark:text-white leading-snug">
             {title}
@@ -219,15 +215,7 @@ const isWishlisted = wishlistItems.some((i) => i.productUuid === productId);
 
       {/* Brand + Code + Hidden Profit Meter Gear */}
       <div className="flex justify-between items-center gap-2 text-sm border-b border-gray-100 dark:border-gray-800 pb-3">
-        <div className="flex items-center gap-1.5">
-          <span className="text-gray-500 dark:text-white">By:</span>
-          <Link
-            href={`/brands/${brand_slug}`}
-            className="text-[#B57908] dark:text-[#D4A97A] hover:underline font-semibold"
-          >
-            {brand}
-          </Link>
-          {/* Secret Gear for Profit Meter */}
+        {/* <div className="flex items-center gap-1.5">
           <button
             type="button"
             onClick={() => setShowProfitMeter(!showProfitMeter)}
@@ -236,16 +224,16 @@ const isWishlisted = wishlistItems.some((i) => i.productUuid === productId);
           >
             <Settings size={14} className="animate-spin-slow" />
           </button>
-        </div>
+        </div> */}
 
-        <div>
+        {/* <div>
           <span className="text-gray-500">
             Code:{" "}
             <span className="font-semibold text-gray-800 dark:text-white">
               #{code}
             </span>
           </span>
-        </div>
+        </div> */}
       </div>
 
       {/* Admin Profit Meter (Secrets Panel) */}
@@ -343,102 +331,96 @@ const isWishlisted = wishlistItems.some((i) => i.productUuid === productId);
 
       {/* Main Pricing block */}
       <div className="lg:flex items-center justify-between gap-4 text-sm bg-[#FAF9F6] dark:bg-[#25221F] p-4 rounded-2xl border border-[#7B4F1E]/20 dark:border-gray-800/80">
-        <div className="space-y-1">
-          <span className="block text-xs font-bold text-gray-500 uppercase tracking-wider">
-            Minimum Booking price BDT {alldata?.minBookingPrice.toLocaleString()}
-          </span>
-          <div className="flex flex-col md:flex-row justify-between">
-            <div className="flex gap-2.5 items-center">
-            <span className="text-[28px] font-extrabold text-[#B57908] dark:text-[#D4A97A]">
-              BDT {alldata?.discountedPrice.toLocaleString()}
-            </span>
-            <span className="text-[18px] text-[#FF7575] line-through font-semibold">
-              BDT {alldata?.regularPrice.toLocaleString()}
-            </span>
-            <span className="bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 font-extrabold text-xs px-2.5 py-0.5 rounded-md">
-              {/* {discount}% OFF */}
-            </span>
-          </div>
+        <div className="space-y-1 w-full">
 
-          <div className="flex items-center gap-3 mt-3 lg:mt-0 mb-3 md:mb-0">
-            <span className="font-bold text-gray-700 dark:text-gray-300">
-              Quantity:
-            </span>
-            <QuantitySelector
-              value={qty ?? 1}
-              onChange={(val) => onQtyChange?.(val)}
-            />
-          </div>
-          </div>
-          {/* Add to Cart Button */}
-          {/* <div className="mt-4">
-            <button
-              onClick={handleAddToCart}
-              className="flex items-center gap-2 bg-[#B57908] hover:bg-[#9a6507] active:scale-95 text-white font-bold px-6 py-3 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg"
-            >
-              <ShoppingCart size={18} />
-              Add to Cart
-            </button>
-          </div> */}
-          {/* {isPreorder && (
-            <span className="block text-xs text-gray-500">
-              Remaining BDT{Math.round(basePrice * 0.95).toLocaleString()} payable
-              at delivery
-            </span>
-          )} */}
+          {/* ── Variant unavailable message ── */}
+          {isVariantUnavailable ? (
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-2 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/40 rounded-xl px-4 py-3">
+                <span className="text-red-500 text-lg">😔</span>
+                <p className="text-sm font-semibold text-red-600 dark:text-red-400">
+                  Sorry! This variant is not in stock
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="font-bold text-gray-700 dark:text-gray-300">
+                  Quantity:
+                </span>
+                <QuantitySelector
+                  value={qty ?? 1}
+                  onChange={(val) => onQtyChange?.(val)}
+                />
+              </div>
+              <button
+                disabled
+                className="w-full flex items-center justify-center gap-2 bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 font-bold px-6 py-3 rounded-xl cursor-not-allowed opacity-60"
+              >
+                <ShoppingCart size={18} />
+                Add to Cart
+              </button>
+            </div>
+          ) : (
+            <>
+              {alldata?.minBookingPrice > 0 && (
+                <span className="block text-xs font-bold text-gray-500 uppercase tracking-wider">
+                  Minimum Booking price BDT {alldata?.minBookingPrice?.toLocaleString()}
+                </span>
+              )}
+              <div className="flex flex-col md:flex-row justify-between">
+                <div className="flex gap-2.5 items-center">
+                  <span className="text-[28px] font-extrabold text-[#B57908] dark:text-[#D4A97A]">
+                    BDT {alldata?.discountedPrice?.toLocaleString()}
+                  </span>
+                  {alldata?.regularPrice > alldata?.discountedPrice && (
+                    <span className="text-[18px] text-[#FF7575] line-through font-semibold">
+                      BDT {alldata?.regularPrice?.toLocaleString()}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-3 mt-3 lg:mt-0 mb-3 md:mb-0">
+                  <span className="font-bold text-gray-700 dark:text-gray-300">
+                    Quantity:
+                  </span>
+                  <QuantitySelector
+                    value={qty ?? 1}
+                    onChange={(val) => onQtyChange?.(val)}
+                  />
+                </div>
+              </div>
+
+              {/* Add to Cart Button */}
+              {/* <button
+                onClick={handleAddToCart}
+                className="w-full flex items-center justify-center gap-2 bg-[#B57908] hover:bg-[#9a6507] active:scale-95 text-white font-bold px-6 py-3 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg mt-2"
+              >
+                <ShoppingCart size={18} />
+                Add to Cart
+              </button> */}
+            </>
+          )}
 
           <article
             className="
               prose prose-sm lg:prose-base dark:prose-invert max-w-none
-              text-gray-700 dark:text-white
-
+              text-gray-700 dark:text-white mt-3
               [&_table]:w-full [&_table]:border-collapse [&_table]:text-sm
               [&_th]:border [&_th]:border-gray-200 dark:[&_th]:border-gray-600 [&_th]:p-3 [&_th]:bg-gray-100 dark:[&_th]:bg-gray-700 [&_th]:text-left
               [&_td]:border [&_td]:border-gray-200 dark:[&_td]:border-gray-600 [&_td]:p-3 [&_td]:text-center
-
               [&_h1]:text-gray-900 dark:[&_h1]:!text-white
               [&_h2]:text-gray-900 dark:[&_h2]:!text-white
               [&_h3]:text-gray-800 dark:[&_h3]:!text-white
-              [&_h4]:text-gray-800 dark:[&_h4]:!text-white
-              [&_h5]:text-gray-800 dark:[&_h5]:!text-white
-              [&_h6]:text-gray-800 dark:[&_h6]:!text-white
-
               [&_p]:text-gray-700 dark:[&_p]:!text-white
               [&_span]:dark:!text-white
-              [&_div]:dark:!text-white
-
               [&_li]:text-gray-700 dark:[&_li]:!text-white
-              [&_ul]:text-gray-700 dark:[&_ul]:!text-white
-              [&_ol]:text-gray-700 dark:[&_ol]:!text-white
-              [&_li::marker]:text-gray-500 dark:[&_li::marker]:!text-white
-
               [&_strong]:text-gray-900 dark:[&_strong]:!text-white
-              [&_b]:text-gray-900 dark:[&_b]:!text-white
-              [&_em]:text-gray-700 dark:[&_em]:!text-white
-              [&_i]:text-gray-700 dark:[&_i]:!text-white
-
               [&_a]:text-blue-600 dark:[&_a]:!text-white dark:[&_a]:underline
-
-              [&_blockquote]:text-gray-700 dark:[&_blockquote]:!text-white
-              [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 dark:[&_blockquote]:border-gray-500
-
-              [&_th]:text-gray-900 dark:[&_th]:!text-white
-              [&_td]:text-gray-700 dark:[&_td]:!text-white
-
-              [&_code]:text-gray-800 dark:[&_code]:!text-white
-              [&_pre]:text-gray-800 dark:[&_pre]:!text-white
-
               dark:[&_*]:!text-white
-
               overflow-x-auto
             "
-            dangerouslySetInnerHTML={{ __html: alldata?.shortDesc }}
+            dangerouslySetInnerHTML={{ __html: alldata?.shortDesc ?? "" }}
           />
-          
         </div>
-
-        {/* Quantity Select */}
-        
       </div>
 
       {/* ── Competitor Live Price Comparison ── */}

@@ -43,10 +43,10 @@ export default function GlobalModal({
           >
             <RightArrow />
           </button>
-          <h3 className="text-base font-bold text-black">{title}</h3>
+          <h3 className="text-base font-bold text-black dark:text-white">{title}</h3>
           <button
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-full text-gray-500 hover:text-black"
+            className="w-8 h-8 flex items-center justify-center rounded-full text-gray-500 dark:text-white hover:text-black"
           >
             <CloseIcon />
           </button>
