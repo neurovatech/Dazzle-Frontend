@@ -12,6 +12,22 @@ interface PageProps {
   searchParams: Promise<{ page?: string; sort?: string; search?: string }>;
 }
 
+
+interface WebBannerItem {
+  bannerUUID: string;
+  imageURL: string;
+  mediaInfo: string;
+  openNewTab: boolean;
+}
+
+interface WebBannerResponse {
+  statusCode: number;
+  status: string;
+  found: boolean;
+  count: number;
+  data: WebBannerItem[];
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const LIMIT = 12;
@@ -61,6 +77,9 @@ export default async function SubCategoriesPage({ params, searchParams }: PagePr
   const categoryName = toTitleCase(categorySlug);
   const subCategoryName = toTitleCase(subCategorySlug);
 
+   let banners: WebBannerItem[] = [];
+
+
   // ── Fetch products: products?page=1&limit=12&categorySlug=phones&subCategorySlug=iphone ──
   let productData: ProductListResponse = {
     statusCode: 200,
@@ -95,6 +114,22 @@ export default async function SubCategoriesPage({ params, searchParams }: PagePr
     console.error("Error fetching sub-category products:", error);
   }
 
+  try {
+    const res = await api.get<WebBannerResponse>(
+      "/web-banner/product-categores-page",
+      { cache: "no-store" }
+    );
+    if (res && typeof res === "object" && "data" in res) {
+      banners = res.data;
+    }
+  } catch (error) {
+    console.error("Error fetching product category banners:", error);
+  }
+
+  if (!banners.length) return null;
+
+  const [banner1, banner2] = banners;
+
   // ── Breadcrumb ────────────────────────────────────────────────────────────────
   const breadcrumbItems = [
     { label: "Home", href: "/" },
@@ -108,7 +143,7 @@ export default async function SubCategoriesPage({ params, searchParams }: PagePr
       <div className="md:px-12.5 px-4">
         <Breadcrumb items={breadcrumbItems} />
       </div>
-      <Banner />
+      <Banner banners={banners} />
       <CategoriesProduct
         categorySlug={categorySlug}
         subCategorySlug={subCategorySlug}

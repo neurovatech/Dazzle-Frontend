@@ -35,6 +35,31 @@ export interface ProductListResponse {
   data: ProductItem[];
 }
 
+// ─── Brand types ──────────────────────────────────────────────────────────────
+
+export interface BrandItem {
+  uuid: string;
+  brand_name: string;
+  brand_slug: string;
+  thumbnail_img: string;
+  is_active: boolean;
+}
+
+interface BrandsApiResponse {
+  statusCode: number;
+  status: string;
+  found: boolean;
+  count: number;
+  data: {
+    category: {
+      uuid: string;
+      category_name: string;
+      category_slug: string;
+      child: BrandItem[];
+    }[];
+  };
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const LIMIT = 12;
@@ -115,6 +140,21 @@ export default async function CategoriesPage({ params, searchParams }: PageProps
     console.error("Error fetching category products:", error);
   }
 
+  // ── Fetch brands for this category ───────────────────────────────────────────
+  let brands: BrandItem[] = [];
+  try {
+    const brandsRes = await api.get<BrandsApiResponse>(
+      `/categories/${categorySlug}/brands`,
+      { cache: "no-store" }
+    );
+    const categoryData = brandsRes?.data?.category;
+    if (Array.isArray(categoryData) && categoryData.length > 0) {
+      brands = (categoryData[0].child ?? []).filter((b) => b.is_active);
+    }
+  } catch (err) {
+    console.error("Error fetching category brands:", err);
+  }
+
   // ── Breadcrumb ────────────────────────────────────────────────────────────────
   const breadcrumbItems = [
     { label: "Home", href: "/" },
@@ -135,6 +175,7 @@ export default async function CategoriesPage({ params, searchParams }: PageProps
         totalCount={productData.totalCount}
         currentSort={sort ?? ""}
         currentSearch={search ?? ""}
+        brands={brands}
       />
     </div>
   );

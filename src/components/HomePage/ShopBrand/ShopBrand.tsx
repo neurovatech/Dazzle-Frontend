@@ -37,59 +37,6 @@ export default async function ShopBrand() {
     }
   }
 
-  const products = [
-    {
-      title: "Apple AirPods Pro (2nd Gen)",
-      price: 100000,
-      originalPrice: 130000,
-      discount: 10,
-      badge: "Buy 2 Get 1",
-      isBestDeal: true,
-      inStock: true,
-      image: "/images/product.png",
-    },
-    {
-      title: "Samsung Galaxy Buds Pro Wireless Earbuds",
-      price: 75000,
-      originalPrice: 95000,
-      discount: 21,
-      badge: "Hot Sale",
-      isBestDeal: false,
-      inStock: true,
-      image: "/images/product.png",
-    },
-    {
-      title: "Sony WH-1000XM5 Noise Cancelling Headphones",
-      price: 120000,
-      originalPrice: 150000,
-      discount: 20,
-      badge: "Limited",
-      isBestDeal: true,
-      inStock: false,
-      image: "/images/product.png",
-    },
-    {
-      title: "Apple AirPods Pro (2nd Gen)",
-      price: 100000,
-      originalPrice: 130000,
-      discount: 10,
-      badge: "Buy 2 Get 1",
-      isBestDeal: true,
-      inStock: true,
-      image: "/images/product.png",
-    },
-    {
-      title: "Samsung Galaxy Buds Pro Wireless Earbuds",
-      price: 75000,
-      originalPrice: 95000,
-      discount: 21,
-      badge: "Hot Sale",
-      isBestDeal: false,
-      inStock: true,
-      image: "/images/product.png",
-    },
-  ];
-
   return (
     <div className="md:px-12.5 px-4">
       <div className="flex justify-between items-center ">
@@ -109,14 +56,16 @@ export default async function ShopBrand() {
               href={`/brands/${item.slug}`}
               className="flex flex-col items-center"
             >
-              <div className="w-full aspect-square flex items-center justify-center bg-[#F5F5F5] dark:bg-[#CB843B]/10 rounded-4xl p-1 md:p-4 transition-all duration-300 hover:bg-[#CB843B]/10 hover:scale-105">
-                <Image
-                  src={item.logo}
-                  alt={item.label}
-                  width={160}
-                  height={160}
-                  className="w-full h-full object-contain transition-transform duration-300 hover:scale-110"
-                />
+              <div className="relative w-full aspect-square bg-white border border-[#c6c6c6]  rounded-4xl p-4 md:p-6 transition-all duration-300 hover:scale-105">
+                <div className="relative w-full h-full">
+                  <Image
+                    src={item.logo}
+                    alt={item.label}
+                    fill
+                    sizes="(max-width: 768px) 25vw, 12vw"
+                    className="object-contain transition-transform duration-300 hover:scale-110"
+                  />
+                </div>
               </div>
 
               <h5 className="mt-2 text-center text-[10px] lg:text-sm font-medium text-primary">

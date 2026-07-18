@@ -161,7 +161,8 @@ function BrandProductList({
           </p>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
+        {/* <div className="flex items-center gap-2 flex-wrap" > */}
+        <div className="hidden" >
           {/* Search */}
           <div className="flex items-center gap-1.5 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 bg-white dark:bg-[#1E1B18]">
             <input
