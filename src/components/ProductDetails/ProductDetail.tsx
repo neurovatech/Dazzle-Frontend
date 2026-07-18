@@ -22,25 +22,28 @@ import PriceAvailability from "./PriceAvailability";
 import { api } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 // import type { ProductApiData } from "@/app/(public)/product/[productSlug]/page";
-import RelatedProductSectionCom from "./RelatedProducts/RelatedProductSectionCom"
+import RelatedProductSectionCom from "./RelatedProducts/RelatedProductSectionCom";
 
 const FALLBACK_PRODUCTS = [
   {
-    image: "https://dazzle.com.bd/_next/image?url=https%3A%2F%2Fdazzle.sgp1.cdn.digitaloceanspaces.com%2F48522%2FiPhone-14-Price-in-Bangladesh-Yellow.jpg&w=640&q=75",
+    image:
+      "https://dazzle.com.bd/_next/image?url=https%3A%2F%2Fdazzle.sgp1.cdn.digitaloceanspaces.com%2F48522%2FiPhone-14-Price-in-Bangladesh-Yellow.jpg&w=640&q=75",
     name: "Belkin USB C 7 in 1 Multiport...",
     inStock: true,
     price: "৳1,00,000",
     originalPrice: "৳1,30,000",
   },
   {
-    image: "https://dazzle.com.bd/_next/image?url=https%3A%2F%2Fdazzle.sgp1.cdn.digitaloceanspaces.com%2F48522%2FiPhone-14-Price-in-Bangladesh-Yellow.jpg&w=640&q=75",
+    image:
+      "https://dazzle.com.bd/_next/image?url=https%3A%2F%2Fdazzle.sgp1.cdn.digitaloceanspaces.com%2F48522%2FiPhone-14-Price-in-Bangladesh-Yellow.jpg&w=640&q=75",
     name: "Belkin USB C 7 in 1 Multiport...",
     inStock: true,
     price: "৳1,00,000",
     originalPrice: "৳1,30,000",
   },
   {
-    image: "https://dazzle.com.bd/_next/image?url=https%3A%2F%2Fdazzle.sgp1.cdn.digitaloceanspaces.com%2F48522%2FiPhone-14-Price-in-Bangladesh-Yellow.jpg&w=640&q=75",
+    image:
+      "https://dazzle.com.bd/_next/image?url=https%3A%2F%2Fdazzle.sgp1.cdn.digitaloceanspaces.com%2F48522%2FiPhone-14-Price-in-Bangladesh-Yellow.jpg&w=640&q=75",
     name: "Belkin USB C 7 in 1 Multiport...",
     inStock: true,
     price: "৳1,00,000",
@@ -86,7 +89,12 @@ function consolidateVariants(rows: VariantRow[]): {
     const lower = raw.trim().toLowerCase();
     if (lower === "color") return "Color";
     if (lower === "storage") return "Storage";
-    if (lower === "ram & storage" || lower === "ram&storage" || lower === "ram and storage") return "RAM & Storage";
+    if (
+      lower === "ram & storage" ||
+      lower === "ram&storage" ||
+      lower === "ram and storage"
+    )
+      return "RAM & Storage";
     if (lower.startsWith("region")) return "Region/Variant";
     // Title case fallback
     return raw.trim().replace(/\b\w/g, (c) => c.toUpperCase());
@@ -106,12 +114,15 @@ function consolidateVariants(rows: VariantRow[]): {
         row.isActive &&
         !row.isTba &&
         row.attributeGroup?.trim() &&
-        row.attribute?.trim()
+        row.attribute?.trim(),
     )
     .map((row) => ({
       ...row,
       _normGroup: normalizeGroup(row.attributeGroup),
-      _normAttr: normalizeAttr(normalizeGroup(row.attributeGroup), row.attribute),
+      _normAttr: normalizeAttr(
+        normalizeGroup(row.attributeGroup),
+        row.attribute,
+      ),
     }));
 
   const groupOrder = ["Color", "Storage", "RAM & Storage", "Region/Variant"];
@@ -154,9 +165,11 @@ function consolidateVariants(rows: VariantRow[]): {
   });
 
   const completeVariants = [...variantMap.values()].filter((v) =>
-    groups.every((g) => v.attributes[g]?.trim())
+    groups.every((g) => v.attributes[g]?.trim()),
   );
-  const nonStorageGroups = groups.filter((g) => g !== "Storage" && g !== "RAM & Storage");
+  const nonStorageGroups = groups.filter(
+    (g) => g !== "Storage" && g !== "RAM & Storage",
+  );
 
   completeVariants.forEach((v) => {
     if (v.price > 0) return;
@@ -164,7 +177,7 @@ function consolidateVariants(rows: VariantRow[]): {
       (other) =>
         other.id !== v.id &&
         other.price > 0 &&
-        nonStorageGroups.every((g) => other.attributes[g] === v.attributes[g])
+        nonStorageGroups.every((g) => other.attributes[g] === v.attributes[g]),
     );
     if (donor) {
       v.price = donor.price;
@@ -175,13 +188,15 @@ function consolidateVariants(rows: VariantRow[]): {
   const finalVariants = completeVariants;
   finalVariants.forEach((v) => {
     if (!v.name) {
-      v.name = groups.map((g) => v.attributes[g]).filter(Boolean).join(" ");
+      v.name = groups
+        .map((g) => v.attributes[g])
+        .filter(Boolean)
+        .join(" ");
     }
   });
 
   return { groups, variants: finalVariants };
 }
-
 
 interface ProductDetailProps {
   product: any | null;
@@ -189,12 +204,13 @@ interface ProductDetailProps {
 
 const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
   const [qty, setQty] = useState(1);
-  const [selectedAttrs, setSelectedAttrs] = useState<Record<string, string>>({});
+  const [selectedAttrs, setSelectedAttrs] = useState<Record<string, string>>(
+    {},
+  );
   const [selectedColor, setSelectedColor] = useState(0);
   const [emiOpen, setEmiOpen] = useState(false);
 
-  console.log(product, "productproductproductproductproduct")
-
+  console.log(product, "productproductproductproductproduct");
 
   const { data: variantApiData } = useQuery<VariantApiResponse>({
     queryKey: ["product-variants", product?.productUuid],
@@ -204,34 +220,38 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
     staleTime: 10 * 60 * 1000,
   });
 
-  console.log(variantApiData, "variantApiDatavariantApiDatavariantApiData")
+  console.log(variantApiData, "variantApiDatavariantApiDatavariantApiData");
 
   // ── Consolidate ────────────────────────────────────────────────
   const { groups, variants } = useMemo(
     () => consolidateVariants(variantApiData?.data ?? []),
-    [variantApiData]
+    [variantApiData],
   );
 
   useEffect(() => {
     if (groups.length === 0) return;
     const initial: Record<string, string> = {};
     groups.forEach((group) => {
-      const firstVal = variants.find((v) => v.attributes[group])?.attributes[group];
+      const firstVal = variants.find((v) => v.attributes[group])?.attributes[
+        group
+      ];
       if (firstVal) initial[group] = firstVal;
     });
     setSelectedAttrs(initial);
   }, [groups, variants]);
 
   const selectedVariant: ConsolidatedVariant | null = useMemo(() => {
-    if (groups.length === 0 || Object.keys(selectedAttrs).length < groups.length)
+    if (
+      groups.length === 0 ||
+      Object.keys(selectedAttrs).length < groups.length
+    )
       return null;
     return (
       variants.find((v) =>
-        groups.every((g) => v.attributes[g] === selectedAttrs[g])
+        groups.every((g) => v.attributes[g] === selectedAttrs[g]),
       ) ?? null
     );
   }, [groups, variants, selectedAttrs]);
-
 
   const isOptionAvailable = (group: string, option: string) =>
     variants.some(
@@ -239,23 +259,24 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
         v.attributes[group] === option &&
         Object.entries(selectedAttrs)
           .filter(([g]) => g !== group)
-          .every(([g, val]) => v.attributes[g] === val)
+          .every(([g, val]) => v.attributes[g] === val),
     );
-
 
   const groupOptions = useMemo(
     () =>
       Object.fromEntries(
         groups.map((group) => [
           group,
-          [...new Set(
-            variants
-              .map((v) => v.attributes[group])
-              .filter((val): val is string => !!val && val.trim() !== "")
-          )],
-        ])
+          [
+            ...new Set(
+              variants
+                .map((v) => v.attributes[group])
+                .filter((val): val is string => !!val && val.trim() !== ""),
+            ),
+          ],
+        ]),
       ),
-    [groups, variants]
+    [groups, variants],
   );
 
   const colorGroupName = groups.find((g) => g.toLowerCase() === "color");
@@ -264,7 +285,9 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
   // ── Base images from product API ──────────────────────────────
   const baseImages: string[] =
     product?.thumbnails && product.thumbnails.length > 0
-      ? product.thumbnails.map((img:any) => img.mediaFileUrl || img.mediafileUrl || "").filter(Boolean)
+      ? product.thumbnails
+          .map((img: any) => img.mediaFileUrl || img.mediafileUrl || "")
+          .filter(Boolean)
       : product?.thumbnailImg
         ? [product.thumbnailImg]
         : [];
@@ -274,12 +297,15 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
 
     const selectedColorVal = selectedAttrs[colorGroupName];
     const colorVariantImages = variants
-      .filter((v) => v.attributes[colorGroupName] === selectedColorVal && v.thumbnailUrl)
+      .filter(
+        (v) =>
+          v.attributes[colorGroupName] === selectedColorVal && v.thumbnailUrl,
+      )
       .map((v) => v.thumbnailUrl);
 
     const uniqueColorImages = [...new Set(colorVariantImages)];
     return uniqueColorImages.length > 0 ? uniqueColorImages : baseImages;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [colorGroupName, selectedAttrs, variants, baseImages]);
 
   // ── Color variant groups for ProductColorVariants ──────────────
@@ -290,13 +316,13 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
           type: "color" as const,
           options: (groupOptions[colorGroupName] ?? []).map((val, idx) => {
             const match = variants.find(
-              (v) => v.attributes[colorGroupName] === val && v.thumbnailUrl
+              (v) => v.attributes[colorGroupName] === val && v.thumbnailUrl,
             );
             // const fallbackImg = baseImages[idx] || baseImages[0] || IPHONE_ORANGE.src;
             return {
               label: val,
               value: val,
-              image: match?.thumbnailUrl ,
+              image: match?.thumbnailUrl,
               disabled: !isOptionAvailable(colorGroupName, val),
             };
           }),
@@ -316,19 +342,21 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
   }));
 
   // ── Pricing — variant price > 0 হলে সেটা নাও, নাহলে product API এর price ──
-  const price = (selectedVariant?.price && selectedVariant.price > 0)
-    ? selectedVariant.price
-    : (product?.discountedPrice ?? 0);
-  const originalPrice = (selectedVariant?.mrp && selectedVariant.mrp > 0)
-    ? selectedVariant.mrp
-    : (product?.regularPrice ?? 0);
+  const price =
+    selectedVariant?.price && selectedVariant.price > 0
+      ? selectedVariant.price
+      : (product?.discountedPrice ?? 0);
+  const originalPrice =
+    selectedVariant?.mrp && selectedVariant.mrp > 0
+      ? selectedVariant.mrp
+      : (product?.regularPrice ?? 0);
 
   // ── Badges ─────────────────────────────────────────────────────
   const VALID_COLORS = ["pink", "purple", "green", "orange"] as const;
   type BadgeColor = (typeof VALID_COLORS)[number];
   const badgeList: { label: string; color: BadgeColor }[] =
     product?.badges && product.badges.length > 0
-      ? product.badges.map((b:any) => ({
+      ? product.badges.map((b: any) => ({
           label: b.label,
           color: (VALID_COLORS.includes(b.color as BadgeColor)
             ? b.color
@@ -405,8 +433,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
     }
   };
 
-
-  console.log(product, "productproductproduct")
+  console.log(product, "productproductproduct");
 
   return (
     <div className="min-h-screen font-sans">
@@ -431,7 +458,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
 
       <div className="max-w-350 mx-auto lg:px-4 px-2 pb-16">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
           {/* ── Left: Image Gallery ── */}
           <div className="lg:col-span-5">
             <div className="rounded-2xl shadow-sm p-5 sticky top-6 transition-colors duration-200  dark:bg-[#3e3329]">
@@ -448,12 +474,10 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
               </div>
               <div className="hidden lg:block space-y-6 pt-2">
                 <ContactOptions
-  whatsappNumber="09638001122
-"
-  messengerUsername="https://www.facebook.com/dazzlebangladesh/"
-  phoneNumber="+09638001122
-"
-/>
+                  whatsappNumber="09638001122"
+                  messengerUsername="dazzlebangladesh/"
+                  phoneNumber="09638001122"
+                />
               </div>
             </div>
           </div>
@@ -483,14 +507,17 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
             />
 
             {/* Variant selector */}
-            {(colorVariantGroups.length > 0 || otherVariantGroups.length > 0) && (
+            {(colorVariantGroups.length > 0 ||
+              otherVariantGroups.length > 0) && (
               <div className="border border-[#e7e7e7] dark:border-[#4a3f36] bg-[#f7f7f7] dark:bg-[#3e3329] text-black dark:text-white rounded-2xl p-4 mt-4">
                 {colorVariantGroups.length > 0 && (
                   <ProductColorVariants
                     groups={colorVariantGroups}
                     selectedValues={selectedAttrs}
                     onChange={(sel) =>
-                      Object.entries(sel).forEach(([g, v]) => handleVariantChange(g, v))
+                      Object.entries(sel).forEach(([g, v]) =>
+                        handleVariantChange(g, v),
+                      )
                     }
                   />
                 )}
@@ -535,7 +562,8 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
                   {
                     id: "ultimate",
                     title: "Dazzle Ultimate Care+ (1 Year)",
-                    description: "Hardware replacement & accidental damage coverage",
+                    description:
+                      "Hardware replacement & accidental damage coverage",
                     icon: "🛡️",
                     price: 100000,
                     originalPrice: 200000,
@@ -543,7 +571,8 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
                   {
                     id: "bundle",
                     title: "DC+ & DSC+ Bundle",
-                    description: "1-year device replacement + 2-year display coverage",
+                    description:
+                      "1-year device replacement + 2-year display coverage",
                     icon: "📦",
                     price: 100000,
                     originalPrice: 200000,
@@ -551,7 +580,8 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
                   {
                     id: "ultimate1",
                     title: "Dazzle Ultimate Care+ (1 Year)",
-                    description: "Hardware replacement & accidental damage coverage",
+                    description:
+                      "Hardware replacement & accidental damage coverage",
                     icon: "🛡️",
                     price: 100000,
                     originalPrice: 200000,
@@ -583,7 +613,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
               </div>
             </div>
           </div>
-
 
           {/* ── Related Products ── */}
           {product?.categorySlug && (
