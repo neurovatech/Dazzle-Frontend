@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -37,6 +38,22 @@ export default function MobileHeader({ categories }: Props) {
   const iconColor = resolvedTheme === "dark" ? "#fff" : "#222";
 
   const menuRef = useRef<HTMLDivElement>(null);
+
+   const cartItems = useAppSelector((state) => state.cart.items);
+  const cartCount = cartItems.length;
+
+  const [bounce, setBounce] = useState(false);
+  const prevCount = useRef(cartCount);
+  useEffect(() => {
+    if (cartCount > prevCount.current) {
+      setBounce(true);
+      const t = setTimeout(() => setBounce(false), 600);
+      prevCount.current = cartCount;
+      return () => clearTimeout(t);
+    }
+    prevCount.current = cartCount;
+  }, [cartCount]);
+  
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -83,8 +100,26 @@ export default function MobileHeader({ categories }: Props) {
           </Link>
 
           <Link
-            href="/cart" className="w-10 h-10 rounded-xl bg-white dark:bg-[#2e2b28] flex items-center justify-center">
-            <CartIcon className="text-primary_color dark:text-white"  />
+            href="/cart" className="relative w-10 h-10 rounded-xl bg-white dark:bg-[#2e2b28] flex items-center justify-center">
+            <span className={bounce ? "animate-bounce" : ""}>
+                  <CartIcon />
+                </span>
+                {cartCount > 0 && (
+                  <span
+                    className={`
+                      absolute -top-1.5 -right-1.5
+                      min-w-[20px] h-5 px-1
+                      bg-[#E6A817] text-white
+                      text-[10px] font-extrabold
+                      rounded-full
+                      flex items-center justify-center
+                      shadow-md
+                      ${bounce ? "animate-bounce" : ""}
+                    `}
+                  >
+                    {cartCount > 99 ? "99+" : cartCount}
+                  </span>
+                )}
           </Link>
         </div>
       </div>

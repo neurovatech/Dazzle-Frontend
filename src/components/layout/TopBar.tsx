@@ -11,7 +11,7 @@ export default function TopBar() {
             <Link
               key={item.label}
               href={item.href}
-              className="text-xs font-medium transition-colors bg-linear-to-r from-primary to-[#CB843B] text-transparent bg-clip-text hover:brightness-110"
+              className="text-xs font-medium transition-colors bg-linear-to-r from-primary to-[#CB843B] text-transparent bg-clip-text hover:brightness-110 dark:hover:text-white"
             >
               {item.label}
             </Link>
@@ -20,14 +20,14 @@ export default function TopBar() {
         <div className="flex items-center gap-6">
           <Link
             href="tel:09638001122"
-            className="flex items-center gap-2 text-xs text-primary hover:text-black transition-colors"
+            className="flex items-center gap-2 text-xs text-primary hover:text-black transition-colors dark:hover:text-[#ba975f]"
           >
             <PhoneIcon />
             <span>09638001122</span>
           </Link>
           <Link
             href="/shop-location"
-            className="flex items-center gap-2 text-xs text-primary hover:text-black transition-colors"
+            className="flex items-center gap-2 text-xs text-primary hover:text-black transition-colors dark:hover:text-[#ba975f]"
           >
             <MapPinIcon />
             <span>Store locations</span>

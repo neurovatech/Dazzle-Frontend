@@ -124,8 +124,6 @@ async function BlogPage({ searchParams }: BlogPageProps) {
     params.set("page", "1");
     return `/blogs?${params.toString()}`;
   };
-  console.log(categoryOptions, "categoryOptionscategoryOptionscategoryOptions")
-  console.log(categories, "categoryOptionscategoryOptionscategoryOptions")
 
   return (
     <div className="flex flex-col flex-1 max-w-355 mx-auto lg:px-8 px-4">
@@ -133,7 +131,7 @@ async function BlogPage({ searchParams }: BlogPageProps) {
 
       {/* Category filter buttons */}
       <div className="flex flex-wrap gap-2">
-        {categoryOptions.map((option) => {
+        {categoryOptions.map((option:any) => {
           const isActive = currentCategory === option.blog_category_slug;
           return (
             <Link
