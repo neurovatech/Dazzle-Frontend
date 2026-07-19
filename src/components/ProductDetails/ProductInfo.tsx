@@ -135,7 +135,7 @@ const isWishlisted = wishlistItems.some((i) => i.productUuid === productId);
 
   return (
     <div className="space-y-5 text-gray-800 dark:text-gray-100">
-      <div className="flex gap-3">
+      <div className="flex gap-1 mb-0">
           <span className="text-gray-500 dark:text-white">By:</span>
           <Link
             href={`/brands/${brand_slug}`}
@@ -144,7 +144,7 @@ const isWishlisted = wishlistItems.some((i) => i.productUuid === productId);
             {brand}
           </Link>
         </div>
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-start justify-between gap-3 mb-0">
         
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-[#222222] dark:text-white leading-snug">
@@ -214,7 +214,7 @@ const isWishlisted = wishlistItems.some((i) => i.productUuid === productId);
       </div>
 
       {/* Brand + Code + Hidden Profit Meter Gear */}
-      <div className="flex justify-between items-center gap-2 text-sm border-b border-gray-100 dark:border-gray-800 pb-3">
+      <div className="flex justify-between items-center gap-2 text-sm border-b border-gray-100 dark:border-gray-800 pb-3 mb-0">
         {/* <div className="flex items-center gap-1.5">
           <button
             type="button"

@@ -43,7 +43,7 @@ function CategoriesProduct({
     <div>
       {/* ── Brand filter tabs ── */}
       {brands.length > 0 && (
-        <div className="md:px-12.5 px-4 mt-4">
+        <div className="md:px-12.5 px-4 mt-1">
           <div className="flex items-center gap-2 flex-wrap">
             {/* All tab */}
             <button

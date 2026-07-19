@@ -14,7 +14,7 @@ interface BreadcrumbProps {
 
 export default function Breadcrumb({ items }: BreadcrumbProps) {
   return (
-    <nav className="flex items-center text-sm text-gray-600 py-6">
+    <nav className="flex items-center text-sm text-gray-600 pt-6 pb-3">
       {items.map((item, index) => {
         const isLast = index === items.length - 1;
 
