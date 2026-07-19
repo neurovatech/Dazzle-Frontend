@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { useState } from "react";
 import Image from "next/image";
@@ -5,6 +6,7 @@ import AllProducts from "@/components/CategoriesPages/CategoriesProduct/AllProdu
 import FilterSidebar from "./FilterSidebar";
 import { ProductItem } from "@/app/(public)/categories/[categorySlug]/page";
 import type { BrandItem } from "@/app/(public)/categories/[categorySlug]/page";
+import Banner from "@/components/CategoriesPages/CategoriesBanner/Banner";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -18,6 +20,7 @@ interface CategoriesProductProps {
   currentSort: string;
   currentSearch: string;
   brands?: BrandItem[];
+  banners?: any;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -32,6 +35,7 @@ function CategoriesProduct({
   currentSort,
   currentSearch,
   brands = [],
+  banners
 }: CategoriesProductProps) {
   const [selectedBrandSlug, setSelectedBrandSlug] = useState<string | null>(null);
 
@@ -87,6 +91,8 @@ function CategoriesProduct({
           </div>
         </div>
       )}
+
+      <Banner banners={banners} />
 
       {/* ── Products grid ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mt-6 items-stretch cursor-pointer md:px-12.5 px-4">

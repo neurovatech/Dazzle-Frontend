@@ -128,36 +128,36 @@ export default function BrandProducts({
   return (
     <>
       {/* ── Category filter buttons ── */}
-      <div className="md:px-12.5 px-4 flex flex-row flex-wrap gap-2 overflow-x-auto py-3">
-        {/* All */}
-        <button
-          onClick={() => navigate(null)}
-          className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-all duration-200 whitespace-nowrap ${
-            activeCategory === null
-              ? "bg-[#6D3F0E] text-white border-[#6D3F0E]"
-              : "border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:border-[#6D3F0E] hover:text-[#6D3F0E] dark:hover:text-[#d4a97a]"
-          }`}
-        >
-          All
-        </button>
+      <div className="md:px-12.5 px-4 flex flex-row flex-nowrap gap-2 overflow-x-auto py-3 scrollbar-hide">
+  {/* All */}
+  <button
+    onClick={() => navigate(null)}
+    className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-all duration-200 whitespace-nowrap shrink-0 ${
+      activeCategory === null
+        ? "bg-[#6D3F0E] text-white border-[#6D3F0E]"
+        : "border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:border-[#6D3F0E] hover:text-[#6D3F0E] dark:hover:text-[#d4a97a]"
+    }`}
+  >
+    All
+  </button>
 
-        {/* Category buttons */}
-        {categories
-          .filter((c) => c.is_active)
-          .map((cat) => (
-            <button
-              key={cat.uuid}
-              onClick={() => navigate(cat.category_slug)}
-              className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-all duration-200 whitespace-nowrap ${
-                activeCategory === cat.category_slug
-                  ? "bg-[#6D3F0E] text-white border-[#6D3F0E]"
-                  : "border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:border-[#6D3F0E] hover:text-[#6D3F0E] dark:hover:text-[#d4a97a]"
-              }`}
-            >
-              {cat.category_name}
-            </button>
-          ))}
-      </div>
+  {/* Category buttons */}
+  {categories
+    .filter((c) => c.is_active)
+    .map((cat) => (
+      <button
+        key={cat.uuid}
+        onClick={() => navigate(cat.category_slug)}
+        className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-all duration-200 whitespace-nowrap shrink-0 ${
+          activeCategory === cat.category_slug
+            ? "bg-[#6D3F0E] text-white border-[#6D3F0E]"
+            : "border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:border-[#6D3F0E] hover:text-[#6D3F0E] dark:hover:text-[#d4a97a]"
+        }`}
+      >
+        {cat.category_name}
+      </button>
+    ))}
+</div>
 
       {/* ── Sidebar + product list ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mt-4 items-start md:px-6.5 px-4">

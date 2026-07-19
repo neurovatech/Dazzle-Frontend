@@ -103,6 +103,7 @@ function ProductGridSkeleton() {
 
 function AllProducts({
   categorySlug,
+  subCategorySlug,
   currentPage,
   products: ssrProducts,
   totalPages: ssrTotalPages,
@@ -127,7 +128,7 @@ function AllProducts({
 
   // ── Client-side fetch when a brand tab is selected ─────────────
   const { data: brandData, isLoading: brandLoading } = useQuery<ProductListResponse>({
-    queryKey: ["category-brand-products", categorySlug, selectedBrandSlug, brandPage, currentSort],
+    queryKey: ["category-brand-products", categorySlug, subCategorySlug, selectedBrandSlug, brandPage, currentSort],
     queryFn: () => {
       const p = new URLSearchParams({
         page:         String(brandPage),
@@ -135,6 +136,7 @@ function AllProducts({
         categorySlug,
         brandSlug:    selectedBrandSlug!,
       });
+      if (subCategorySlug) p.set("subCategorySlug", subCategorySlug);
       if (currentSort) p.set("sort", currentSort);
       return api.get<ProductListResponse>(`/products?${p.toString()}`);
     },

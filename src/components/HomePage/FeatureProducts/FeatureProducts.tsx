@@ -9,7 +9,7 @@ interface ShowcaseThumbnail {
   fileUuid: string;
   mediaFileUrl: string;
 }
- 
+
 interface ShowcaseItem {
   productUuid: string;
   productCode: string;
@@ -22,7 +22,7 @@ interface ShowcaseItem {
   disRate: number;
   thumbnails: ShowcaseThumbnail;
 }
- 
+
 interface ShowcaseItemsResponse {
   statusCode: number;
   status: string;
@@ -48,14 +48,13 @@ export interface ProductCardItem {
   image: string;
 }
 
- 
 interface WebBanner {
   bannerUUID: string;
   imageURL: string;
   mediaInfo: string;
   openNewTab: boolean;
 }
- 
+
 interface WebBannerResponse {
   statusCode: number;
   status: string;
@@ -64,21 +63,18 @@ interface WebBannerResponse {
   data: WebBanner[];
 }
 
-
-
-
 export default async function FeatureProducts() {
   let products: ProductCardItem[] = [];
-    let banners: WebBanner[] = [];
- 
+  let banners: WebBanner[] = [];
+
   try {
     const res = await api.get<ShowcaseItemsResponse>(
       "/showcase-items?showcaseSlug=feature-products&limit=5",
-      { cache: "no-store" }
+      { cache: "no-store" },
     );
- 
+
     const list = Array.isArray(res?.data) ? res.data : [];
- 
+
     products = list.map((item) => ({
       uuid: item.productUuid,
       title: item.productName,
@@ -98,18 +94,15 @@ export default async function FeatureProducts() {
   try {
     const bannerRes = await api.get<WebBannerResponse>(
       "/web-banner/feature-products-below",
-      { cache: "no-store" }
+      { cache: "no-store" },
     );
- 
+
     banners = Array.isArray(bannerRes?.data) ? bannerRes.data : [];
   } catch (error) {
     console.error("Error fetching feature-products-below banners SSR:", error);
   }
- 
+
   const [primaryBanner, secondaryBanner] = banners;
-
- 
-
 
   const features = [
     {
@@ -249,48 +242,51 @@ export default async function FeatureProducts() {
         ))}
       </div>
 
-            {(primaryBanner || secondaryBanner) && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 sm:gap-4 mt-6 items-stretch cursor-pointer">
-          {primaryBanner && (
-            <div className="sm:col-span-1 lg:col-span-8 h-full">
-              <Link
-                href={primaryBanner.mediaInfo || "#"}
-                target={primaryBanner.openNewTab ? "_blank" : undefined}
-                rel={primaryBanner.openNewTab ? "noopener noreferrer" : undefined}
-              >
-                <Image
-                  src={primaryBanner.imageURL}
-                  width={500}
-                  height={500}
-                  alt="Offer banner"
-                  loading="lazy"
-                  className="w-full h-full object-cover rounded-xl transition-all duration-500 hover:shadow-lg"
-                />
-              </Link>
-            </div>
-          )}
- 
-          {secondaryBanner && (
-            <div className="sm:col-span-1 lg:col-span-4 h-full">
-              <Link
-                href={secondaryBanner.mediaInfo || "#"}
-                target={secondaryBanner.openNewTab ? "_blank" : undefined}
-                rel={secondaryBanner.openNewTab ? "noopener noreferrer" : undefined}
-              >
-                <Image
-                  src={secondaryBanner.imageURL}
-                  width={500}
-                  height={500}
-                  alt="Offer banner"
-                  loading="lazy"
-                  className="w-full h-full object-cover rounded-xl transition-all duration-500 hover:shadow-lg"
-                />
-              </Link>
-            </div>
-          )}
-        </div>
-      )}
+      {(primaryBanner || secondaryBanner) && (
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 sm:gap-4 mt-6 items-stretch cursor-pointer">
+    {primaryBanner && (
+      <div className="sm:col-span-1 lg:col-span-8 h-[300px] md:h-[600px]">
+        <Link
+          href={primaryBanner.mediaInfo || "#"}
+          target={primaryBanner.openNewTab ? "_blank" : undefined}
+          rel={
+            primaryBanner.openNewTab ? "noopener noreferrer" : undefined
+          }
+        >
+          <Image
+            src={primaryBanner.imageURL}
+            width={500}
+            height={300}
+            alt="Offer banner"
+            loading="lazy"
+            className="w-full h-[300px] md:h-[600px] object-cover rounded-xl transition-all duration-500 hover:shadow-lg"
+          />
+        </Link>
+      </div>
+    )}
 
+    {secondaryBanner && (
+      <div className="sm:col-span-1 lg:col-span-4 h-[300px] md:h-[600px]">
+        <Link
+          href={secondaryBanner.mediaInfo || "#"}
+          target={secondaryBanner.openNewTab ? "_blank" : undefined}
+          rel={
+            secondaryBanner.openNewTab ? "noopener noreferrer" : undefined
+          }
+        >
+          <Image
+            src={secondaryBanner.imageURL}
+            width={500}
+            height={300}
+            alt="Offer banner"
+            loading="lazy"
+            className="w-full h-[300px] lg:h-[600px] object-cover rounded-xl transition-all duration-500 hover:shadow-lg"
+          />
+        </Link>
+      </div>
+    )}
+  </div>
+)}
 
       {/* <div className="grid gap-3 sm:gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 justify-center mt-8 sm:mt-10">
         {features.map((feature, i) => (

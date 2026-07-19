@@ -73,8 +73,8 @@ export default function SearchBar() {
       {/* ── Dropdown Panel ── */}
       <div
         className={`
-          fixed left-2 right-2 top-auto
-          sm:absolute sm:left-0 sm:right-auto sm:w-full sm:min-w-205
+          fixed  left-2 md:-left-32.5 lg:-left-32.5 right-2 top-auto
+          sm:absolute  sm:right-auto sm:w-full sm:min-w-205
           mt-2 sm:mt-0 sm:top-[calc(100%+8px)]
           bg-white dark:bg-[#2e2b28] rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-600
           max-h-[80vh] overflow-y-auto

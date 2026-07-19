@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import CategoriesProduct from "@/components/CategoriesPages/CategoriesProduct/CategoriesProduct";
-import Banner from "@/components/CategoriesPages/CategoriesBanner/Banner";
+
 import Breadcrumb from "@/components/share/Breadcrumb";
 import { api } from "@/lib/api";
 import type { Metadata } from "next";
-import { ProductItem, ProductListResponse } from "@/app/(public)/categories/[categorySlug]/page";
+import { ProductItem, ProductListResponse, BrandItem } from "@/app/(public)/categories/[categorySlug]/page";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -130,6 +131,42 @@ export default async function SubCategoriesPage({ params, searchParams }: PagePr
 
   const [banner1, banner2] = banners;
 
+  // ── Fetch brands for this subcategory ───────────────────────────────────────
+  let brands: BrandItem[] = [];
+  try {
+    const brandsRes = await api.get<any>(
+      `/subcategory/${subCategorySlug}/brands`,
+      { cache: "no-store" }
+    );
+    let rawChild: any[] = [];
+    if (brandsRes?.data) {
+      if (Array.isArray(brandsRes.data.subCategory) && brandsRes.data.subCategory.length > 0) {
+        rawChild = brandsRes.data.subCategory[0].child || [];
+      } else if (Array.isArray(brandsRes.data.category) && brandsRes.data.category.length > 0) {
+        rawChild = brandsRes.data.category[0].child || [];
+      } else if (Array.isArray(brandsRes.data.child)) {
+        rawChild = brandsRes.data.child;
+      } else if (Array.isArray(brandsRes.data.brands)) {
+        rawChild = brandsRes.data.brands;
+      } else if (Array.isArray(brandsRes.data)) {
+        rawChild = brandsRes.data;
+      }
+    }
+    if (Array.isArray(rawChild)) {
+      brands = rawChild
+        .filter((b: any) => b && b.is_active)
+        .map((b: any) => ({
+          uuid: b.uuid,
+          brand_name: b.brand_name || "",
+          brand_slug: b.brand_slug || "",
+          thumbnail_img: b.thumbnail_img || "",
+          is_active: b.is_active ?? true,
+        }));
+    }
+  } catch (err) {
+    console.error("Error fetching sub-category brands:", err);
+  }
+
   // ── Breadcrumb ────────────────────────────────────────────────────────────────
   const breadcrumbItems = [
     { label: "Home", href: "/" },
@@ -143,8 +180,9 @@ export default async function SubCategoriesPage({ params, searchParams }: PagePr
       <div className="md:px-12.5 px-4">
         <Breadcrumb items={breadcrumbItems} />
       </div>
-      <Banner banners={banners} />
+      {/* <Banner banners={banners} /> */}
       <CategoriesProduct
+      banners={banners}
         categorySlug={categorySlug}
         subCategorySlug={subCategorySlug}
         currentPage={currentPage}
@@ -153,6 +191,7 @@ export default async function SubCategoriesPage({ params, searchParams }: PagePr
         totalCount={productData.totalCount}
         currentSort={sort ?? ""}
         currentSearch={search ?? ""}
+        brands={brands}
       />
     </div>
   );

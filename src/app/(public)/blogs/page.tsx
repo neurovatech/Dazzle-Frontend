@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Metadata } from "next";
 import Link from "next/link";
 import BlogCard from "@/components/Blogs/BlogCard";
@@ -96,11 +97,12 @@ async function BlogPage({ searchParams }: BlogPageProps) {
     getBlogCategories(),
   ]);
 
-  const categoryOptions = [
-    { value: "all", label: "All Categories" },
+  const categoryOptions:any = [
+    { value: "all", label: "All Categories", blog_category_slug:"all", },
     ...categories.map((c) => ({
       value: c.uuid,
       label: c.blog_category,
+      blog_category_slug: c.blog_category_slug,
     })),
   ];
 
@@ -122,6 +124,8 @@ async function BlogPage({ searchParams }: BlogPageProps) {
     params.set("page", "1");
     return `/blogs?${params.toString()}`;
   };
+  console.log(categoryOptions, "categoryOptionscategoryOptionscategoryOptions")
+  console.log(categories, "categoryOptionscategoryOptionscategoryOptions")
 
   return (
     <div className="flex flex-col flex-1 max-w-355 mx-auto lg:px-8 px-4">
@@ -130,11 +134,11 @@ async function BlogPage({ searchParams }: BlogPageProps) {
       {/* Category filter buttons */}
       <div className="flex flex-wrap gap-2">
         {categoryOptions.map((option) => {
-          const isActive = currentCategory === option.value;
+          const isActive = currentCategory === option.blog_category_slug;
           return (
             <Link
               key={option.value}
-              href={buildCategoryLink(option.value)}
+              href={buildCategoryLink(option.blog_category_slug)}
               className={`px-5! h-10 flex items-center rounded-full text-sm font-medium transition-colors border ${
                 isActive
                   ? "bg-[#101828] text-white border-black"
