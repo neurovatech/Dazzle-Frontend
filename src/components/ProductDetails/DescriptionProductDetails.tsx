@@ -19,7 +19,9 @@ interface DescriptionProps {
   description?: string;
 }
 
-const DescriptionProductDetails: React.FC<DescriptionProps> = ({ description }) => {
+const DescriptionProductDetails: React.FC<DescriptionProps> = ({
+  description,
+}) => {
   const [open, setOpen] = useState(true);
   const cards = [
     {
@@ -57,26 +59,12 @@ const DescriptionProductDetails: React.FC<DescriptionProps> = ({ description }) 
   ];
 
   return (
-    <div className="w-full pt-4">
-      {/* Header */}
-      <button
-        onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 mb-4 text-base font-semibold text-gray-900 hover:text-gray-700 transition-colors dark:hover:text-gray-300 dark:text-white"
-      >
-        Description
-        {open ? (
-          <ChevronUp size={16} className="text-gray-500" />
-        ) : (
-          <ChevronDown size={16} className="text-gray-500" />
-        )}
-      </button>
-
+    <div className="w-full">
       {/* Groups */}
-      {open && (
-        <div className="flex flex-col gap-4">
-          {description ? (
-            <div
-  className="
+      <div className="flex flex-col gap-4">
+        {description ? (
+          <div
+            className="
     prose dark:prose-invert max-w-none text-sm 
     text-gray-800 dark:text-gray-100 
     p-5 bg-[#F7F7F7] dark:bg-[#1a1613] 
@@ -118,37 +106,36 @@ const DescriptionProductDetails: React.FC<DescriptionProps> = ({ description }) 
 
     overflow-x-auto
   "
-  dangerouslySetInnerHTML={{ __html: description }}
-/>
-          ) : (
-            <>
-              <Image
-                src={ProductBanner}
-                width={500}
-                height={500}
-                alt="Picture of the author"
-                className="w-full object-cover"
-              />
+            dangerouslySetInnerHTML={{ __html: description }}
+          />
+        ) : (
+          <>
+            <Image
+              src={ProductBanner}
+              width={500}
+              height={500}
+              alt="Picture of the author"
+              className="w-full object-cover"
+            />
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4">
-                {cards.map((card, i) => (
-                  <div
-                    key={i}
-                    className={`rounded-2xl p-6 h-full ${card?.wrapper}`}
-                  >
-                    <h2 className="text-[17px] font-bold text-gray-900 leading-snug mb-3">
-                      {card.title}
-                    </h2>
-                    <p className="text-sm text-gray-400 leading-relaxed">
-                      {card.description}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-      )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4">
+              {cards.map((card, i) => (
+                <div
+                  key={i}
+                  className={`rounded-2xl p-6 h-full ${card?.wrapper}`}
+                >
+                  <h2 className="text-[17px] font-bold text-gray-900 leading-snug mb-3">
+                    {card.title}
+                  </h2>
+                  <p className="text-sm text-gray-400 leading-relaxed">
+                    {card.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 };

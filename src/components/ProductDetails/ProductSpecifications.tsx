@@ -61,21 +61,6 @@ const ProductSpecifications: React.FC<ProductSpecificationsProps> = ({ groups: p
 
   return (
     <div className="w-full">
-      {/* Header */}
-      <button
-        onClick={() => setOpen(!open)}
-        className="flex items-center dark:text-white gap-2 mb-4 text-base font-semibold text-gray-900 hover:text-gray-700 transition-colors dark:hover:text-gray-300"
-      >
-        Product Specifications
-        {open ? (
-          <ChevronUp size={16} className="text-gray-500" />
-        ) : (
-          <ChevronDown size={16} className="text-gray-500" />
-        )}
-      </button>
-
-      {/* Groups */}
-      {open && (
         <div className="flex flex-col gap-4">
           {groups.map((group, gi) => (
             <div
@@ -109,9 +94,7 @@ const ProductSpecifications: React.FC<ProductSpecificationsProps> = ({ groups: p
             </div>
           ))}
         </div>
-      )}
 
-      <DescriptionProductDetails description={description} />
     </div>
   );
 };

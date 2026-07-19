@@ -23,6 +23,7 @@ import { api } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 // import type { ProductApiData } from "@/app/(public)/product/[productSlug]/page";
 import RelatedProductSectionCom from "./RelatedProducts/RelatedProductSectionCom";
+import DescriptionProductDetails from "./DescriptionProductDetails";
 
 const FALLBACK_PRODUCTS = [
   {
@@ -403,12 +404,18 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
   }, [specApiData, product?.specifications]);
   const tabsData = [
     {
-      label: "Specifications",
+      label: "Specification",
       content: (
         <ProductSpecifications
           groups={specGroups}
           description={product?.description}
         />
+      ),
+    },
+    {
+      label: "Description",
+      content: (
+        <DescriptionProductDetails description={product?.description} />
       ),
     },
   ];

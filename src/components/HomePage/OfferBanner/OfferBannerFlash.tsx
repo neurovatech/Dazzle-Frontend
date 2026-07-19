@@ -22,7 +22,10 @@ interface OfferBannerProps {
   height?: string;
 }
 
-export default async function OfferBannerFlash({ apiEndpoint, height }: OfferBannerProps) {
+export default async function OfferBannerFlash({
+  apiEndpoint,
+  height,
+}: OfferBannerProps) {
   let banners: WebBanner[] = [];
 
   try {
@@ -33,23 +36,20 @@ export default async function OfferBannerFlash({ apiEndpoint, height }: OfferBan
 
     banners = Array.isArray(bannerRes?.data) ? bannerRes.data : [];
   } catch (error) {
-    console.error(
-      `Error fetching ${apiEndpoint} banners SSR:`,
-      error,
-    );
+    console.error(`Error fetching ${apiEndpoint} banners SSR:`, error);
   }
 
   return (
-    <div className="grid md:grid-cols-2 grid-cols-1 md:gap-4 gap-2 py-6 cursor-pointer">
+    <div className="grid md:grid-cols-2 grid-cols-1 md:gap-4 gap-2 py-6 cursor-pointer rounded-xl">
       {banners.map((banner, i) => (
-        <div key={i} className="overflow-hidden rounded-xl lg:h-[385px]">
+        <div key={i} className="overflow-hidden rounded-xl lg:h-96.25">
           <Image
             src={banner?.imageURL}
             width={500}
             height={200}
             alt={banner?.bannerUUID}
             loading="lazy"
-            className="w-full transition-all duration-500 hover:scale-105 hover:shadow-lg"
+            className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
           />
         </div>
       ))}
