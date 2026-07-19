@@ -205,11 +205,11 @@ const isWishlisted = wishlistItems.some((i) => i.productUuid === productId);
             >
               <SwapIcon key="2" color="#B57908" width={16} height={16} />
             </button>
-        <button
+        {/* <button
               className="w-10 h-10 border border-[#EEEEEE] dark:border-gray-700 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-[#1A1A1A] transition-colors"
             >
               <Share2 key="3" size={16} className="text-[#B57908]" />
-            </button>
+            </button> */}
         </div>
       </div>
 

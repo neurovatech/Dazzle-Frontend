@@ -307,16 +307,17 @@ export default function Footer() {
                   Download Our App:
                 </p>
                 <div className="flex flex-wrap gap-1 sm:gap-2">
-                  <Link href="/" className="">
+                  <Link target="_blank" href="https://play.google.com/store/apps/details?id=com.bd.com.dazzle.app&hl=en" className="">
                     <Image
                       className="border-2 border-[#282828] rounded-xl"
-                      src={AppStore}
+                      src="https://dazzle.sgp1.cdn.digitaloceanspaces.com/site/google-play.svg"
                       width={130}
+                      height={40}
                       alt="App Store"
                     />
                   </Link>
-                  <Link href="/" className="">
-                    <Image src={GooglePlay} width={130} alt="Google Play" />
+                  <Link target="_blank" href="https://apps.apple.com/us/app/dazzle-your-ai-photo-rizz/id6737238234" className="">
+                    <Image src="https://dazzle.sgp1.cdn.digitaloceanspaces.com/site/app-store.svg" width={130} height={40} alt="Google Play" />
                   </Link>
                 </div>
               </div>

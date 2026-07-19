@@ -242,14 +242,14 @@ function ReelModal({
 
         <div className="absolute bottom-0 left-0 right-0 p-5">
           <div className="relative w-[60px] h-[60px] mb-[10px] rounded-[2px] overflow-hidden">
-  <Image
-    src={product.image}
-    alt={product.title}
-    fill
-    sizes="60px"
-    className="object-cover"
-  />
-</div>
+            <Image
+              src={product.image}
+              alt={product.title}
+              fill
+              sizes="60px"
+              className="object-cover"
+            />
+          </div>
 
           <p className="text-white/50 text-xs mb-1 font-medium tracking-widest uppercase">
             {currentIndex + 1} / {products.length}

@@ -69,7 +69,7 @@ export default function CartPageCom() {
     0,
   );
   const baseDeliveryFees: Record<DeliveryOption, number> = {
-    regular: 60,
+    regular: 0,
     fast: 150,
     express: 100,
     pickup: 0,
@@ -174,15 +174,7 @@ export default function CartPageCom() {
               </div>
               <hr className="border-dashed border-gray-300 dark:border-gray-600" />
 
-              <div className="flex justify-between my-4">
-                <span className="text-sm text-gray-500 dark:text-gray-300">
-                  Discount
-                </span>
-                <span className="text-sm text-gray-900 font-bold dark:text-white">
-                  10 {selectedCurrency}
-                </span>
-              </div>
-              <hr className="border-dashed border-gray-300 dark:border-gray-600" />
+             
 
               <div className="flex justify-between my-4">
                 <span className="text-sm text-gray-500 dark:text-gray-300">
