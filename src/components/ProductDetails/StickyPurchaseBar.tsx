@@ -133,7 +133,7 @@ export default function StickyPurchaseBar({
               {!isUnavailable && (
                 <>
                   <p className="text-xs sm:text-sm text-gray-600 mt-0.5 dark:text-white/90">
-                    {Math.round((price ?? 0) / 12).toLocaleString()}  for {monthlyDuration}
+                    {Math.round((productOriginalPrice ?? 0) / 12).toLocaleString()}  for {monthlyDuration}
                   </p>
                   <button
                     onClick={onExploreFinancing}

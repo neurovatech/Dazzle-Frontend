@@ -77,33 +77,34 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
 
         {/* ── Main Image ── */}
         <div
-          className="relative rounded-2xl overflow-hidden aspect-square flex items-center justify-center cursor-zoom-in group"
-          onClick={() => openLightbox(selected)}
-        >
-          {badges && (
-            <div className="absolute top-3 z-10 left-0 flex flex-col gap-1.5 justify-start  bg-[#ff7575] text-white text-[9px] sm:text-xs font-bold px-1.5 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-md">
-              {badges} %
-            </div>
-          )}
+  className="relative rounded-2xl overflow-hidden aspect-square flex items-center justify-center cursor-zoom-in group"
+  onClick={() => openLightbox(selected)}
+>
+  {badges && (
+    <div className="absolute top-6 z-10 left-6 flex flex-col gap-1.5 justify-start bg-[#ff7575] text-white text-[9px] sm:text-xs font-bold px-1.5 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-md">
+      {badges} %
+    </div>
+  )}
 
-          {/* Zoom hint overlay */}
-          <div className="absolute inset-0 bg-black/0  transition-colors duration-200 z-10 rounded-2xl flex items-center justify-center">
-            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-white/80 dark:bg-black/50 rounded-full p-2 shadow">
-              <ZoomIn size={20} className="text-gray-600 dark:text-gray-300" />
-            </div>
-          </div>
+  {/* Image */}
+  <div className="relative w-full h-full">
+    <Image
+      src={images[selected]}
+      alt={`Product image ${selected + 1}`}
+      fill
+      className="object-contain transition-all duration-300 mt-[10px]"
+      // sizes="(max-width: 768px) 80vw, 40vw"
+      priority
+    />
+  </div>
 
-          <div className="relative w-4/5 h-4/5">
-            <Image
-              src={images[selected]}
-              alt={`Product image ${selected + 1}`}
-              fill
-              className="object-contain transition-all duration-300"
-              sizes="(max-width: 768px) 80vw, 40vw"
-              priority
-            />
-          </div>
-        </div>
+  {/* Zoom hint overlay */}
+  <div className="absolute inset-0 bg-black/0 transition-colors duration-200 z-10 rounded-2xl flex items-center justify-center pointer-events-none">
+    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-white/80 dark:bg-black/50 rounded-full p-2 shadow">
+      <ZoomIn size={20} className="text-gray-600 dark:text-gray-300" />
+    </div>
+  </div>
+</div>
 
         {/* ── Thumbnails ── */}
         <ProductImageThumbnails

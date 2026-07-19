@@ -460,7 +460,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* ── Left: Image Gallery ── */}
           <div className="lg:col-span-5">
-            <div className="rounded-2xl shadow-sm p-5 sticky top-6 transition-colors duration-200  dark:bg-[#3e3329]">
+            <div className="rounded-2xl shadow-sm p-3 sticky top-6 transition-colors duration-200  dark:bg-[#3e3329]">
               <ProductImageGallery
                 images={images}
                 selected={selectedColor}
@@ -493,7 +493,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
               stockNote={""}
               warrantyNote={""}
               stats={{ soldLastHours: "", reviewCount: "", viewingNow: "" }}
-              price={price}
+              price={selectedVariant?.mrp}
               originalPrice={originalPrice}
               description={product?.description}
               alldata={{
@@ -590,16 +590,23 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
               />
             </div>
 
+
+                    
+
+
+
+
             <div>
               <CheckAvailability
                 product={product}
-                currentPrice={price}
+                currentPrice={selectedVariant?.mrp}
                 externalEmiOpen={emiOpen}
                 onExternalEmiClose={() => setEmiOpen(false)}
               />
             </div>
             <div>
-              <PriceAvailability product={product} />
+             
+              <PriceAvailability product={product} offerPrice={selectedVariant?.price} originalPrice={originalPrice} />
             </div>
 
             <div className="lg:col-span-5">

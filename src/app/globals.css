@@ -228,6 +228,13 @@ button {
   }
 }
 
+
+.mySwiper .swiper-button-next, .mySwiper .swiper-button-prev {
+	color: #d4a017 !important;
+	--swiper-navigation-size: 16px !important;
+	margin-top: -40px !important;
+}
+
 /* ─── Skeleton shimmer animation ─────────────────────────────────────────── */
 @keyframes shimmer {
   0%   { transform: translateX(-100%); }

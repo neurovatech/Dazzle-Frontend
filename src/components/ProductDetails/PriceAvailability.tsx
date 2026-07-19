@@ -5,10 +5,10 @@ import { CheckHome } from "@/icon";
 import GlobalModal from "@/components/share/GlobalModal";
 import { MapPin, Navigation, Info } from "lucide-react";
 
-export default function PriceAvailability({ product }: any) {
+export default function PriceAvailability({ product, offerPrice, originalPrice }: any) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedPrice, setSelectedPrice] = useState<"offer" | "regular">("offer");
-
+console.log(product, "productproductproductproduct")
   return (
     <div className="lg:flex gap-3 my-6">
       {/* Offer Price */}
@@ -32,7 +32,7 @@ export default function PriceAvailability({ product }: any) {
           <span className="font-semibold text-sm">
             Offer Price:{" "}
             <span className="text-[#CB843B]">
-              {product?.discountedPrice?.toLocaleString()} ৳
+              {offerPrice?.toLocaleString()} ৳
             </span>
           </span>
           <span className="text-[#767676] text-xs">Cash/Card/MFS Payment</span>
@@ -60,12 +60,12 @@ export default function PriceAvailability({ product }: any) {
           <span className="font-semibold  text-sm">
             Regular Price:{" "}
             <span className="text-[#CB843B]">
-              {product?.regularPrice?.toLocaleString()} ৳
+              {originalPrice?.toLocaleString()} ৳
             </span>
           </span>
           <span className="text-[#767676] text-xs bg-gray-100 px-0.5">
-  EMI begin at BDT {Math.round((product?.regularPrice ?? 0) / 12).toLocaleString()} per month
-</span>
+          EMI begin at BDT {Math.round((originalPrice ?? 0) / 12).toLocaleString()} per month
+        </span>
         </div>
       </button>
     </div>
