@@ -1,23 +1,100 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api";
 import Newest from "@/components/HomePage/FlashSale/Newest";
+interface HeroBannerItem {
+  bannerUUID: string;
+  imageURL: string;
+  mediaInfo?: string;
+  openNewTab?: boolean;
+}
 
+interface HeroBannerApiResponse {
+  statusCode: number;
+  status: string;
+  found: boolean;
+  count: number;
+  data: HeroBannerItem[];
+}
+
+interface BannerItem {
+  bannerUUID: string;
+  imageURL: string;
+  mediaInfo?: string;
+  openNewTab?: boolean;
+}
+
+interface BannerApiResponse {
+  statusCode: number;
+  status: string;
+  found: boolean;
+  count: number;
+  data: BannerItem[];
+}
 
 function OnlineExclusive() {
+    const { data: heroData, isLoading: heroLoading } = useQuery<BannerApiResponse>({
+    queryKey: ["online-exclusive-hero-banner"],
+    staleTime: 2 * 60 * 1000,
+    queryFn: () => api.get<BannerApiResponse>("/web-banner/online-exclusive-product-hero"),
+  });
+
+  const { data: belowData, isLoading: belowLoading } = useQuery<BannerApiResponse>({
+    queryKey: ["online-exclusive-below-banner"],
+    staleTime: 2 * 60 * 1000,
+    queryFn: () => api.get<BannerApiResponse>("/web-banner/online-exclusive-product-below"),
+  });
+
+   const { data: topData, isLoading: topLoading } = useQuery<BannerApiResponse>({
+    queryKey: ["online-exclusive-top-banner"],
+    staleTime: 2 * 60 * 1000,
+    queryFn: () => api.get<BannerApiResponse>("/web-banner/online-exclusive-product-top"),
+  });
+
+
+  const heroBanner = heroData?.data?.[0];
+  const belowBanners = belowData?.data ?? [];
+  const topBanners = topData?.data ?? [];
+
+  console.log(topBanners, "topBannerstopBannerstopBanners");
+  
 
   return (
     <div className="">
       <div className="bg-[#ebebeb] dark:bg-[#2e2b28]">
         <div className="flex flex-col flex-1 items-center max-w-355 mx-auto px-4 ">
           <div className="w-full pt-5">
-            <Image
-              src="https://dazzle.com.bd/_next/image?url=https%3A%2F%2Fdazzle.sgp1.cdn.digitaloceanspaces.com%2F35924%2Fmain-banner.jpg&w=3840&q=75"
-              width={500}
-              height={500}
-              className="w-full!"
-              alt="Picture of the author"
-            />
+            {heroLoading ? (
+              <div className="w-full h-55 sm:h-75 md:h-121 animate-pulse bg-gray-200 dark:bg-zinc-800 rounded-[15px]" />
+            ) : heroBanner?.imageURL ? (
+              heroBanner.mediaInfo && heroBanner.mediaInfo !== "#" ? (
+                <Link
+                  href={heroBanner.mediaInfo}
+                  target={heroBanner.openNewTab ? "_blank" : undefined}
+                  rel={
+                    heroBanner.openNewTab ? "noopener noreferrer" : undefined
+                  }
+                >
+                  <Image
+                    src={heroBanner.imageURL}
+                    width={500}
+                    height={500}
+                    className="w-full!"
+                    alt="Online exclusive banner"
+                  />
+                </Link>
+              ) : (
+                <Image
+                  src={heroBanner.imageURL}
+                  width={500}
+                  height={500}
+                  className="w-full!"
+                  alt="Online exclusive banner"
+                />
+              )
+            ) : null}
             <div className="bg-black text-white flex justify-evenly items-center text-center gap-x-2 rounded-full md:rounded-xl md:max-w-3xl mx-auto py-1 md:py-2 px-3 md:px-10 font-semibold text-[10px] md:text-base my-6">
               <p>Delivery:</p>
               <p className="gradient-text">1-3 days</p>
@@ -32,55 +109,46 @@ function OnlineExclusive() {
       </div>
 
       <div className="flex flex-col flex-1 items-center max-w-355 mx-auto pt-4 px-4">
-        <div className="grid md:grid-cols-4 grid-cols-2 gap-4 w-full">
-          <Link
-            className="w-full shadow-lg transition-all duration-500 hover:shadow-2xl "
-            href=""
-          >
-            <Image
-              src="https://dazzle.com.bd/_next/image?url=https%3A%2F%2Fdazzle.sgp1.cdn.digitaloceanspaces.com%2F35925%2F205.jpg&w=640&q=75"
-              width={500}
-              height={500}
-              className="w-full!"
-              alt="Picture of the author"
-            />
-          </Link>
-          <Link
-            className="w-full shadow-lg transition-all duration-500 hover:shadow-2xl "
-            href=""
-          >
-            <Image
-              src="https://dazzle.com.bd/_next/image?url=https%3A%2F%2Fdazzle.sgp1.cdn.digitaloceanspaces.com%2F35925%2F205.jpg&w=640&q=75"
-              width={500}
-              height={500}
-              className="w-full!"
-              alt="Picture of the author"
-            />
-          </Link>
-          <Link
-            className="w-full shadow-lg transition-all duration-500 hover:shadow-2xl "
-            href=""
-          >
-            <Image
-              src="https://dazzle.com.bd/_next/image?url=https%3A%2F%2Fdazzle.sgp1.cdn.digitaloceanspaces.com%2F35925%2F205.jpg&w=640&q=75"
-              width={500}
-              height={500}
-              className="w-full!"
-              alt="Picture of the author"
-            />
-          </Link>
-          <Link
-            className="w-full shadow-lg transition-all duration-500 hover:shadow-2xl "
-            href=""
-          >
-            <Image
-              src="https://dazzle.com.bd/_next/image?url=https%3A%2F%2Fdazzle.sgp1.cdn.digitaloceanspaces.com%2F35925%2F205.jpg&w=640&q=75"
-              width={500}
-              height={500}
-              className="w-full!"
-              alt="Picture of the author"
-            />
-          </Link>
+        <div className="grid grid-cols-2 gap-4 w-full">
+          {belowLoading
+            ? Array.from({ length: 2 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="w-full h-40 sm:h-60 md:h-70 animate-pulse bg-gray-200 dark:bg-zinc-800 rounded-[15px]"
+                />
+              ))
+            : belowBanners.map((banner) =>
+                banner.mediaInfo && banner.mediaInfo !== "#" ? (
+                  <Link
+                    key={banner.bannerUUID}
+                    href={banner.mediaInfo}
+                    target={banner.openNewTab ? "_blank" : undefined}
+                    rel={banner.openNewTab ? "noopener noreferrer" : undefined}
+                    className="shadow-lg transition-all duration-500 hover:shadow-2xl"
+                  >
+                    <Image
+                      src={banner.imageURL}
+                      width={500}
+                      height={500}
+                      className="w-full!"
+                      alt="Online exclusive product banner"
+                    />
+                  </Link>
+                ) : (
+                  <div
+                    key={banner.bannerUUID}
+                    className="shadow-lg transition-all duration-500 hover:shadow-2xl"
+                  >
+                    <Image
+                      src={banner.imageURL}
+                      width={500}
+                      height={500}
+                      className="w-full!"
+                      alt="Online exclusive product banner"
+                    />
+                  </div>
+                )
+              )}
         </div>
       </div>
 

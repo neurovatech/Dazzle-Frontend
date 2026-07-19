@@ -1,5 +1,7 @@
 "use client";
+
 import Image from "next/image";
+import Link from "next/link";
 import React from "react";
 import {
   Navigation,
@@ -20,6 +22,8 @@ export interface SlideItem {
   imageUrl?: string;
   title?: string;
   content?: React.ReactNode;
+  openNewTab?: boolean;
+  mediaInfo?: string;
 }
 
 interface BannerSliderProps {
@@ -74,10 +78,10 @@ function Bannerslider({
         navigation={navigation}
         autoplay={
           autoplayDelay
-            ? { 
-                delay: autoplayDelay, 
+            ? {
+                delay: autoplayDelay,
                 disableOnInteraction: false,
-                reverseDirection: true, // 👈 this reverses the slide direction
+                reverseDirection: true,
               }
             : undefined
         }
@@ -99,7 +103,12 @@ function Bannerslider({
         {finalSlides.map((slide) => (
           <SwiperSlide key={slide.id}>
             {slide.imageUrl ? (
-              <div className="relative w-full h-55 max-[450px]:h-35 sm:h-75 md:h-110 rounded-[15px] overflow-hidden">
+              <Link
+                href={(slide.content as string) || "#"}
+                target={slide.openNewTab ? "_blank" : undefined}
+                rel={slide.openNewTab ? "noopener noreferrer" : undefined}
+                className="relative w-full h-55 max-[450px]:h-35 sm:h-75 md:h-110 rounded-[15px] overflow-hidden block"
+              >
                 <Image
                   src={slide.imageUrl}
                   alt={slide.title || `Slide ${slide.id}`}
@@ -108,7 +117,7 @@ function Bannerslider({
                   sizes="100vw"
                   priority={slide.id === finalSlides[0]?.id}
                 />
-              </div>
+              </Link>
             ) : (
               <div className="flex flex-col items-center justify-center w-full h-55 sm:h-75 md:h-105 lg:h-125 bg-blue-100 text-blue-900 rounded-[15px] border border-blue-200 px-4 text-center">
                 <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4">
