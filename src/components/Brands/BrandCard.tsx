@@ -79,7 +79,7 @@ function BrandCard({ brands }: { brands: Brand[] }) {
               className="
                 flex w-full flex-col items-center justify-center gap-2
                 py-4 px-2 rounded-xl border border-gray-200 dark:border-gray-700
-                bg-white dark:bg-[#1A1A1A] hover:border-[#D4A97A]
+                bg-white  hover:border-[#D4A97A]
                 dark:hover:border-[#D4A97A] transition-all duration-300
               "
             >
@@ -94,14 +94,14 @@ function BrandCard({ brands }: { brands: Brand[] }) {
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
-                    <span className="text-xs text-gray-400 dark:text-gray-500 text-center px-1 leading-tight">
+                    <span className="text-xs text-gray-400 dark:text-black text-center px-1 leading-tight">
                       No image available
                     </span>
                   </div>
                 )}
               </div>
 
-              <span className="text-[16px] font-medium text-black dark:text-white">
+              <span className="text-[16px] font-medium text-black dark:text-black ">
                 {brand.label}
               </span>
             </Link>
