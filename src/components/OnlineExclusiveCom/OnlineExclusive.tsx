@@ -35,31 +35,36 @@ interface BannerApiResponse {
 }
 
 function OnlineExclusive() {
-    const { data: heroData, isLoading: heroLoading } = useQuery<BannerApiResponse>({
-    queryKey: ["online-exclusive-hero-banner"],
-    staleTime: 2 * 60 * 1000,
-    queryFn: () => api.get<BannerApiResponse>("/web-banner/online-exclusive-product-hero"),
-  });
+  const { data: heroData, isLoading: heroLoading } =
+    useQuery<BannerApiResponse>({
+      queryKey: ["online-exclusive-hero-banner"],
+      staleTime: 2 * 60 * 1000,
+      queryFn: () =>
+        api.get<BannerApiResponse>("/web-banner/online-exclusive-product-hero"),
+    });
 
-  const { data: belowData, isLoading: belowLoading } = useQuery<BannerApiResponse>({
-    queryKey: ["online-exclusive-below-banner"],
-    staleTime: 2 * 60 * 1000,
-    queryFn: () => api.get<BannerApiResponse>("/web-banner/online-exclusive-product-below"),
-  });
+  const { data: belowData, isLoading: belowLoading } =
+    useQuery<BannerApiResponse>({
+      queryKey: ["online-exclusive-below-banner"],
+      staleTime: 2 * 60 * 1000,
+      queryFn: () =>
+        api.get<BannerApiResponse>(
+          "/web-banner/online-exclusive-product-below",
+        ),
+    });
 
-   const { data: topData, isLoading: topLoading } = useQuery<BannerApiResponse>({
+  const { data: topData, isLoading: topLoading } = useQuery<BannerApiResponse>({
     queryKey: ["online-exclusive-top-banner"],
     staleTime: 2 * 60 * 1000,
-    queryFn: () => api.get<BannerApiResponse>("/web-banner/online-exclusive-product-top"),
+    queryFn: () =>
+      api.get<BannerApiResponse>("/web-banner/online-exclusive-product-top"),
   });
-
 
   const heroBanner = heroData?.data?.[0];
   const belowBanners = belowData?.data ?? [];
   const topBanners = topData?.data ?? [];
 
   console.log(topBanners, "topBannerstopBannerstopBanners");
-  
 
   return (
     <div className="">
@@ -109,6 +114,41 @@ function OnlineExclusive() {
       </div>
 
       <div className="flex flex-col flex-1 items-center max-w-355 mx-auto pt-4 px-4">
+        <div className="grid md:grid-cols-4 grid-cols-2 gap-4 w-full">
+          {topBanners.map((banner) => (
+            <Link
+              key={banner.bannerUUID}
+              className="w-full shadow-lg transition-all duration-500 hover:shadow-2xl"
+              href={banner.mediaInfo || ""}
+              target={banner.openNewTab ? "_blank" : undefined}
+              rel={banner.openNewTab ? "noopener noreferrer" : undefined}
+            >
+              <Image
+                src={banner.imageURL}
+                width={500}
+                height={500}
+                className="w-full!"
+                alt="Picture of the author"
+              />
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      <div className="max-w-355 mx-auto pt-6 px-4 e_slider">
+        <div className="flex justify-between items-center pb-4 ">
+          <h3 className="md:text-[32px] text-[20px] font-bold transition-colors text-transparent bg-clip-text bg-[linear-gradient(90deg,#101518_0%,#E9CCAE_46.15%,#B57908_100%)] dark:text-white">
+            {" "}
+            Online Exclusive Products
+          </h3>
+          {/* <Link href="/product" className="">
+            See all
+          </Link> */}
+        </div>
+        <Newest />
+      </div>
+
+      <div className="flex flex-col flex-1 items-center max-w-355 mx-auto pt-4 px-4">
         <div className="grid grid-cols-2 gap-4 w-full">
           {belowLoading
             ? Array.from({ length: 2 }).map((_, i) => (
@@ -147,50 +187,8 @@ function OnlineExclusive() {
                       alt="Online exclusive product banner"
                     />
                   </div>
-                )
+                ),
               )}
-        </div>
-      </div>
-
-      <div className="max-w-355 mx-auto pt-6 px-4 e_slider">
-        <div className="flex justify-between items-center pb-4 ">
-          <h3 className="md:text-[32px] text-[20px] font-bold transition-colors text-transparent bg-clip-text bg-[linear-gradient(90deg,#101518_0%,#E9CCAE_46.15%,#B57908_100%)] dark:text-white">
-            {" "}
-            Online Exclusive Products
-          </h3>
-          {/* <Link href="/product" className="">
-            See all
-          </Link> */}
-        </div>
-        <Newest />
-      </div>
-
-      <div className="flex flex-col flex-1 items-center max-w-355 mx-auto pt-6 px-4">
-        <div className="grid grid-cols-2 gap-4 w-full">
-          <Link
-            href="/"
-            className="shadow-lg transition-all duration-500 hover:shadow-2xl"
-          >
-            <Image
-              src="https://dazzle.com.bd/_next/image?url=https%3A%2F%2Fdazzle.sgp1.cdn.digitaloceanspaces.com%2F35924%2Fmain-banner.jpg&w=3840&q=75"
-              width={500}
-              height={500}
-              className="w-full!"
-              alt="Picture of the author"
-            />
-          </Link>
-          <Link
-            href="/"
-            className="shadow-lg transition-all duration-500 hover:shadow-2xl"
-          >
-            <Image
-              src="https://dazzle.com.bd/_next/image?url=https%3A%2F%2Fdazzle.sgp1.cdn.digitaloceanspaces.com%2F35924%2Fmain-banner.jpg&w=3840&q=75"
-              width={500}
-              height={500}
-              className="w-full!"
-              alt="Picture of the author"
-            />
-          </Link>
         </div>
       </div>
 

@@ -562,7 +562,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
               </div>
             )}
 
-            <div className="pt-5 hidden">
+            <div className="pt-5">
               <DazzleCare
                 options={[
                   {
