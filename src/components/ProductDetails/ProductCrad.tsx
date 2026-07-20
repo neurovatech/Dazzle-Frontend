@@ -1,5 +1,8 @@
 "use client";
 
+import Image from "next/image";
+import NoImg from "@/images/no_images.png";
+
 interface ProductCardProps {
   image?: string;
   name?: string;
@@ -10,21 +13,25 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({
-  image = "https://dazzle.com.bd/_next/image?url=https%3A%2F%2Fdazzle.sgp1.cdn.digitaloceanspaces.com%2F48522%2FiPhone-14-Price-in-Bangladesh-Yellow.jpg&w=640&q=75",
+  image,
   name = "Belkin USB C 7 in 1 Multiport...",
   inStock = true,
   price = "৳1,00,000",
   originalPrice = "৳1,30,000",
   onAdd,
 }: ProductCardProps) {
+  const hasImage = Boolean(image && image.trim() !== "");
+
   return (
     <div className="w-full bg-white dark:bg-[#1f1a16] border border-[#E7E7E7] dark:border-[#3a2f28] rounded-[10px] p-3 flex flex-col font-sans transition-colors duration-200">
       {/* Image Container */}
       <div className="relative rounded-2xl flex items-center justify-center h-50 mb-3 overflow-visible">
-        <img
-          src={image}
+        <Image
+          src={hasImage ? (image as string) : NoImg}
           alt={name}
-          className="w-full h-full object-contain rounded-2xl"
+          fill
+          className="object-contain rounded-2xl"
+          sizes="(max-width: 768px) 100vw, 300px"
         />
 
         {/* Add Button */}
@@ -32,7 +39,6 @@ export default function ProductCard({
           onClick={onAdd}
           className="absolute -bottom-4 right-3 flex items-center gap-2 bg-white dark:bg-[#2a211c] border border-[#E9CCAE] dark:border-[#5a3f2a] shadow-md rounded-[10px] text-[#6D3F0E] dark:text-[#e3b48a] font-bold text-base hover:bg-orange-50 dark:hover:bg-[#3a2a20] transition-colors text-[14px] py-1 px-2"
         >
-          {/* SVG unchanged */}
           <svg
             width="15"
             height="15"
@@ -65,7 +71,6 @@ export default function ProductCard({
 
       {/* Content */}
       <div className="pt-5 px-1">
-        {/* Product Name + Stock */}
         <p className="text-gray-700 dark:text-gray-200 text-sm font-medium leading-snug mb-1">
           {name.replace("...", "")}{" "}
           {inStock ? (
@@ -79,12 +84,10 @@ export default function ProductCard({
           )}
         </p>
 
-        {/* Price Row */}
         <div className="flex items-center gap-3 mt-2">
           <span className="text-gray-900 dark:text-white text-[16px] font-bold">
             {price}
           </span>
-
           <span className="text-gray-400 dark:text-gray-500 text-[14px] line-through">
             {originalPrice}
           </span>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import Newest from "@/components/HomePage/FlashSale/Newest";
+import OnlineExclusiveCom from "./OnlineExclusiveCom"
 interface HeroBannerItem {
   bannerUUID: string;
   imageURL: string;
@@ -34,6 +35,42 @@ interface BannerApiResponse {
   data: BannerItem[];
 }
 
+
+interface ShowcaseItem {
+  productUuid: string;
+  productName: string;
+  productSlug: string;
+  discountedPrice: number;
+  regularPrice: number;
+  disRate: number;
+  productBadge?: string;
+  isTba: boolean;
+  thumbnails?: {
+    mediaFileUrl: string;
+  };
+}
+
+interface ShowcaseItemsResponse {
+  statusCode: number;
+  status: string;
+  found: boolean;
+  count: number;
+  data: ShowcaseItem[];
+}
+
+interface ProductCardItem {
+  uuid: string;
+  title: string;
+  slug: string;
+  price: number;
+  originalPrice: number;
+  discount: number;
+  badge?: string;
+  isBestDeal: boolean;
+  inStock: boolean;
+  image: string;
+}
+
 function OnlineExclusive() {
   const { data: heroData, isLoading: heroLoading } =
     useQuery<BannerApiResponse>({
@@ -59,6 +96,82 @@ function OnlineExclusive() {
     queryFn: () =>
       api.get<BannerApiResponse>("/web-banner/online-exclusive-product-top"),
   });
+
+    // --- New: most-popular products query ---
+  const { data: popularData, isLoading: popularLoading } =
+    useQuery<ShowcaseItemsResponse>({
+      queryKey: ["showcase-most-popular"],
+      staleTime: 2 * 60 * 1000,
+      queryFn: () =>
+        api.get<ShowcaseItemsResponse>(
+          "/showcase-items?showcaseSlug=oep-exclusive-product",
+        ),
+    });
+
+  const popularList = Array.isArray(popularData?.data) ? popularData.data : [];
+
+  const products: ProductCardItem[] = popularList.map((item) => ({
+    uuid: item.productUuid,
+    title: item.productName,
+    slug: item.productSlug,
+    price: item.discountedPrice,
+    originalPrice: item.regularPrice,
+    discount: Math.round(item.disRate),
+    badge: item.productBadge,
+    isBestDeal: item.disRate > 15,
+    inStock: !item.isTba,
+    image: item.thumbnails?.mediaFileUrl ?? "/images/product.png",
+  }));
+
+  const { data: popularDataTwo, isLoading: popularLoadingTwo } =
+    useQuery<ShowcaseItemsResponse>({
+      queryKey: ["showcase-most-popular"],
+      staleTime: 2 * 60 * 1000,
+      queryFn: () =>
+        api.get<ShowcaseItemsResponse>(
+          "/showcase-items?showcaseSlug=oep-best-selling",
+        ),
+    });
+
+  const bsetSale = Array.isArray(popularDataTwo?.data) ? popularDataTwo.data : [];
+
+  const bestproducts: ProductCardItem[] = bsetSale.map((item) => ({
+    uuid: item.productUuid,
+    title: item.productName,
+    slug: item.productSlug,
+    price: item.discountedPrice,
+    originalPrice: item.regularPrice,
+    discount: Math.round(item.disRate),
+    badge: item.productBadge,
+    isBestDeal: item.disRate > 15,
+    inStock: !item.isTba,
+    image: item.thumbnails?.mediaFileUrl ?? "/images/product.png",
+  }));
+
+  const { data: popularDataThree, isLoading: popularLoadingThree } =
+    useQuery<ShowcaseItemsResponse>({
+      queryKey: ["showcase-most-popular"],
+      staleTime: 2 * 60 * 1000,
+      queryFn: () =>
+        api.get<ShowcaseItemsResponse>(
+          "/showcase-items?showcaseSlug=oep-best-selling",
+        ),
+    });
+
+  const daybsetSale = Array.isArray(popularDataThree?.data) ? popularDataThree.data : [];
+
+  const daybestproducts: ProductCardItem[] = daybsetSale.map((item) => ({
+    uuid: item.productUuid,
+    title: item.productName,
+    slug: item.productSlug,
+    price: item.discountedPrice,
+    originalPrice: item.regularPrice,
+    discount: Math.round(item.disRate),
+    badge: item.productBadge,
+    isBestDeal: item.disRate > 15,
+    inStock: !item.isTba,
+    image: item.thumbnails?.mediaFileUrl ?? "/images/product.png",
+  }));
 
   const heroBanner = heroData?.data?.[0];
   const belowBanners = belowData?.data ?? [];
@@ -145,7 +258,8 @@ function OnlineExclusive() {
             See all
           </Link> */}
         </div>
-        <Newest />
+        <OnlineExclusiveCom products={products} />
+        {/* <Newest /> */}
       </div>
 
       <div className="flex flex-col flex-1 items-center max-w-355 mx-auto pt-4 px-4">
@@ -202,7 +316,7 @@ function OnlineExclusive() {
             See all
           </Link>
         </div>
-        <Newest />
+        <OnlineExclusiveCom products={bestproducts} />
       </div>
       <div className="max-w-355 mx-auto pt-6 px-4 e_slider">
         <div className="flex justify-between items-center pb-4 ">
@@ -214,7 +328,7 @@ function OnlineExclusive() {
             See all
           </Link>
         </div>
-        <Newest />
+        <OnlineExclusiveCom products={daybestproducts} />
       </div>
     </div>
   );

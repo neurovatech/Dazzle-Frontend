@@ -24,32 +24,7 @@ import { useQuery } from "@tanstack/react-query";
 import RelatedProductSectionCom from "./RelatedProducts/RelatedProductSectionCom";
 import DescriptionProductDetails from "./DescriptionProductDetails";
 
-const FALLBACK_PRODUCTS = [
-  {
-    image:
-      "https://dazzle.com.bd/_next/image?url=https%3A%2F%2Fdazzle.sgp1.cdn.digitaloceanspaces.com%2F48522%2FiPhone-14-Price-in-Bangladesh-Yellow.jpg&w=640&q=75",
-    name: "Belkin USB C 7 in 1 Multiport...",
-    inStock: true,
-    price: "৳1,00,000",
-    originalPrice: "৳1,30,000",
-  },
-  {
-    image:
-      "https://dazzle.com.bd/_next/image?url=https%3A%2F%2Fdazzle.sgp1.cdn.digitaloceanspaces.com%2F48522%2FiPhone-14-Price-in-Bangladesh-Yellow.jpg&w=640&q=75",
-    name: "Belkin USB C 7 in 1 Multiport...",
-    inStock: true,
-    price: "৳1,00,000",
-    originalPrice: "৳1,30,000",
-  },
-  {
-    image:
-      "https://dazzle.com.bd/_next/image?url=https%3A%2F%2Fdazzle.sgp1.cdn.digitaloceanspaces.com%2F48522%2FiPhone-14-Price-in-Bangladesh-Yellow.jpg&w=640&q=75",
-    name: "Belkin USB C 7 in 1 Multiport...",
-    inStock: true,
-    price: "৳1,00,000",
-    originalPrice: "৳1,30,000",
-  },
-];
+
 interface VariantRow {
   variantUuid: string;
   variantName: string;
@@ -220,6 +195,37 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
     staleTime: 10 * 60 * 1000,
   });
 
+  const { data: planAccessoriesData } = useQuery({
+    queryKey: ["plan-accessories", product?.productUuid],
+    queryFn: () =>
+      api.get<{
+        statusCode: number;
+        status: string;
+        found: boolean;
+        count: number;
+        data: {
+          planGroup: string;
+          items: {
+            accessoriesUuid: string;
+            bundleCode: string;
+            planGroup: string;
+            productCode: string;
+            productName: string;
+            productSlug: string;
+            regularPrice: number;
+            discountedPrice: number;
+            isTba: boolean;
+            productBadge: string;
+            stdWarrantyProdDay: number;
+            salesOnRate: number;
+            thumbnail: { fileUuid: string; mediaFileURL?: string; mediaFileUrl?: string }[];
+          }[];
+        }[];
+      }>(`/plan-accessories/${product!.productUuid}`),
+    enabled: !!product?.productUuid,
+    staleTime: 10 * 60 * 1000,
+  });
+
   console.log(variantApiData, "variantApiDatavariantApiDatavariantApiData");
 
   // ── Consolidate ────────────────────────────────────────────────
@@ -351,6 +357,82 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
       ? selectedVariant.mrp
       : (product?.regularPrice ?? 0);
 
+  // ── Plan Accessories data processing ─────────────────────────
+  const { dazzleCareOptions, frequentlyBoughtProducts } = useMemo(() => {
+    const groups = planAccessoriesData?.data;
+    if (!groups || !Array.isArray(groups)) {
+      return { dazzleCareOptions: [], frequentlyBoughtProducts: [] };
+    }
+
+    const dazzleCareGroup = groups.find((g) => g.planGroup === "Dazzle_Care");
+    const frequentlyBuyTogetherGroup = groups.find(
+      (g) => g.planGroup === "Frequently_Buy_Together"
+    );
+
+    // Map Dazzle Care options
+    const dcOptions = (dazzleCareGroup?.items ?? []).map((item) => {
+      // productName을 ':' 또는 '(' 기준으로 title / description 분리
+      const parenIdx = item.productName.indexOf("(");
+      const colonIdx = item.productName.indexOf(":");
+      let title = item.productName;
+      let description = "";
+
+      if (parenIdx !== -1) {
+        title       = item.productName.slice(0, parenIdx).trim();
+        description = item.productName.slice(parenIdx + 1).replace(/\)$/, "").trim();
+      } else if (colonIdx !== -1) {
+        title       = item.productName.slice(0, colonIdx).trim();
+        description = item.productName.slice(colonIdx + 1).trim();
+      }
+      const optPrice = item.discountedPrice > 0
+        ? item.discountedPrice
+        : (item.salesOnRate > 0 ? Math.round((price * item.salesOnRate) / 100) : 0);
+
+      const optOriginalPrice = item.regularPrice > 0
+        ? item.regularPrice
+        : optPrice; // same if no markup
+
+      // // thumbnail URL
+      // const thumbUrl = item.thumbnail?.[0]?.mediaFileURL
+      //               || item.thumbnail?.[0]?.mediaFileUrl
+      //               || "";
+
+      return {
+        id:           item.accessoriesUuid,
+        title,
+        description,
+        price:        optPrice,
+        originalPrice: optOriginalPrice,
+        icon:         "🛡️",
+       thumbnail: item.thumbnail?.[0]?.mediaFileURL ||
+            item.thumbnail?.[0]?.mediaFileUrl ||
+            "",
+        salesOnRate:  item.salesOnRate ?? 0,
+        warrantyDays: item.stdWarrantyProdDay ?? 0,
+      };
+    });
+
+    // Map Frequently Bought Together products
+    const fbtProducts = (frequentlyBuyTogetherGroup?.items ?? []).map((item) => {
+      const img = item.thumbnail?.[0]?.mediaFileURL || item.thumbnail?.[0]?.mediaFileUrl || "";
+      return {
+        image: img,
+        name: item.productName,
+        inStock: !item.isTba,
+        price: `৳${(item.discountedPrice || item.regularPrice || 0).toLocaleString("en-US")}`,
+        originalPrice: item.regularPrice > item.discountedPrice 
+          ? `৳${item.regularPrice.toLocaleString("en-US")}`
+          : undefined,
+        
+      };
+    });
+
+    return {
+      dazzleCareOptions: dcOptions,
+      frequentlyBoughtProducts: fbtProducts,
+    };
+  }, [planAccessoriesData, price]);
+
   // ── Badges ─────────────────────────────────────────────────────
   const VALID_COLORS = ["pink", "purple", "green", "orange"] as const;
   type BadgeColor = (typeof VALID_COLORS)[number];
@@ -473,11 +555,13 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
                 onSelect={setSelectedColor}
                 badges={product?.disRate}
               />
-              <div className="grid-cols-2 lg:grid-cols-3 gap-2 mt-5 hidden lg:grid">
-                {FALLBACK_PRODUCTS.map((prod, index) => (
-                  <ProductCard key={index} {...prod} />
-                ))}
-              </div>
+              {frequentlyBoughtProducts.length > 0 && (
+                <div className="grid-cols-2 lg:grid-cols-3 gap-2 mt-5 hidden lg:grid">
+                  {frequentlyBoughtProducts.map((prod, index) => (
+                    <ProductCard key={index} {...prod} />
+                  ))}
+                </div>
+              )}
               <div className="hidden lg:block space-y-6 pt-2">
                 <ContactOptions
                   whatsappNumber="09638001122"
@@ -562,39 +646,11 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
               </div>
             )}
 
-            <div className="pt-5">
-              <DazzleCare
-                options={[
-                  {
-                    id: "ultimate",
-                    title: "Dazzle Ultimate Care+ (1 Year)",
-                    description:
-                      "Hardware replacement & accidental damage coverage",
-                    icon: "🛡️",
-                    price: 100000,
-                    originalPrice: 200000,
-                  },
-                  {
-                    id: "bundle",
-                    title: "DC+ & DSC+ Bundle",
-                    description:
-                      "1-year device replacement + 2-year display coverage",
-                    icon: "📦",
-                    price: 100000,
-                    originalPrice: 200000,
-                  },
-                  {
-                    id: "ultimate1",
-                    title: "Dazzle Ultimate Care+ (1 Year)",
-                    description:
-                      "Hardware replacement & accidental damage coverage",
-                    icon: "🛡️",
-                    price: 100000,
-                    originalPrice: 200000,
-                  },
-                ]}
-              />
-            </div>
+            {dazzleCareOptions.length > 0 && (
+              <div className="pt-5">
+                <DazzleCare options={dazzleCareOptions} />
+              </div>
+            )}
 
             <div>
               <CheckAvailability
@@ -609,16 +665,18 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
               <PriceAvailability product={product} offerPrice={selectedVariant?.price === 0 ? price : selectedVariant?.price} originalPrice={originalPrice} />
             </div>
 
-            <div className="lg:col-span-5">
-              <div className="grid-cols-2 lg:grid-cols-3 gap-2 mt-5 grid lg:hidden">
-                {FALLBACK_PRODUCTS.map((prod, index) => (
-                  <ProductCard key={index} {...prod} />
-                ))}
+            {frequentlyBoughtProducts.length > 0 && (
+              <div className="lg:col-span-5">
+                <div className="grid-cols-2 lg:grid-cols-3 gap-2 mt-5 grid lg:hidden">
+                  {frequentlyBoughtProducts.map((prod, index) => (
+                    <ProductCard key={index} {...prod} />
+                  ))}
+                </div>
+                <div className="grid lg:hidden space-y-6 pt-2">
+                  <ContactOptions />
+                </div>
               </div>
-              <div className="grid lg:hidden space-y-6 pt-2">
-                <ContactOptions />
-              </div>
-            </div>
+            )}
           </div>
 
           {/* ── Related Products ── */}
