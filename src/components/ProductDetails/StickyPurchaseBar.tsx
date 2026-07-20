@@ -4,6 +4,7 @@ import QuantitySelector from "./QuantitySelector";
 import { useAppDispatch } from "@/store/hooks";
 import { addToCart } from "@/store/slices/cartSlice";
 import toast from "react-hot-toast";
+import type { CareOption } from "./DazzleCare";
 
 const StoreIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -35,60 +36,82 @@ const WhatsAppIcon = () => (
 );
 
 interface StickyPurchaseBarProps {
-  // Product data for adding to cart
   productId?: string;
   productName?: string;
   productImage?: string;
   productPrice?: number;
   productOriginalPrice?: number;
   productSlug?: string;
-  // Shared quantity — controlled from parent (ProductDetail)
   qty?: number;
   onQtyChange?: (val: number) => void;
-  // Display props
   price?: any;
   isUnavailable?: boolean;
-  monthlyPrice?: string;
   monthlyDuration?: string;
   storeAvailabilityHref?: string;
   expressDeliveryText?: string;
   standardDeliveryText?: string;
   onExploreFinancing?: () => void;
   onWhatsApp?: () => void;
+  // Care plan & price type — same logic as ProductInfo
+  selectedPriceType?: "offer" | "regular";
+  selectedCareOptions?: CareOption[];
+  careTotalOffer?: number;
+  careTotalRegular?: number;
 }
 
 export default function StickyPurchaseBar({
   productId,
   productName,
   productImage,
-  productPrice,
-  productOriginalPrice,
+  productPrice = 0,
+  productOriginalPrice = 0,
   productSlug,
   qty = 1,
   onQtyChange,
-  price = "৳ 3,399",
+  price = 0,
   isUnavailable = false,
-  monthlyPrice = "৳ 142/mo.",
   monthlyDuration = "12 months",
   storeAvailabilityHref = "#",
   expressDeliveryText = "Express Delivery in 4 hrs – Dhaka",
   standardDeliveryText = "Standard Delivery: Get in 1–3 days",
   onExploreFinancing,
   onWhatsApp,
+  selectedPriceType = "offer",
+  selectedCareOptions = [],
+  careTotalOffer = 0,
+  careTotalRegular = 0,
 }: StickyPurchaseBarProps) {
   const dispatch = useAppDispatch();
 
-  // No local qty state — uses shared qty from parent
+  // ── Combined prices (product + selected care plan) ────────────
+  const combinedOfferPrice    = (productPrice ?? 0) + careTotalOffer;
+  const combinedRegularPrice  = (productOriginalPrice ?? 0) + careTotalRegular;
+
+  // Price shown in the bar — whichever the user selected
+  const displayPrice = selectedPriceType === "regular" ? combinedRegularPrice : combinedOfferPrice;
+
+  // EMI always from regular price
+  const emiMonthly = Math.round(combinedRegularPrice / 12);
+
+  // ── Cart name — same format as ProductInfo ────────────────────
+  const plan = selectedCareOptions[0] as CareOption | undefined;
+  const carePlanSuffix = plan
+    ? `\nwith ${plan.title}${plan.description ? ` (${plan.description})` : ""} (${
+        plan.price > 0 ? plan.price.toLocaleString() + " BDT" : "included"
+      })`
+    : "";
+  const cartName = `${productName || "Product"}${carePlanSuffix}`;
+
   const handleAddToCart = () => {
     if (!productId || isUnavailable) return;
     dispatch(
       addToCart({
         id: productId,
-        name: productName || "Product",
+        name: cartName,
         brand: "",
         image: productImage || "",
-        price: productPrice || 0,
-        originalPrice: productOriginalPrice || 0,
+        price: displayPrice,
+        originalPrice: combinedRegularPrice,
         quantity: qty,
         inStock: true,
         slug: productSlug || "",
@@ -102,20 +125,21 @@ export default function StickyPurchaseBar({
       <div className="fixed md:bottom-0 bottom-0 left-0 right-0 z-50 bg-[#f5f5f7] dark:bg-[#3e3329] border-t border-gray-200 dark:border-gray-700/60 shadow-[0_-2px_12px_rgba(0,0,0,0.08)]">
         <div className="max-w-350 mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-24 gap-4">
+
+            {/* Store Pickup */}
             <div className="hidden md:flex items-start gap-2 shrink-0">
               <StoreIcon />
               <div>
                 <p className="text-sm font-semibold text-gray-800 dark:text-white leading-tight">Store Pickup</p>
-                <a
-                  href={storeAvailabilityHref}
-                  className="text-xs text-[#af7e4a] hover:underline mt-0.5 inline-block"
-                >
+                <a href={storeAvailabilityHref} className="text-xs text-[#af7e4a] hover:underline mt-0.5 inline-block">
                   View store availability
                 </a>
               </div>
             </div>
 
             <div className="hidden md:block w-px h-8 bg-gray-300 shrink-0" />
+
+            {/* Home Delivery */}
             <div className="hidden md:flex items-start gap-2 shrink-0">
               <DeliveryIcon />
               <div>
@@ -126,15 +150,27 @@ export default function StickyPurchaseBar({
             </div>
 
             <div className="hidden md:block w-px h-8 bg-gray-300 shrink-0" />
+
+            {/* Price block */}
             <div className="flex flex-col justify-center shrink-0">
-              <p className={`text-xl sm:text-2xl font-bold leading-tight ${isUnavailable ? "text-gray-400 dark:text-gray-500" : "text-gray-900 dark:text-white"}`}>
-                {isUnavailable  ? "Not in stock" :  `${price} BDT` } 
-              </p>
-              {!isUnavailable && (
+              {isUnavailable ? (
+                <p className="text-xl sm:text-2xl font-bold leading-tight text-gray-400 dark:text-gray-500">
+                  Not in stock
+                </p>
+              ) : (
                 <>
-                  <p className="text-xs sm:text-sm text-gray-600 mt-0.5 dark:text-white/90">
-                    {Math.round((productOriginalPrice ?? 0) / 12).toLocaleString()}  for {monthlyDuration}
+                  {/* Main price — offer or regular depending on selection */}
+                  <p className="text-xl sm:text-2xl font-bold leading-tight text-gray-900 dark:text-white">
+                    {displayPrice > 0 ? `${displayPrice.toLocaleString()} BDT` : "Price on request"}
                   </p>
+
+                  {/* EMI line — always from regular price */}
+                  {combinedRegularPrice > 0 && (
+                    <p className="text-xs sm:text-sm text-gray-600 mt-0.5 dark:text-white/90">
+                      {emiMonthly.toLocaleString()} for {monthlyDuration}
+                    </p>
+                  )}
+
                   <button
                     onClick={onExploreFinancing}
                     className="flex items-center gap-0.5 text-xs sm:text-sm text-[#af7e4a] font-semibold hover:underline mt-0.5 w-fit"
@@ -148,11 +184,12 @@ export default function StickyPurchaseBar({
 
             <div className="flex-1" />
 
-            {/* Quantity — controlled by shared parent state */}
+            {/* Quantity */}
             <div className="hidden md:block">
               <QuantitySelector value={qty} onChange={(val) => onQtyChange?.(val)} />
             </div>
 
+            {/* Add to Cart */}
             <button
               onClick={handleAddToCart}
               disabled={isUnavailable}
@@ -167,7 +204,8 @@ export default function StickyPurchaseBar({
           </div>
         </div>
       </div>
-      
+
+      {/* WhatsApp FAB */}
       <button
         onClick={onWhatsApp}
         aria-label="Contact via WhatsApp"

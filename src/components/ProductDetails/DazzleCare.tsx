@@ -5,30 +5,43 @@ import { ChevronDown, ChevronUp, Shield } from "lucide-react";
 import { AddFileIcon, HandDollar } from "@/icon";
 
 // ── Types ─────────────────────────────────────────────────────────
-interface CareOption {
+export interface CareOption {
   id: string;
   title: string;
   description: string;
-  price: number;          // calculated from salesOnRate × productPrice
+  price: number;
   originalPrice: number;
   icon?: string;
-  thumbnail?: string;     // image URL if available
-  salesOnRate?: number;   // e.g. 12.99
-  warrantyDays?: number;  // stdWarrantyProdDay
+  thumbnail?: string;
+  salesOnRate?: number;
+  warrantyDays?: number;
 }
 
 interface DazzleCareProps {
   options: CareOption[];
+  /** Called whenever the selected care-option ID changes (null = deselected) */
+  onSelectionChange?: (selectedIds: string[]) => void;
 }
 
 const formatPrice = (n: number) =>
   n > 0 ? "৳" + n.toLocaleString("en-US") : "Price on request";
 
-const DazzleCare: React.FC<DazzleCareProps> = ({ options }) => {
-  const [open,     setOpen]     = useState(true);
+const DazzleCare: React.FC<DazzleCareProps> = ({ options, onSelectionChange }) => {
+  const [open, setOpen]       = useState(true);
   const [selected, setSelected] = useState<string | null>(null);
 
   if (!options || options.length === 0) return null;
+
+  const handleSelect = (id: string) => {
+    const next = selected === id ? null : id;   // click again → deselect
+    setSelected(next);
+    onSelectionChange?.(next ? [next] : []);
+  };
+
+  // ── Price of the selected option ──────────────────────────────
+  const selectedOpt        = options.find((o) => o.id === selected) ?? null;
+  const selectedOfferPrice = selectedOpt?.price ?? 0;
+  const selectedOrigPrice  = selectedOpt?.originalPrice ?? 0;
 
   return (
     <div className="rounded-2xl bg-[#222222] border border-[#3a3330] overflow-hidden">
@@ -42,7 +55,7 @@ const DazzleCare: React.FC<DazzleCareProps> = ({ options }) => {
           Dazzle Care (Recommended)
         </div>
         {open ? (
-          <ChevronUp  size={17} className="text-gray-400" />
+          <ChevronUp size={17} className="text-gray-400" />
         ) : (
           <ChevronDown size={17} className="text-gray-400" />
         )}
@@ -64,19 +77,29 @@ const DazzleCare: React.FC<DazzleCareProps> = ({ options }) => {
               <label
                 key={opt.id}
                 className={`flex items-start gap-3 px-3 py-3.5 cursor-pointer rounded-2xl bg-white transition-all duration-150
-                  ${isSelected
-                    ? "ring-2 ring-orange-400 shadow-md"
-                    : "hover:shadow-sm"
-                  }`}
+                  ${isSelected ? "ring-2 ring-orange-400 shadow-md" : "hover:shadow-sm"}`}
               >
-                {/* Radio */}
+                {/* Custom checkbox — label wraps everything, so clicking anywhere selects */}
+                <div
+                  className={`mt-1 w-4 h-4 shrink-0 rounded-sm border-2 flex items-center justify-center pointer-events-none
+                    ${isSelected
+                      ? "bg-orange-500 border-orange-500"
+                      : "border-gray-300 bg-white"
+                    }`}
+                >
+                  {isSelected && (
+                    <svg viewBox="0 0 10 8" className="w-2.5 h-2.5 fill-white" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M1 4l2.5 2.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                    </svg>
+                  )}
+                </div>
+                {/* hidden real input — label click triggers this */}
                 <input
-                  type="radio"
-                  name="dazzle-care"
+                  type="checkbox"
                   value={opt.id}
                   checked={isSelected}
-                  onChange={() => setSelected(opt.id)}
-                  className="mt-1 accent-orange-500 w-4 h-4 shrink-0"
+                  onChange={() => handleSelect(opt.id)}
+                  className="sr-only"
                 />
 
                 {/* Icon / thumbnail */}
@@ -111,29 +134,22 @@ const DazzleCare: React.FC<DazzleCareProps> = ({ options }) => {
 
                     {/* Price area */}
                     <div className="flex items-center gap-1.5 flex-wrap shrink-0">
-                      {/* salesOnRate badge */}
                       {opt.salesOnRate && opt.salesOnRate > 0 && (
                         <span className="text-[10px] font-bold text-orange-500 bg-orange-50 px-2 py-1 rounded-lg whitespace-nowrap">
                           {opt.salesOnRate}%
                         </span>
                       )}
-
-                      {/* Saving */}
                       {hasSaving && (
                         <p className="text-[10px] lg:text-xs flex gap-1 items-center text-orange-500 font-medium bg-[#FF98000F] py-1.5 px-2 rounded-[10px] whitespace-nowrap">
                           <HandDollar />
                           Save {formatPrice(opt.originalPrice - opt.price)}
                         </p>
                       )}
-
-                      {/* Price */}
                       <p className="text-sm font-bold text-gray-900 whitespace-nowrap">
                         {opt.price > 0 ? formatPrice(opt.price) : (
                           <span className="text-gray-400 text-xs">Calculated on purchase</span>
                         )}
                       </p>
-
-                      {/* Strike price */}
                       {hasSaving && (
                         <p className="text-xs text-gray-400 line-through whitespace-nowrap">
                           {formatPrice(opt.originalPrice)}
@@ -152,6 +168,23 @@ const DazzleCare: React.FC<DazzleCareProps> = ({ options }) => {
               </label>
             );
           })}
+
+          {/* ── Selected plan summary ── */}
+          {selected && selectedOpt && (
+            <div className="mt-3 px-4 py-3 bg-[#2a2420] rounded-xl flex items-center justify-between gap-3">
+              <p className="text-xs text-gray-400 font-medium">1 care plan selected</p>
+              <div className="flex items-center gap-3">
+                {selectedOrigPrice > selectedOfferPrice && (
+                  <span className="text-sm text-gray-400 line-through whitespace-nowrap">
+                    {formatPrice(selectedOrigPrice)}
+                  </span>
+                )}
+                <span className="text-base font-extrabold text-orange-400 whitespace-nowrap">
+                  {formatPrice(selectedOfferPrice)}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

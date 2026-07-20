@@ -8,7 +8,7 @@ import ProductImageGallery from "./ProductImageGallery";
 import ProductInfo from "./ProductInfo";
 import ProductVariants from "./ProductVariants";
 import ProductColorVariants from "./ProductColorVariants";
-import DazzleCare from "./DazzleCare";
+import DazzleCare, { CareOption } from "./DazzleCare";
 import ContactOptions from "./ContactOptions";
 import CheckAvailability from "./CheckAvailability";
 import ProductCard from "./ProductCrad";
@@ -184,6 +184,8 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
   );
   const [selectedColor, setSelectedColor] = useState(0);
   const [emiOpen, setEmiOpen] = useState(false);
+  const [selectedCareIds, setSelectedCareIds] = useState<string[]>([]);
+  const [selectedPriceType, setSelectedPriceType] = useState<"offer" | "regular">("offer");
 
   console.log(product, "productproductproductproductproduct");
 
@@ -433,6 +435,14 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
     };
   }, [planAccessoriesData, price]);
 
+  // ── Derived care plan totals (offer + regular) ─────────────────
+  const selectedCareOptions = useMemo(
+    () => dazzleCareOptions.filter((o) => selectedCareIds.includes(o.id)),
+    [selectedCareIds, dazzleCareOptions]
+  );
+  const careTotalOffer   = selectedCareOptions.reduce((s, o) => s + (o.price > 0 ? o.price : 0), 0);
+  const careTotalRegular = selectedCareOptions.reduce((s, o) => s + (o.originalPrice > 0 ? o.originalPrice : 0), 0);
+
   // ── Badges ─────────────────────────────────────────────────────
   const VALID_COLORS = ["pink", "purple", "green", "orange"] as const;
   type BadgeColor = (typeof VALID_COLORS)[number];
@@ -542,6 +552,10 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
         onQtyChange={setQty}
         isUnavailable={price === 0}
         onExploreFinancing={() => setEmiOpen(true)}
+        selectedPriceType={selectedPriceType}
+        selectedCareOptions={selectedCareOptions}
+        careTotalOffer={careTotalOffer}
+        careTotalRegular={careTotalRegular}
       />
 
       <div className="max-w-350 mx-auto lg:px-4 px-2 pb-16">
@@ -594,6 +608,8 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
               qty={qty}
               onQtyChange={setQty}
               selectedVariant={selectedVariant}
+              selectedCareOptions={selectedCareOptions}
+              selectedPriceType={selectedPriceType}
             />
 
             {/* Variant selector */}
@@ -648,7 +664,10 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
 
             {dazzleCareOptions.length > 0 && (
               <div className="pt-5">
-                <DazzleCare options={dazzleCareOptions} />
+                <DazzleCare
+                  options={dazzleCareOptions}
+                  onSelectionChange={setSelectedCareIds}
+                />
               </div>
             )}
 
@@ -662,7 +681,15 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
             </div>
             <div>
              
-              <PriceAvailability product={product} offerPrice={selectedVariant?.price === 0 ? price : selectedVariant?.price} originalPrice={originalPrice} />
+              <PriceAvailability
+                product={product}
+                offerPrice={selectedVariant?.price === 0 ? price : selectedVariant?.price}
+                originalPrice={originalPrice}
+                careTotalOffer={careTotalOffer}
+                careTotalRegular={careTotalRegular}
+                selectedPriceType={selectedPriceType}
+                onPriceTypeChange={setSelectedPriceType}
+              />
             </div>
 
             {frequentlyBoughtProducts.length > 0 && (

@@ -23,6 +23,7 @@ import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { addToCart } from "@/store/slices/cartSlice";
 import toast from "react-hot-toast";
 import { toggleWishlist } from "@/store/slices/wishlistSlice";
+import type { CareOption } from "./DazzleCare";
 type StockStatus = "in_stock" | "overselling" | "pre_order" | "eol";
 
 interface ProductInfoProps {
@@ -56,7 +57,9 @@ export default function ProductInfo({
   originalPrice: baseOriginalPrice,
   qty,
   onQtyChange,
-  selectedVariant,  
+  selectedVariant,
+  selectedCareOptions = [],
+  selectedPriceType = "offer",
 }: any) {
 
   const stockStatus: StockStatus = inStock ? "in_stock" : "eol";
@@ -65,24 +68,43 @@ export default function ProductInfo({
   const effectivePrice = variantPrice > 0 ? variantPrice : productPrice;
   const isVariantUnavailable = effectivePrice === 0;
 
+  // ── Care plan totals ──────────────────────────────────────────
+  const carePlans: CareOption[] = selectedCareOptions ?? [];
+  const careTotalOffer    = carePlans.reduce((s: number, o: CareOption) => s + (o.price > 0 ? o.price : 0), 0);
+  const careTotalOriginal = carePlans.reduce((s: number, o: CareOption) => s + (o.originalPrice > 0 ? o.originalPrice : 0), 0);
+
+  const combinedOfferPrice    = effectivePrice + careTotalOffer;
+  const combinedOriginalPrice = (alldata?.regularPrice ?? baseOriginalPrice ?? 0) + careTotalOriginal;
+
+  // ── The price actually used for cart — based on what user selected ──
+  const cartPrice = selectedPriceType === "regular" ? combinedOriginalPrice : combinedOfferPrice;
+
   // Redux dispatch
   const dispatch = useAppDispatch();
   const handleAddToCart = () => {
     if (isVariantUnavailable) return;
     const cartName = selectedVariant?.name || title;
-    // Variant attributes string (e.g. "Black | 256GB | JP/MEA")
-    const variantStr = selectedVariant
-      ? Object.values(selectedVariant.attributes ?? {}).join(" | ")
+
+    // Build cart name exactly like screenshot:
+    // "iPhone 17 Pro Max ( Cosmic Orange / JP/MEA (Dual e-Sim) / 256GB )
+    //  with Dazzle Ultimate Care+ 1 year (New replacement for hardware issues & free parts for accidental damage) (23,532 BDT)"
+    const plan = carePlans[0] as CareOption | undefined;
+    const carePlanSuffix = plan
+      ? `\nwith ${plan.title}${plan.description ? ` (${plan.description})` : ""} (${
+          plan.price > 0 ? plan.price.toLocaleString() + " BDT" : "included"
+        })`
       : "";
+
+    const fullName = `${cartName}${carePlanSuffix}`;
 
     dispatch(
       addToCart({
         id: selectedVariant?.id || alldata?.productUuid || alldata?.id || code,
-        name: variantStr ? `${cartName}` : cartName,
+        name: fullName,
         brand: brand,
         image: alldata?.thumbnailImg || alldata?.thumbnail || alldata?.image || selectedVariant?.thumbnailUrl || "",
-        price: effectivePrice,
-        originalPrice: alldata?.regularPrice || baseOriginalPrice || 0,
+        price: cartPrice,
+        originalPrice: combinedOriginalPrice,
         quantity: qty ?? 1,
         inStock: !isVariantUnavailable,
         slug: alldata?.productSlug || "",
@@ -369,11 +391,11 @@ const isWishlisted = wishlistItems.some((i) => i.productUuid === productId);
               <div className="flex flex-col md:flex-row justify-between">
                 <div className="flex gap-2.5 items-center">
                   <span className="text-[28px] font-extrabold text-[#B57908] dark:text-[#D4A97A]">
-                    BDT {alldata?.discountedPrice?.toLocaleString()}
+                    BDT {combinedOfferPrice.toLocaleString()}
                   </span>
-                  {alldata?.regularPrice > alldata?.discountedPrice && (
+                  {combinedOriginalPrice > combinedOfferPrice && (
                     <span className="text-[18px] text-[#FF7575] line-through font-semibold">
-                      BDT {alldata?.regularPrice?.toLocaleString()}
+                      BDT {combinedOriginalPrice.toLocaleString()}
                     </span>
                   )}
                 </div>
@@ -389,14 +411,37 @@ const isWishlisted = wishlistItems.some((i) => i.productUuid === productId);
                 </div>
               </div>
 
+              {/* Care plan price breakdown */}
+              {carePlans.length > 0 && (
+                <div className="mt-2 space-y-1">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Price breakdown:</p>
+                  <div className="flex justify-between text-xs text-gray-600 dark:text-gray-300">
+                    <span>Product</span>
+                    <span className="font-semibold">BDT {effectivePrice.toLocaleString()}</span>
+                  </div>
+                  {carePlans.map((o: CareOption) => (
+                    <div key={o.id} className="flex justify-between text-xs text-orange-600 dark:text-orange-400">
+                      <span className="truncate pr-2">{o.title}</span>
+                      <span className="font-semibold shrink-0">
+                        + BDT {(o.price > 0 ? o.price : 0).toLocaleString()}
+                      </span>
+                    </div>
+                  ))}
+                  <div className="flex justify-between text-xs font-bold text-[#B57908] dark:text-[#D4A97A] border-t border-gray-200 dark:border-gray-700 pt-1 mt-1">
+                    <span>Total</span>
+                    <span>BDT {combinedOfferPrice.toLocaleString()}</span>
+                  </div>
+                </div>
+              )}
+
               {/* Add to Cart Button */}
-              {/* <button
+              <button
                 onClick={handleAddToCart}
-                className="w-full flex items-center justify-center gap-2 bg-[#B57908] hover:bg-[#9a6507] active:scale-95 text-white font-bold px-6 py-3 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg mt-2"
+                className="w-full flex items-center justify-center gap-2 bg-[#B57908] hover:bg-[#9a6507] active:scale-95 text-white font-bold px-6 py-3 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg mt-3"
               >
                 <ShoppingCart size={18} />
                 Add to Cart
-              </button> */}
+              </button>
             </>
           )}
 

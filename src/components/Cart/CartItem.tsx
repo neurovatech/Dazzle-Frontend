@@ -81,9 +81,9 @@ export default function CartItem({
             ৳ {price.toLocaleString()}
           </p>
 
-          <p className="text-xs text-gray-400 line-through">
+          {/* <p className="text-xs text-gray-400 line-through">
             ৳ {originalPrice.toLocaleString()}
-          </p>
+          </p> */}
         </div>
       </Link>
 
