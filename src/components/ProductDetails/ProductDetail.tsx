@@ -10,7 +10,6 @@ import ProductVariants from "./ProductVariants";
 import ProductColorVariants from "./ProductColorVariants";
 import DazzleCare from "./DazzleCare";
 import ContactOptions from "./ContactOptions";
-import IPHONE_ORANGE from "@/images/no_images.png";
 import CheckAvailability from "./CheckAvailability";
 import ProductCard from "./ProductCrad";
 import ProductSpecifications from "./ProductSpecifications";
@@ -597,12 +596,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
               />
             </div>
 
-
-                    
-
-
-
-
             <div>
               <CheckAvailability
                 product={product}
@@ -613,7 +606,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
             </div>
             <div>
              
-              <PriceAvailability product={product} offerPrice={selectedVariant?.price} originalPrice={originalPrice} />
+              <PriceAvailability product={product} offerPrice={selectedVariant?.price === 0 ? price : selectedVariant?.price} originalPrice={originalPrice} />
             </div>
 
             <div className="lg:col-span-5">

@@ -158,9 +158,9 @@ function OnlineExclusive() {
             {" "}
             Online Exclusive Products
           </h3>
-          <Link href="/product" className="">
+          {/* <Link href="/product" className="">
             See all
-          </Link>
+          </Link> */}
         </div>
         <Newest />
       </div>

@@ -132,7 +132,7 @@ export default function BrandProducts({
   return (
     <>
       {/* ── Category filter buttons ── */}
-      <div className="md:px-12.5 px-4 flex flex-row flex-nowrap gap-2 overflow-x-auto py-3 scrollbar-hide">
+      <div className="md:px-12.5 px-4 flex flex-row md:flex-wrap flex-nowrap gap-2 overflow-x-auto md:overflow-visible py-3 scrollbar-hide">
         {/* All */}
         <button
           onClick={() => navigate(null)}
