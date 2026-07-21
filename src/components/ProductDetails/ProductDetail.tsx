@@ -8,6 +8,7 @@ import ProductImageGallery from "./ProductImageGallery";
 import ProductInfo from "./ProductInfo";
 import ProductVariants from "./ProductVariants";
 import ProductCard from "./ProductCrad";
+import BuyMore from "./BuyMore";
 import ProductColorVariants from "./ProductColorVariants";
 import DazzleCare, { CareOption } from "./DazzleCare";
 import ContactOptions from "./ContactOptions";
@@ -710,12 +711,9 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
                 {selectedVariant && (
                   <div className="mt-4 pt-4 border-t border-[#e7e7e7] dark:border-[#4a3f36] flex items-center justify-between gap-3 lg:px-5">
                     <p className="text-sm font-medium text-gray-600 dark:text-gray-300 truncate">
-                      {/* Always prefix with product name so it reads:
-                          "iPhone 17 Pro Max Cosmic Orange 256GB CH/HK" */}
                       {(() => {
                         const varName = selectedVariant.name ?? "";
                         const prodName = product?.productName ?? "";
-                        // If variantName already starts with the product name, show as-is
                         return varName.startsWith(prodName)
                           ? varName
                           : `${prodName} ${varName}`.trim();
@@ -744,6 +742,21 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
               </div>
             )}
 
+            {/* {dazzleCareOptions.length > 0 && ( */}
+              <div className="pt-5">
+                <BuyMore
+                  items={frequentlyBoughtProducts.map((p: any) => ({
+                    id: p.id,
+                    name: p.name,
+                    image: p.image,
+                    price: p.rawPrice ?? 0,
+                    originalPrice: p.rawOriginalPrice ?? 0,
+                    slug: p.slug,
+                    inStock: p.inStock,
+                  }))}
+                />
+              </div>
+            {/* )} */}
             {dazzleCareOptions.length > 0 && (
               <div className="pt-5">
                 <DazzleCare
@@ -789,6 +802,10 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
             )}
           </div>
 
+          <div className="lg:col-span-12">
+            <GlobalTabs tabs={tabsData} />
+          </div>
+
           {/* ── Related Products ── */}
           {product?.categorySlug && (
             <div className="lg:col-span-12">
@@ -799,9 +816,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
             </div>
           )}
 
-          <div className="lg:col-span-12">
-            <GlobalTabs tabs={tabsData} />
-          </div>
+          
         </div>
       </div>
     </div>
