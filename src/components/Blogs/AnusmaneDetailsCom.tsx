@@ -50,7 +50,7 @@ function formatDate(dateString: string): string {
   }
 }
 
-function BlogDetailsCom({ post }: BlogDetailsComProps) {
+function AnusmaneDetailsCom({ post }: BlogDetailsComProps) {
   const parts = post.content.split("~separator~");
   // If no separator — treat entire content as article HTML (no meta description)
   const metaDescription = parts.length > 1 ? parts[0] : "";
@@ -129,4 +129,4 @@ function BlogDetailsCom({ post }: BlogDetailsComProps) {
   );
 }
 
-export default BlogDetailsCom;
+export default AnusmaneDetailsCom;

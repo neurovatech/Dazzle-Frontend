@@ -1,4 +1,4 @@
-import BlogDetailsCom from "@/components/Blogs/BlogDetailsCom";
+import AnusmaneDetailsCom from "@/components/Blogs/AnusmaneDetailsCom";
 import Breadcrumb from "@/components/share/Breadcrumb";
 import { api } from "@/lib/api";
 import React from "react";
@@ -25,7 +25,7 @@ export interface BlogDetail {
 
 async function getBlogBySlug(slug: string): Promise<BlogDetail | null> {
   try {
-    const res = await api.get<unknown>(`/blogs/${slug}&IsStory=1`, { cache: "no-store" });
+    const res = await api.get<unknown>(`/blogs/${slug}?IsStory=1`, { cache: "no-store" });
     const obj = res as Record<string, unknown>;
     if (obj?.data && typeof obj.data === "object") {
       return obj.data as BlogDetail;
@@ -70,10 +70,11 @@ export default async function BlogDetails({ params }: PageProps) {
     { label: blog.post_title, href: `/announcement/${blogSlug}` },
   ];
 
+
   return (
     <div className="flex flex-col flex-1 max-w-355 mx-auto lg:px-8 px-4">
       <Breadcrumb items={breadcrumbItems} />
-      <BlogDetailsCom post={blog} />
+      <AnusmaneDetailsCom post={blog} />
     </div>
   );
 }

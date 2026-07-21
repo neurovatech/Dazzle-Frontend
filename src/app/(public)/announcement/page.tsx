@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import CareerCard from "@/components/career/CareerCard";
+import AnnouncementCard from "@/components/career/AnnouncementCard";
 import Breadcrumb from "@/components/share/Breadcrumb";
 import { api } from "@/lib/api";
 import NoData from "@/components/ui/NoData";
@@ -163,7 +163,7 @@ async function CareerPage({ searchParams }: BlogPageProps) {
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8 cursor-pointer">
             {blogPosts.map((post) => (
-              <CareerCard key={post.uuid} post={post} />
+              <AnnouncementCard key={post.uuid} post={post} />
             ))}
           </div>
 
