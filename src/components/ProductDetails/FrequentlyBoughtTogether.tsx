@@ -1,56 +1,97 @@
-import React from "react";
-import { Plus } from "lucide-react";
+"use client";
 
-interface BundleItem {
-  id: string;
-  name: string;
-  image: string;
-  price: number;
-  originalPrice: number;
-  inStock: boolean;
+import ProductCard from "./ProductCrad";
+
+interface Product {
+  id?: string;
+  image?: string;
+  name?: string;
+  inStock?: boolean;
+  price?: string;
+  originalPrice?: string;
+  rawPrice?: number;
+  rawOriginalPrice?: number;
+  slug?: string;
 }
 
 interface FrequentlyBoughtTogetherProps {
-  items: BundleItem[];
+  products: Product[];
+  onAddToCart?: () => void;
 }
 
-const formatPrice = (n: number) => "৳" + n.toLocaleString("en-US");
+export default function FrequentlyBoughtTogether({
+  products,
+  onAddToCart,
+}: FrequentlyBoughtTogetherProps) {
+  if (!products || products.length === 0) return null;
 
-const FrequentlyBoughtTogether: React.FC<FrequentlyBoughtTogetherProps> = ({ items }) => {
+  // Use raw numeric prices if available, else parse from display string
+  const parsePrice = (p: Product, field: "price" | "originalPrice") => {
+    if (field === "price")
+      return p.rawPrice ?? Number((p.price ?? "").replace(/[^\d.]/g, "")) ?? 0;
+    return (
+      p.rawOriginalPrice ??
+      Number((p.originalPrice ?? p.price ?? "").replace(/[^\d.]/g, "")) ??
+      0
+    );
+  };
+
+  const totalPrice = products.reduce((s, p) => s + parsePrice(p, "price"), 0);
+  const totalOriginalPrice = products.reduce(
+    (s, p) => s + parsePrice(p, "originalPrice"),
+    0,
+  );
+
+  const availableCount = products.filter((p) => p.inStock).length;
+
   return (
-    <div className="space-y-3">
-      <h3 className="font-bold text-gray-800 text-base">Frequently Buy Together</h3>
-      <div className="flex flex-wrap gap-3 items-center">
-        {items.map((item, i) => (
-          <React.Fragment key={item.id}>
-            <div className="relative bg-white border border-gray-100 rounded-2xl p-3 w-36 hover:border-orange-200 hover:shadow-md transition-all">
-              <div className="w-full aspect-square bg-gray-50 rounded-xl flex items-center justify-center mb-2 overflow-hidden">
-                <img
-                  src={item.image}
-                  alt={item.name}
-                  className="w-4/5 h-4/5 object-contain"
-                />
-              </div>
-              <button className="absolute top-2 right-2 flex items-center gap-1 bg-orange-500 hover:bg-orange-600 text-white text-[11px] font-bold px-2 py-1 rounded-lg transition-colors">
-                <Plus size={10} /> Add
-              </button>
-              <p className="text-[11px] text-gray-600 truncate font-medium">{item.name}</p>
-              <p className={`text-[11px] font-semibold ${item.inStock ? "text-emerald-600" : "text-red-500"}`}>
-                {item.inStock ? "In Stock" : "Out of Stock"}
-              </p>
-              <div className="flex items-baseline gap-1 mt-1">
-                <span className="text-sm font-bold text-gray-900">{formatPrice(item.price)}</span>
-                <span className="text-[10px] text-gray-400 line-through">{formatPrice(item.originalPrice)}</span>
-              </div>
+    <div className="py-4 w-full">
+      <h3 className="py-3 font-bold">Frequently Buy Together</h3>
+
+      <div className="flex flex-wrap items-stretch gap-2 sm:gap-3 w-full">
+        {products.map((prod, index) => (
+          <div key={index} className="flex items-stretch gap-2 sm:gap-3 min-w-0">
+            <div className="w-[150px] sm:w-[180px] shrink-0">
+              <ProductCard {...prod} />
             </div>
-            {i < items.length - 1 && (
-              <Plus size={18} className="text-gray-300 flex-shrink-0" />
+            {index < products.length - 1 && (
+              <span className="text-xl sm:text-2xl text-gray-400 dark:text-gray-500 font-light select-none shrink-0 flex items-center">
+                +
+              </span>
             )}
-          </React.Fragment>
+          </div>
         ))}
+
+        <span className="text-xl sm:text-2xl text-gray-400 dark:text-gray-500 font-light select-none shrink-0 flex items-center">
+          =
+        </span>
+
+        <div className="flex flex-col items-start sm:items-center px-1 sm:px-2 shrink-0 justify-center">
+          <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
+            {products.length} Items
+          </span>
+          <span className="text-orange-500 font-bold text-base sm:text-lg whitespace-nowrap">
+            BDT {totalPrice.toLocaleString("en-US")}
+          </span>
+          {totalOriginalPrice > totalPrice && (
+            <span className="text-gray-400 dark:text-gray-500 text-xs sm:text-sm line-through whitespace-nowrap">
+              BDT {totalOriginalPrice.toLocaleString("en-US")}
+            </span>
+          )}
+        </div>
       </div>
+
+      <button
+        onClick={onAddToCart}
+        disabled={availableCount === 0}
+        className={`shrink-0 px-6 mt-4 sm:px-8 py-3 text-sm sm:text-base font-semibold rounded-full transition-colors duration-150 whitespace-nowrap shadow-sm
+          ${availableCount === 0
+            ? "bg-gray-200 text-gray-400 cursor-not-allowed opacity-60"
+            : "bg-[#E9CCAE] hover:bg-[#D4B89A] active:bg-[#C0A486] text-black cursor-pointer"
+          }`}
+      >
+        Add {availableCount} item{availableCount !== 1 ? "s" : ""} to cart
+      </button>
     </div>
   );
-};
-
-export default FrequentlyBoughtTogether;
+}

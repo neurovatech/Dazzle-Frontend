@@ -7,11 +7,12 @@ import ProductBadges from "./ProductBadges";
 import ProductImageGallery from "./ProductImageGallery";
 import ProductInfo from "./ProductInfo";
 import ProductVariants from "./ProductVariants";
+import ProductCard from "./ProductCrad";
 import ProductColorVariants from "./ProductColorVariants";
 import DazzleCare, { CareOption } from "./DazzleCare";
 import ContactOptions from "./ContactOptions";
 import CheckAvailability from "./CheckAvailability";
-import ProductCard from "./ProductCrad";
+import FrequentlyBoughtTogether from "./FrequentlyBoughtTogether";
 import ProductSpecifications from "./ProductSpecifications";
 import GlobalTabs from "@/components/share/GlobalTabs";
 import Breadcrumb from "@/components/share/Breadcrumb";
@@ -20,10 +21,12 @@ import StickyPurchaseBar from "./StickyPurchaseBar";
 import PriceAvailability from "./PriceAvailability";
 import { api } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
+import { useAppDispatch } from "@/store/hooks";
+import { addToCart } from "@/store/slices/cartSlice";
+import toast from "react-hot-toast";
 // import type { ProductApiData } from "@/app/(public)/product/[productSlug]/page";
 import RelatedProductSectionCom from "./RelatedProducts/RelatedProductSectionCom";
 import DescriptionProductDetails from "./DescriptionProductDetails";
-
 
 interface VariantRow {
   variantUuid: string;
@@ -178,6 +181,7 @@ interface ProductDetailProps {
 }
 
 const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
+  const dispatch = useAppDispatch();
   const [qty, setQty] = useState(1);
   const [selectedAttrs, setSelectedAttrs] = useState<Record<string, string>>(
     {},
@@ -185,7 +189,9 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
   const [selectedColor, setSelectedColor] = useState(0);
   const [emiOpen, setEmiOpen] = useState(false);
   const [selectedCareIds, setSelectedCareIds] = useState<string[]>([]);
-  const [selectedPriceType, setSelectedPriceType] = useState<"offer" | "regular">("offer");
+  const [selectedPriceType, setSelectedPriceType] = useState<
+    "offer" | "regular"
+  >("offer");
 
   console.log(product, "productproductproductproductproduct");
 
@@ -220,7 +226,11 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
             productBadge: string;
             stdWarrantyProdDay: number;
             salesOnRate: number;
-            thumbnail: { fileUuid: string; mediaFileURL?: string; mediaFileUrl?: string }[];
+            thumbnail: {
+              fileUuid: string;
+              mediaFileURL?: string;
+              mediaFileUrl?: string;
+            }[];
           }[];
         }[];
       }>(`/plan-accessories/${product!.productUuid}`),
@@ -368,7 +378,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
 
     const dazzleCareGroup = groups.find((g) => g.planGroup === "Dazzle_Care");
     const frequentlyBuyTogetherGroup = groups.find(
-      (g) => g.planGroup === "Frequently_Buy_Together"
+      (g) => g.planGroup === "Frequently_Buy_Together",
     );
 
     // Map Dazzle Care options
@@ -380,19 +390,24 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
       let description = "";
 
       if (parenIdx !== -1) {
-        title       = item.productName.slice(0, parenIdx).trim();
-        description = item.productName.slice(parenIdx + 1).replace(/\)$/, "").trim();
+        title = item.productName.slice(0, parenIdx).trim();
+        description = item.productName
+          .slice(parenIdx + 1)
+          .replace(/\)$/, "")
+          .trim();
       } else if (colonIdx !== -1) {
-        title       = item.productName.slice(0, colonIdx).trim();
+        title = item.productName.slice(0, colonIdx).trim();
         description = item.productName.slice(colonIdx + 1).trim();
       }
-      const optPrice = item.discountedPrice > 0
-        ? item.discountedPrice
-        : (item.salesOnRate > 0 ? Math.round((price * item.salesOnRate) / 100) : 0);
+      const optPrice =
+        item.discountedPrice > 0
+          ? item.discountedPrice
+          : item.salesOnRate > 0
+            ? Math.round((price * item.salesOnRate) / 100)
+            : 0;
 
-      const optOriginalPrice = item.regularPrice > 0
-        ? item.regularPrice
-        : optPrice; // same if no markup
+      const optOriginalPrice =
+        item.regularPrice > 0 ? item.regularPrice : optPrice; // same if no markup
 
       // // thumbnail URL
       // const thumbUrl = item.thumbnail?.[0]?.mediaFileURL
@@ -400,34 +415,48 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
       //               || "";
 
       return {
-        id:           item.accessoriesUuid,
+        id: item.accessoriesUuid,
         title,
         description,
-        price:        optPrice,
+        price: optPrice,
         originalPrice: optOriginalPrice,
-        icon:         "🛡️",
-       thumbnail: item.thumbnail?.[0]?.mediaFileURL ||
-            item.thumbnail?.[0]?.mediaFileUrl ||
-            "",
-        salesOnRate:  item.salesOnRate ?? 0,
+        icon: "🛡️",
+        thumbnail:
+          item.thumbnail?.[0]?.mediaFileURL ||
+          item.thumbnail?.[0]?.mediaFileUrl ||
+          "",
+        salesOnRate: item.salesOnRate ?? 0,
         warrantyDays: item.stdWarrantyProdDay ?? 0,
       };
     });
 
     // Map Frequently Bought Together products
-    const fbtProducts = (frequentlyBuyTogetherGroup?.items ?? []).map((item) => {
-      const img = item.thumbnail?.[0]?.mediaFileURL || item.thumbnail?.[0]?.mediaFileUrl || "";
-      return {
-        image: img,
-        name: item.productName,
-        inStock: !item.isTba,
-        price: `৳${(item.discountedPrice || item.regularPrice || 0).toLocaleString("en-US")}`,
-        originalPrice: item.regularPrice > item.discountedPrice 
-          ? `৳${item.regularPrice.toLocaleString("en-US")}`
-          : undefined,
-        
-      };
-    });
+    const fbtProducts = (frequentlyBuyTogetherGroup?.items ?? []).map(
+      (item) => {
+        const img =
+          item.thumbnail?.[0]?.mediaFileURL ||
+          item.thumbnail?.[0]?.mediaFileUrl ||
+          "";
+        const offerPrice = item.discountedPrice > 0 ? item.discountedPrice : item.regularPrice ?? 0;
+        const regPrice   = item.regularPrice ?? 0;
+        return {
+          // cart-ready raw data
+          id:            item.accessoriesUuid,
+          slug:          item.productSlug || "",
+          rawPrice:      offerPrice,
+          rawOriginalPrice: regPrice,
+          // display data
+          image: img,
+          name: item.productName,
+          inStock: !item.isTba,
+          price: offerPrice > 0 ? `৳${offerPrice.toLocaleString("en-US")}` : "Price on request",
+          originalPrice:
+            regPrice > offerPrice
+              ? `৳${regPrice.toLocaleString("en-US")}`
+              : undefined,
+        };
+      },
+    );
 
     return {
       dazzleCareOptions: dcOptions,
@@ -438,10 +467,16 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
   // ── Derived care plan totals (offer + regular) ─────────────────
   const selectedCareOptions = useMemo(
     () => dazzleCareOptions.filter((o) => selectedCareIds.includes(o.id)),
-    [selectedCareIds, dazzleCareOptions]
+    [selectedCareIds, dazzleCareOptions],
   );
-  const careTotalOffer   = selectedCareOptions.reduce((s, o) => s + (o.price > 0 ? o.price : 0), 0);
-  const careTotalRegular = selectedCareOptions.reduce((s, o) => s + (o.originalPrice > 0 ? o.originalPrice : 0), 0);
+  const careTotalOffer = selectedCareOptions.reduce(
+    (s, o) => s + (o.price > 0 ? o.price : 0),
+    0,
+  );
+  const careTotalRegular = selectedCareOptions.reduce(
+    (s, o) => s + (o.originalPrice > 0 ? o.originalPrice : 0),
+    0,
+  );
 
   // ── Badges ─────────────────────────────────────────────────────
   const VALID_COLORS = ["pink", "purple", "green", "orange"] as const;
@@ -505,9 +540,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
     },
     {
       label: "Description",
-      content: (
-        <DescriptionProductDetails description={product?.description} />
-      ),
+      content: <DescriptionProductDetails description={product?.description} />,
     },
   ];
 
@@ -531,7 +564,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
     }
   };
 
-  console.log(product, "productproductproduct");
+  console.log(frequentlyBoughtProducts, "090909");
 
   return (
     <div className="min-h-screen font-sans">
@@ -542,7 +575,14 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
 
       <StickyPurchaseBar
         productId={selectedVariant?.id ?? product?.productUuid}
-        productName={selectedVariant?.name ?? product?.productName}
+        productName={(() => {
+          const prodName = product?.productName ?? "";
+          const varName  = selectedVariant?.name ?? "";
+          if (!varName) return prodName;
+          return varName.startsWith(prodName)
+            ? varName
+            : `${prodName} ${varName}`.trim();
+        })()}
         productImage={images[0]}
         productPrice={price}
         productOriginalPrice={originalPrice}
@@ -569,13 +609,46 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
                 onSelect={setSelectedColor}
                 badges={product?.disRate}
               />
-              {frequentlyBoughtProducts.length > 0 && (
-                <div className="grid-cols-2 lg:grid-cols-3 gap-2 mt-5 hidden lg:grid">
+              {/* {frequentlyBoughtProducts.length > 0 && (
+                <div className="grid-cols-2 lg:grid-cols-3 gap-2 hidden lg:grid">
                   {frequentlyBoughtProducts.map((prod, index) => (
                     <ProductCard key={index} {...prod} />
                   ))}
                 </div>
+              )} */}
+              {frequentlyBoughtProducts.length > 0 && (
+                <FrequentlyBoughtTogether
+                  products={frequentlyBoughtProducts}
+                  onAddToCart={() => {
+                    const inStockItems = frequentlyBoughtProducts.filter(
+                      (p: any) => p.inStock
+                    );
+                    if (inStockItems.length === 0) {
+                      toast.error("No available products to add.");
+                      return;
+                    }
+                    inStockItems.forEach((p: any) => {
+                      dispatch(
+                        addToCart({
+                          id: p.id,
+                          name: p.name,
+                          brand: "",
+                          image: p.image || "",
+                          price: p.rawPrice ?? 0,
+                          originalPrice: p.rawOriginalPrice ?? 0,
+                          quantity: 1,
+                          inStock: true,
+                          slug: p.slug || "",
+                        })
+                      );
+                    });
+                    toast.success(
+                      `${inStockItems.length} item${inStockItems.length > 1 ? "s" : ""} added to cart! 🛒`
+                    );
+                  }}
+                />
               )}
+
               <div className="hidden lg:block space-y-6 pt-2">
                 <ContactOptions
                   whatsappNumber="09638001122"
@@ -637,7 +710,16 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
                 {selectedVariant && (
                   <div className="mt-4 pt-4 border-t border-[#e7e7e7] dark:border-[#4a3f36] flex items-center justify-between gap-3 lg:px-5">
                     <p className="text-sm font-medium text-gray-600 dark:text-gray-300 truncate">
-                      {selectedVariant.name}
+                      {/* Always prefix with product name so it reads:
+                          "iPhone 17 Pro Max Cosmic Orange 256GB CH/HK" */}
+                      {(() => {
+                        const varName = selectedVariant.name ?? "";
+                        const prodName = product?.productName ?? "";
+                        // If variantName already starts with the product name, show as-is
+                        return varName.startsWith(prodName)
+                          ? varName
+                          : `${prodName} ${varName}`.trim();
+                      })()}
                     </p>
                     <div className="flex items-center gap-2 shrink-0">
                       {selectedVariant.price > 0 ? (
@@ -680,10 +762,11 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
               />
             </div>
             <div>
-             
               <PriceAvailability
                 product={product}
-                offerPrice={selectedVariant?.price === 0 ? price : selectedVariant?.price}
+                offerPrice={
+                  selectedVariant?.price === 0 ? price : selectedVariant?.price
+                }
                 originalPrice={originalPrice}
                 careTotalOffer={careTotalOffer}
                 careTotalRegular={careTotalRegular}

@@ -63,7 +63,7 @@ const DazzleCare: React.FC<DazzleCareProps> = ({ options, onSelectionChange }) =
 
       {/* ── Options ── */}
       {open && (
-        <div className="p-3 space-y-2">
+        <div className="p-3 pt-0 space-y-2">
           {options.map((opt) => {
             const isSelected  = selected === opt.id;
             const hasSaving   = opt.price > 0 && opt.originalPrice > opt.price;
@@ -76,7 +76,7 @@ const DazzleCare: React.FC<DazzleCareProps> = ({ options, onSelectionChange }) =
             return (
               <label
                 key={opt.id}
-                className={`flex items-start gap-3 px-3 py-3.5 cursor-pointer rounded-2xl bg-white transition-all duration-150
+                className={`flex items-start gap-3 px-3 py-1.5 cursor-pointer rounded-2xl bg-white transition-all duration-150
                   ${isSelected ? "ring-2 ring-orange-400 shadow-md" : "hover:shadow-sm"}`}
               >
                 {/* Custom checkbox — label wraps everything, so clicking anywhere selects */}
@@ -160,7 +160,7 @@ const DazzleCare: React.FC<DazzleCareProps> = ({ options, onSelectionChange }) =
 
                   {/* Warranty badge */}
                   {warrantyYrs && (
-                    <span className="inline-block mt-1.5 text-[10px] font-semibold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full">
+                    <span className="inline-block text-[10px] font-semibold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full">
                       {warrantyYrs} Coverage
                     </span>
                   )}

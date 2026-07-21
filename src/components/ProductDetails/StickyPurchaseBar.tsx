@@ -93,14 +93,15 @@ export default function StickyPurchaseBar({
   // EMI always from regular price
   const emiMonthly = Math.round(combinedRegularPrice / 12);
 
-  // ── Cart name — same format as ProductInfo ────────────────────
+  // ── Cart name — product name always prefixed ─────────────────
   const plan = selectedCareOptions[0] as CareOption | undefined;
+  const variantName  = productName ?? "";
   const carePlanSuffix = plan
     ? `\nwith ${plan.title}${plan.description ? ` (${plan.description})` : ""} (${
         plan.price > 0 ? plan.price.toLocaleString() + " BDT" : "included"
       })`
     : "";
-  const cartName = `${productName || "Product"}${carePlanSuffix}`;
+  const cartName = `${variantName}${carePlanSuffix}`;
 
   const handleAddToCart = () => {
     if (!productId || isUnavailable) return;

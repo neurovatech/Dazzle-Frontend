@@ -73,17 +73,34 @@ export default function CartItem({
         <div className="flex-1 min-w-0">
           <p className="text-xs font-semibold text-[#E6A817]">{brand}</p>
 
-          <p className="text-sm text-gray-800 dark:text-white ">
-            {name}
-          </p>
+          {/* Split name into product line + care plan line */}
+          {(() => {
+            const newlineIdx = name.indexOf("\n");
+            if (newlineIdx === -1) {
+              // No care plan — plain name
+              return (
+                <p className="text-sm text-gray-800 dark:text-white">
+                  {name}
+                </p>
+              );
+            }
+            const productLine  = name.slice(0, newlineIdx);
+            const carePlanLine = name.slice(newlineIdx + 1); // "with Dazzle care+ ..."
+            return (
+              <>
+                <p className="text-sm text-gray-800 dark:text-white">
+                  {productLine}
+                </p>
+                <p className="text-xs font-bold italic text-[#B57908] dark:text-[#D4A97A] mt-0.5 leading-snug">
+                  {carePlanLine}
+                </p>
+              </>
+            );
+          })()}
 
           <p className="text-base font-bold text-gray-800 dark:text-white mt-1">
             ৳ {price.toLocaleString()}
           </p>
-
-          {/* <p className="text-xs text-gray-400 line-through">
-            ৳ {originalPrice.toLocaleString()}
-          </p> */}
         </div>
       </Link>
 

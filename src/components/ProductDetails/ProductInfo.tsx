@@ -83,7 +83,14 @@ export default function ProductInfo({
   const dispatch = useAppDispatch();
   const handleAddToCart = () => {
     if (isVariantUnavailable) return;
-    const cartName = selectedVariant?.name || title;
+    const variantName = selectedVariant?.name ?? "";
+    const productTitle = title ?? "";
+    // Ensure product name is always in the cart title
+    const cartName = variantName
+      ? variantName.startsWith(productTitle)
+        ? variantName
+        : `${productTitle} ${variantName}`.trim()
+      : productTitle;
 
     // Build cart name exactly like screenshot:
     // "iPhone 17 Pro Max ( Cosmic Orange / JP/MEA (Dual e-Sim) / 256GB )
@@ -435,13 +442,13 @@ const isWishlisted = wishlistItems.some((i) => i.productUuid === productId);
               )}
 
               {/* Add to Cart Button */}
-              <button
+              {/* <button
                 onClick={handleAddToCart}
                 className="w-full flex items-center justify-center gap-2 bg-[#B57908] hover:bg-[#9a6507] active:scale-95 text-white font-bold px-6 py-3 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg mt-3"
               >
                 <ShoppingCart size={18} />
                 Add to Cart
-              </button>
+              </button> */}
             </>
           )}
 

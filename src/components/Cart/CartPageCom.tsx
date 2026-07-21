@@ -130,7 +130,7 @@ export default function CartPageCom() {
           </div>
 
           {/* Bottom section: Promo code + Totals */}
-          <div className="mt-6 flex flex-col md:flex-row md:justify-end gap-4">
+          <div className="mt-6 flex flex-col md:flex-row md:justify-between gap-4">
             {/* Promo Code & Gift Voucher */}
             <div className="w-full md:w-80 lg:w-96 rounded-2xl space-y-3 border border-gray-100 dark:border-zinc-800 p-5 dark:bg-[#1C1A17] bg-white shadow-sm">
               <div className="flex items-center gap-2">
