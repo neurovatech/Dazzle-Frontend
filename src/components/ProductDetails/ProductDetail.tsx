@@ -788,7 +788,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
               />
             </div>
 
-            {frequentlyBoughtProducts.length > 0 && (
+            {/* {frequentlyBoughtProducts.length > 0 && (
               <div className="lg:col-span-5">
                 <div className="grid-cols-2 lg:grid-cols-3 gap-2 mt-5 grid lg:hidden">
                   {frequentlyBoughtProducts.map((prod, index) => (
@@ -799,7 +799,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
                   <ContactOptions />
                 </div>
               </div>
-            )}
+            )} */}
           </div>
 
           <div className="lg:col-span-12">
