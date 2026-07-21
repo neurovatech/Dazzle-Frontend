@@ -59,7 +59,7 @@ const BuyMore: React.FC<BuyMoreProps> = ({ items }: any) => {
 
   return (
     <div>
-      <h3 className="font-bold text-white text-base pb-3">
+      <h3 className="font-bold dark:text-white text-black text-base pb-3">
         Estimated delivery: 0-3 days
       </h3>
       <div className="space-y-2 bg-[#222222] hover:bg-[#2a2420] transition-colors p-3 rounded-2xl">
