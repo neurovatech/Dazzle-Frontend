@@ -112,7 +112,7 @@ async function CareerPage({ searchParams }: BlogPageProps) {
     const params = new URLSearchParams();
     params.set("page", String(p));
     if (category) params.set("category", category);
-    return `/blogs?${params.toString()}`;
+    return `/career?${params.toString()}`;
   };
 
   const buildCategoryLink = (value: string) => {
