@@ -380,13 +380,13 @@ const isWishlisted = wishlistItems.some((i) => i.productUuid === productId);
                   onChange={(val) => onQtyChange?.(val)}
                 />
               </div>
-              <button
+              {/* <button
                 disabled
                 className="w-full flex items-center justify-center gap-2 bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 font-bold px-6 py-3 rounded-xl cursor-not-allowed opacity-60"
               >
                 <ShoppingCart size={18} />
                 Add to Cart
-              </button>
+              </button> */}
             </div>
           ) : (
             <>
