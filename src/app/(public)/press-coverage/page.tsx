@@ -127,7 +127,7 @@ async function CareerPage({ searchParams }: BlogPageProps) {
       <Breadcrumb items={breadcrumbItems} />
 
       {/* Category filter buttons */}
-      <div className="flex flex-wrap gap-2">
+      {/* <div className="flex flex-wrap gap-2">
         {categoryOptions.map((option) => {
           const isActive = currentCategory === option.value;
           return (
@@ -144,7 +144,7 @@ async function CareerPage({ searchParams }: BlogPageProps) {
             </Link>
           );
         })}
-      </div>
+      </div> */}
 
       {/* Header */}
       <div className="flex items-center justify-between py-3">
