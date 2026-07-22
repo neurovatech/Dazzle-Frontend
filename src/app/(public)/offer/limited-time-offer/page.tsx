@@ -76,7 +76,7 @@ export default async function LimitedTimeOffer() {
         originalPrice: item.regularPrice,
         discount: Math.round(item.disRate),
         badge: item.productBadge,
-        isBestDeal: item.disRate > 15, // adjust threshold as needed, API has no direct flag
+        isBestDeal: item.disRate > 15,
         inStock: !item.isTba,
         image: item.thumbnails?.mediaFileUrl ?? "/images/product.png",
       }));
@@ -89,7 +89,7 @@ export default async function LimitedTimeOffer() {
         <Breadcrumb items={breadcrumbItems} />
 
         <div className="lg:col-span-12  bg-[#6d3f0e] px-4 rounded-sm">
-        <GlobalCountdown title="Flash Sale" targetDate="2026-06-10T23:59:59" />
+        <GlobalCountdown title="Flash Sale" targetDate={new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString()} />
       </div>
       </div>
 

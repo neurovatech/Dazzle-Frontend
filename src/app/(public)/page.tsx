@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/purity */
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import BannerSlider, {
@@ -143,7 +144,7 @@ export default async function Home() {
             <div className="px-3 sm:px-4 md:px-6 lg:px-12 pb-4">
               <GlobalCountdown
                 title="Flash Sale"
-                targetDate="2026-06-10T23:59:59"
+                targetDate={new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString()}
                 pagesLink="/offer/limited-time-offer"
               />
               <FlashSaleSectionCom />
