@@ -4,7 +4,7 @@ import CategoriesProduct from "@/components/CategoriesPages/CategoriesProduct/Ca
 import Breadcrumb from "@/components/share/Breadcrumb";
 import { api } from "@/lib/api";
 import type { Metadata } from "next";
-import { ProductItem, ProductListResponse, BrandItem } from "@/app/(public)/categories/[categorySlug]/page";
+// import { ProductItem, ProductListResponse, BrandItem } from "@/app/(public)/categories/[categorySlug]/page";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -82,7 +82,7 @@ export default async function SubCategoriesPage({ params, searchParams }: PagePr
 
 
   // ── Fetch products: products?page=1&limit=12&categorySlug=phones&subCategorySlug=iphone ──
-  let productData: ProductListResponse = {
+  let productData: any = {
     statusCode: 200,
     status: "success",
     found: false,
@@ -104,7 +104,7 @@ export default async function SubCategoriesPage({ params, searchParams }: PagePr
     if (sort) queryParams.set("sort", sort);
     if (search) queryParams.set("search", search);
 
-    const res = await api.get<ProductListResponse>(
+    const res = await api.get<any>(
       `/products?${queryParams.toString()}`,
       { cache: "no-store" }
     );
@@ -132,7 +132,7 @@ export default async function SubCategoriesPage({ params, searchParams }: PagePr
   const [banner1, banner2] = banners;
 
   // ── Fetch brands for this subcategory ───────────────────────────────────────
-  let brands: BrandItem[] = [];
+  let brands: any = [];
   try {
     const brandsRes = await api.get<any>(
       `/subcategory/${subCategorySlug}/brands`,
@@ -168,9 +168,9 @@ export default async function SubCategoriesPage({ params, searchParams }: PagePr
   }
 
   // ── Fetch attributes for this subcategory ────────────────────────────────────
-  let attributes: AttributeGroup[] = [];
+  let attributes: any = [];
   try {
-    const attrRes = await api.get<{ data: AttributeGroup[] }>(
+    const attrRes = await api.get<{ data: any }>(
       `/products/attributes?subCategorySlug=${subCategorySlug}`,
       { cache: "no-store" }
     );
