@@ -167,6 +167,20 @@ export default async function SubCategoriesPage({ params, searchParams }: PagePr
     console.error("Error fetching sub-category brands:", err);
   }
 
+  // ── Fetch attributes for this subcategory ────────────────────────────────────
+  let attributes: AttributeGroup[] = [];
+  try {
+    const attrRes = await api.get<{ data: AttributeGroup[] }>(
+      `/products/attributes?subCategorySlug=${subCategorySlug}`,
+      { cache: "no-store" }
+    );
+    if (attrRes && Array.isArray(attrRes.data)) {
+      attributes = attrRes.data;
+    }
+  } catch (err) {
+    console.error("Error fetching sub-category attributes:", err);
+  }
+
   // ── Breadcrumb ────────────────────────────────────────────────────────────────
   const breadcrumbItems = [
     { label: "Home", href: "/" },
@@ -182,7 +196,7 @@ export default async function SubCategoriesPage({ params, searchParams }: PagePr
       </div>
       {/* <Banner banners={banners} /> */}
       <CategoriesProduct
-      banners={banners}
+        banners={banners}
         categorySlug={categorySlug}
         subCategorySlug={subCategorySlug}
         currentPage={currentPage}
@@ -192,6 +206,7 @@ export default async function SubCategoriesPage({ params, searchParams }: PagePr
         currentSort={sort ?? ""}
         currentSearch={search ?? ""}
         brands={brands}
+        attributes={attributes}
       />
     </div>
   );

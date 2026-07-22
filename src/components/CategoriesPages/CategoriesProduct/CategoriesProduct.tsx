@@ -1,12 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import { useState } from "react";
-import Image from "next/image";
+
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import AllProducts from "@/components/CategoriesPages/CategoriesProduct/AllProducts";
-import FilterSidebar from "./FilterSidebar";
+import FilterSidebar, { AttributeGroup } from "@/components/share/FilterSidebar";
 import { ProductItem } from "@/app/(public)/categories/[categorySlug]/page";
 import type { BrandItem } from "@/app/(public)/categories/[categorySlug]/page";
 import Banner from "@/components/CategoriesPages/CategoriesBanner/Banner";
+import { SlidersHorizontal, X } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -20,6 +22,7 @@ interface CategoriesProductProps {
   currentSort: string;
   currentSearch: string;
   brands?: BrandItem[];
+  attributes?: AttributeGroup[];
   banners?: any;
 }
 
@@ -35,9 +38,182 @@ function CategoriesProduct({
   currentSort,
   currentSearch,
   brands = [],
-  banners
+  attributes = [],
+  banners,
 }: CategoriesProductProps) {
-  const [selectedBrandSlug, setSelectedBrandSlug] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+
+  const initialCategory = searchParams.get("category") ?? null;
+  const initialPage = Number(searchParams.get("page") ?? String(currentPage));
+  const initialAttributes = searchParams.get("attributes")
+    ? searchParams.get("attributes")!.split(",").filter(Boolean)
+    : [];
+  const initialMinPrice = searchParams.get("minDiscountedPrice")
+    ? Number(searchParams.get("minDiscountedPrice"))
+    : undefined;
+  const initialMaxPrice = searchParams.get("maxDiscountedPrice")
+    ? Number(searchParams.get("maxDiscountedPrice"))
+    : undefined;
+  const initialStockStatus = searchParams.get("stockStatus") ?? null;
+  const initialBrand = searchParams.get("brand") ?? null;
+
+  const [selectedBrandSlug, setSelectedBrandSlug] = useState<string | null>(initialBrand);
+  const [selectedAttributes, setSelectedAttributes] = useState<string[]>(initialAttributes);
+  const [minPrice, setMinPrice] = useState<number | undefined>(initialMinPrice);
+  const [maxPrice, setMaxPrice] = useState<number | undefined>(initialMaxPrice);
+  const [stockStatus, setStockStatus] = useState<string | null>(initialStockStatus);
+  const [activePage, setActivePage] = useState<number>(initialPage);
+
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+  useEffect(() => {
+    const page = Number(searchParams.get("page") ?? String(currentPage));
+    const attrs = searchParams.get("attributes")?.split(",").filter(Boolean) ?? [];
+    const minP = searchParams.get("minDiscountedPrice")
+      ? Number(searchParams.get("minDiscountedPrice"))
+      : undefined;
+    const maxP = searchParams.get("maxDiscountedPrice")
+      ? Number(searchParams.get("maxDiscountedPrice"))
+      : undefined;
+    const stock = searchParams.get("stockStatus") ?? null;
+    const brand = searchParams.get("brand") ?? null;
+
+    setActivePage(page);
+    setSelectedAttributes(attrs);
+    setMinPrice(minP);
+    setMaxPrice(maxP);
+    setStockStatus(stock);
+    setSelectedBrandSlug(brand);
+  }, [searchParams, currentPage]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      setActivePage(Number(params.get("page") ?? String(currentPage)));
+      setSelectedAttributes(params.get("attributes")?.split(",").filter(Boolean) ?? []);
+      setMinPrice(
+        params.get("minDiscountedPrice")
+          ? Number(params.get("minDiscountedPrice"))
+          : undefined
+      );
+      setMaxPrice(
+        params.get("maxDiscountedPrice")
+          ? Number(params.get("maxDiscountedPrice"))
+          : undefined
+      );
+      setStockStatus(params.get("stockStatus") ?? null);
+      setSelectedBrandSlug(params.get("brand") ?? null);
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [currentPage]);
+
+  const handleBrandSelect = (brandSlug: string | null) => {
+    setSelectedBrandSlug(brandSlug);
+    setActivePage(1);
+
+    const params = new URLSearchParams(window.location.search);
+    if (brandSlug) {
+      params.set("brand", brandSlug);
+    } else {
+      params.delete("brand");
+    }
+    params.delete("page");
+
+    const newQueryString = params.toString();
+    const newUrl = newQueryString
+      ? `${window.location.pathname}?${newQueryString}`
+      : window.location.pathname;
+
+    window.history.pushState(null, "", newUrl);
+  };
+
+  const handleToggleAttribute = (guid: string) => {
+    const nextAttrs = selectedAttributes.includes(guid)
+      ? selectedAttributes.filter((id) => id !== guid)
+      : [...selectedAttributes, guid];
+
+    setSelectedAttributes(nextAttrs);
+    setActivePage(1);
+
+    const params = new URLSearchParams(window.location.search);
+    if (nextAttrs.length > 0) {
+      params.set("attributes", nextAttrs.join(","));
+    } else {
+      params.delete("attributes");
+    }
+    params.delete("page");
+
+    const newQueryString = params.toString();
+    const newUrl = newQueryString
+      ? `${window.location.pathname}?${newQueryString}`
+      : window.location.pathname;
+
+    window.history.pushState(null, "", newUrl);
+  };
+
+  const handlePriceChange = (min: number, max: number) => {
+    setMinPrice(min);
+    setMaxPrice(max);
+    setActivePage(1);
+
+    const params = new URLSearchParams(window.location.search);
+    params.set("minDiscountedPrice", String(min));
+    params.set("maxDiscountedPrice", String(max));
+    params.delete("page");
+
+    const newQueryString = params.toString();
+    const newUrl = newQueryString
+      ? `${window.location.pathname}?${newQueryString}`
+      : window.location.pathname;
+
+    window.history.pushState(null, "", newUrl);
+  };
+
+  const handleStockStatusToggle = (status: string) => {
+    const nextStatus = stockStatus === status ? null : status;
+    setStockStatus(nextStatus);
+    setActivePage(1);
+
+    const params = new URLSearchParams(window.location.search);
+    if (nextStatus !== null) {
+      params.set("stockStatus", nextStatus);
+    } else {
+      params.delete("stockStatus");
+    }
+    params.delete("page");
+
+    const newQueryString = params.toString();
+    const newUrl = newQueryString
+      ? `${window.location.pathname}?${newQueryString}`
+      : window.location.pathname;
+
+    window.history.pushState(null, "", newUrl);
+  };
+
+  const handleClearFilters = () => {
+    setSelectedBrandSlug(null);
+    setSelectedAttributes([]);
+    setMinPrice(undefined);
+    setMaxPrice(undefined);
+    setStockStatus(null);
+    setActivePage(1);
+
+    const params = new URLSearchParams(window.location.search);
+    params.delete("brand");
+    params.delete("attributes");
+    params.delete("minDiscountedPrice");
+    params.delete("maxDiscountedPrice");
+    params.delete("stockStatus");
+    params.delete("page");
+
+    const newQueryString = params.toString();
+    const newUrl = newQueryString
+      ? `${window.location.pathname}?${newQueryString}`
+      : window.location.pathname;
+
+    window.history.pushState(null, "", newUrl);
+  };
 
   return (
     <div>
@@ -47,7 +223,7 @@ function CategoriesProduct({
           <div className="flex items-center gap-2 flex-wrap">
             {/* All tab */}
             <button
-              onClick={() => setSelectedBrandSlug(null)}
+              onClick={() => handleBrandSelect(null)}
               className={`px-4 py-1.5 rounded-full text-sm font-semibold border transition-colors ${
                 selectedBrandSlug === null
                   ? "bg-[#6D3F0E] text-white border-[#6D3F0E]"
@@ -63,9 +239,7 @@ function CategoriesProduct({
                 <button
                   key={brand.uuid}
                   onClick={() =>
-                    setSelectedBrandSlug(
-                      isActive ? null : brand.brand_slug
-                    )
+                    handleBrandSelect(isActive ? null : brand.brand_slug)
                   }
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold border transition-colors ${
                     isActive
@@ -73,17 +247,6 @@ function CategoriesProduct({
                       : "bg-white dark:bg-[#2a2420] text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-[#6D3F0E] hover:text-[#6D3F0E]"
                   }`}
                 >
-                  {/* {brand.thumbnail_img && (
-                    <div className="relative w-4 h-4 rounded-full overflow-hidden bg-white shrink-0">
-                      <Image
-                        src={brand.thumbnail_img}
-                        alt={brand.brand_name}
-                        fill
-                        sizes="16px"
-                        className="object-contain"
-                      />
-                    </div>
-                  )} */}
                   {brand.brand_name}
                 </button>
               );
@@ -95,23 +258,84 @@ function CategoriesProduct({
       <Banner banners={banners} />
 
       {/* ── Products grid ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mt-6 items-stretch cursor-pointer md:px-12.5 px-4">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mt-6 items-stretch md:px-12.5 px-4">
         <div className="lg:col-span-3 h-full md:block hidden">
-          <FilterSidebar />
+          <FilterSidebar
+            attributes={attributes}
+            selectedAttributes={selectedAttributes}
+            onToggleAttribute={handleToggleAttribute}
+            minPrice={minPrice}
+            maxPrice={maxPrice}
+            onPriceChange={handlePriceChange}
+            stockStatus={stockStatus}
+            onStockStatusToggle={handleStockStatusToggle}
+          />
         </div>
+
+        <button
+          onClick={() => setIsFilterOpen(true)}
+          className="md:hidden flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold border border-gray-200 dark:border-white/10 text-white dark:text-gray-300 shrink-0 bg-[#6d3f0e] w-[40%] mb-3"
+        >
+          <SlidersHorizontal size={16} />
+          Filter
+        </button>
+
         <div className="lg:col-span-9 h-full">
           <AllProducts
             categorySlug={categorySlug}
             subCategorySlug={subCategorySlug}
-            currentPage={currentPage}
+            currentPage={activePage}
             products={products}
             totalPages={totalPages}
             totalCount={totalCount}
             currentSort={currentSort}
             currentSearch={currentSearch}
             selectedBrandSlug={selectedBrandSlug}
+            selectedAttributes={selectedAttributes}
+            minPrice={minPrice}
+            maxPrice={maxPrice}
+            stockStatus={stockStatus}
+            onClearFilter={handleClearFilters}
           />
         </div>
+
+        {isFilterOpen && (
+          <div className="fixed inset-0 z-50 md:hidden">
+            {/* Backdrop */}
+            <div
+              className="absolute inset-0 bg-black/50"
+              onClick={() => setIsFilterOpen(false)}
+            />
+
+            {/* Bottom sheet */}
+            <div className="absolute bottom-0 left-0 right-0 max-h-[85vh] bg-white dark:bg-gray-900 rounded-t-2xl overflow-y-auto animate-in slide-in-from-bottom duration-300">
+              <div className="sticky top-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900">
+                <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+                  Filter
+                </h3>
+                <button
+                  onClick={() => setIsFilterOpen(false)}
+                  className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-white/10"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="p-4">
+                <FilterSidebar
+                  attributes={attributes}
+                  selectedAttributes={selectedAttributes}
+                  onToggleAttribute={handleToggleAttribute}
+                  minPrice={minPrice}
+                  maxPrice={maxPrice}
+                  onPriceChange={handlePriceChange}
+                  stockStatus={stockStatus}
+                  onStockStatusToggle={handleStockStatusToggle}
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

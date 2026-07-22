@@ -85,6 +85,10 @@ function Pagination({ page, totalPages, onPageChange }: {
 interface Props {
   brandSlug: string;
   categorySlug?: string;
+  selectedAttributes?: string[];
+  minPrice?: number;
+  maxPrice?: number;
+  stockStatus?: string | null;
   currentPage: number;
   onPageChange: (page: number) => void;
   onClearFilter: () => void;
@@ -98,6 +102,10 @@ interface Props {
 export default function BrandProductListClient({
   brandSlug,
   categorySlug,
+  selectedAttributes = [],
+  minPrice,
+  maxPrice,
+  stockStatus,
   currentPage,
   onPageChange,
   onClearFilter,
@@ -106,18 +114,50 @@ export default function BrandProductListClient({
   initialTotalPages,
 }: Props) {
   const { data, isLoading, isPlaceholderData } = useQuery<ProductListResponse>({
-    queryKey:        ["brand-products", brandSlug, categorySlug, currentPage],
-    staleTime:       2 * 60 * 1000,
+    queryKey: [
+      "brand-products",
+      brandSlug,
+      categorySlug,
+      selectedAttributes.join(","),
+      minPrice,
+      maxPrice,
+      stockStatus,
+      currentPage,
+    ],
+    staleTime: 2 * 60 * 1000,
     placeholderData: (prev) => prev,
-    initialData:     !categorySlug && currentPage === 1 ? {
-      statusCode: 200, status: "success", found: true,
-      count: initialProducts.length, totalCount: initialTotalCount,
-      page: 1, limit: LIMIT, totalPages: initialTotalPages,
-      data: initialProducts,
-    } : undefined,
+    initialData:
+      !categorySlug &&
+      selectedAttributes.length === 0 &&
+      minPrice === undefined &&
+      maxPrice === undefined &&
+      !stockStatus &&
+      currentPage === 1
+        ? {
+            statusCode: 200,
+            status: "success",
+            found: true,
+            count: initialProducts.length,
+            totalCount: initialTotalCount,
+            page: 1,
+            limit: LIMIT,
+            totalPages: initialTotalPages,
+            data: initialProducts,
+          }
+        : undefined,
     queryFn: () => {
-      const qp = new URLSearchParams({ brandSlug, page: String(currentPage), limit: String(LIMIT) });
+      const qp = new URLSearchParams({
+        brandSlug,
+        page: String(currentPage),
+        limit: String(LIMIT),
+      });
       if (categorySlug) qp.set("subCategorySlug", categorySlug);
+      if (selectedAttributes.length > 0) qp.set("attributes", selectedAttributes.join(","));
+      if (minPrice !== undefined) qp.set("minDiscountedPrice", String(minPrice));
+      if (maxPrice !== undefined) qp.set("maxDiscountedPrice", String(maxPrice));
+      if (stockStatus !== null && stockStatus !== undefined && stockStatus !== "") {
+        qp.set("stockStatus", stockStatus);
+      }
       return api.get<ProductListResponse>(`/products?${qp.toString()}`);
     },
   });
@@ -125,6 +165,14 @@ export default function BrandProductListClient({
   const products   = data?.data       ?? [];
   const totalCount = data?.totalCount ?? 0;
   const totalPages = data?.totalPages ?? 1;
+
+  const hasActiveFilters = Boolean(
+    categorySlug ||
+    selectedAttributes.length > 0 ||
+    minPrice !== undefined ||
+    maxPrice !== undefined ||
+    stockStatus !== null
+  );
 
   return (
     <div>
@@ -136,10 +184,10 @@ export default function BrandProductListClient({
       {/* Count + clear */}
       <p className="text-xs text-gray-400 mb-4 h-4">
         {!isLoading && `${totalCount.toLocaleString()} products found`}
-        {!isLoading && categorySlug && (
+        {!isLoading && hasActiveFilters && (
           <button onClick={onClearFilter}
             className="ml-2 text-[#6D3F0E] dark:text-[#d4a97a] hover:underline"
-          >Clear filter</button>
+          >Clear filters</button>
         )}
       </p>
 
@@ -160,7 +208,7 @@ export default function BrandProductListClient({
             {products.length === 0 && (
               <div className="flex flex-col items-center justify-center py-16 gap-2">
                 <p className="text-sm text-gray-500 dark:text-gray-400">No products found.</p>
-                {categorySlug && (
+                {hasActiveFilters && (
                   <button onClick={onClearFilter}
                     className="text-xs text-[#6D3F0E] dark:text-[#d4a97a] hover:underline"
                   >Show all products</button>

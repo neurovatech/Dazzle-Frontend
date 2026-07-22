@@ -3,7 +3,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import FilterSidebar from "@/components/share/FilterSidebar";
+import FilterSidebar, { AttributeGroup } from "@/components/share/FilterSidebar";
 import BrandProductListClient from "@/components/Brands/BrandProductListClient";
 import { SlidersHorizontal, X } from "lucide-react";
 // import type { ProductItem } from "@/app/(public)/brands/[slug]/page";
@@ -20,6 +20,7 @@ export interface CategoryItem {
 interface Props {
   brandSlug: string;
   categories: CategoryItem[];
+  attributes?: AttributeGroup[];
   initialProducts: ProductItem[];
   initialTotalCount: number;
   initialTotalPages: number;
@@ -55,6 +56,7 @@ export interface ProductListResponse {
 export default function BrandProducts({
   brandSlug,
   categories,
+  attributes = [],
   initialProducts,
   initialTotalCount,
   initialTotalPages,
@@ -63,11 +65,23 @@ export default function BrandProducts({
 
   const initialCategory = searchParams.get("category") ?? null;
   const initialPage = Number(searchParams.get("page") ?? "1");
+  const initialAttributes = searchParams.get("attributes")
+    ? searchParams.get("attributes")!.split(",").filter(Boolean)
+    : [];
+  const initialMinPrice = searchParams.get("minDiscountedPrice")
+    ? Number(searchParams.get("minDiscountedPrice"))
+    : undefined;
+  const initialMaxPrice = searchParams.get("maxDiscountedPrice")
+    ? Number(searchParams.get("maxDiscountedPrice"))
+    : undefined;
+  const initialStockStatus = searchParams.get("stockStatus") ?? null;
 
-  const [activeCategory, setActiveCategory] = useState<string | null>(
-    initialCategory,
-  );
+  const [activeCategory, setActiveCategory] = useState<string | null>(initialCategory);
   const [activePage, setActivePage] = useState<number>(initialPage);
+  const [selectedAttributes, setSelectedAttributes] = useState<string[]>(initialAttributes);
+  const [minPrice, setMinPrice] = useState<number | undefined>(initialMinPrice);
+  const [maxPrice, setMaxPrice] = useState<number | undefined>(initialMaxPrice);
+  const [stockStatus, setStockStatus] = useState<string | null>(initialStockStatus);
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
@@ -75,8 +89,21 @@ export default function BrandProducts({
   useEffect(() => {
     const category = searchParams.get("category") ?? null;
     const page = Number(searchParams.get("page") ?? "1");
+    const attrs = searchParams.get("attributes")?.split(",").filter(Boolean) ?? [];
+    const minP = searchParams.get("minDiscountedPrice")
+      ? Number(searchParams.get("minDiscountedPrice"))
+      : undefined;
+    const maxP = searchParams.get("maxDiscountedPrice")
+      ? Number(searchParams.get("maxDiscountedPrice"))
+      : undefined;
+    const stock = searchParams.get("stockStatus") ?? null;
+
     setActiveCategory(category);
     setActivePage(page);
+    setSelectedAttributes(attrs);
+    setMinPrice(minP);
+    setMaxPrice(maxP);
+    setStockStatus(stock);
   }, [searchParams]);
 
   // Sync state if browser navigation (back/forward) happens via browser popstate
@@ -85,6 +112,18 @@ export default function BrandProducts({
       const params = new URLSearchParams(window.location.search);
       setActiveCategory(params.get("category") ?? null);
       setActivePage(Number(params.get("page") ?? "1"));
+      setSelectedAttributes(params.get("attributes")?.split(",").filter(Boolean) ?? []);
+      setMinPrice(
+        params.get("minDiscountedPrice")
+          ? Number(params.get("minDiscountedPrice"))
+          : undefined
+      );
+      setMaxPrice(
+        params.get("maxDiscountedPrice")
+          ? Number(params.get("maxDiscountedPrice"))
+          : undefined
+      );
+      setStockStatus(params.get("stockStatus") ?? null);
     };
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
@@ -100,6 +139,93 @@ export default function BrandProducts({
     } else {
       params.delete("category");
     }
+    params.delete("page");
+
+    const newQueryString = params.toString();
+    const newUrl = newQueryString
+      ? `${window.location.pathname}?${newQueryString}`
+      : window.location.pathname;
+
+    window.history.pushState(null, "", newUrl);
+  };
+
+  const handleToggleAttribute = (guid: string) => {
+    const nextAttrs = selectedAttributes.includes(guid)
+      ? selectedAttributes.filter((id) => id !== guid)
+      : [...selectedAttributes, guid];
+
+    setSelectedAttributes(nextAttrs);
+    setActivePage(1);
+
+    const params = new URLSearchParams(window.location.search);
+    if (nextAttrs.length > 0) {
+      params.set("attributes", nextAttrs.join(","));
+    } else {
+      params.delete("attributes");
+    }
+    params.delete("page");
+
+    const newQueryString = params.toString();
+    const newUrl = newQueryString
+      ? `${window.location.pathname}?${newQueryString}`
+      : window.location.pathname;
+
+    window.history.pushState(null, "", newUrl);
+  };
+
+  const handlePriceChange = (min: number, max: number) => {
+    setMinPrice(min);
+    setMaxPrice(max);
+    setActivePage(1);
+
+    const params = new URLSearchParams(window.location.search);
+    params.set("minDiscountedPrice", String(min));
+    params.set("maxDiscountedPrice", String(max));
+    params.delete("page");
+
+    const newQueryString = params.toString();
+    const newUrl = newQueryString
+      ? `${window.location.pathname}?${newQueryString}`
+      : window.location.pathname;
+
+    window.history.pushState(null, "", newUrl);
+  };
+
+  const handleStockStatusToggle = (status: string) => {
+    const nextStatus = stockStatus === status ? null : status;
+    setStockStatus(nextStatus);
+    setActivePage(1);
+
+    const params = new URLSearchParams(window.location.search);
+    if (nextStatus !== null) {
+      params.set("stockStatus", nextStatus);
+    } else {
+      params.delete("stockStatus");
+    }
+    params.delete("page");
+
+    const newQueryString = params.toString();
+    const newUrl = newQueryString
+      ? `${window.location.pathname}?${newQueryString}`
+      : window.location.pathname;
+
+    window.history.pushState(null, "", newUrl);
+  };
+
+  const handleClearFilters = () => {
+    setActiveCategory(null);
+    setSelectedAttributes([]);
+    setMinPrice(undefined);
+    setMaxPrice(undefined);
+    setStockStatus(null);
+    setActivePage(1);
+
+    const params = new URLSearchParams(window.location.search);
+    params.delete("category");
+    params.delete("attributes");
+    params.delete("minDiscountedPrice");
+    params.delete("maxDiscountedPrice");
+    params.delete("stockStatus");
     params.delete("page");
 
     const newQueryString = params.toString();
@@ -166,7 +292,16 @@ export default function BrandProducts({
       {/* ── Sidebar + product list ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mt-4 items-start md:px-6.5 px-4">
         <div className="lg:col-span-3 h-full md:block hidden">
-          <FilterSidebar />
+          <FilterSidebar
+            attributes={attributes}
+            selectedAttributes={selectedAttributes}
+            onToggleAttribute={handleToggleAttribute}
+            minPrice={minPrice}
+            maxPrice={maxPrice}
+            onPriceChange={handlePriceChange}
+            stockStatus={stockStatus}
+            onStockStatusToggle={handleStockStatusToggle}
+          />
         </div>
 
         <button
@@ -183,9 +318,13 @@ export default function BrandProducts({
             <BrandProductListClient
               brandSlug={brandSlug}
               categorySlug={activeCategory ?? undefined}
+              selectedAttributes={selectedAttributes}
+              minPrice={minPrice}
+              maxPrice={maxPrice}
+              stockStatus={stockStatus}
               currentPage={activePage}
               onPageChange={handlePageChange}
-              onClearFilter={() => navigate(null)}
+              onClearFilter={handleClearFilters}
               initialProducts={initialProducts}
               initialTotalCount={initialTotalCount}
               initialTotalPages={initialTotalPages}
@@ -216,7 +355,16 @@ export default function BrandProducts({
               </div>
 
               <div className="p-4">
-                <FilterSidebar />
+                <FilterSidebar
+                  attributes={attributes}
+                  selectedAttributes={selectedAttributes}
+                  onToggleAttribute={handleToggleAttribute}
+                  minPrice={minPrice}
+                  maxPrice={maxPrice}
+                  onPriceChange={handlePriceChange}
+                  stockStatus={stockStatus}
+                  onStockStatusToggle={handleStockStatusToggle}
+                />
               </div>
             </div>
           </div>

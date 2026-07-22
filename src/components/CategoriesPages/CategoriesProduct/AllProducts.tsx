@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -22,6 +22,11 @@ interface AllProductsProps {
   currentSort: string;
   currentSearch: string;
   selectedBrandSlug?: string | null; // brand tab filter from CategoriesProduct
+  selectedAttributes?: string[];
+  minPrice?: number;
+  maxPrice?: number;
+  stockStatus?: string | null;
+  onClearFilter?: () => void;
 }
 
 const LIMIT = 12;
@@ -111,48 +116,72 @@ function AllProducts({
   currentSort,
   currentSearch,
   selectedBrandSlug,
+  selectedAttributes = [],
+  minPrice,
+  maxPrice,
+  stockStatus,
+  onClearFilter,
 }: AllProductsProps) {
   const router       = useRouter();
   const pathname     = usePathname();
   const searchParams = useSearchParams();
 
   const [searchInput, setSearchInput] = useState(currentSearch);
-  const [brandPage,   setBrandPage]   = useState(1);
 
-  // Reset to page 1 when brand changes
-  useEffect(() => {
-    setBrandPage(1);
-  }, [selectedBrandSlug]);
+  const hasFilter = Boolean(
+    selectedBrandSlug ||
+    selectedAttributes.length > 0 ||
+    minPrice !== undefined ||
+    maxPrice !== undefined ||
+    stockStatus !== null
+  );
 
-  const hasBrandFilter = !!selectedBrandSlug;
-
-  // ── Client-side fetch when a brand tab is selected ─────────────
-  const { data: brandData, isLoading: brandLoading } = useQuery<ProductListResponse>({
-    queryKey: ["category-brand-products", categorySlug, subCategorySlug, selectedBrandSlug, brandPage, currentSort],
+  // ── Client-side fetch when any filter or page change occurs ─────────────
+  const { data: filterData, isLoading: filterLoading } = useQuery<ProductListResponse>({
+    queryKey: [
+      "category-filtered-products",
+      categorySlug,
+      subCategorySlug,
+      selectedBrandSlug,
+      selectedAttributes.join(","),
+      minPrice,
+      maxPrice,
+      stockStatus,
+      currentPage,
+      currentSort,
+      currentSearch,
+    ],
     queryFn: () => {
       const p = new URLSearchParams({
-        page:         String(brandPage),
+        page:         String(currentPage),
         limit:        String(LIMIT),
         categorySlug,
-        brandSlug:    selectedBrandSlug!,
       });
       if (subCategorySlug) p.set("subCategorySlug", subCategorySlug);
+      if (selectedBrandSlug) p.set("brandSlug", selectedBrandSlug);
+      if (selectedAttributes.length > 0) p.set("attributes", selectedAttributes.join(","));
+      if (minPrice !== undefined) p.set("minDiscountedPrice", String(minPrice));
+      if (maxPrice !== undefined) p.set("maxDiscountedPrice", String(maxPrice));
+      if (stockStatus !== null && stockStatus !== undefined && stockStatus !== "") {
+        p.set("stockStatus", stockStatus);
+      }
       if (currentSort) p.set("sort", currentSort);
+      if (currentSearch) p.set("search", currentSearch);
+
       return api.get<ProductListResponse>(`/products?${p.toString()}`);
     },
-    enabled:   hasBrandFilter,
+    enabled:   hasFilter || currentPage > 1,
     staleTime: 2 * 60 * 1000,
     placeholderData: (prev) => prev,
   });
 
   // ── Derived display values ─────────────────────────────────────
-  const displayProducts = hasBrandFilter ? (brandData?.data ?? [])      : ssrProducts;
-  const displayTotal    = hasBrandFilter ? (brandData?.totalCount ?? 0) : ssrTotalCount;
-  const displayPages    = hasBrandFilter ? (brandData?.totalPages ?? 1) : ssrTotalPages;
-  const displayPage     = hasBrandFilter ? brandPage                    : currentPage;
-  const isLoading       = hasBrandFilter && brandLoading && !brandData;
+  const displayProducts = (hasFilter || currentPage > 1) ? (filterData?.data ?? [])      : ssrProducts;
+  const displayTotal    = (hasFilter || currentPage > 1) ? (filterData?.totalCount ?? 0) : ssrTotalCount;
+  const displayPages    = (hasFilter || currentPage > 1) ? (filterData?.totalPages ?? 1) : ssrTotalPages;
+  const isLoading       = (hasFilter || currentPage > 1) && filterLoading && !filterData;
 
-  // ── URL navigation — SSR path (no brand filter) ────────────────
+  // ── URL navigation ────────────────
   const navigate = (overrides: Record<string, string>) => {
     const params = new URLSearchParams(searchParams.toString());
     Object.entries(overrides).forEach(([key, val]) => {
@@ -166,12 +195,7 @@ function AllProducts({
   };
 
   const handlePageChange = (p: number) => {
-    if (hasBrandFilter) {
-      setBrandPage(p);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    } else {
-      navigate({ page: String(p) });
-    }
+    navigate({ page: String(p) });
   };
 
   const handleClearSearch = () => { setSearchInput(""); navigate({ search: "" }); };
@@ -182,7 +206,7 @@ function AllProducts({
       <div className="flex flex-wrap items-center justify-between gap-3 pb-3">
         <div>
           <h3 className="md:text-[32px] text-[20px] font-bold text-transparent bg-clip-text bg-[linear-gradient(90deg,#101518_0%,#E9CCAE_46.15%,#B57908_100%)] dark:text-white">
-            Products of {categorySlug}
+            Products of {subCategorySlug || categorySlug}
           </h3>
           <p className="text-xs text-gray-400 mt-0.5">
             {displayTotal.toLocaleString()} products found
@@ -190,6 +214,14 @@ function AllProducts({
               <span className="ml-2 text-[#6D3F0E] dark:text-[#d4a97a] font-semibold">
                 · {selectedBrandSlug}
               </span>
+            )}
+            {hasFilter && onClearFilter && (
+              <button
+                onClick={onClearFilter}
+                className="ml-3 text-[#6D3F0E] dark:text-[#d4a97a] hover:underline"
+              >
+                Clear filters
+              </button>
             )}
           </p>
         </div>
@@ -203,7 +235,12 @@ function AllProducts({
         <div className="flex flex-col items-center justify-center py-20 gap-2">
           <p className="text-4xl">😔</p>
           <p className="text-sm text-gray-500 dark:text-gray-400">No products found.</p>
-          {currentSearch && (
+          {hasFilter && onClearFilter && (
+            <button onClick={onClearFilter} className="text-xs text-[#6D3F0E] dark:text-[#d4a97a] hover:underline">
+              Show all products
+            </button>
+          )}
+          {currentSearch && !hasFilter && (
             <button onClick={handleClearSearch} className="text-xs text-[#6D3F0E] dark:text-[#d4a97a] hover:underline">
               Clear search
             </button>
@@ -237,10 +274,10 @@ function AllProducts({
             })}
           </div>
 
-          <Pagination page={displayPage} totalPages={displayPages} onPageChange={handlePageChange} />
+          <Pagination page={currentPage} totalPages={displayPages} onPageChange={handlePageChange} />
 
           <p className="text-center text-xs text-gray-400 mt-3 mb-8">
-            Page {displayPage} of {displayPages} — showing {displayProducts.length} of{" "}
+            Page {currentPage} of {displayPages} — showing {displayProducts.length} of{" "}
             {displayTotal.toLocaleString()} products
           </p>
         </>

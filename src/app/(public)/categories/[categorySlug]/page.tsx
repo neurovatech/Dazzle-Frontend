@@ -1,7 +1,10 @@
 import CategoriesProduct from "@/components/CategoriesPages/CategoriesProduct/CategoriesProduct";
 import Breadcrumb from "@/components/share/Breadcrumb";
 import { api } from "@/lib/api";
+import type { AttributeGroup } from "@/components/share/FilterSidebar";
 import type { Metadata } from "next";
+
+export type { AttributeGroup };
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -155,6 +158,20 @@ export default async function CategoriesPage({ params, searchParams }: PageProps
     console.error("Error fetching category brands:", err);
   }
 
+  // ── Fetch attributes for this category ───────────────────────────────────────
+  let attributes: AttributeGroup[] = [];
+  try {
+    const attrRes = await api.get<{ data: AttributeGroup[] }>(
+      `/products/attributes?categorySlug=${categorySlug}`,
+      { cache: "no-store" }
+    );
+    if (attrRes && Array.isArray(attrRes.data)) {
+      attributes = attrRes.data;
+    }
+  } catch (err) {
+    console.error("Error fetching category attributes:", err);
+  }
+
   // ── Breadcrumb ────────────────────────────────────────────────────────────────
   const breadcrumbItems = [
     { label: "Home", href: "/" },
@@ -176,6 +193,7 @@ export default async function CategoriesPage({ params, searchParams }: PageProps
         currentSort={sort ?? ""}
         currentSearch={search ?? ""}
         brands={brands}
+        attributes={attributes}
       />
     </div>
   );

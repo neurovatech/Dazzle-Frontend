@@ -39,6 +39,28 @@ interface CategoryListResponse {
   data: CategoryItem[];
 }
 
+export interface AttributeItem {
+  attributeGuid: string;
+  attributeVariation: string;
+}
+
+export interface AttributeGroup {
+  attributeName: string;
+  items: AttributeItem[];
+}
+
+export interface BrandAttributesResponse {
+  statusCode: number;
+  status: string;
+  found: boolean;
+  count: number;
+  totalCount: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  data: AttributeGroup[];
+}
+
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
@@ -79,9 +101,9 @@ export default async function BrandDetailsPage({ params }: PageProps) {
   const { slug }    = await params;
   const brandName   = toTitleCase(slug);
 
-  // SSR fetch: categories (5 min cache) + page-1 all products (1 min cache)
+  // SSR fetch: categories (5 min cache) + page-1 all products (1 min cache) + brand attributes (5 min cache)
   // These give Google bots full content on first render → SEO intact
-  const [catResult, prodResult] = await Promise.allSettled([
+  const [catResult, prodResult, attrResult] = await Promise.allSettled([
     api.get<CategoryListResponse>(`/brands/${slug}/categories`, {
       next: { revalidate: 300 }, // 5 min
     }),
@@ -93,6 +115,9 @@ export default async function BrandDetailsPage({ params }: PageProps) {
       }).toString()}`,
       { next: { revalidate: 60 } } // 1 min
     ),
+    api.get<BrandAttributesResponse>(`/products/attributes?brandSlug=${slug}`, {
+      next: { revalidate: 300 }, // 5 min
+    }),
   ]);
 
   const categories: CategoryItem[] =
@@ -106,6 +131,11 @@ export default async function BrandDetailsPage({ params }: PageProps) {
       : { statusCode: 200, status: "success", found: false, count: 0,
           totalCount: 0, page: 1, limit: LIMIT, totalPages: 1, data: [] };
 
+  const attributes: AttributeGroup[] =
+    attrResult.status === "fulfilled" && Array.isArray(attrResult.value?.data)
+      ? attrResult.value.data
+      : [];
+
   const breadcrumbItems = [
     { label: "Home",    href: "/" },
     { label: "Brands",  href: "/brands" },
@@ -118,11 +148,12 @@ export default async function BrandDetailsPage({ params }: PageProps) {
         <Breadcrumb items={breadcrumbItems} />
       </div>
 
-      {/* BrandProducts renders category buttons + Suspense-wrapped product list */}
+      {/* BrandProducts renders category buttons + FilterSidebar + Suspense-wrapped product list */}
       <Suspense>
         <BrandProducts
           brandSlug={slug}
           categories={categories}
+          attributes={attributes}
           initialProducts={initialProductData.data}
           initialTotalCount={initialProductData.totalCount}
           initialTotalPages={initialProductData.totalPages}
