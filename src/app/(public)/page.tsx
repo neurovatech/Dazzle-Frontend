@@ -111,6 +111,23 @@ export default async function Home() {
       content: <Olds />,
     },
   ];
+    function getNext15thDate() {
+      const now = new Date();
+      const currentDay = now.getDate();
+      
+      let targetMonth = now.getMonth();
+      let targetYear = now.getFullYear();
+      if (currentDay >= 15) {
+        targetMonth += 1;
+        if (targetMonth > 11) {
+          targetMonth = 0;
+          targetYear += 1;
+        }
+      }
+      
+      const target = new Date(targetYear, targetMonth, 15, 23, 59, 59);
+      return target.toISOString();
+    }
 
   return (
     <div>
@@ -144,7 +161,7 @@ export default async function Home() {
             <div className="px-3 sm:px-4 md:px-6 lg:px-12 pb-4">
               <GlobalCountdown
                 title="Flash Sale"
-                targetDate={new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString()}
+                targetDate={getNext15thDate()}
                 pagesLink="/offer/limited-time-offer"
               />
               <FlashSaleSectionCom />

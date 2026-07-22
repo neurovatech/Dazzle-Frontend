@@ -64,6 +64,9 @@ export default async function OffersPage() {
     console.error("Error fetching campaigns:", err);
   }
 
+
+
+
   return (
     <div className="min-h-screen py-5 px-4">
       <div className="max-w-355 mx-auto">

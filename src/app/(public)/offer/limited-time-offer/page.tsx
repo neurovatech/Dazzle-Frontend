@@ -83,13 +83,32 @@ export default async function LimitedTimeOffer() {
     } catch (error) {
       console.error("Error fetching feature products SSR:", error);
     }
+
+    function getNext15thDate() {
+      const now = new Date();
+      const currentDay = now.getDate();
+      
+      let targetMonth = now.getMonth();
+      let targetYear = now.getFullYear();
+      if (currentDay >= 15) {
+        targetMonth += 1;
+        if (targetMonth > 11) {
+          targetMonth = 0;
+          targetYear += 1;
+        }
+      }
+      
+      const target = new Date(targetYear, targetMonth, 15, 23, 59, 59);
+      return target.toISOString();
+    }
+
   return (
     <div className="flex flex-col flex-1 max-w-355 mx-auto">
       <div className="md:px-12.5 px-4">
         <Breadcrumb items={breadcrumbItems} />
 
         <div className="lg:col-span-12  bg-[#6d3f0e] px-4 rounded-sm">
-        <GlobalCountdown title="Flash Sale" targetDate={new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString()} />
+        <GlobalCountdown title="Flash Sale" targetDate={getNext15thDate()} />
       </div>
       </div>
 
