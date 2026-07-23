@@ -11,6 +11,7 @@ import {
   MapPin,
   Plus,
   Loader2,
+  Star,
 } from "lucide-react";
 
 import locationImg from "@/images/location.png";
@@ -70,6 +71,13 @@ interface AlterAddressResponse {
     updatedAt?: string;
     createdAt?: string;
   };
+}
+
+// Response for PUT /address/{uuid}/primary
+interface SetPrimaryResponse {
+  statusCode: number;
+  status: string;
+  message: string;
 }
 
 // ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
@@ -152,6 +160,9 @@ const DeliveryAddress = () => {
     onSuccess: (res) => {
       toast.success(res.message || "Address book updated successfully!");
       queryClient.invalidateQueries({ queryKey: ["addressList"] });
+
+      const newUuid = res.data?.addressUuid 
+      setPrimaryAddress(newUuid);
       closeModal();
     },
     onError: (err: any) => {
@@ -191,6 +202,48 @@ const DeliveryAddress = () => {
       }
     },
   });
+
+  // 5. Set Address as Primary/Default — PUT /address/{uuid}/primary
+  const {
+    mutate: setPrimaryAddress,
+    isPending: isSettingPrimary,
+    variables: settingPrimaryUuid,
+  } = useMutation({
+    mutationFn: async (uuid: string) => {
+      return api.put<SetPrimaryResponse>(
+        `address/${uuid}/primary`,
+        {},
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "X-API-Key": apiKey || "",
+            Authorization: authHeader,
+          },
+        },
+      );
+    },
+    onSuccess: (res) => {
+      toast.success(res.message || "Primary address updated successfully.");
+      queryClient.invalidateQueries({ queryKey: ["addressList"] });
+    },
+    onError: (err: any) => {
+      try {
+        const parsed = JSON.parse(err.message);
+        if (parsed.errors && parsed.errors.length > 0) {
+          parsed.errors.forEach((e: string) => toast.error(e));
+        } else {
+          toast.error(parsed.message || "Failed to set primary address.");
+        }
+      } catch {
+        toast.error("Something went wrong while setting default address.");
+      }
+    },
+  });
+
+  const handleSetDefaultClick = (uuid: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setPrimaryAddress(uuid);
+  };
 
   // State for custom delete confirmation modal
   const [deletingUuid, setDeletingUuid] = useState<string | null>(null);
@@ -304,6 +357,8 @@ const DeliveryAddress = () => {
         <div className="space-y-3">
           {activeAddresses.map((addr) => {
             const isExpanded = expandedUuid === addr.addressUuid;
+            const isThisSettingPrimary =
+              isSettingPrimary && settingPrimaryUuid === addr.addressUuid;
 
             // Look up Names from Area List API data dynamically
             const districtName =
@@ -400,14 +455,15 @@ const DeliveryAddress = () => {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex gap-2 w-full md:w-auto mt-2 md:mt-0">
+                    <div className="flex gap-2 w-full md:w-auto mt-2 md:mt-0 flex-wrap">
                       <button
                         onClick={(e) => openEditModal(addr, e)}
                         className="flex-1 md:flex-none flex items-center justify-center gap-1.5 px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 transition"
                       >
                         <Edit2 size={13} />
-                        Edit {activeAddresses.length}
+                        Edit
                       </button>
+
                       {activeAddresses.length > 1 && (
                         <button
                           onClick={(e) =>
@@ -417,6 +473,25 @@ const DeliveryAddress = () => {
                         >
                           <Trash2 size={13} />
                           Delete
+                        </button>
+                      )}
+
+                      {/* Set as Default — calls PUT /address/{uuid}/primary */}
+                      {!addr.isDefault && (
+                        <button
+                          type="button"
+                          disabled={isThisSettingPrimary}
+                          onClick={(e) =>
+                            handleSetDefaultClick(addr.addressUuid, e)
+                          }
+                          className="flex-1 md:flex-none flex items-center justify-center gap-1.5 px-4 py-2 border border-yellow-200 dark:border-yellow-900/40 rounded-xl text-xs font-semibold text-yellow-600 dark:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-950/20 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isThisSettingPrimary ? (
+                            <Loader2 size={13} className="animate-spin" />
+                          ) : (
+                            <Star size={13} />
+                          )}
+                          Default
                         </button>
                       )}
                     </div>

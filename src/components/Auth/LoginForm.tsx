@@ -87,7 +87,7 @@ interface MobileOtpModalProps {
   onClose: () => void;
 }
 
-const RESEND_COOLDOWN = 120; // seconds
+const RESEND_COOLDOWN = 120;
 
 const MobileOtpModal: React.FC<MobileOtpModalProps> = ({ onClose }) => {
   const router = useRouter();

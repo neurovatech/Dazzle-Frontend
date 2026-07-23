@@ -1,5 +1,6 @@
 import NewArrivals from "./NewArrivals";
 import { api } from "@/lib/api";
+import NoImg from "@/images/no_images.png";
 
 interface ShowcaseThumbnail {
   fileUuid: string;
@@ -65,7 +66,7 @@ export default async function NewArrivalsSectionCom() {
       badge: item.productBadge,
       isBestDeal: item.disRate > 15, // adjust threshold as needed, API has no direct flag
       inStock: !item.isTba,
-      image: item.thumbnails?.mediaFileUrl ?? "/images/product.png",
+      image: item.thumbnails?.mediaFileUrl ?? NoImg,
     }));
   } catch (error) {
     console.error("Error fetching hot deal products SSR:", error);

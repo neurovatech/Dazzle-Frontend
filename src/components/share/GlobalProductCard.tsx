@@ -128,7 +128,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
                 alt={title || "Product image"}
                 fill
                 sizes="(max-width: 640px) 45vw, (max-width: 1024px) 25vw, 200px"
-                className="object-contain w-[75%]! mx-auto"
+                className="object-contain w-full mx-auto"
                 onError={() => setImgError(true)}
               />
             </div>
