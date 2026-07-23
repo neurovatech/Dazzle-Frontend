@@ -6,7 +6,6 @@ import CategoryNav from "./CategoryNav";
 import MobileHeader from "./MobileHeader";
 import { api } from "@/lib/api";
 
-// ─── API Types (categories/brands) ───────────────────────────────────────────
 export interface ApiBrand {
   uuid: string;
   brand_name: string;

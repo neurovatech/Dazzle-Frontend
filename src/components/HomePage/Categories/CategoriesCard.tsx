@@ -7,7 +7,6 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import NoImg from "@/images/no_images.png";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface CategoryItem {
   uuid: string;
@@ -23,7 +22,6 @@ interface CategoriesCardProps {
   currentPage?: number;
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const isEmpty = (value: string | null | undefined): boolean =>
   !value || value.trim() === "";
