@@ -92,7 +92,7 @@ function ProductRow({ product }: { product: NormalizedProduct }) {
         />
       </div>
       <div className="min-w-0">
-        <p className="text-xs text-gray-700 dark:text-white font-medium truncate group-hover/prod:text-[#b8864e] transition-colors leading-snug">
+        <p className="text-xs text-gray-700 dark:text-white font-medium group-hover/prod:text-[#b8864e] transition-colors leading-snug">
           {product.productName}
         </p>
         <p className={`text-xs font-medium mt-0.5 ${product.isStockAvailable ? "text-green-500" : "text-red-500"}`}>
@@ -198,7 +198,7 @@ export default function ProductSearches({ query }: ProductSearchesProps) {
     return (
       <div className="flex flex-col sm:flex-row h-full">
         {/* Left panel */}
-        <div className="w-full sm:w-[220px] lg:w-[260px] shrink-0 p-4 sm:p-5 border-b sm:border-b-0 sm:border-r border-gray-100 dark:border-gray-700">
+        <div className="w-full sm:w-[220px] lg:w-[200px] shrink-0 p-4 sm:p-5 border-b sm:border-b-0 sm:border-r border-gray-100 dark:border-gray-700">
           <button
             onClick={() => setSelectedCategory(null)}
             className="flex items-center gap-1 text-sm font-semibold text-[#B57908] hover:text-[#9a6507] mb-4 transition-colors"
@@ -242,11 +242,11 @@ export default function ProductSearches({ query }: ProductSearchesProps) {
   return (
     <div className="flex flex-col sm:flex-row h-full">
       {/* Left panel — categories */}
-      <div className="w-full sm:w-[220px] lg:w-[260px] shrink-0 p-4 sm:p-5 border-b sm:border-b-0 sm:border-r border-gray-100 dark:border-gray-700">
+      <div className="w-full sm:w-[220px] lg:w-[200px] shrink-0 p-4 sm:p-5 border-b sm:border-b-0 sm:border-r border-gray-100 dark:border-gray-700">
         <p className="text-sm font-semibold text-gray-800 dark:text-white mb-3">Categories</p>
-        <div className="flex flex-col gap-2 items-start">
+        <div className="flex flex-row flex-wrap gap-2 items-start sm:flex-col">
           {loading && (
-            <div className="space-y-2 w-full">
+            <div className="flex flex-row flex-wrap gap-2 w-full sm:flex-col">
               {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="h-8 w-28 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
               ))}

@@ -7,7 +7,6 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import NoImg from "@/images/no_images.png";
 
-
 interface CategoryItem {
   uuid: string;
   thumbnail_img: string;
@@ -21,7 +20,6 @@ interface CategoriesCardProps {
   totalPages?: number;
   currentPage?: number;
 }
-
 
 const isEmpty = (value: string | null | undefined): boolean =>
   !value || value.trim() === "";
@@ -61,56 +59,55 @@ function CategoriesCard({
         )}
       </div>
 
-
       {/* ── Grid ── */}
-<div className="py-4">
-  <div className="grid gap-2 sm:gap-3 md:gap-4 grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8">
-    {categories.map((item) => {
-      const hasImage = !isEmpty(item.thumbnail_img);
-      const hasName = !isEmpty(item.category_name);
-      const hasSlug = !isEmpty(item.category_slug);
+      <div className="py-4">
+        <div className="grid grid-cols-4 md:grid-cols-4 lg:grid-cols-8 gap-4">
+          {categories.map((item) => {
+            const hasImage = !isEmpty(item.thumbnail_img);
+            const hasName = !isEmpty(item.category_name);
+            const hasSlug = !isEmpty(item.category_slug);
 
-      const href = hasSlug
-        ? `/categories/${item.category_slug}`
-        : hasName
-          ? `/categories/${item.category_name.toLowerCase().replace(/\s+/g, "-")}`
-          : "/categories";
+            const href = hasSlug
+              ? `/categories/${item.category_slug}`
+              : hasName
+                ? `/categories/${item.category_name.toLowerCase().replace(/\s+/g, "-")}`
+                : "/categories";
 
-      return (
-        <Link
-          key={item.uuid}
-          href={href}
-          className="flex flex-col items-center group cursor-pointer h-full"
-        >
-          {/* Fixed-size box so every image container is the same height */}
-          <div className="relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 bg-[#F5F5F5] dark:bg-[#F5F5F5] dark:group-hover:bg-white/10 rounded-2xl sm:rounded-3xl lg:rounded-4xl transition-all duration-300 group-hover:bg-[#CB843B]/10 group-hover:scale-105 flex items-center justify-center overflow-hidden">
-            <Image
-              src={hasImage ? item.thumbnail_img : NoImg}
-              width={100}
-              height={100}
-              alt={hasName ? item.category_name : "Category"}
-              className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-16 lg:h-16 object-contain transition-transform duration-300 group-hover:scale-110"
-              onError={(e) => {
-                (e.currentTarget as HTMLImageElement).src =
-                  (NoImg as any).src ?? NoImg.toString();
-              }}
-            />
-          </div>
+            return (
+              <Link
+                key={item.uuid}
+                href={href}
+                className="flex flex-col items-center"
+              >
+                {/* Fixed-size box so every image container is the same height */}
+                <div className="relative w-full aspect-square bg-white border border-[#c6c6c6]  rounded-4xl p-6 md:p-8 transition-all duration-300 hover:scale-105">
+                  <Image
+                    src={hasImage ? item.thumbnail_img : NoImg}
+                    alt={hasName ? item.category_name : "Category"}
+                    fill
+                    sizes="(max-width: 768px) 25vw, 12vw"
+                    className="object-contain transition-transform duration-300 hover:scale-110"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src =
+                        (NoImg as any).src ?? NoImg.toString();
+                    }}
+                  />
+                </div>
 
-          <h2 className="w-full text-[9px] sm:text-[10px] lg:text-sm font-medium text-primary pt-1 sm:pt-2 text-center transition-colors duration-300 group-hover:text-[#CB843B] line-clamp-2 leading-tight min-h-[22px] sm:min-h-[26px] lg:min-h-[36px] flex items-start justify-center">
-            {hasName ? (
-              item.category_name
-            ) : (
-              <span className="text-gray-400 dark:text-gray-500 italic">
-                No name
-              </span>
-            )}
-          </h2>
-        </Link>
-      );
-    })}
-  </div>
-</div>
+                <h2 className="w-full text-[9px] sm:text-[10px] lg:text-sm font-medium text-primary pt-1 sm:pt-2 text-center transition-colors duration-300 group-hover:text-[#CB843B] line-clamp-2 leading-tight min-h-[22px] sm:min-h-[26px] lg:min-h-[36px] flex items-start justify-center">
+                  {hasName ? (
+                    item.category_name
+                  ) : (
+                    <span className="text-gray-400 dark:text-gray-500 italic">
+                      No name
+                    </span>
+                  )}
+                </h2>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
 
       {/* ── Pagination — only on full /categories page ── */}
       {!seeAllBtn && totalPages > 1 && (

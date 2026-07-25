@@ -88,63 +88,62 @@ function MostPopular({
   autoplayDelay = 3000,
   navigation = true,
 }: MostPopularProps) {
+  console.log(products, "productsproductsproductsproducts");
 
   return (
     <div>
-
       <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5 grid-cols-2 mt-5">
         {products.map((product, i) => (
-          <ProductCard
-            key={i}
-            {...product}
-          />
+          <div key={i} className={i === 4 ? "hidden lg:block" : ""}>
+            <ProductCard {...product} />
+          </div>
         ))}
       </div>
 
       <div className="pt-6">
         <Swiper
-        modules={[Navigation,  Scrollbar, A11y, Autoplay]}
-        loop={true}
-        // pagination={pagination ? { clickable: true } : false}
-        navigation={navigation}
-        autoplay={
-          autoplayDelay
-            ? { delay: autoplayDelay, disableOnInteraction: false }
-            : undefined
-        }
-        scrollbar={{ draggable: true }}
-        slidesPerView={2}
-        spaceBetween={8}
-        breakpoints={{
-          640: {
-            slidesPerView: 2,
-            spaceBetween: 16,
-          },
-          768: {
-            slidesPerView: 2,
-            spaceBetween: 20,
-          },
-          1024: {
-            slidesPerView: 3,
-            spaceBetween: 10,
-          },
-        }}
-        className="mySwiper"
-      >
-        {banners.map((banner, i) => (
-          <SwiperSlide key={i}>
-            <Link href={banner.mediaInfo || "#"} className="">
-              <Image
-                src={banner.imageURL}
-                width={500}
-                height={500}
-                alt="Offer banner"
-                className="w-full transition-all duration-500 hover:shadow-lg"
-              />
-            </Link>
-          </SwiperSlide>
-        ))}
-      </Swiper>
+          modules={[Navigation, Scrollbar, A11y, Autoplay]}
+          loop={true}
+          // pagination={pagination ? { clickable: true } : false}
+          navigation={navigation}
+          autoplay={
+            autoplayDelay
+              ? { delay: autoplayDelay, disableOnInteraction: false }
+              : undefined
+          }
+          scrollbar={{ draggable: true }}
+          slidesPerView={2}
+          spaceBetween={8}
+          breakpoints={{
+            640: {
+              slidesPerView: 2,
+              spaceBetween: 16,
+            },
+            768: {
+              slidesPerView: 2,
+              spaceBetween: 20,
+            },
+            1024: {
+              slidesPerView: 3,
+              spaceBetween: 10,
+            },
+          }}
+          className="mySwiper"
+        >
+          {banners.map((banner, i) => (
+            <SwiperSlide key={i}>
+              <Link href={banner.mediaInfo || "#"} className="">
+                <Image
+                  src={banner.imageURL}
+                  width={500}
+                  height={500}
+                  alt="Offer banner"
+                  className="w-full transition-all duration-500 hover:shadow-lg"
+                />
+              </Link>
+            </SwiperSlide>
+          ))}
+        </Swiper>
       </div>
     </div>
   );

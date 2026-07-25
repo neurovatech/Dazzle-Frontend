@@ -107,7 +107,7 @@ function Bannerslider({
                 href={(slide.content as string) || "#"}
                 target={slide.openNewTab ? "_blank" : undefined}
                 rel={slide.openNewTab ? "noopener noreferrer" : undefined}
-                className="relative w-full h-55 max-[450px]:h-35 sm:h-75 md:h-110 rounded-[15px] overflow-hidden block"
+                className="relative w-full h-60 max-[450px]:h-50 sm:h-75 md:h-110 rounded-[15px] overflow-hidden block"
               >
                 <Image
                   src={slide.imageUrl}

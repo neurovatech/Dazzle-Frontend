@@ -58,7 +58,7 @@ export default function SearchBar() {
           onFocus={() => setIsFocused(true)}
           onKeyDown={handleKeyDown}
           placeholder="Search for the item"
-          className="w-full bg-background dark:text-[#ffffff] text-gray-800 placeholder-gray-400 rounded-[10px] px-5 pl-11 py-2.5 text-sm outline-none border border-transparent focus:border-[#D4A97A]/50 transition-all duration-200 lg:h-13.5 h-10"
+          className="w-full text-[16px] bg-background dark:text-[#ffffff] text-gray-800 placeholder-gray-400 rounded-[10px] px-5 pl-11 py-2.5 text-sm outline-none border border-transparent focus:border-[#D4A97A]/50 transition-all duration-200 lg:h-13.5 h-10"
         />
         {query && (
           <button
@@ -73,8 +73,8 @@ export default function SearchBar() {
       {/* ── Dropdown Panel ── */}
       <div
         className={`
-          fixed  left-2 md:-left-32.5 lg:-left-32.5 right-2 top-auto
-          sm:absolute  sm:right-auto sm:w-full sm:min-w-205
+          fixed  left-2 md:-left-70 lg:-left-70 right-2 top-auto
+          sm:absolute  sm:right-auto sm:min-w-260
           mt-2 sm:mt-0 sm:top-[calc(100%+8px)]
           bg-white dark:bg-[#2e2b28] rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-600
           max-h-[80vh] overflow-y-auto

@@ -143,7 +143,7 @@ export default function RecentSearches({ onSelectTerm }: RecentSearchesProps) {
                 <span className="shrink-0 text-gray-400">
                   <SearchIcon />
                 </span>
-                <span className="text-sm text-gray-600 dark:text-white truncate">
+                <span className="text-sm text-gray-600 dark:text-white">
                   {term}
                 </span>
               </div>
@@ -214,7 +214,7 @@ export default function RecentSearches({ onSelectTerm }: RecentSearchesProps) {
 
                 {/* Info */}
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs text-gray-700 dark:text-white font-medium truncate group-hover/prod:text-[#b8864e] transition-colors leading-snug">
+                  <p className="text-xs text-gray-700 dark:text-white font-medium group-hover/prod:text-[#b8864e] transition-colors leading-snug">
                     {product.productName}
                   </p>
                   <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">

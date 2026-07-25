@@ -25,6 +25,8 @@ import "swiper/css/pagination";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import type { Swiper as SwiperType } from "swiper";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -313,6 +315,7 @@ function ClipToCart({
 }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const swiperRef = useRef<SwiperType | null>(null);
 
   const { data, isLoading } = useQuery<ApiResponse>({
     queryKey: ["showcase-clip-to-cart"],
@@ -380,89 +383,113 @@ function ClipToCart({
       </div>
 
       {/* Swiper */}
-      <Swiper
-        modules={[Navigation, Pagination, Scrollbar, A11y, Autoplay]}
-        loop={products.length > 5}
-        pagination={pagination ? { clickable: true } : false}
-        navigation={navigation}
-        autoplay={
-          autoplayDelay
-            ? { delay: autoplayDelay, disableOnInteraction: false }
-            : undefined
-        }
-        scrollbar={{ draggable: true }}
-        slidesPerView={2}
-        spaceBetween={8}
-        breakpoints={{
-          640: { slidesPerView: 2, spaceBetween: 16 },
-          768: { slidesPerView: 2, spaceBetween: 20 },
-          1024: { slidesPerView: 5, spaceBetween: 10 },
+      <div className="relative">
+        {navigation && (
+          <button
+            onClick={() => swiperRef.current?.slidePrev()}
+            className="absolute left-0 top-[45%] -translate-y-1/2 -translate-x-2 z-10 flex items-center justify-center w-9 h-9 rounded-full bg-white dark:bg-gray-800 shadow-md border border-gray-200 dark:border-gray-700 hover:bg-[#D4A97A] hover:text-white transition-colors"
+            aria-label="Previous slide"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+        )}
+        <Swiper
+          modules={[Navigation, Pagination, Scrollbar, A11y, Autoplay]}
+          loop={products.length > 5}
+          pagination={pagination ? { clickable: true } : false}
+          // navigation={navigation}
+          autoplay={
+            autoplayDelay
+              ? { delay: autoplayDelay, disableOnInteraction: false }
+              : undefined
+          }
+          scrollbar={{ draggable: true }}
+          slidesPerView={2}
+          spaceBetween={8}
+          onSwiper={(swiper) => {
+          swiperRef.current = swiper;
         }}
-        className="mySwiper"
-      >
-        {products.map((product, i) => {
-          const hasVideo = !isEmpty(product.videoUrl);
-          const hasDiscount =
-            product.discountedPrice &&
-            product.regularPrice &&
-            product.discountedPrice < product.regularPrice;
+          breakpoints={{
+            640: { slidesPerView: 2, spaceBetween: 16 },
+            768: { slidesPerView: 2, spaceBetween: 20 },
+            1024: { slidesPerView: 5, spaceBetween: 10 },
+          }}
+          className="mySwiper"
+        >
+          {products.map((product, i) => {
+            const hasVideo = !isEmpty(product.videoUrl);
+            const hasDiscount =
+              product.discountedPrice &&
+              product.regularPrice &&
+              product.discountedPrice < product.regularPrice;
 
-          return (
-            <SwiperSlide key={product.id}>
-              <div
-                className="group bg-white dark:bg-[#2e2b28] rounded-lg shadow-md p-4 relative transition-all duration-500 hover:shadow-2xl cursor-pointer h-full w-full flex flex-col"
-                onClick={() => handleOpenModal(i)}
-              >
-                {/* Cart badge */}
-                {/* <div className="w-10 h-10 flex items-center justify-center rounded-full bg-[#101518] dark:bg-white absolute right-3 top-3 z-10">
+            return (
+              <SwiperSlide key={product.id}>
+                <div
+                  className="group bg-white dark:bg-[#2e2b28] rounded-lg shadow-md p-4 relative transition-all duration-500 hover:shadow-2xl cursor-pointer h-full w-full flex flex-col"
+                  onClick={() => handleOpenModal(i)}
+                >
+                  {/* Cart badge */}
+                  {/* <div className="w-10 h-10 flex items-center justify-center rounded-full bg-[#101518] dark:bg-white absolute right-3 top-3 z-10">
                   <CartIcon className="w-5 h-5 text-[#E9CCAE] dark:text-black" />
                 </div> */}
 
-                {/* Fixed-height media box → keeps every card aligned */}
-                <div className="relative w-full h-75 max-[450px]:h-50 rounded-md overflow-hidden bg-gray-100 dark:bg-black/20">
-                  <Image
-                    src={`${product?.clipThumbnail}`}
-                    alt={product.title}
-                    fill
-                    sizes="(max-width: 768px) 50vw, 20vw"
-                    className="object-cover"
-                  />
+                  {/* Fixed-height media box → keeps every card aligned */}
+                  <div className="relative w-full h-75 max-[450px]:h-50 rounded-md overflow-hidden bg-gray-100 dark:bg-black/20">
+                    <Image
+                      src={`${product?.clipThumbnail}`}
+                      alt={product.title}
+                      fill
+                      sizes="(max-width: 768px) 50vw, 20vw"
+                      className="object-cover"
+                    />
 
-                  {/* Play button — only shows if this item actually has a video */}
-                  {hasVideo && (
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                      <div className="w-[56px] h-[56px] rounded-full flex items-center justify-center backdrop-blur-md bg-black/30 border border-black/40 shadow-lg group-hover:scale-110 transition-transform duration-300">
-                        <Play className="w-5 h-5 text-white fill-white" />
+                    {/* Play button — only shows if this item actually has a video */}
+                    {hasVideo && (
+                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                        <div className="w-[56px] h-[56px] rounded-full flex items-center justify-center backdrop-blur-md bg-black/30 border border-black/40 shadow-lg group-hover:scale-110 transition-transform duration-300">
+                          <Play className="w-5 h-5 text-white fill-white" />
+                        </div>
                       </div>
+                    )}
+                  </div>
+
+                  {/* Product title */}
+                  <p className="mt-3 text-xs font-medium text-gray-700 dark:text-white line-clamp-2 leading-tight min-h-[32px]">
+                    {product.title}
+                  </p>
+
+                  {/* Price */}
+                  {(product.discountedPrice || product.regularPrice) && (
+                    <div className="mt-1 flex items-center gap-2">
+                      <span className="text-sm font-bold text-[#CB843B]">
+                        {formatPrice(
+                          product.discountedPrice ?? product.regularPrice,
+                        )}
+                      </span>
+                      {hasDiscount && (
+                        <span className="text-xs text-gray-400 line-through">
+                          {formatPrice(product.regularPrice)}
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>
+              </SwiperSlide>
+            );
+          })}
+        </Swiper>
 
-                {/* Product title */}
-                <p className="mt-3 text-xs font-medium text-gray-700 dark:text-white line-clamp-2 leading-tight min-h-[32px]">
-                  {product.title}
-                </p>
-
-                {/* Price */}
-                {(product.discountedPrice || product.regularPrice) && (
-                  <div className="mt-1 flex items-center gap-2">
-                    <span className="text-sm font-bold text-[#CB843B]">
-                      {formatPrice(
-                        product.discountedPrice ?? product.regularPrice,
-                      )}
-                    </span>
-                    {hasDiscount && (
-                      <span className="text-xs text-gray-400 line-through">
-                        {formatPrice(product.regularPrice)}
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
-            </SwiperSlide>
-          );
-        })}
-      </Swiper>
+        {navigation && (
+          <button
+            onClick={() => swiperRef.current?.slideNext()}
+            className="absolute right-0 top-[45%] -translate-y-1/2 translate-x-2 z-10 flex items-center justify-center w-9 h-9 rounded-full bg-white dark:bg-gray-800 shadow-md border border-gray-200 dark:border-gray-700 hover:bg-[#D4A97A] hover:text-white transition-colors"
+            aria-label="Next slide"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        )}
+      </div>
 
       <ReelModal
         isOpen={modalOpen}
