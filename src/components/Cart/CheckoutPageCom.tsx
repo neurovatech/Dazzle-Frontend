@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/purity */
 "use client";
 import React, { useState } from "react";
 import Breadcrumb from "@/components/share/Breadcrumb";
@@ -46,10 +47,47 @@ const THANAS: Record<string, string[]> = {
   Rajshahi: ["Boalia", "Motihar", "Rajpara", "Shah Mokhdum"],
 };
 
+const BkashIcon = () => (
+  <svg className="h-7 w-auto" viewBox="0 0 100 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="100" height="36" rx="8" fill="#E2136E" />
+    <g transform="translate(6, 4) scale(0.9)">
+      <path d="M14 2L28 13.5L16.5 18.5L14 2Z" fill="#FFFFFF" />
+      <path d="M16.5 18.5L29.5 23.5L21 31.5L16.5 18.5Z" fill="#FFFFFF" fillOpacity="0.9" />
+      <path d="M16.5 18.5L22.5 5.5L28 13.5L16.5 18.5Z" fill="#FFFFFF" fillOpacity="0.75" />
+      <path d="M16.5 18.5L0.5 10.5L14 2L16.5 18.5Z" fill="#FFFFFF" />
+      <path d="M16.5 18.5L5.8 28.8L0.5 10.5L16.5 18.5Z" fill="#FFFFFF" fillOpacity="0.8" />
+    </g>
+    <text x="36" y="24" fill="#FFFFFF" fontFamily="Arial, Helvetica, sans-serif" fontWeight="900" fontSize="17" letterSpacing="-0.5">bKash</text>
+  </svg>
+);
+
+const VisaIcon = () => (
+  <svg className="h-6 w-10" viewBox="0 0 40 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="40" height="26" rx="4" fill="#1A1F71" />
+    <path
+      d="M16.2 17.5h-2.2l1.4-8.5h2.2l-1.4 8.5zm9.6-8.3c-.4-.2-1.1-.3-2-.3-2.2 0-3.7 1.1-3.7 2.7 0 1.2 1.1 1.9 1.9 2.3.8.4 1.1.7 1.1 1 0 .6-.7.9-1.4.9-.9 0-1.4-.1-2.1-.4l-.3-.1-.3 2.2c.6.3 1.7.5 2.8.5 2.6 0 4.4-1.3 4.4-3.2 0-1.1-.7-2-2.1-2.6-.9-.4-1.4-.7-1.4-1.1 0-.4.5-.8 1.5-.8.8 0 1.4.1 1.9.3l.2.1.3-2.1zm6.2-.2h-1.7c-.5 0-.9.2-1.1.7l-3.2 7.8h2.3l.4-1.3h2.8l.3 1.3h2l-1.8-8.5zm-2.4 5.3l1.2-3.2.7 3.2h-1.9zM12.1 9.2l-2.1 5.8-.2-1.2c-.4-1.4-1.8-3.1-3.3-3.8l2 7.7h2.3l3.4-8.5h-2.1z"
+      fill="#FFFFFF"
+    />
+    <path d="M8.1 9.2h-3.6l-.1.2c2.8.7 4.7 2.5 5.5 4.5l-.8-4c-.1-.5-.5-.7-1-.7z" fill="#F7B600" />
+  </svg>
+);
+
+const MastercardIcon = () => (
+  <svg className="h-6 w-10" viewBox="0 0 40 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="40" height="26" rx="4" fill="#141414" />
+    <circle cx="15" cy="13" r="8" fill="#EB001B" />
+    <circle cx="25" cy="13" r="8" fill="#F79E1B" />
+    <path
+      d="M20 7.1a7.97 7.97 0 013 5.9 7.97 7.97 0 01-3 5.9 7.97 7.97 0 01-3-5.9 7.97 7.97 0 013-5.9z"
+      fill="#FF5F00"
+    />
+  </svg>
+);
+
 export default function CheckoutPageCom() {
   const [items, setItems] = useState<CartItemType[]>(INITIAL_ITEMS);
   const [paymentType, setPaymentType] = useState<"online" | "cod">("online");
-  const [paymentMethod, setPaymentMethod] = useState<"bkash" | "sslcommerz">("bkash");
+  const [paymentMethod, setPaymentMethod] = useState<"bkash" | "card">("bkash");
   const [deliveryMethod, setDeliveryMethod] = useState<"regular" | "pickup">("regular");
   const [addressTab, setAddressTab] = useState<"existing" | "new">("new");
   const [selectedStore, setSelectedStore] = useState<string>("Banani Branch (Dazzle Flagship)");
@@ -204,7 +242,7 @@ export default function CheckoutPageCom() {
                 </div>
               </div>
 
-              {/* Payment Gateway Method (bkash or sslcommerz) - Show if Online Payment is active */}
+              {/* Payment Gateway Method (bkash or card) - Show if Online Payment is active */}
               {paymentType === "online" && (
                 <div className="space-y-4 mt-6 pt-6 border-t border-gray-100 dark:border-zinc-800/60">
                   <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm font-semibold">
@@ -215,37 +253,45 @@ export default function CheckoutPageCom() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {/* bKash */}
                     <button
+                      type="button"
                       onClick={() => setPaymentMethod("bkash")}
-                      className={`flex items-center justify-center gap-3 p-4 rounded-2xl border-2 transition-all cursor-pointer h-20 ${
+                      className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all cursor-pointer h-20 ${
                         paymentMethod === "bkash"
-                          ? "border-[#e2136e] bg-pink-50/5 text-gray-900 dark:text-white"
-                          : "border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-gray-400"
+                          ? "border-[#e2136e] bg-pink-50/20 dark:bg-pink-950/20 text-gray-900 dark:text-white"
+                          : "border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-gray-400 hover:border-pink-200"
                       }`}
                     >
-                      {/* Stylized bKash Representation */}
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-[#e2136e] flex items-center justify-center text-white font-black text-xs">
-                          bK
-                        </div>
-                        <span className="font-extrabold text-[#e2136e] text-lg">bKash</span>
+                      <div className="flex items-center gap-3">
+                        <BkashIcon />
+                      </div>
+                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                        paymentMethod === "bkash" ? "border-[#e2136e]" : "border-gray-300 dark:border-zinc-700"
+                      }`}>
+                        {paymentMethod === "bkash" && <div className="w-2 h-2 rounded-full bg-[#e2136e]" />}
                       </div>
                     </button>
 
-                    {/* SSLCOMMERZ */}
+                    {/* Card (Visa / Mastercard) */}
                     <button
-                      onClick={() => setPaymentMethod("sslcommerz")}
-                      className={`flex items-center justify-center gap-3 p-4 rounded-2xl border-2 transition-all cursor-pointer h-20 ${
-                        paymentMethod === "sslcommerz"
-                          ? "border-blue-600 bg-blue-50/5 text-gray-900 dark:text-white"
-                          : "border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-gray-400"
+                      type="button"
+                      onClick={() => setPaymentMethod("card")}
+                      className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all cursor-pointer h-20 ${
+                        paymentMethod === "card"
+                          ? "border-[#D4A97A] bg-amber-50/20 dark:bg-amber-950/20 text-gray-900 dark:text-white"
+                          : "border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-gray-400 hover:border-amber-200"
                       }`}
                     >
-                      {/* Stylized SSLCOMMERZ Representation */}
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-extrabold text-[10px] leading-tight">
-                          SSL
+                      <div className="flex flex-col items-start gap-1">
+                        <span className="text-xs font-bold text-gray-800 dark:text-zinc-200">Visa / Mastercard</span>
+                        <div className="flex items-center gap-1.5">
+                          <VisaIcon />
+                          <MastercardIcon />
                         </div>
-                        <span className="font-extrabold text-blue-600 text-base tracking-tighter">SSLCOMMERZ</span>
+                      </div>
+                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                        paymentMethod === "card" ? "border-[#D4A97A]" : "border-gray-300 dark:border-zinc-700"
+                      }`}>
+                        {paymentMethod === "card" && <div className="w-2 h-2 rounded-full bg-[#D4A97A]" />}
                       </div>
                     </button>
                   </div>

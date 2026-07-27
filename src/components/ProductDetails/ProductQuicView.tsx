@@ -49,6 +49,8 @@ function ProductQuicView({
 }: ProductQuicViewProps) {
   const dispatch = useAppDispatch();
 
+  console.log(productUuid, "productUuidproductUuidproductUuidproductUuidproductUuid")
+
   const [open, setOpen] = useState(false);
   const [product, setProduct] = useState<ProductApiData | null>(null);
   const [variantApiData, setVariantApiData] = useState<VariantApiResponse | null>(null);

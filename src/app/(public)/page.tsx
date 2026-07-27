@@ -54,6 +54,10 @@ const FlashSaleSectionCom = dynamic(
   () => import("@/components/HomePage/FlashSale/FlashSaleSectionCom"),
 );
 
+const TrendingNowSectionCom = dynamic(
+  () => import("@/components/HomePage/TrendingNow/TrendingNowSectionCom"),
+);
+
 const MostPopularSectionCom = dynamic(
   () => import("@/components/HomePage/MostPopular/MostPopularSectionCom"),
 );
@@ -194,8 +198,7 @@ export default async function Home() {
               </Link>
             </div>
 
-            {/* <GlobalTabs tabs={tabsData} /> */}
-            <FlashSaleSectionCom />
+            <TrendingNowSectionCom />
           </div>
         </div>
       </Suspense>

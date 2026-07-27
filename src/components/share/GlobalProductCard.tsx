@@ -43,7 +43,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 }) => {
   const dispatch      = useAppDispatch();
   const wishlistItems = useAppSelector((state) => state.wishlist.items);
-  const itemId        = productUuid || slug || title || "";
+  const itemId        = productUuid || "";
   const isWishlisted  = wishlistItems.some((i) => i.productUuid === itemId);
 
   const [addedToCart, setAddedToCart] = useState(false);
@@ -90,6 +90,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const formatPrice = (val: number) => val > 0 ? "৳" + val.toLocaleString("en-IN") : "Price on Request";
 
   const imgSrc = !image || imgError ? NoImg : image;
+
+
 
   return (
     <div className="group relative bg-white rounded-2xl sm:rounded-3xl cursor-pointer w-full h-full flex flex-col shadow-lg transition-all duration-500 hover:shadow-sm select-none">

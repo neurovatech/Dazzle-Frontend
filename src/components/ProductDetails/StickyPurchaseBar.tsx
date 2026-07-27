@@ -5,6 +5,8 @@ import { useAppDispatch } from "@/store/hooks";
 import { addToCart } from "@/store/slices/cartSlice";
 import toast from "react-hot-toast";
 import type { CareOption } from "./DazzleCare";
+import Link from "next/link";
+
 
 const StoreIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -132,9 +134,9 @@ export default function StickyPurchaseBar({
               <StoreIcon />
               <div>
                 <p className="text-sm font-semibold text-gray-800 dark:text-white leading-tight">Store Pickup</p>
-                <a href={storeAvailabilityHref} className="text-xs text-[#af7e4a] hover:underline mt-0.5 inline-block">
+                <Link  href={`/shop-location`} className="text-xs text-[#af7e4a] hover:underline mt-0.5 inline-block">
                   View store availability
-                </a>
+                </Link>
               </div>
             </div>
 

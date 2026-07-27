@@ -41,6 +41,7 @@ function FlashSale({
       </p>
     );
   }
+ 
 
   return (
     <div className="relative flex flex-wrap gap-6">
@@ -85,6 +86,8 @@ function FlashSale({
         {products.map((product, i) => (
           <SwiperSlide key={i}>
             <ProductCard
+              productUuid={product.uuid}
+              slug={product.slug}
               title={product.title}
               price={product.price}
               originalPrice={product.originalPrice}

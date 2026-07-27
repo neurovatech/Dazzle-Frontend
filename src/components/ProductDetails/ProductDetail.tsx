@@ -2,7 +2,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import ProductBadges from "./ProductBadges";
 import ProductImageGallery from "./ProductImageGallery";
 import ProductInfo from "./ProductInfo";
@@ -52,6 +52,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
     "offer" | "regular"
   >("offer");
   const [showDescription, setShowDescription] = useState(false);
+  const descriptionRef = useRef<HTMLDivElement>(null);
 
   console.log(product, "productproductproductproductproduct");
 
@@ -662,7 +663,23 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
               </button>
               <button
                 type="button"
-                onClick={() => setShowDescription((prev) => !prev)}
+                onClick={() => {
+                  if (!showDescription) {
+                    setShowDescription(true);
+                    // State update hobe, তারপর scroll করবো
+                    setTimeout(() => {
+                      descriptionRef.current?.scrollIntoView({
+                        behavior: "smooth",
+                        block: "start",
+                      });
+                    }, 50);
+                  } else {
+                    descriptionRef.current?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "start",
+                    });
+                  }
+                }}
                 className={`px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 ${
                   showDescription
                     ? "bg-[#E9CCAE] text-black shadow-sm"
@@ -681,7 +698,10 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
 
             {/* Description content shown below Specification when Description button is clicked */}
             {showDescription && (
-              <div className="mt-6 border-t border-gray-200 dark:border-gray-700 pt-6">
+              <div
+                ref={descriptionRef}
+                className="mt-6 border-t border-gray-200 dark:border-gray-700 pt-6 scroll-mt-24"
+              >
                 <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-3">
                   Description
                 </h3>
