@@ -390,11 +390,11 @@ const isWishlisted = wishlistItems.some((i) => i.productUuid === productId);
             </div>
           ) : (
             <>
-              {alldata?.minBookingPrice > 0 && (
+              {/* {alldata?.minBookingPrice > 0 && (
                 <span className="block text-xs font-bold text-gray-500 uppercase tracking-wider">
                   Minimum Booking price BDT {alldata?.minBookingPrice?.toLocaleString()}
                 </span>
-              )}
+              )} */}
               <div className="flex flex-col md:flex-row justify-between">
                 <div className="flex gap-2.5 items-center">
                   <span className="text-[28px] font-extrabold text-[#B57908] dark:text-[#D4A97A]">

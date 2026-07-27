@@ -39,7 +39,7 @@ function BrandCard({ brands }: { brands: Brand[] }) {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="
-              w-full h-12 rounded-xl border border-gray-300 dark:border-gray-700
+              w-full h-12 rounded-xl border border-gray-300 text-[16px] dark:border-gray-700
               bg-white dark:bg-[#1A1A1A] px-4 text-sm text-black dark:text-white
               placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none
               focus:border-[#D4A97A] dark:focus:border-[#D4A97A]

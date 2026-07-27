@@ -1,17 +1,24 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import GlobalModal from "@/components/share/GlobalModal";
 import ProductBadges from "./ProductBadges";
+import ProductColorVariants from "./ProductColorVariants";
+import ProductVariants from "./ProductVariants";
 import NoImg from "@/images/no_images.png";
 import { useAppDispatch } from "@/store/hooks";
 import { addToCart } from "@/store/slices/cartSlice";
 import { api } from "@/lib/api";
 import toast from "react-hot-toast";
 import type { ProductApiData } from "@/app/(public)/product/[productSlug]/page";
+import {
+  consolidateVariants,
+  type VariantApiResponse,
+  type ConsolidatedVariant,
+} from "./utils";
 
 interface ProductQuicViewProps {
   slug?: string;
@@ -44,50 +51,191 @@ function ProductQuicView({
 
   const [open, setOpen] = useState(false);
   const [product, setProduct] = useState<ProductApiData | null>(null);
+  const [variantApiData, setVariantApiData] = useState<VariantApiResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [qty, setQty] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [selectedAttrs, setSelectedAttrs] = useState<Record<string, string>>({});
 
-  // Fetch product data when modal opens
+  // Fetch product data & variants when modal opens
   useEffect(() => {
     if (!open || !slug) return;
 
     setLoading(true);
     setProduct(null);
+    setVariantApiData(null);
     setQty(1);
     setSelectedImage(0);
+    setSelectedAttrs({});
 
     api
       .get<ProductApiResponse>(`/product/${slug}`, { cache: "no-store" })
       .then((res) => {
-        if (res?.data) setProduct(res.data);
+        if (res?.data) {
+          setProduct(res.data);
+          const pUuid = res.data.productUuid || productUuid;
+          if (pUuid) {
+            api
+              .get<VariantApiResponse>(`/product-variants/${pUuid}`, { cache: "no-store" })
+              .then((vRes) => {
+                if (vRes?.data) setVariantApiData(vRes);
+              })
+              .catch((vErr) => console.error("[QuickView] variant fetch failed:", vErr));
+          }
+        }
       })
       .catch((err) => {
         console.error("[QuickView] fetch failed:", err);
       })
       .finally(() => setLoading(false));
-  }, [open, slug]);
+  }, [open, slug, productUuid]);
 
-  // Derived display values — use API data if available, fall back to props
-  const displayTitle    = product?.productName    ?? fallbackTitle    ?? "Product";
-  const displayPrice    = product?.discountedPrice ?? fallbackPrice    ?? 0;
-  const displayOriginal = product?.regularPrice    ?? 0;
+  // Consolidate Variants
+  const { groups, variants } = useMemo(
+    () => consolidateVariants(variantApiData?.data ?? []),
+    [variantApiData]
+  );
+
+  // Set default selected attributes when variants load
+  useEffect(() => {
+    if (groups.length === 0) return;
+    const initial: Record<string, string> = {};
+    groups.forEach((group) => {
+      const firstVal = variants.find((v) => v.attributes[group])?.attributes[group];
+      if (firstVal) initial[group] = firstVal;
+    });
+    setSelectedAttrs(initial);
+  }, [groups, variants]);
+
+  const selectedVariant: ConsolidatedVariant | null = useMemo(() => {
+    if (groups.length === 0 || Object.keys(selectedAttrs).length < groups.length)
+      return null;
+    return (
+      variants.find((v) =>
+        groups.every((g) => v.attributes[g] === selectedAttrs[g])
+      ) ?? null
+    );
+  }, [groups, variants, selectedAttrs]);
+
+  const isOptionAvailable = (group: string, option: string) =>
+    variants.some(
+      (v) =>
+        v.attributes[group] === option &&
+        Object.entries(selectedAttrs)
+          .filter(([g]) => g !== group)
+          .every(([g, val]) => v.attributes[g] === val)
+    );
+
+  const groupOptions = useMemo(
+    () =>
+      Object.fromEntries(
+        groups.map((group) => [
+          group,
+          [
+            ...new Set(
+              variants
+                .map((v) => v.attributes[group])
+                .filter((val): val is string => !!val && val.trim() !== "")
+            ),
+          ],
+        ])
+      ),
+    [groups, variants]
+  );
+
+  const colorGroupName = groups.find((g) => g.toLowerCase() === "color");
+  const otherGroupNames = groups.filter((g) => g.toLowerCase() !== "color");
+
+  // Base images from product
+  const baseImages: string[] = useMemo(() => {
+    if (product?.thumbnails && product.thumbnails.length > 0) {
+      const list = product.thumbnails
+        .map((t) => t.mediaFileUrl || t.mediafileUrl || "")
+        .filter(Boolean);
+      if (list.length > 0) return list;
+    }
+    if (product?.thumbnailImg) return [product.thumbnailImg];
+    if (fallbackImage) return [fallbackImage];
+    return [];
+  }, [product, fallbackImage]);
+
+  // Derived image list based on selected color variant
+  const images: string[] = useMemo(() => {
+    if (!colorGroupName || !selectedAttrs[colorGroupName]) return baseImages;
+
+    const selectedColorVal = selectedAttrs[colorGroupName];
+    const colorVariantImages = variants
+      .filter(
+        (v) =>
+          v.attributes[colorGroupName] === selectedColorVal && v.thumbnailUrl
+      )
+      .map((v) => v.thumbnailUrl);
+
+    const uniqueColorImages = [...new Set(colorVariantImages)];
+    return uniqueColorImages.length > 0 ? uniqueColorImages : baseImages;
+  }, [colorGroupName, selectedAttrs, variants, baseImages]);
+
+  // Color & Text variant groups
+  const colorVariantGroups = colorGroupName
+    ? [
+        {
+          label: colorGroupName,
+          type: "color" as const,
+          options: (groupOptions[colorGroupName] ?? []).map((val) => {
+            const match = variants.find(
+              (v) => v.attributes[colorGroupName] === val && v.thumbnailUrl
+            );
+            return {
+              label: val,
+              value: val,
+              image: match?.thumbnailUrl,
+              disabled: !isOptionAvailable(colorGroupName, val),
+            };
+          }),
+        },
+      ]
+    : [];
+
+  const otherVariantGroups = otherGroupNames.map((group) => ({
+    label: group,
+    type: "text" as const,
+    options: (groupOptions[group] ?? []).map((val) => ({
+      label: val,
+      value: val,
+      disabled: !isOptionAvailable(group, val),
+    })),
+  }));
+
+  const handleVariantChange = (group: string, value: string) => {
+    if (!isOptionAvailable(group, value)) return;
+    setSelectedAttrs((prev) => ({ ...prev, [group]: value }));
+    if (group.toLowerCase() === "color") {
+      setSelectedImage(0);
+    }
+  };
+
+  // Derived display values
+  const displayTitle = selectedVariant?.name
+    ? selectedVariant.name.startsWith(product?.productName ?? "")
+      ? selectedVariant.name
+      : `${product?.productName ?? fallbackTitle ?? "Product"} ${selectedVariant.name}`
+    : product?.productName ?? fallbackTitle ?? "Product";
+
+  const displayPrice =
+    selectedVariant?.price && selectedVariant.price > 0
+      ? selectedVariant.price
+      : (product?.discountedPrice ?? fallbackPrice ?? 0);
+
+  const displayOriginal =
+    selectedVariant?.mrp && selectedVariant.mrp > 0
+      ? selectedVariant.mrp
+      : (product?.regularPrice ?? 0);
+
   const displayBrand    = product?.brandName       ?? "";
   const displayCode     = product?.productCode     ?? "";
   const displayInStock  = product != null ? product.isActive : true;
   const displaySlug     = product?.productSlug     ?? slug ?? "";
-  const displayId       = product?.productUuid     ?? productUuid ?? slug ?? "";
-
-  const images: string[] =
-    product?.thumbnails && product.thumbnails.length > 0
-      ? product.thumbnails
-          .map((t) => t.mediaFileUrl || t.mediafileUrl || "")
-          .filter(Boolean)
-      : product?.thumbnailImg
-        ? [product.thumbnailImg]
-        : fallbackImage
-          ? [fallbackImage]
-          : [];
+  const displayId       = selectedVariant?.id      ?? product?.productUuid ?? productUuid ?? slug ?? "";
 
   const currentImage = images[selectedImage] || fallbackImage || NoImg.src;
 
@@ -96,7 +244,6 @@ function ProductQuicView({
       ? Math.round(((displayOriginal - displayPrice) / displayOriginal) * 100)
       : 0;
 
-  // Build badge array from API badge string or discount
   const badges = (() => {
     const list: { label: string; color: string }[] = [];
     if (discount > 0) list.push({ label: `${discount}%`, color: "pink" });
@@ -124,17 +271,12 @@ function ProductQuicView({
 
   const handleBuyNow = () => {
     handleAddToCart();
-    // Navigate to checkout — next/link can't do programmatic nav here easily,
-    // so we rely on the href in the button below after adding to cart.
   };
-
-  console.log(product, "productproductproductproduct")
 
   return (
     <div>
       <GlobalModal isOpen={open} onClose={() => setOpen(false)}>
         <div className="p-5 overflow-y-auto scrollbar-hide md:max-h-138 max-h-132">
-
           {/* ── Image Gallery ── */}
           <div className="relative">
             {/* Badges */}
@@ -145,7 +287,7 @@ function ProductQuicView({
             )}
 
             {/* Main image */}
-            <div className="relative w-full h-64 sm:h-80 rounded-xl overflow-hidden bg-gray-100 dark:bg-[#2a2420]">
+            <div className="relative w-full h-64 sm:h-80 rounded-xl overflow-hidden bg-white dark:bg-[#2a2420]">
               {loading ? (
                 <div className="w-full h-full flex items-center justify-center">
                   <div className="w-10 h-10 border-4 border-[#B57908] border-t-transparent rounded-full animate-spin" />
@@ -266,58 +408,62 @@ function ProductQuicView({
                   </button>
                 </div>
               </div>
-
-
-
-              <article
-            className="
-              prose prose-sm lg:prose-base dark:prose-invert max-w-none
-              text-gray-700 dark:text-white
-
-              [&_table]:w-full [&_table]:border-collapse [&_table]:text-sm
-              [&_th]:border [&_th]:border-gray-200 dark:[&_th]:border-gray-600 [&_th]:p-3 [&_th]:bg-gray-100 dark:[&_th]:bg-gray-700 [&_th]:text-left
-              [&_td]:border [&_td]:border-gray-200 dark:[&_td]:border-gray-600 [&_td]:p-3 [&_td]:text-center
-
-              [&_h1]:text-gray-900 dark:[&_h1]:!text-white
-              [&_h2]:text-gray-900 dark:[&_h2]:!text-white
-              [&_h3]:text-gray-800 dark:[&_h3]:!text-white
-              [&_h4]:text-gray-800 dark:[&_h4]:!text-white
-              [&_h5]:text-gray-800 dark:[&_h5]:!text-white
-              [&_h6]:text-gray-800 dark:[&_h6]:!text-white
-
-              [&_p]:text-gray-700 dark:[&_p]:!text-white
-              [&_span]:dark:!text-white
-              [&_div]:dark:!text-white
-
-              [&_li]:text-gray-700 dark:[&_li]:!text-white
-              [&_ul]:text-gray-700 dark:[&_ul]:!text-white
-              [&_ol]:text-gray-700 dark:[&_ol]:!text-white
-              [&_li::marker]:text-gray-500 dark:[&_li::marker]:!text-white
-
-              [&_strong]:text-gray-900 dark:[&_strong]:!text-white
-              [&_b]:text-gray-900 dark:[&_b]:!text-white
-              [&_em]:text-gray-700 dark:[&_em]:!text-white
-              [&_i]:text-gray-700 dark:[&_i]:!text-white
-
-              [&_a]:text-blue-600 dark:[&_a]:!text-white dark:[&_a]:underline
-
-              [&_blockquote]:text-gray-700 dark:[&_blockquote]:!text-white
-              [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 dark:[&_blockquote]:border-gray-500
-
-              [&_th]:text-gray-900 dark:[&_th]:!text-white
-              [&_td]:text-gray-700 dark:[&_td]:!text-white
-
-              [&_code]:text-gray-800 dark:[&_code]:!text-white
-              [&_pre]:text-gray-800 dark:[&_pre]:!text-white
-
-              dark:[&_*]:!text-white
-
-              overflow-x-auto
-            "
-            dangerouslySetInnerHTML={{ __html: product ? product?.shortDesc : '' }}
-          />
-
             </div>
+
+            {/* Variant selector */}
+            {(colorVariantGroups.length > 0 || otherVariantGroups.length > 0) && (
+              <div className="border border-[#e7e7e7] dark:border-[#4a3f36] bg-[#f7f7f7] dark:bg-[#3e3329] text-black dark:text-white rounded-2xl p-4 mt-4">
+                {colorVariantGroups.length > 0 && (
+                  <ProductColorVariants
+                    groups={colorVariantGroups}
+                    selectedValues={selectedAttrs}
+                    onChange={(sel) =>
+                      Object.entries(sel).forEach(([g, v]) =>
+                        handleVariantChange(g, v)
+                      )
+                    }
+                  />
+                )}
+                {otherVariantGroups.length > 0 && (
+                  <ProductVariants
+                    groups={otherVariantGroups}
+                    selectedValues={selectedAttrs}
+                    onSelect={handleVariantChange}
+                  />
+                )}
+                {selectedVariant && (
+                  <div className="mt-4 pt-4 border-t border-[#e7e7e7] dark:border-[#4a3f36] flex items-center justify-between gap-3 lg:px-5">
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300 truncate">
+                      {(() => {
+                        const varName = selectedVariant.name ?? "";
+                        const prodName = product?.productName ?? "";
+                        return varName.startsWith(prodName)
+                          ? varName
+                          : `${prodName} ${varName}`.trim();
+                      })()}
+                    </p>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {selectedVariant.price > 0 ? (
+                        <>
+                          <span className="text-base font-extrabold text-[#B57908]">
+                            BDT {selectedVariant.price.toLocaleString()}
+                          </span>
+                          {selectedVariant.mrp > selectedVariant.price && (
+                            <span className="text-sm text-gray-400 line-through">
+                              BDT {selectedVariant.mrp.toLocaleString()}
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        <span className="text-xs font-semibold text-red-500 bg-red-50 dark:bg-red-950/30 px-2 py-1 rounded-lg">
+                          Not in stock
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Short Description */}
             {product?.shortDesc && (

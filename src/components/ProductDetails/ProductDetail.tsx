@@ -15,7 +15,6 @@ import ContactOptions from "./ContactOptions";
 import CheckAvailability from "./CheckAvailability";
 import FrequentlyBoughtTogether from "./FrequentlyBoughtTogether";
 import ProductSpecifications from "./ProductSpecifications";
-import GlobalTabs from "@/components/share/GlobalTabs";
 import Breadcrumb from "@/components/share/Breadcrumb";
 import MarqueeBulletinBar from "@/components/HomePage/MarqueeBulletinBar";
 import StickyPurchaseBar from "./StickyPurchaseBar";
@@ -29,153 +28,12 @@ import toast from "react-hot-toast";
 import RelatedProductSectionCom from "./RelatedProducts/RelatedProductSectionCom";
 import DescriptionProductDetails from "./DescriptionProductDetails";
 
-interface VariantRow {
-  variantUuid: string;
-  variantName: string;
-  attributeGroup: string;
-  attribute: string;
-  mrpUnitSale: number;
-  retailUnitSale: number;
-  thumbnailUrl: string;
-  isActive: boolean;
-  isTba: boolean;
-}
-
-interface VariantApiResponse {
-  statusCode: number;
-  status: string;
-  found: boolean;
-  count: number;
-  data: VariantRow[];
-}
-
-interface ConsolidatedVariant {
-  id: string;
-  name: string;
-  mrp: number;
-  price: number;
-  thumbnailUrl: string;
-  attributes: Record<string, string>;
-}
-
-function consolidateVariants(rows: VariantRow[]): {
-  groups: string[];
-  variants: ConsolidatedVariant[];
-} {
-  if (!rows || rows.length === 0) return { groups: [], variants: [] };
-
-  const normalizeGroup = (raw: string): string => {
-    const lower = raw.trim().toLowerCase();
-    if (lower === "color") return "Color";
-    if (lower === "storage") return "Storage";
-    if (
-      lower === "ram & storage" ||
-      lower === "ram&storage" ||
-      lower === "ram and storage"
-    )
-      return "RAM & Storage";
-    if (lower.startsWith("region")) return "Region/Variant";
-    // Title case fallback
-    return raw.trim().replace(/\b\w/g, (c) => c.toUpperCase());
-  };
-
-  const normalizeAttr = (group: string, value: string): string => {
-    const v = value.trim();
-    if (group === "Storage") {
-      if (/^\d+$/.test(v)) return v + "GB";
-      return v.toUpperCase().replace(/\s+/g, "");
-    }
-    return v;
-  };
-  const activeRows = rows
-    .filter(
-      (row) =>
-        row.isActive &&
-        !row.isTba &&
-        row.attributeGroup?.trim() &&
-        row.attribute?.trim(),
-    )
-    .map((row) => ({
-      ...row,
-      _normGroup: normalizeGroup(row.attributeGroup),
-      _normAttr: normalizeAttr(
-        normalizeGroup(row.attributeGroup),
-        row.attribute,
-      ),
-    }));
-
-  const groupOrder = ["Color", "Storage", "RAM & Storage", "Region/Variant"];
-  const foundGroups = new Set(activeRows.map((r) => r._normGroup));
-  const groups = groupOrder.filter((g) => foundGroups.has(g));
-  activeRows.forEach((r) => {
-    if (!groups.includes(r._normGroup)) groups.push(r._normGroup);
-  });
-  const variantMap = new Map<string, ConsolidatedVariant>();
-
-  activeRows.forEach((row) => {
-    const uuid = row.variantUuid;
-    if (!variantMap.has(uuid)) {
-      variantMap.set(uuid, {
-        id: uuid,
-        name: row.variantName ?? "",
-        mrp: 0,
-        price: 0,
-        thumbnailUrl: "",
-        attributes: {},
-      });
-    }
-
-    const existing = variantMap.get(uuid)!;
-    if (!existing.attributes[row._normGroup]) {
-      existing.attributes[row._normGroup] = row._normAttr;
-    }
-
-    if (row.retailUnitSale > 0 && existing.price === 0) {
-      existing.price = row.retailUnitSale;
-      existing.mrp = row.mrpUnitSale;
-    }
-
-    if (row.thumbnailUrl?.trim() && !existing.thumbnailUrl) {
-      existing.thumbnailUrl = row.thumbnailUrl.trim();
-    }
-    if (row.variantName?.trim() && !existing.name) {
-      existing.name = row.variantName.trim();
-    }
-  });
-
-  const completeVariants = [...variantMap.values()].filter((v) =>
-    groups.every((g) => v.attributes[g]?.trim()),
-  );
-  const nonStorageGroups = groups.filter(
-    (g) => g !== "Storage" && g !== "RAM & Storage",
-  );
-
-  completeVariants.forEach((v) => {
-    if (v.price > 0) return;
-    const donor = completeVariants.find(
-      (other) =>
-        other.id !== v.id &&
-        other.price > 0 &&
-        nonStorageGroups.every((g) => other.attributes[g] === v.attributes[g]),
-    );
-    if (donor) {
-      v.price = donor.price;
-      v.mrp = donor.mrp;
-    }
-  });
-
-  const finalVariants = completeVariants;
-  finalVariants.forEach((v) => {
-    if (!v.name) {
-      v.name = groups
-        .map((g) => v.attributes[g])
-        .filter(Boolean)
-        .join(" ");
-    }
-  });
-
-  return { groups, variants: finalVariants };
-}
+import {
+  consolidateVariants,
+  type VariantRow,
+  type VariantApiResponse,
+  type ConsolidatedVariant,
+} from "./utils";
 
 interface ProductDetailProps {
   product: any | null;
@@ -193,6 +51,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
   const [selectedPriceType, setSelectedPriceType] = useState<
     "offer" | "regular"
   >("offer");
+  const [showDescription, setShowDescription] = useState(false);
 
   console.log(product, "productproductproductproductproduct");
 
@@ -529,21 +388,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
     // Fallback: product API এর specifications (যদি থাকে)
     return product?.specifications ?? [];
   }, [specApiData, product?.specifications]);
-  const tabsData = [
-    {
-      label: "Specification",
-      content: (
-        <ProductSpecifications
-          groups={specGroups}
-          description={product?.description}
-        />
-      ),
-    },
-    {
-      label: "Description",
-      content: <DescriptionProductDetails description={product?.description} />,
-    },
-  ];
 
   // ── Breadcrumb ─────────────────────────────────────────────────
   const breadcrumbItems = [
@@ -802,8 +646,48 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
             )} */}
           </div>
 
-          <div className="lg:col-span-12">
-            <GlobalTabs tabs={tabsData} />
+          <div className="lg:col-span-12 space-y-6">
+            {/* Specification & Description Tab Buttons */}
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setShowDescription(false)}
+                className={`px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 ${
+                  !showDescription
+                    ? "bg-[#E9CCAE] text-black shadow-sm"
+                    : "bg-[#F7F7F7] dark:bg-[#3e3329] text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-[#4a3f36]"
+                }`}
+              >
+                Specification
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowDescription((prev) => !prev)}
+                className={`px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 ${
+                  showDescription
+                    ? "bg-[#E9CCAE] text-black shadow-sm"
+                    : "bg-[#F7F7F7] dark:bg-[#3e3329] text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-[#4a3f36]"
+                }`}
+              >
+                Description
+              </button>
+            </div>
+
+            {/* Specification is ALWAYS open */}
+            <ProductSpecifications
+              groups={specGroups}
+              description={product?.description}
+            />
+
+            {/* Description content shown below Specification when Description button is clicked */}
+            {showDescription && (
+              <div className="mt-6 border-t border-gray-200 dark:border-gray-700 pt-6">
+                <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-3">
+                  Description
+                </h3>
+                <DescriptionProductDetails description={product?.description} />
+              </div>
+            )}
           </div>
 
           {/* ── Related Products ── */}
