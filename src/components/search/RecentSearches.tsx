@@ -61,9 +61,10 @@ export function addRecentSearch(term: string) {
 // ── Props ───────────────────────────────────────────────────────────
 interface RecentSearchesProps {
   onSelectTerm?: (term: string) => void;
+  onClose?: () => void;
 }
 
-export default function RecentSearches({ onSelectTerm }: RecentSearchesProps) {
+export default function RecentSearches({ onSelectTerm, onClose }: RecentSearchesProps) {
   const [recents, setRecents] = useState<string[]>([]);
 
   // Hydrate from localStorage on mount (avoids SSR mismatch)
@@ -197,6 +198,7 @@ export default function RecentSearches({ onSelectTerm }: RecentSearchesProps) {
                 onClick={() => {
                   addRecentSearch(product.productName);
                   setRecents(loadRecents());
+                  onClose?.();
                 }}
                 className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors group/prod border border-transparent hover:border-gray-100 dark:hover:border-gray-600"
               >

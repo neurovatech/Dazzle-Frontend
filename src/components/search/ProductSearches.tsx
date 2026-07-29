@@ -52,7 +52,7 @@ interface NormalizedProduct {
   isStockAvailable: boolean;
 }
 
-interface ProductSearchesProps { query?: string; }
+interface ProductSearchesProps { query?: string; onClose?: () => void; }
 
 // ── Skeleton loader ─────────────────────────────────────────────────
 function ProductSkeleton() {
@@ -73,12 +73,15 @@ function ProductSkeleton() {
 }
 
 // ── Product card (shared between both screens) ──────────────────────
-function ProductRow({ product }: { product: NormalizedProduct }) {
+function ProductRow({ product, onClose }: { product: NormalizedProduct; onClose?: () => void }) {
   const formatPrice = (p: number) => `৳${p.toLocaleString("en-BD")}`;
   return (
     <Link
       href={`/product/${product.productSlug}`}
-      onClick={() => addRecentSearch(product.productName)}
+      onClick={() => {
+        addRecentSearch(product.productName);
+        onClose?.();
+      }}
       className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer transition-colors group/prod border border-transparent hover:border-gray-100"
     >
       <div className="w-14 h-14 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden shrink-0">
@@ -125,7 +128,7 @@ function getThumbnail(thumbnails: ProductItem["thumbnails"]): string {
 }
 
 // ── Main component ──────────────────────────────────────────────────
-export default function ProductSearches({ query }: ProductSearchesProps) {
+export default function ProductSearches({ query, onClose }: ProductSearchesProps) {
   const [selectedCategory, setSelectedCategory] = useState<{ slug: string; name: string } | null>(null);
 
   // Reset to Screen 1 whenever the search keyword changes
@@ -215,7 +218,7 @@ export default function ProductSearches({ query }: ProductSearchesProps) {
         {/* Right panel */}
         <div className="flex-1 p-4 sm:p-5 flex flex-col min-h-0">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-sm font-semibold text-gray-800 dark:text-white">Products</p>
+            <p className="text-sm font-semibold text-gray-800 dark:text-[#ffffff]">Products</p>
             {!loading && (
               <p className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-300">
                 Total Products: {total}
@@ -227,7 +230,7 @@ export default function ProductSearches({ query }: ProductSearchesProps) {
             {!loading && products.length === 0 && (
               <p className="text-xs text-gray-400 col-span-2">No products found</p>
             )}
-            {!loading && products.map((p) => <ProductRow key={p.id} product={p} />)}
+            {!loading && products.map((p) => <ProductRow key={p.id} product={p} onClose={onClose} />)}
           </div>
         </div>
       </div>
@@ -270,7 +273,7 @@ export default function ProductSearches({ query }: ProductSearchesProps) {
       {/* Right panel — keyword products */}
       <div className="flex-1 p-4 sm:p-5 flex flex-col min-h-0">
         <div className="flex items-center justify-between mb-3">
-          <p className="text-sm font-semibold text-gray-800 dark:text-white">Products</p>
+          <p className="text-sm font-semibold text-gray-800 dark:text-[#ffffff]">Products</p>
           {!loading && (
             <p className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-300">
               Total Products: {total}
@@ -282,7 +285,7 @@ export default function ProductSearches({ query }: ProductSearchesProps) {
           {!loading && products.length === 0 && (
             <p className="text-xs text-gray-400 col-span-2">No products found</p>
           )}
-          {!loading && products.map((p) => <ProductRow key={p.id} product={p} />)}
+          {!loading && products.map((p) => <ProductRow key={p.id} product={p} onClose={onClose} />)}
         </div>
       </div>
     </div>

@@ -77,19 +77,19 @@ const ProductSpecifications: React.FC<ProductSpecificationsProps> = ({ groups: p
               {/* Spec rows */}
               <div className="divide-y divide-gray-100 dark:divide-[#3a2f28] bg-[#F7F7F7] dark:bg-[#171210] p-3">
                 {group.items.map((item, ii) => (
-                  <div
-                    key={ii}
-                    className="grid grid-cols-[minmax(90px,160px)_1fr] sm:grid-cols-[200px_1fr] px-5 py-3.5 gap-4 bg-white dark:bg-[#221a16] mb-1 rounded-lg transition-colors"
-                  >
-                    <span className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
-                      {item.label}
-                    </span>
+  <div
+    key={ii}
+    className="grid grid-cols-[80px_1fr] sm:grid-cols-[200px_1fr] px-5 md:py-3.5 py-1 gap-3 sm:gap-4 bg-white dark:bg-[#221a16] mb-1 rounded-lg transition-colors"
+  >
+    <span className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+      {item.label}
+    </span>
 
-                    <span className="text-sm text-gray-800 dark:text-gray-200 leading-relaxed">
-                      {item.value}
-                    </span>
-                  </div>
-                ))}
+    <span className="text-sm text-gray-800 dark:text-gray-200 leading-relaxed">
+      {item.value}
+    </span>
+  </div>
+))}
               </div>
             </div>
           ))}

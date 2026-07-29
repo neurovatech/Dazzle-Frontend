@@ -1,6 +1,7 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { SearchIcon } from "@/icon";
 import RecentSearches, { addRecentSearch } from "./RecentSearches";
 import ProductSearches from "./ProductSearches";
@@ -10,8 +11,13 @@ export default function SearchBar() {
   const [query, setQuery] = useState("");
   const wrapperRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const pathname = usePathname();
 
   const hasQuery = query.trim().length > 0;
+
+  useEffect(() => {
+    setIsFocused(false);
+  }, [pathname]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -25,6 +31,10 @@ export default function SearchBar() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const handleClose = () => {
+    setIsFocused(false);
+  };
 
   // Navigate to search page on Enter
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -87,10 +97,10 @@ export default function SearchBar() {
         `}
       >
         {!hasQuery && (
-          <RecentSearches onSelectTerm={handleSelectTerm} />
+          <RecentSearches onSelectTerm={handleSelectTerm} onClose={handleClose} />
         )}
         {hasQuery && (
-          <ProductSearches query={query} />
+          <ProductSearches query={query} onClose={handleClose} />
         )}
       </div>
     </div>

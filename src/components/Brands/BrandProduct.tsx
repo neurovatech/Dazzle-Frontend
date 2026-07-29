@@ -290,7 +290,7 @@ export default function BrandProducts({
       </div>
 
       {/* ── Sidebar + product list ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mt-4 items-start md:px-6.5 px-4">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mt-4 items-start md:px-6.5 px-4 relative">
         <div className="lg:col-span-3 h-full md:block hidden">
           <FilterSidebar
             attributes={attributes}
@@ -306,7 +306,7 @@ export default function BrandProducts({
 
         <button
           onClick={() => setIsFilterOpen(true)}
-          className="md:hidden flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold border border-gray-200 dark:border-white/10 text-white dark:text-gray-300 shrink-0 bg-[#6d3f0e] w-[40%]"
+          className="md:hidden flex items-center absolute right-4 gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold border border-gray-200 dark:border-white/10 text-white dark:text-gray-300 shrink-0 bg-[#6d3f0e] w-[30%] mb-3"
         >
           <SlidersHorizontal size={16} />
           Filter
@@ -333,28 +333,28 @@ export default function BrandProducts({
         </div>
 
         {isFilterOpen && (
-          <div className="fixed inset-0 z-50 md:hidden">
+          <div className="fixed inset-0 z-50 md:hidden flex">
             {/* Backdrop */}
             <div
-              className="absolute inset-0 bg-black/50"
+              className="fixed inset-0 bg-black/50 transition-opacity"
               onClick={() => setIsFilterOpen(false)}
             />
 
-            {/* Bottom sheet */}
-            <div className="absolute bottom-0 left-0 right-0 max-h-[85vh] bg-white dark:bg-gray-900 rounded-t-2xl overflow-y-auto animate-in slide-in-from-bottom duration-300">
-              <div className="sticky top-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900">
+            {/* Left Side Drawer */}
+            <div className="relative w-[85%] max-w-[320px] h-full bg-white dark:bg-gray-900 shadow-2xl z-10 flex flex-col overflow-hidden animate-in slide-in-from-left duration-300">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900">
                 <h3 className="text-base font-semibold text-gray-900 dark:text-white">
                   Filter
                 </h3>
                 <button
                   onClick={() => setIsFilterOpen(false)}
-                  className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-white/10"
+                  className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300"
                 >
                   <X size={20} />
                 </button>
               </div>
 
-              <div className="p-4">
+              <div className="lg:p-4 overflow-y-auto flex-1">
                 <FilterSidebar
                   attributes={attributes}
                   selectedAttributes={selectedAttributes}

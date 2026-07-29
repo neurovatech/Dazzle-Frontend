@@ -134,7 +134,7 @@ export default function FilterSidebar({
 
   return (
     <div className="bg-white dark:bg-[#3e3329] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/60 p-5 sticky top-6 transition-colors duration-200">
-      <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-5">Filter</h3>
+      {/* <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-5">Filter</h3> */}
 
       {/* Budget Section */}
       <div className="mb-4 border-b border-gray-100 dark:border-gray-700/60 pb-4">
