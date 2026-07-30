@@ -98,6 +98,8 @@ export default function CartPageCom() {
     maximumFractionDigits: selectedCurrency === "BDT" ? 0 : 2,
   });
 
+  console.log(cartItems, "cartItemscartItemscartItemscartItems")
+
 
   return (
     <div className="flex flex-col flex-1 max-w-355 mx-auto">

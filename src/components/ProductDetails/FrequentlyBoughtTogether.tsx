@@ -1,9 +1,30 @@
 "use client";
 
+import { useState } from "react";
 import ProductCard from "./ProductCrad";
+import { useAppDispatch } from "@/store/hooks";
+import { addToCart } from "@/store/slices/cartSlice";
+import { api } from "@/lib/api";
+import toast from "react-hot-toast";
+
+interface DefaultVariantResponse {
+  statusCode: number;
+  status: string;
+  message?: string;
+  data?: {
+    productUUID: string;
+    variantUUID: string;
+    regularPrice: number;
+    offerPrice: number;
+    wholeSalePrice: number;
+    thumbnailURL: string;
+    isTba: boolean;
+  };
+}
 
 interface Product {
   id?: string;
+  productUuid?: string;
   image?: string;
   name?: string;
   inStock?: boolean;
@@ -23,6 +44,9 @@ export default function FrequentlyBoughtTogether({
   products,
   onAddToCart,
 }: FrequentlyBoughtTogetherProps) {
+  const dispatch = useAppDispatch();
+  const [adding, setAdding] = useState(false);
+
   if (!products || products.length === 0) return null;
 
   // Use raw numeric prices if available, else parse from display string
@@ -43,6 +67,75 @@ export default function FrequentlyBoughtTogether({
   );
 
   const availableCount = products.filter((p) => p.inStock).length;
+
+  const handleAddToCartAll = async () => {
+    const inStockItems = products.filter((p) => p.inStock);
+    if (inStockItems.length === 0) {
+      toast.error("No available products to add.");
+      return;
+    }
+
+    setAdding(true);
+    try {
+      let addedCount = 0;
+      for (const p of inStockItems) {
+        const pUuid = (p.productUuid || p.id || "").trim();
+        let variantUUID = pUuid;  // default fallback
+        let finalPrice = parsePrice(p, "price");
+        let finalRegPrice = parsePrice(p, "originalPrice");
+        let finalImage = p.image || "";
+
+        if (pUuid) {
+          try {
+            const res = await api.get<DefaultVariantResponse>(
+              `/get-default-variant/${pUuid}?priceSort=1&userDefine=0`
+            );
+            if (res?.data) {
+              // isTba true হলে এই product skip করো
+              if (res.data.isTba) {
+                console.log(`[FrequentlyBoughtTogether] Skipping ${pUuid} — isTba: true`);
+                continue;
+              }
+              variantUUID = res.data.variantUUID || variantUUID;
+              finalPrice = res.data.offerPrice ?? finalPrice;
+              finalRegPrice = res.data.regularPrice ?? finalRegPrice;
+              if (res.data.thumbnailURL) {
+                finalImage = res.data.thumbnailURL;
+              }
+            }
+          } catch (err) {
+            console.error(`[FrequentlyBoughtTogether] get-default-variant failed for ${pUuid}:`, err);
+          }
+        }
+
+        dispatch(
+          addToCart({
+            id: variantUUID,
+            productUuid: pUuid,
+            variantUuid: variantUUID,
+            name: p.name || "Product",
+            brand: "",
+            image: finalImage,
+            price: finalPrice,
+            originalPrice: finalRegPrice,
+            quantity: 1,
+            inStock: true,
+            slug: p.slug || "",
+          })
+        );
+        addedCount++;
+      }
+
+      toast.success(`${addedCount} item${addedCount > 1 ? "s" : ""} added to cart! 🛒`);
+      if (onAddToCart) {
+        onAddToCart();
+      }
+    } catch (err) {
+      console.error("[FrequentlyBoughtTogether] handleAddToCartAll error:", err);
+    } finally {
+      setAdding(false);
+    }
+  };
 
   return (
     <div className="py-4 w-full">
@@ -82,15 +175,15 @@ export default function FrequentlyBoughtTogether({
       </div>
 
       <button
-        onClick={onAddToCart}
-        disabled={availableCount === 0}
+        onClick={handleAddToCartAll}
+        disabled={availableCount === 0 || adding}
         className={`shrink-0 px-6 mt-4 sm:px-8 py-3 text-sm sm:text-base font-semibold rounded-full transition-colors duration-150 whitespace-nowrap shadow-sm
-          ${availableCount === 0
+          ${availableCount === 0 || adding
             ? "bg-gray-200 text-gray-400 cursor-not-allowed opacity-60"
             : "bg-[#E9CCAE] hover:bg-[#D4B89A] active:bg-[#C0A486] text-black cursor-pointer"
           }`}
       >
-        Add {availableCount} item{availableCount !== 1 ? "s" : ""} to cart
+        {adding ? "Adding..." : `Add ${availableCount} item${availableCount !== 1 ? "s" : ""} to cart`}
       </button>
     </div>
   );

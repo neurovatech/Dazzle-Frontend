@@ -3,11 +3,14 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface CartItem {
-  id: string;           // product UUID / unique id
+  id: string;              // unique cart id
+  productUuid?: string;    // Product UUID (PRODUCT ID)
+  variantUuid?: string;    // Selected Variant UUID
+  accessoriesUuid?: string; // DazzleCare Option ID
   name: string;
   brand: string;
   image: string;
-  price: number;        // discounted price
+  price: number;        // discounted price (offerPrice)
   originalPrice: number;
   quantity: number;
   inStock: boolean;
@@ -38,10 +41,13 @@ const cartSlice = createSlice({
       if (existing) {
         // Replace quantity — user explicitly chose this qty on the product page
         existing.quantity = action.payload.quantity;
-        // Also refresh price/image in case they changed
+        // Also refresh price/image/variantUuid/productUuid/accessoriesUuid in case they changed
         existing.price = action.payload.price;
         existing.originalPrice = action.payload.originalPrice;
         existing.image = action.payload.image || existing.image;
+        existing.variantUuid = action.payload.variantUuid || existing.variantUuid;
+        existing.productUuid = action.payload.productUuid || existing.productUuid;
+        existing.accessoriesUuid = action.payload.accessoriesUuid !== undefined ? action.payload.accessoriesUuid : existing.accessoriesUuid;
       } else {
         state.items.push({ ...action.payload });
       }

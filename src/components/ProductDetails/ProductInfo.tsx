@@ -92,9 +92,6 @@ export default function ProductInfo({
         : `${productTitle} ${variantName}`.trim()
       : productTitle;
 
-    // Build cart name exactly like screenshot:
-    // "iPhone 17 Pro Max ( Cosmic Orange / JP/MEA (Dual e-Sim) / 256GB )
-    //  with Dazzle Ultimate Care+ 1 year (New replacement for hardware issues & free parts for accidental damage) (23,532 BDT)"
     const plan = carePlans[0] as CareOption | undefined;
     const carePlanSuffix = plan
       ? `\nwith ${plan.title}${plan.description ? ` (${plan.description})` : ""} (${
@@ -103,10 +100,16 @@ export default function ProductInfo({
       : "";
 
     const fullName = `${cartName}${carePlanSuffix}`;
+    const targetProductUuid = alldata?.productUuid || alldata?.id || "";
+    const targetVariantUuid = selectedVariant?.variantUuid || selectedVariant?.id || "";
+    const targetAccessoriesUuid = selectedCareOptions.map((o: any) => o.id).join(",") || "";
 
     dispatch(
       addToCart({
-        id: selectedVariant?.id || alldata?.productUuid || alldata?.id || code,
+        id: targetVariantUuid || targetProductUuid || code,
+        variantUuid: targetVariantUuid || targetProductUuid || "",
+        productUuid: targetProductUuid,
+        accessoriesUuid: targetAccessoriesUuid,
         name: fullName,
         brand: brand,
         image: alldata?.thumbnailImg || alldata?.thumbnail || alldata?.image || selectedVariant?.thumbnailUrl || "",

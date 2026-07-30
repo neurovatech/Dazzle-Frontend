@@ -420,7 +420,8 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
       </div>
 
       <StickyPurchaseBar
-        productId={selectedVariant?.id ?? product?.productUuid}
+        productId={product?.productUuid}
+        variantUuid={selectedVariant?.variantUuid || selectedVariant?.id}
         productName={(() => {
           const prodName = product?.productName ?? "";
           const varName  = selectedVariant?.name ?? "";
@@ -465,33 +466,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
               {frequentlyBoughtProducts.length > 0 && (
                 <FrequentlyBoughtTogether
                   products={frequentlyBoughtProducts}
-                  onAddToCart={() => {
-                    const inStockItems = frequentlyBoughtProducts.filter(
-                      (p: any) => p.inStock
-                    );
-                    if (inStockItems.length === 0) {
-                      toast.error("No available products to add.");
-                      return;
-                    }
-                    inStockItems.forEach((p: any) => {
-                      dispatch(
-                        addToCart({
-                          id: p.id,
-                          name: p.name,
-                          brand: "",
-                          image: p.image || "",
-                          price: p.rawPrice ?? 0,
-                          originalPrice: p.rawOriginalPrice ?? 0,
-                          quantity: 1,
-                          inStock: true,
-                          slug: p.slug || "",
-                        })
-                      );
-                    });
-                    toast.success(
-                      `${inStockItems.length} item${inStockItems.length > 1 ? "s" : ""} added to cart! 🛒`
-                    );
-                  }}
                 />
               )}
 

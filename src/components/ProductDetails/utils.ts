@@ -20,6 +20,7 @@ export interface VariantApiResponse {
 
 export interface ConsolidatedVariant {
   id: string;
+  variantUuid: string;
   name: string;
   mrp: number;
   price: number;
@@ -86,6 +87,7 @@ export function consolidateVariants(rows: VariantRow[]): {
     if (!variantMap.has(uuid)) {
       variantMap.set(uuid, {
         id: uuid,
+        variantUuid: uuid,
         name: row.variantName ?? "",
         mrp: 0,
         price: 0,

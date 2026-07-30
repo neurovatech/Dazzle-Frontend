@@ -39,6 +39,7 @@ const WhatsAppIcon = () => (
 
 interface StickyPurchaseBarProps {
   productId?: string;
+  variantUuid?: string;
   productName?: string;
   productImage?: string;
   productPrice?: number;
@@ -63,6 +64,7 @@ interface StickyPurchaseBarProps {
 
 export default function StickyPurchaseBar({
   productId,
+  variantUuid,
   productName,
   productImage,
   productPrice = 0,
@@ -106,10 +108,16 @@ export default function StickyPurchaseBar({
   const cartName = `${variantName}${carePlanSuffix}`;
 
   const handleAddToCart = () => {
-    if (!productId || isUnavailable) return;
+    if ((!productId && !variantUuid) || isUnavailable) return;
+    const targetVariantUuid = variantUuid || productId || "";
+    const targetAccessoriesUuid = selectedCareOptions.map((o: any) => o.id).join(",") || "";
+
     dispatch(
       addToCart({
-        id: productId,
+        id: targetVariantUuid,
+        variantUuid: targetVariantUuid,
+        productUuid: productId || "",
+        accessoriesUuid: targetAccessoriesUuid,
         name: cartName,
         brand: "",
         image: productImage || "",

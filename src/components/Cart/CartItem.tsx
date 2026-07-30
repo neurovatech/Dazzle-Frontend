@@ -11,6 +11,9 @@ import {
 import Link from "next/link";
 type CartItemProps = {
   id: string;
+  variantUuid?: string;
+  productUuid?: string;
+  accessoriesUuid?: string;
   brand: string;
   slug?: string;
   name: string;
@@ -23,6 +26,9 @@ type CartItemProps = {
 
 export default function CartItem({
   id,
+  variantUuid,
+  productUuid,
+  accessoriesUuid,
   brand,
   name,
   price,

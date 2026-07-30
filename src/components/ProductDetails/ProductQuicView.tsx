@@ -253,17 +253,69 @@ function ProductQuicView({
     return list;
   })();
 
-  const handleAddToCart = () => {
+interface DefaultVariantResponse {
+  statusCode: number;
+  status: string;
+  message?: string;
+  data?: {
+    productUUID: string;
+    variantUUID: string;
+    regularPrice: number;
+    offerPrice: number;
+    wholeSalePrice: number;
+    thumbnailURL: string;
+    isTba: boolean;
+  };
+}
+
+  const handleAddToCart = async () => {
+    const pUuid = product?.productUuid || productUuid || "";
+
+    // User যদি variant select করেন সেটার id ব্যবহার করো
+    let variantUUID = selectedVariant?.id || displayId;
+    let finalPrice = displayPrice;
+    let finalRegPrice = displayOriginal;
+    let finalImage = currentImage;
+    let finalIsTba = !displayInStock; // default from product data
+
+    // User যদি কোনো specific variant select না করেন, API থেকে default variant আনো
+    if (pUuid && !selectedVariant) {
+      try {
+        const res = await api.get<DefaultVariantResponse>(
+          `/get-default-variant/${pUuid.trim()}?priceSort=1&userDefine=0`
+        );
+        if (res?.data) {
+          variantUUID = res.data.variantUUID || variantUUID;
+          finalPrice = res.data.offerPrice ?? finalPrice;
+          finalRegPrice = res.data.regularPrice ?? finalRegPrice;
+          finalIsTba = res.data.isTba;
+          if (res.data.thumbnailURL) {
+            finalImage = res.data.thumbnailURL;
+          }
+        }
+      } catch (err) {
+        console.error("[QuickView] fetch default variant failed:", err);
+      }
+    }
+
+    // isTba true হলে কার্টে add করি না
+    if (finalIsTba) {
+      toast.error("This product is not in stock!");
+      return;
+    }
+
     dispatch(
       addToCart({
-        id:            displayId,
+        id:            variantUUID,
+        productUuid:   pUuid,
+        variantUuid:   variantUUID,
         name:          displayTitle,
         brand:         displayBrand,
-        image:         currentImage,
-        price:         displayPrice,
-        originalPrice: displayOriginal,
+        image:         finalImage,
+        price:         finalPrice,
+        originalPrice: finalRegPrice,
         quantity:      qty,
-        inStock:       displayInStock,
+        inStock:       !finalIsTba,
         slug:          displaySlug,
       })
     );
@@ -532,17 +584,34 @@ function ProductQuicView({
 
         {/* ── Footer Buttons ── */}
         <div className="rounded-b-2xl gap-4 bg-white p-4 shadow-[0px_-4px_26.6px_6px_#0000002B] flex items-center justify-between dark:bg-[#3d3228]">
-          <button
-            onClick={handleAddToCart}
-            disabled={loading || !displayInStock}
-            className="border border-[#E7E7E7] bg-[#F7F7F7] text-[#222222] px-4 py-2 rounded-md hover:bg-[#222222] hover:text-white transition-colors duration-500 w-full justify-center flex items-center disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
-          >
-            ADD TO CART
-          </button>
+          {/* isTba true হলে NOT IN STOCK দেখাও, নাহলে ADD TO CART দেখাও */}
+          {!displayInStock ? (
+            <button
+              disabled
+              className="border border-gray-200 bg-gray-100 text-gray-400 px-4 py-2 rounded-md w-full justify-center flex items-center gap-2 cursor-not-allowed font-semibold opacity-70"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                strokeWidth={2} stroke="currentColor" className="w-4 h-4 shrink-0"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+              </svg>
+              NOT IN STOCK
+            </button>
+          ) : (
+            <button
+              onClick={handleAddToCart}
+              disabled={loading}
+              className="border border-[#E7E7E7] bg-[#F7F7F7] text-[#222222] px-4 py-2 rounded-md hover:bg-[#222222] hover:text-white transition-colors duration-500 w-full justify-center flex items-center disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+            >
+              ADD TO CART
+            </button>
+          )}
           <Link
             href={`/checkout`}
             onClick={handleBuyNow}
-            className="border border-[#E7E7E7] bg-[#222222] text-white px-4 py-2 rounded-md hover:bg-[#F7F7F7] hover:text-[#222222] transition-colors duration-500 w-full justify-center flex items-center font-semibold"
+            className={`border border-[#E7E7E7] bg-[#222222] text-white px-4 py-2 rounded-md hover:bg-[#F7F7F7] hover:text-[#222222] transition-colors duration-500 w-full justify-center flex items-center font-semibold ${
+              !displayInStock ? "pointer-events-none opacity-50" : ""
+            }`}
           >
             BUY NOW
           </Link>

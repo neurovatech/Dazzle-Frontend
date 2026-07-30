@@ -43,6 +43,9 @@ const DazzleCare: React.FC<DazzleCareProps> = ({ options, onSelectionChange }) =
   const selectedOfferPrice = selectedOpt?.price ?? 0;
   const selectedOrigPrice  = selectedOpt?.originalPrice ?? 0;
 
+
+  console.log(options, "optionsoptionsoptionsoptionsoptions")
+
   return (
     <div className="rounded-2xl bg-[#222222] border border-[#3a3330] overflow-hidden">
       {/* ── Header ── */}
@@ -134,11 +137,11 @@ const DazzleCare: React.FC<DazzleCareProps> = ({ options, onSelectionChange }) =
 
                     {/* Price area */}
                     <div className="flex items-center gap-1.5 flex-wrap shrink-0">
-                      {opt.salesOnRate && opt.salesOnRate > 0 && (
+                      {/* {opt.salesOnRate && opt.salesOnRate > 0 && (
                         <span className="text-[10px] font-bold text-orange-500 bg-orange-50 px-2 py-1 rounded-lg whitespace-nowrap">
                           {opt.salesOnRate}%
                         </span>
-                      )}
+                      )} */}
                       {hasSaving && (
                         <p className="text-[10px] lg:text-xs flex gap-1 items-center text-orange-500 font-medium bg-[#FF98000F] py-1.5 px-2 rounded-[10px] whitespace-nowrap">
                           <HandDollar />
