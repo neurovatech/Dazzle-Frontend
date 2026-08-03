@@ -174,6 +174,14 @@ const Profile: React.FC = () => {
             </div>
 
             <div className="">
+              {selectedOrder && (
+                <button
+                  onClick={() => setSelectedOrder(null)}
+                  className="mb-4 text-xs font-bold text-[#7A4500] dark:text-[#d48c34] hover:underline flex items-center gap-1 cursor-pointer"
+                >
+                  ← Back to Orders
+                </button>
+              )}
               {!selectedOrder && !showOtp && (
                 <h1
                   className={`text-3xl font-bold text-gray-900 dark:text-white ${

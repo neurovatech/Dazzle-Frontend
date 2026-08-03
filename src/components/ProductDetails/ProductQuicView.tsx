@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import GlobalModal from "@/components/share/GlobalModal";
 import ProductBadges from "./ProductBadges";
 import ProductColorVariants from "./ProductColorVariants";
@@ -48,6 +50,7 @@ function ProductQuicView({
   image: fallbackImage,
 }: ProductQuicViewProps) {
   const dispatch = useAppDispatch();
+  const router = useRouter();
 
   console.log(productUuid, "productUuidproductUuidproductUuidproductUuidproductUuid")
 
@@ -55,6 +58,7 @@ function ProductQuicView({
   const [product, setProduct] = useState<ProductApiData | null>(null);
   const [variantApiData, setVariantApiData] = useState<VariantApiResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingBuyNow, setLoadingBuyNow] = useState(false);
   const [qty, setQty] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedAttrs, setSelectedAttrs] = useState<Record<string, string>>({});
@@ -268,21 +272,20 @@ interface DefaultVariantResponse {
   };
 }
 
-  const handleAddToCart = async () => {
+  const handleAddToCart:any = async (options?: { showToast?: boolean }) => {
     const pUuid = product?.productUuid || productUuid || "";
 
-    // User যদি variant select করেন সেটার id ব্যবহার করো
     let variantUUID = selectedVariant?.id || displayId;
     let finalPrice = displayPrice;
     let finalRegPrice = displayOriginal;
     let finalImage = currentImage;
-    let finalIsTba = !displayInStock; // default from product data
+    let finalIsTba = !displayInStock; 
 
-    // User যদি কোনো specific variant select না করেন, API থেকে default variant আনো
+
     if (pUuid && !selectedVariant) {
       try {
         const res = await api.get<DefaultVariantResponse>(
-          `/get-default-variant/${pUuid.trim()}?priceSort=1&userDefine=0`
+          `/get-default-variant/${pUuid.trim()}?priceSort=0&userDefine=1`
         );
         if (res?.data) {
           variantUUID = res.data.variantUUID || variantUUID;
@@ -301,7 +304,7 @@ interface DefaultVariantResponse {
     // isTba true হলে কার্টে add করি না
     if (finalIsTba) {
       toast.error("This product is not in stock!");
-      return;
+      return false;
     }
 
     dispatch(
@@ -319,12 +322,25 @@ interface DefaultVariantResponse {
         slug:          displaySlug,
       })
     );
-    toast.success(`${displayTitle} added to cart! 🛒`);
+    if (options?.showToast !== false) {
+      toast.success(`${displayTitle} added to cart! 🛒`);
+    }
     setOpen(false);
+    return true;
   };
 
-  const handleBuyNow = () => {
-    handleAddToCart();
+  const handleBuyNow = async () => {
+    setLoadingBuyNow(true);
+    try {
+      const success = await handleAddToCart({ showToast: false });
+      if (success) {
+        router.push("/checkout");
+      }
+    } catch (err) {
+      console.error("[QuickView] Buy now error:", err);
+    } finally {
+      setLoadingBuyNow(false);
+    }
   };
 
   return (
@@ -606,15 +622,26 @@ interface DefaultVariantResponse {
               ADD TO CART
             </button>
           )}
-          <Link
-            href={`/checkout`}
+          <button
+            type="button"
             onClick={handleBuyNow}
-            className={`border border-[#E7E7E7] bg-[#222222] text-white px-4 py-2 rounded-md hover:bg-[#F7F7F7] hover:text-[#222222] transition-colors duration-500 w-full justify-center flex items-center font-semibold ${
+            disabled={loading || loadingBuyNow || !displayInStock}
+            className={`border border-[#E7E7E7] bg-[#222222] text-white px-4 py-2 rounded-md hover:bg-[#F7F7F7] hover:text-[#222222] transition-colors duration-500 w-full justify-center flex items-center font-semibold disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${
               !displayInStock ? "pointer-events-none opacity-50" : ""
             }`}
           >
-            BUY NOW
-          </Link>
+            {loadingBuyNow ? (
+              <span className="flex items-center gap-2">
+                <svg className="w-4 h-4 animate-spin shrink-0" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                </svg>
+                Processing...
+              </span>
+            ) : (
+              "BUY NOW"
+            )}
+          </button>
         </div>
       </GlobalModal>
 

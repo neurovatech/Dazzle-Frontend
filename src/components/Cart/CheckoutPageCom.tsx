@@ -240,18 +240,6 @@ export default function CheckoutPageCom() {
     },
   });
 
-  //  const { data: areaList, isLoading: isAreaLoading } =
-  //     useQuery<AreaListResponse>({
-  //       queryKey: ["areaList"],
-  //       queryFn: async () => {
-  // return api.get<AreaListResponse>("area-list", {
-  //   headers: {
-  //     "X-API-Key": apiKey || "",
-  //     Authorization: authHeader,
-  //   },
-  // });
-  //       },
-  //     });
 
   const districts = areaListRes?.data || [];
   const selectedDistrictObj = districts.find(

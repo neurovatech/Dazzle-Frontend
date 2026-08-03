@@ -1,13 +1,33 @@
 "use client";
 import { useState } from "react";
-import { ChevronRight, RotateCcw, X, CheckCircle, Clock, AlertTriangle } from "lucide-react";
+import {
+  ChevronRight,
+  RotateCcw,
+  X,
+  CheckCircle,
+  Clock,
+  AlertTriangle,
+  Loader2,
+  MapPin,
+  FileText,
+  Bell,
+  CreditCard,
+} from "lucide-react";
 import Image from "next/image";
 import toast from "react-hot-toast";
 import locationImg from "@/images/location.png";
-import { Order, ReturnReason } from "./profile.types";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api";
+import {
+  Order,
+  ReturnReason,
+  OrderTrackingResponse,
+  OrderTrackingData,
+} from "./profile.types";
 
 // ─── Helper: 7-day window check ──────────────────────────────────────────────
 function isWithinReturnWindow(orderDateISO: string): boolean {
+  if (!orderDateISO) return false;
   const orderDate = new Date(orderDateISO);
   const now = new Date();
   const diffMs = now.getTime() - orderDate.getTime();
@@ -16,6 +36,7 @@ function isWithinReturnWindow(orderDateISO: string): boolean {
 }
 
 function getDaysAgo(orderDateISO: string): number {
+  if (!orderDateISO) return 0;
   const orderDate = new Date(orderDateISO);
   const now = new Date();
   const diffMs = now.getTime() - orderDate.getTime();
@@ -24,7 +45,7 @@ function getDaysAgo(orderDateISO: string): number {
 
 // ─── Return Modal ─────────────────────────────────────────────────────────────
 interface ReturnModalProps {
-  order: Order;
+  orderNo: string;
   onClose: () => void;
 }
 
@@ -36,7 +57,7 @@ const RETURN_REASONS: ReturnReason[] = [
   "Damaged in Shipping",
 ];
 
-const ReturnModal: React.FC<ReturnModalProps> = ({ order, onClose }) => {
+const ReturnModal: React.FC<ReturnModalProps> = ({ orderNo, onClose }) => {
   const [reason, setReason] = useState<ReturnReason | "">("");
   const [description, setDescription] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -50,15 +71,15 @@ const ReturnModal: React.FC<ReturnModalProps> = ({ order, onClose }) => {
     }
     setLoading(true);
     // Simulate API call
-    await new Promise((r) => setTimeout(r, 1500));
+    await new Promise((r) => setTimeout(r, 1200));
     setLoading(false);
     setSubmitted(true);
-    toast.success(`Return request for Order ${order.id} submitted successfully!`);
+    toast.success(`Return request for Order #${orderNo} submitted successfully!`);
   };
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white dark:bg-[#2a2520] rounded-3xl w-full max-w-md shadow-2xl overflow-hidden">
+      <div className="bg-white dark:bg-[#2a2520] rounded-3xl w-full max-w-md shadow-2xl overflow-hidden font-sans">
         {/* Modal Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-gray-700">
           <div className="flex items-center gap-3">
@@ -69,7 +90,7 @@ const ReturnModal: React.FC<ReturnModalProps> = ({ order, onClose }) => {
               <h2 className="text-lg font-bold text-gray-900 dark:text-white">
                 Return Request
               </h2>
-              <p className="text-xs text-gray-400">Order {order.id}</p>
+              <p className="text-xs text-gray-400">Order #{orderNo}</p>
             </div>
           </div>
           <button
@@ -83,7 +104,6 @@ const ReturnModal: React.FC<ReturnModalProps> = ({ order, onClose }) => {
         {/* Modal Body */}
         <div className="p-6">
           {submitted ? (
-            /* ── Success State ── */
             <div className="text-center py-6">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle size={32} className="text-green-600" />
@@ -92,17 +112,11 @@ const ReturnModal: React.FC<ReturnModalProps> = ({ order, onClose }) => {
                 Request Submitted!
               </h3>
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                Your return request for Order <strong>{order.id}</strong> has been received.
+                Your return request for Order <strong>#{orderNo}</strong> has been received.
               </p>
               <p className="text-xs text-gray-400 dark:text-gray-500 mb-6">
                 Our team will contact you within 24-48 hours to arrange pickup.
               </p>
-              <div className="bg-green-50 dark:bg-green-900/20 rounded-2xl p-4 text-left mb-6">
-                <p className="text-xs font-semibold text-green-700 dark:text-green-400 mb-1">Return Reference</p>
-                <p className="text-sm font-bold text-green-800 dark:text-green-300">
-                  RTN-{order.id.replace("#", "")}-{Date.now().toString().slice(-4)}
-                </p>
-              </div>
               <button
                 onClick={onClose}
                 className="w-full py-3 bg-[#7A4500] text-white rounded-2xl font-semibold hover:bg-[#5a3300] transition-colors"
@@ -111,30 +125,7 @@ const ReturnModal: React.FC<ReturnModalProps> = ({ order, onClose }) => {
               </button>
             </div>
           ) : (
-            /* ── Form State ── */
             <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Order Items Summary */}
-              {order.items && order.items.length > 0 && (
-                <div className="bg-gray-50 dark:bg-[#1e1a17] rounded-2xl p-4">
-                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wide">
-                    Items in this order
-                  </p>
-                  <div className="space-y-2">
-                    {order.items.map((item, idx) => (
-                      <div key={idx} className="flex justify-between items-center">
-                        <span className="text-sm text-gray-700 dark:text-gray-300">
-                          {item.name} × {item.qty}
-                        </span>
-                        <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                          {item.price}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Return Reason */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                   Reason for Return <span className="text-red-500">*</span>
@@ -163,7 +154,6 @@ const ReturnModal: React.FC<ReturnModalProps> = ({ order, onClose }) => {
                 </div>
               </div>
 
-              {/* Description */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                   Additional Details{" "}
@@ -178,7 +168,6 @@ const ReturnModal: React.FC<ReturnModalProps> = ({ order, onClose }) => {
                 />
               </div>
 
-              {/* Submit Button */}
               <button
                 type="submit"
                 disabled={loading || !reason}
@@ -186,7 +175,7 @@ const ReturnModal: React.FC<ReturnModalProps> = ({ order, onClose }) => {
               >
                 {loading ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <Loader2 className="w-4 h-4 animate-spin" />
                     Submitting...
                   </>
                 ) : (
@@ -204,20 +193,25 @@ const ReturnModal: React.FC<ReturnModalProps> = ({ order, onClose }) => {
   );
 };
 
-// ─── Return Status Badge ──────────────────────────────────────────────────────
+// ─── Return Status Widget ─────────────────────────────────────────────────────
 interface ReturnWidgetProps {
-  order: Order;
+  orderDateISO: string;
+  isDelivered: boolean;
+  orderNo: string;
 }
 
-const ReturnWidget: React.FC<ReturnWidgetProps> = ({ order }) => {
+const ReturnWidget: React.FC<ReturnWidgetProps> = ({
+  orderDateISO,
+  isDelivered,
+  orderNo,
+}) => {
   const [showModal, setShowModal] = useState(false);
 
-  const canReturn = isWithinReturnWindow(order.orderDate);
-  const daysAgo = getDaysAgo(order.orderDate);
+  const canReturn = isWithinReturnWindow(orderDateISO);
+  const daysAgo = getDaysAgo(orderDateISO);
   const daysLeft = 7 - daysAgo;
 
-  // Only show return widget for delivered orders
-  if (order.status !== "Delivered") {
+  if (!isDelivered) {
     return null;
   }
 
@@ -280,7 +274,7 @@ const ReturnWidget: React.FC<ReturnWidgetProps> = ({ order }) => {
       </div>
 
       {showModal && (
-        <ReturnModal order={order} onClose={() => setShowModal(false)} />
+        <ReturnModal orderNo={orderNo} onClose={() => setShowModal(false)} />
       )}
     </>
   );
@@ -292,192 +286,232 @@ interface OrderDetailsProps {
 }
 
 const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
-  // Default mock order for backward compatibility
-  const displayOrder: Order = order ?? {
-    id: "#7678",
-    date: "August 04, 2025",
-    orderDate: "2025-08-04T10:30:00Z",
-    status: "In Progress",
-    total: "৳1,00,120",
-    items: [
-      { name: "Apple iPhone 15 Pro Max", qty: 1, price: "৳1,00,000" },
-      { name: "Delivery Fee", qty: 1, price: "৳120" },
-    ],
+  const orderNo = order?.comerzOrderNo || order?.id || "";
+
+  // ── Fetch Tracking details from API ──
+  const { data: trackingRes, isLoading, isError } = useQuery<OrderTrackingResponse>({
+    queryKey: ["order-tracking", orderNo],
+    queryFn: async () => {
+      return api.get<OrderTrackingResponse>(`/order-tracking/${orderNo}`);
+    },
+    enabled: !!orderNo,
+  });
+
+  const trackingData: OrderTrackingData | undefined = trackingRes?.data;
+
+  const formatDate = (isoString?: string) => {
+    if (!isoString) return order?.date || "N/A";
+    try {
+      const d = new Date(isoString);
+      return d.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {
+      return isoString;
+    }
   };
 
-  const steps = [
-    {
-      title: "Delivered",
-      subtitle: "Waiting...",
-      completed: false,
-      last: false,
-    },
-    {
-      title: "In Transit",
-      subtitle: "Waiting...",
-      completed: false,
-      last: false,
-    },
-    {
-      title: "Sent Out",
-      subtitle: "Sent out Mar 7, 2026",
-      time: "8:00 PM",
-      completed: true,
-      last: false,
-    },
-    {
-      title: "Packaged",
-      subtitle: "Packaged Mar 7, 2026",
-      time: "8:00 PM",
-      completed: true,
-      last: true,
-    },
-  ];
+  const statusText = trackingData
+    ? trackingData.orderCancelled
+      ? "Cancelled"
+      : trackingData.orderDelivered
+      ? "Delivered"
+      : "In Progress"
+    : order?.status || "In Progress";
+
+  if (isLoading) {
+    return (
+      <div className="p-12 text-center bg-[#F7F7F7] dark:bg-[#393430] rounded-3xl flex flex-col items-center justify-center font-sans">
+        <Loader2 className="w-8 h-8 text-[#7A4500] animate-spin mb-3" />
+        <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+          Fetching tracking details for Order #{orderNo}...
+        </p>
+      </div>
+    );
+  }
+
+  const timelineSteps = trackingData?.statusTimeline || [];
+  const alertLogs = trackingData?.alertsLogs || [];
 
   return (
-    <div className="p-5 rounded-3xl bg-[#F7F7F7] dark:bg-[#393430] font-sans">
+    <div className="p-5 rounded-3xl bg-[#F7F7F7] dark:bg-[#393430] font-sans space-y-6">
       {/* Header Section */}
-      <div className="rounded-2xl mb-5 flex justify-between items-start">
+      <div className="rounded-2xl flex justify-between items-start flex-wrap gap-4">
         <div>
-          <h2 className="text-[#7A4500] text-xl font-bold">
-            Order {displayOrder.id}
+          <h2 className="text-[#7A4500] dark:text-[#d48c34] text-xl font-bold">
+            Order #{trackingData?.orderNo || orderNo}
           </h2>
-          <p className="text-gray-400 text-sm mt-1">
-            Placed on {displayOrder.date}
+          <p className="text-gray-400 text-xs mt-1">
+            Placed on {formatDate(trackingData?.createdAt || order?.orderDate)}
           </p>
-          <div className="flex gap-3 mt-4">
-            <button className="bg-white px-5 py-2 border border-gray-200 rounded-xl text-sm dark:text-black font-medium hover:bg-gray-50 transition-colors">
-              Invoice Details
-            </button>
-            <button className="bg-white px-5 py-2 border border-gray-200 rounded-xl text-sm dark:text-black font-medium hover:bg-gray-50 transition-colors">
-              Need Help?
-            </button>
-          </div>
         </div>
+
         <span
-          className={`text-sm font-medium px-3 py-1 rounded-full ${
-            displayOrder.status === "Delivered"
-              ? "bg-green-100 text-green-600"
-              : "bg-yellow-100 text-yellow-600"
+          className={`text-xs font-semibold px-3 py-1 rounded-full ${
+            statusText === "Cancelled"
+              ? "bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400"
+              : statusText === "Delivered"
+              ? "bg-green-100 dark:bg-green-950/40 text-green-600 dark:text-green-400"
+              : "bg-yellow-100 dark:bg-yellow-950/40 text-yellow-700 dark:text-yellow-400"
           }`}
         >
-          {displayOrder.status}
+          {statusText}
         </span>
       </div>
 
-      {/* ── 7-Day Return Widget ────────────────────────────────────────── */}
-      <div className="mb-5">
-        <ReturnWidget order={displayOrder} />
-      </div>
-
-      {/* Order Tracking Section */}
-      <div className="mb-5">
-        <h3 className="text-xl font-bold mb-4 text-gray-800 dark:text-white">
-          Order Tracking
-        </h3>
-        <div className="bg-white dark:bg-[#393430] p-3 rounded-2xl border border-gray-100">
-          {steps.map((step, index) => (
-            <div key={index} className="flex gap-4 items-start">
-              {/* Stepper Line Logic */}
-              <div className="flex flex-col items-center">
-                <div
-                  className={`w-6 h-6 rounded-full border-2 flex items-center justify-center z-10 bg-white ${
-                    step.completed ? "border-gray-800" : "border-gray-200"
-                  }`}
-                >
-                  {step.completed && (
-                    <div className="w-4 h-4 bg-gray-800 rounded-full"></div>
-                  )}
-                </div>
-                {!step.last && (
-                  <div className="w-[1px] h-[30px] border-l-2 border-dashed border-gray-300 my-1"></div>
-                )}
-              </div>
-
-              {/* Step Content */}
-              <div className="flex-1 flex items-center pb-2">
-                <div>
-                  <h4
-                    className={`font-semibold ${
-                      step.completed
-                        ? "text-gray-800 dark:text-white"
-                        : "text-gray-400"
-                    }`}
-                  >
-                    {step.title}
-                  </h4>
-                  <p className="text-xs text-gray-400 mt-1">{step.subtitle}</p>
-                </div>
-                {step.time && (
-                  <span className="text-xs text-gray-400 font-medium mx-auto">
-                    {step.time}
-                  </span>
-                )}
+      {/* ── Alert Logs Banner (If any) ── */}
+      {alertLogs.length > 0 && (
+        <div className="space-y-2">
+          {alertLogs.map((alert, idx) => (
+            <div
+              key={idx}
+              className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 flex items-start gap-3"
+            >
+              <Bell className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+              <div>
+                <p className="text-xs font-bold text-amber-900 dark:text-amber-200">
+                  {alert.alertTypes || "Notice"}
+                </p>
+                <p className="text-xs text-amber-700 dark:text-amber-300 mt-0.5">
+                  {alert.description}
+                </p>
               </div>
             </div>
           ))}
         </div>
+      )}
+
+      {/* ── 7-Day Return Widget ── */}
+      <div>
+        <ReturnWidget
+          orderDateISO={trackingData?.createdAt || order?.orderDate || ""}
+          isDelivered={!!trackingData?.orderDelivered || order?.status === "Delivered"}
+          orderNo={trackingData?.orderNo || orderNo}
+        />
       </div>
 
-      {/* Delivery Address Section */}
-      <div className="mb-5">
-        <h3 className="text-xl font-bold mb-4 text-gray-800 dark:text-white">
-          Delivery Address
+      {/* ── Order Tracking Timeline ── */}
+      <div>
+        <h3 className="text-lg font-bold mb-3 text-gray-800 dark:text-white">
+          Order Tracking
         </h3>
-        <div className="bg-white dark:bg-[#393430] py-4 px-5 rounded-xl border border-gray-100 flex items-center">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-[#F7F7F7] rounded-xl flex items-center justify-center border border-gray-100 text-red-500">
-              <Image src={locationImg} alt="Location" width={38} />
+        <div className="bg-white dark:bg-[#2e2a27] p-4 rounded-2xl border border-gray-100 dark:border-zinc-800/80">
+          {timelineSteps.length > 0 ? (
+            <div className="space-y-4">
+              {timelineSteps.map((step, idx) => {
+                const isLast = idx === timelineSteps.length - 1;
+                return (
+                  <div key={idx} className="flex gap-4 items-start relative">
+                    <div className="flex flex-col items-center">
+                      <div className="w-6 h-6 rounded-full border-2 border-[#7A4500] bg-orange-500 flex items-center justify-center z-10 shrink-0">
+                        <CheckCircle size={14} className="text-white" />
+                      </div>
+                      {!isLast && (
+                        <div className="w-[1.5px] h-8 bg-orange-300 dark:bg-orange-800 my-1" />
+                      )}
+                    </div>
+
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-sm text-gray-800 dark:text-white">
+                        {step.orderStatus}
+                      </h4>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        By {step.createdBy || "System"} • {formatDate(step.createdAt)}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-            <div>
-              <h4 className="font-semibold text-gray-800 dark:text-white">
-                Dhaka
-              </h4>
-              <p className="text-sm text-gray-400 dark:text-gray-300">
-                Rd 7, Block A, Bashundhara
-              </p>
+          ) : (
+            <div className="py-4 text-center text-xs text-gray-400 italic">
+              Order processing timeline updates will appear here.
             </div>
-          </div>
-          <ChevronRight
-            className="text-[#222222] dark:text-white mx-auto"
-            size={20}
-          />
+          )}
         </div>
       </div>
 
-      {/* Order Summary Section */}
+      {/* ── Delivery Details Section ── */}
       <div>
-        <h3 className="text-xl font-bold mb-4 text-gray-800 dark:text-white">
+        <h3 className="text-lg font-bold mb-3 text-gray-800 dark:text-white">
+          Delivery Details
+        </h3>
+        <div className="bg-white dark:bg-[#2e2a27] p-4 rounded-2xl border border-gray-100 dark:border-zinc-800/80 space-y-3">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 bg-amber-50 dark:bg-amber-950/40 rounded-xl flex items-center justify-center shrink-0 border border-amber-100 dark:border-amber-900">
+              <MapPin size={18} className="text-[#7A4500] dark:text-[#d48c34]" />
+            </div>
+            <div>
+              <h4 className="font-bold text-sm text-gray-800 dark:text-white">
+                {trackingData?.fullName || "Customer"} ({trackingData?.mobile || "N/A"})
+              </h4>
+              <p className="text-xs text-gray-500 dark:text-gray-300 mt-0.5 leading-relaxed">
+                {trackingData?.address2
+                  ? `${trackingData.address} - ${trackingData.address2}`
+                  : trackingData?.address || "Address details not available"}
+              </p>
+              {trackingData?.deliveryIns && (
+                <p className="text-xs text-amber-700 dark:text-amber-400 mt-1 font-medium">
+                  Delivery Instruction: {trackingData.deliveryIns}
+                </p>
+              )}
+              {trackingData?.customerNotes && (
+                <p className="text-xs text-gray-400 mt-0.5">
+                  Notes: {trackingData.customerNotes}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Order Summary Section ── */}
+      <div>
+        <h3 className="text-lg font-bold mb-3 text-gray-800 dark:text-white">
           Order Summary
         </h3>
-        <div className="bg-white dark:bg-[#393430] py-4 px-5 rounded-xl text-base text-[#222222] dark:text-white border border-gray-100 space-y-2">
-          {displayOrder.items ? (
-            displayOrder.items.map((item, idx) => (
-              <div key={idx} className="flex items-center">
-                <span className="font-medium text-sm">
-                  {item.name} × {item.qty}
-                </span>
-                <span className="mx-auto font-semibold">{item.price}</span>
-              </div>
-            ))
-          ) : (
+        <div className="bg-white dark:bg-[#2e2a27] p-4 rounded-2xl border border-gray-100 dark:border-zinc-800/80 space-y-3 text-sm">
+          {trackingData ? (
             <>
-              <div className="flex items-center">
-                <span className="font-medium">Subtotal</span>
-                <span className="mx-auto font-semibold">৳ 1,00,000</span>
+              <div className="flex justify-between items-center text-xs font-medium text-gray-600 dark:text-gray-300">
+                <span>Subtotal</span>
+                <span>৳{(trackingData.subTotal ?? 0).toLocaleString("en-IN")}</span>
               </div>
-              <div className="flex items-center">
-                <span className="font-medium">Delivery Fee</span>
-                <span className="mx-auto font-semibold">৳ 120</span>
+              <div className="flex justify-between items-center text-xs font-medium text-gray-600 dark:text-gray-300">
+                <span>Paid Amount</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                  ৳{(trackingData.paidAmount ?? 0).toLocaleString("en-IN")}
+                </span>
+              </div>
+              <div className="border-t border-gray-100 dark:border-zinc-800 pt-3 flex justify-between items-center font-bold text-gray-900 dark:text-white">
+                <span>Grand Total</span>
+                <span className="text-[#7A4500] dark:text-[#d48c34] text-base">
+                  ৳{(trackingData.grandAmount ?? 0).toLocaleString("en-IN")}
+                </span>
+              </div>
+              <div className="pt-1 flex items-center justify-between text-[11px]">
+                <span className="text-gray-400">Payment Status:</span>
+                <span
+                  className={`font-semibold px-2 py-0.5 rounded-full ${
+                    trackingData.orderFullPaid
+                      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
+                      : "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400"
+                  }`}
+                >
+                  {trackingData.orderFullPaid ? "Fully Paid" : "Payment Pending / Partial"}
+                </span>
               </div>
             </>
+          ) : (
+            <div className="flex justify-between items-center font-bold">
+              <span>Total</span>
+              <span className="text-[#7A4500]">{order?.total}</span>
+            </div>
           )}
-          <div className="border-t border-gray-100 dark:border-gray-600 pt-2 flex items-center">
-            <span className="font-bold">Total Bill</span>
-            <span className="mx-auto font-bold text-[#7A4500]">
-              {displayOrder.total}
-            </span>
-          </div>
         </div>
       </div>
     </div>

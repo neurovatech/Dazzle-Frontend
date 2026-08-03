@@ -15,13 +15,86 @@ export interface WishlistItem {
   old: string;
 }
 
+export interface ApiOrderItem {
+  comerzOrderNo: string;
+  createdAt: string;
+  paymentType: string;
+  paymentMethod: string;
+  deliveryMethod: string;
+  productCount: number;
+  productPrice: number;
+  deliveryFee: number;
+  discount: number;
+  subTotal: number;
+  paidAmount: number;
+  total: number;
+  isFullPaid: boolean;
+  isDelivered: boolean;
+  isCancelled: boolean;
+  isShopPickup: boolean;
+}
+
+export interface OrderListResponse {
+  statusCode: number;
+  status: string;
+  found: boolean;
+  count: number;
+  totalCount: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  data: ApiOrderItem[];
+  message?: string;
+}
+
+export interface OrderTrackingTimeline {
+  createdAt: string;
+  createdBy: string;
+  orderStatus: string;
+}
+
+export interface OrderAlertLog {
+  createdAt: string;
+  alertTypes: string;
+  description: string;
+}
+
+export interface OrderTrackingData {
+  orderNo: string;
+  createdAt: string;
+  fullName: string;
+  mobile: string;
+  address: string;
+  address2?: string;
+  deliveryIns?: string;
+  customerNotes?: string;
+  subTotal: number;
+  paidAmount: number;
+  grandAmount: number;
+  orderFullPaid: boolean;
+  orderDelivered: boolean;
+  orderCancelled: boolean;
+  statusTimeline?: OrderTrackingTimeline[];
+  alertsLogs?: OrderAlertLog[];
+}
+
+export interface OrderTrackingResponse {
+  statusCode: number;
+  status: string;
+  message: string;
+  data?: OrderTrackingData;
+}
+
 export interface Order {
-  id: string;
+  id: string; // comerzOrderNo
+  comerzOrderNo?: string;
   date: string;
-  orderDate: string; // ISO date string – 7-day return window calculation-এর জন্য
-  status: "In Progress" | "Delivered";
+  orderDate: string; // ISO date string
+  status: "In Progress" | "Delivered" | "Cancelled";
   total: string;
+  totalNumber?: number;
   items?: OrderItem[];
+  rawApiData?: ApiOrderItem;
 }
 
 export interface OrderItem {
