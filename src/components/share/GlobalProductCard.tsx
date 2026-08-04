@@ -106,6 +106,15 @@ const ProductCard: React.FC<ProductCardProps> = ({
         return;
       }
 
+      const isAlreadyInCart = cartItems.some(
+        (item) => item.id === variantUUID || item.variantUuid === variantUUID
+      );
+
+      if (isAlreadyInCart) {
+        toast.error("Product already added to cart!");
+        return;
+      }
+
       dispatch(
         addToCart({
           id: variantUUID,
@@ -128,6 +137,15 @@ const ProductCard: React.FC<ProductCardProps> = ({
     } catch (error) {
       console.error("[GlobalProductCard] get-default-variant error:", error);
       // Fallback: API fail হলে productUuid দিয়ে cart-এ add করো
+      const isAlreadyInCart = cartItems.some(
+        (item) => item.id === itemId || item.variantUuid === itemId
+      );
+
+      if (isAlreadyInCart) {
+        toast.error("Product already added to cart!");
+        return;
+      }
+
       dispatch(
         addToCart({
           id: itemId,

@@ -134,7 +134,7 @@ export default async function Home() {
     }
 
   return (
-    <div>
+    <div className="bg-[#fffbf6] dark:bg-[#2e2b28]">
       {/* HERO SLIDER  */}
       <div className="flex flex-col flex-1 items-center max-w-355 mx-auto px-0 sm:px-0">
         {heroSlides.length > 0 && (

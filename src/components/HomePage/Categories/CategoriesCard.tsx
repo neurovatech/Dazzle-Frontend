@@ -80,13 +80,13 @@ function CategoriesCard({
                 className="flex flex-col items-center"
               >
                 {/* Fixed-size box so every image container is the same height */}
-                <div className="relative w-full aspect-square bg-white border border-[#c6c6c6]  rounded-4xl p-6 md:p-8 transition-all duration-300 hover:scale-105">
+                <div className="relative w-full aspect-square bg-[#F5F5F5]  rounded-4xl p-6 md:p-8 transition-all duration-300 hover:scale-105">
                   <Image
                     src={hasImage ? item.thumbnail_img : NoImg}
                     alt={hasName ? item.category_name : "Category"}
                     fill
                     sizes="(max-width: 768px) 25vw, 12vw"
-                    className="object-contain transition-transform duration-300 hover:scale-110"
+                    className="object-contain transition-transform duration-300 hover:scale-110 p-5"
                     onError={(e) => {
                       (e.currentTarget as HTMLImageElement).src =
                         (NoImg as any).src ?? NoImg.toString();
@@ -94,7 +94,7 @@ function CategoriesCard({
                   />
                 </div>
 
-                <h2 className="w-full text-[9px] sm:text-[10px] lg:text-sm font-medium text-primary pt-1 sm:pt-2 text-center transition-colors duration-300 group-hover:text-[#CB843B] line-clamp-2 leading-tight min-h-[22px] sm:min-h-[26px] lg:min-h-[36px] flex items-start justify-center">
+                <h2 className="w-full text-[14px] sm:text-[14px] font-medium text-primary pt-1 sm:pt-2 text-center transition-colors duration-300 group-hover:text-[#CB843B] line-clamp-2 leading-tight min-h-[22px] sm:min-h-[26px] lg:min-h-[36px] flex items-start justify-center">
                   {hasName ? (
                     item.category_name
                   ) : (

@@ -41,5 +41,6 @@ import GiftIcon from "./GiftIcon";
 import StackIcon from "./StackIcon";
 import RightArrow from "./RightArrow";
 import CheckHome from "./CheckHome";
+import Locationicon from "./Locationicon";
 
-export { AirpodIcon, CartIcon, ChevronDownIcon, ChevronUpIcon, CloseIcon, CoverIcon, GadgetIcon, LaptopIcon, MapPinIcon, MenuIcon, MobileIcon, MoonIcon, PhoneIcon, ProtectorIcon, SearchIcon, SoundIcon, SunIcon, TabletIcon, UserIcon, WatchIcon, TestBg , MobileMenuIcon, MassageIcon, FacebookIcon, InstragramIcon, LinkindIcon, YouTubeIcon, FaireIcon, LoveIcon, CompareIcon, GoogleIcon, WarrantyIcon, StarIcon, EyeIcon, AddFileIcon, CareIcon, HandDollar, SwapIcon, BookingIcon, GiftIcon, StackIcon, RightArrow, CheckHome };
+export { AirpodIcon, CartIcon, ChevronDownIcon, ChevronUpIcon, CloseIcon, CoverIcon, GadgetIcon, LaptopIcon, MapPinIcon, MenuIcon, MobileIcon, MoonIcon, PhoneIcon, ProtectorIcon, SearchIcon, SoundIcon, SunIcon, TabletIcon, UserIcon, WatchIcon, TestBg , MobileMenuIcon, MassageIcon, FacebookIcon, InstragramIcon, LinkindIcon, YouTubeIcon, FaireIcon, LoveIcon, CompareIcon, GoogleIcon, WarrantyIcon, StarIcon, EyeIcon, AddFileIcon, CareIcon, HandDollar, SwapIcon, BookingIcon, GiftIcon, StackIcon, RightArrow, CheckHome, Locationicon };

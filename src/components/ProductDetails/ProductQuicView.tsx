@@ -11,7 +11,7 @@ import ProductBadges from "./ProductBadges";
 import ProductColorVariants from "./ProductColorVariants";
 import ProductVariants from "./ProductVariants";
 import NoImg from "@/images/no_images.png";
-import { useAppDispatch } from "@/store/hooks";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { addToCart } from "@/store/slices/cartSlice";
 import { api } from "@/lib/api";
 import toast from "react-hot-toast";
@@ -50,6 +50,7 @@ function ProductQuicView({
   image: fallbackImage,
 }: ProductQuicViewProps) {
   const dispatch = useAppDispatch();
+  const cartItems = useAppSelector((state) => state.cart.items);
   const router = useRouter();
 
   console.log(productUuid, "productUuidproductUuidproductUuidproductUuidproductUuid")
@@ -305,6 +306,17 @@ interface DefaultVariantResponse {
     if (finalIsTba) {
       toast.error("This product is not in stock!");
       return false;
+    }
+
+    const isAlreadyInCart = cartItems.some(
+      (item) => item.id === variantUUID || item.variantUuid === variantUUID
+    );
+
+    if (isAlreadyInCart) {
+      if (options?.showToast !== false) {
+        toast.error("Product already added to cart!");
+      }
+      return true; // return true so BUY NOW can proceed to checkout even if already added
     }
 
     dispatch(

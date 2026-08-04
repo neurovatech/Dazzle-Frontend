@@ -9,6 +9,7 @@ import {
   CartIcon,
   MobileMenuIcon,
   CloseIcon,
+  Locationicon,
 } from "@/icon";
 import ExplorePanel from "./ExplorePanel";
 
@@ -93,10 +94,11 @@ export default function MobileHeader({ categories }: Props) {
 
         <div className="flex items-center gap-2">
           <Link
-            href={token ? "/profile" : "/auth/login"}
+            // href={token ? "/profile" : "/auth/login"}
+            href="/shop-location"
             className="w-10 h-10 rounded-xl bg-background flex items-center justify-center"
           >
-            <UserIcon className="text-primary_color dark:text-white" />
+            <Locationicon  />
           </Link>
 
           <Link

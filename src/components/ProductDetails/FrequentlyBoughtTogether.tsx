@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import ProductCard from "./ProductCrad";
-import { useAppDispatch } from "@/store/hooks";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { addToCart } from "@/store/slices/cartSlice";
 import { api } from "@/lib/api";
 import toast from "react-hot-toast";
@@ -68,6 +68,8 @@ export default function FrequentlyBoughtTogether({
 
   const availableCount = products.filter((p) => p.inStock).length;
 
+  const cartItems = useAppSelector((state) => state.cart.items);
+
   const handleAddToCartAll = async () => {
     const inStockItems = products.filter((p) => p.inStock);
     if (inStockItems.length === 0) {
@@ -108,6 +110,14 @@ export default function FrequentlyBoughtTogether({
           }
         }
 
+        const isAlreadyInCart = cartItems.some(
+          (item) => item.id === variantUUID || item.variantUuid === variantUUID
+        );
+
+        if (isAlreadyInCart) {
+          continue;
+        }
+
         dispatch(
           addToCart({
             id: variantUUID,
@@ -126,9 +136,13 @@ export default function FrequentlyBoughtTogether({
         addedCount++;
       }
 
-      toast.success(`${addedCount} item${addedCount > 1 ? "s" : ""} added to cart! 🛒`);
-      if (onAddToCart) {
-        onAddToCart();
+      if (addedCount > 0) {
+        toast.success(`${addedCount} item${addedCount > 1 ? "s" : ""} added to cart! 🛒`);
+        if (onAddToCart) {
+          onAddToCart();
+        }
+      } else {
+        toast.error("Products already added to cart!");
       }
     } catch (err) {
       console.error("[FrequentlyBoughtTogether] handleAddToCartAll error:", err);

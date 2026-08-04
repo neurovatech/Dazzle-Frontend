@@ -81,6 +81,7 @@ export default function ProductInfo({
 
   // Redux dispatch
   const dispatch = useAppDispatch();
+  const cartItems = useAppSelector((state) => state.cart.items);
   const handleAddToCart = () => {
     if (isVariantUnavailable) return;
     const variantName = selectedVariant?.name ?? "";
@@ -103,6 +104,16 @@ export default function ProductInfo({
     const targetProductUuid = alldata?.productUuid || alldata?.id || "";
     const targetVariantUuid = selectedVariant?.variantUuid || selectedVariant?.id || "";
     const targetAccessoriesUuid = selectedCareOptions.map((o: any) => o.id).join(",") || "";
+
+    const targetId = targetVariantUuid || targetProductUuid || code;
+    const isAlreadyInCart = cartItems.some(
+      (item) => item.id === targetId || item.variantUuid === targetVariantUuid
+    );
+
+    if (isAlreadyInCart) {
+      toast.error("Product already added to cart!");
+      return;
+    }
 
     dispatch(
       addToCart({

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import QuantitySelector from "./QuantitySelector";
-import { useAppDispatch } from "@/store/hooks";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { addToCart } from "@/store/slices/cartSlice";
 import toast from "react-hot-toast";
 import type { CareOption } from "./DazzleCare";
@@ -86,6 +86,7 @@ export default function StickyPurchaseBar({
   careTotalRegular = 0,
 }: StickyPurchaseBarProps) {
   const dispatch = useAppDispatch();
+  const cartItems = useAppSelector((state) => state.cart.items);
 
   // ── Combined prices (product + selected care plan) ────────────
   const combinedOfferPrice    = (productPrice ?? 0) + careTotalOffer;
@@ -111,6 +112,15 @@ export default function StickyPurchaseBar({
     if ((!productId && !variantUuid) || isUnavailable) return;
     const targetVariantUuid = variantUuid || productId || "";
     const targetAccessoriesUuid = selectedCareOptions.map((o: any) => o.id).join(",") || "";
+
+    const isAlreadyInCart = cartItems.some(
+      (item) => item.id === targetVariantUuid || item.variantUuid === targetVariantUuid
+    );
+
+    if (isAlreadyInCart) {
+      toast.error("Product already added to cart!");
+      return;
+    }
 
     dispatch(
       addToCart({
