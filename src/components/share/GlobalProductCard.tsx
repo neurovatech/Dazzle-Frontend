@@ -67,6 +67,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const [imgError, setImgError]       = useState(false);
   // isTba = true হলে পণ্যটি স্টকে নেই
   const [isTba, setIsTba]             = useState(!inStock);
+  const cartItems = useAppSelector((state) => state.cart.items);
 
   const handleAddToCart = async () => {
     if (!itemId) {
