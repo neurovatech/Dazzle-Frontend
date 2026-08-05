@@ -1,8 +1,10 @@
 import CategoriesProduct from "@/components/CategoriesPages/CategoriesProduct/CategoriesProduct";
 import Breadcrumb from "@/components/share/Breadcrumb";
+import ProductListSectionCom from "@/components/HomePage/ProductList/ProductListSectionCom";
 import { api } from "@/lib/api";
 import type { AttributeGroup } from "@/components/share/FilterSidebar";
 import type { Metadata } from "next";
+
 
 export type { AttributeGroup };
 
@@ -184,6 +186,10 @@ export default async function CategoriesPage({ params, searchParams }: PageProps
       <div className="md:px-12.5 px-4">
         <Breadcrumb items={breadcrumbItems} />
       </div>
+
+
+
+
       <CategoriesProduct
         categorySlug={categorySlug}
         currentPage={currentPage}
@@ -194,6 +200,7 @@ export default async function CategoriesPage({ params, searchParams }: PageProps
         currentSearch={search ?? ""}
         brands={brands}
         attributes={attributes}
+        trendingNowSlot={<ProductListSectionCom />}
       />
     </div>
   );

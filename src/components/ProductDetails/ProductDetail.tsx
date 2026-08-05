@@ -538,7 +538,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
                           : `${prodName} ${varName}`.trim();
                       })()}
                     </p>
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="hidden items-center gap-2 shrink-0">
                       {selectedVariant.price > 0 ? (
                         <>
                           <span className="text-base font-extrabold text-[#B57908]">
@@ -640,7 +640,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
                 onClick={() => {
                   if (!showDescription) {
                     setShowDescription(true);
-                    // State update hobe, তারপর scroll করবো
                     setTimeout(() => {
                       descriptionRef.current?.scrollIntoView({
                         behavior: "smooth",
@@ -671,7 +670,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
             />
 
             {/* Description content shown below Specification when Description button is clicked */}
-            {showDescription && (
+            {/* {showDescription && ( */}
               <div
                 ref={descriptionRef}
                 className="mt-6 border-t border-gray-200 dark:border-gray-700 pt-6 scroll-mt-24"
@@ -681,7 +680,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
                 </h3>
                 <DescriptionProductDetails description={product?.description} />
               </div>
-            )}
+            {/* )} */}
           </div>
 
           {/* ── Related Products ── */}

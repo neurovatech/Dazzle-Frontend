@@ -5,12 +5,16 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import AllProducts from "@/components/CategoriesPages/CategoriesProduct/AllProducts";
-import FilterSidebar, { AttributeGroup } from "@/components/share/FilterSidebar";
+import FilterSidebar, {
+  AttributeGroup,
+} from "@/components/share/FilterSidebar";
 import { ProductItem } from "@/app/(public)/categories/[categorySlug]/page";
 import type { BrandItem } from "@/app/(public)/categories/[categorySlug]/page";
 import Banner from "@/components/CategoriesPages/CategoriesBanner/Banner";
 import { SlidersHorizontal, X } from "lucide-react";
+import dynamic from "next/dynamic";
 
+// TrendingNowSectionCom will be passed as a prop from the Server Component
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface CategoriesProductProps {
@@ -25,6 +29,7 @@ interface CategoriesProductProps {
   brands?: BrandItem[];
   attributes?: AttributeGroup[];
   banners?: any;
+  trendingNowSlot?: React.ReactNode;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -41,6 +46,7 @@ function CategoriesProduct({
   brands = [],
   attributes = [],
   banners,
+  trendingNowSlot,
 }: CategoriesProductProps) {
   const searchParams = useSearchParams();
 
@@ -58,18 +64,24 @@ function CategoriesProduct({
   const initialStockStatus = searchParams.get("stockStatus") ?? null;
   const initialBrand = searchParams.get("brand") ?? null;
 
-  const [selectedBrandSlug, setSelectedBrandSlug] = useState<string | null>(initialBrand);
-  const [selectedAttributes, setSelectedAttributes] = useState<string[]>(initialAttributes);
+  const [selectedBrandSlug, setSelectedBrandSlug] = useState<string | null>(
+    initialBrand,
+  );
+  const [selectedAttributes, setSelectedAttributes] =
+    useState<string[]>(initialAttributes);
   const [minPrice, setMinPrice] = useState<number | undefined>(initialMinPrice);
   const [maxPrice, setMaxPrice] = useState<number | undefined>(initialMaxPrice);
-  const [stockStatus, setStockStatus] = useState<string | null>(initialStockStatus);
+  const [stockStatus, setStockStatus] = useState<string | null>(
+    initialStockStatus,
+  );
   const [activePage, setActivePage] = useState<number>(initialPage);
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   useEffect(() => {
     const page = Number(searchParams.get("page") ?? String(currentPage));
-    const attrs = searchParams.get("attributes")?.split(",").filter(Boolean) ?? [];
+    const attrs =
+      searchParams.get("attributes")?.split(",").filter(Boolean) ?? [];
     const minP = searchParams.get("minDiscountedPrice")
       ? Number(searchParams.get("minDiscountedPrice"))
       : undefined;
@@ -91,16 +103,18 @@ function CategoriesProduct({
     const handlePopState = () => {
       const params = new URLSearchParams(window.location.search);
       setActivePage(Number(params.get("page") ?? String(currentPage)));
-      setSelectedAttributes(params.get("attributes")?.split(",").filter(Boolean) ?? []);
+      setSelectedAttributes(
+        params.get("attributes")?.split(",").filter(Boolean) ?? [],
+      );
       setMinPrice(
         params.get("minDiscountedPrice")
           ? Number(params.get("minDiscountedPrice"))
-          : undefined
+          : undefined,
       );
       setMaxPrice(
         params.get("maxDiscountedPrice")
           ? Number(params.get("maxDiscountedPrice"))
-          : undefined
+          : undefined,
       );
       setStockStatus(params.get("stockStatus") ?? null);
       setSelectedBrandSlug(params.get("brand") ?? null);
@@ -258,17 +272,19 @@ function CategoriesProduct({
 
       {/* ── Products grid ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mt-6 items-stretch md:px-12.5 px-4 relative">
-        <div className="lg:col-span-3 h-full md:block hidden">
-          <FilterSidebar
-            attributes={attributes}
-            selectedAttributes={selectedAttributes}
-            onToggleAttribute={handleToggleAttribute}
-            minPrice={minPrice}
-            maxPrice={maxPrice}
-            onPriceChange={handlePriceChange}
-            stockStatus={stockStatus}
-            onStockStatusToggle={handleStockStatusToggle}
-          />
+        <div className="lg:col-span-3 md:block hidden h-full">
+          <div className="sticky overflow-y-auto scrollbar-hide w-full pb-4">
+            <FilterSidebar
+              attributes={attributes}
+              selectedAttributes={selectedAttributes}
+              onToggleAttribute={handleToggleAttribute}
+              minPrice={minPrice}
+              maxPrice={maxPrice}
+              onPriceChange={handlePriceChange}
+              stockStatus={stockStatus}
+              onStockStatusToggle={handleStockStatusToggle}
+            />
+          </div>
         </div>
 
         <button
@@ -280,6 +296,24 @@ function CategoriesProduct({
         </button>
 
         <div className="lg:col-span-9 h-full">
+          <div className="bg-[#EEEEEE] dark:bg-[#2a2420] rounded-lg py-6 px-3 mb-6">
+            <div className="flex pb-4 px-4">
+              <h1 className="md:text-[32px] text-[18px] font-bold text-transparent bg-clip-text bg-[linear-gradient(90deg,#101518_0%,#E9CCAE_46.15%,#B57908_100%)] dark:text-white">
+                Top Selling
+              </h1>
+            </div>
+            {trendingNowSlot}
+          </div>
+
+          <div className="bg-[#6D3F0E] dark:bg-[#2a2420] rounded-lg py-6 px-3 mb-6">
+            <div className="flex pb-4 px-4">
+              <h1 className="text-[20px] sm:text-[24px] md:text-[32px] font-bold transition-colors bg-linear-to-r from-white to-[#CB843B] text-transparent bg-clip-text hover:brightness-110 dark:text-white">
+                Running Offer
+              </h1>
+            </div>
+            {trendingNowSlot}
+          </div>
+
           <AllProducts
             categorySlug={categorySlug}
             subCategorySlug={subCategorySlug}

@@ -160,7 +160,7 @@ export default function CheckoutPageCom() {
   // ─── Form States ────────────────────────────────────────────────────────────
   const [paymentType, setPaymentType] = useState<"online" | "cod">("online");
   const [paymentMethod, setPaymentMethod] = useState<"bkash" | "card">("bkash");
-  const [deliveryMethod, setDeliveryMethod] = useState<"regular" | "pickup">(
+  const [deliveryMethod, setDeliveryMethod] = useState<"regular" | "express" | "extreme" | "pickup">(
     "regular",
   );
   const [addressTab, setAddressTab] = useState<"existing" | "new">("existing");
@@ -239,7 +239,6 @@ export default function CheckoutPageCom() {
       });
     },
   });
-
 
   const districts = areaListRes?.data || [];
   const selectedDistrictObj = districts.find(
@@ -648,8 +647,22 @@ export default function CheckoutPageCom() {
 
                   {/* Cash on Delivery */}
                   <button
-                    onClick={() => setPaymentType("cod")}
-                    className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all cursor-pointer ${
+                    onClick={() => {
+                      if (deliveryMethod === "express") {
+                        toast.error("Cash on Delivery is not available for Express Delivery.", {
+                          style: {
+                            borderRadius: '10px',
+                            background: '#333',
+                            color: '#fff',
+                          },
+                        });
+                        return;
+                      }
+                      setPaymentType("cod");
+                    }}
+                    className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${
+                      deliveryMethod === "express" ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                    } ${
                       paymentType === "cod"
                         ? "border-[#D4A97A] bg-amber-50/10 text-gray-900 dark:text-white"
                         : "border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-gray-400"
@@ -779,7 +792,14 @@ export default function CheckoutPageCom() {
                         : "border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-gray-400"
                     }`}
                   >
-                    <span className="text-sm font-bold">Regular Delivery</span>
+                    <div className="text-left flex flex-col">
+                      <span className="text-sm font-bold">
+                        Regular Delivery
+                      </span>
+                      <span className="text-xs text-gray-400 dark:text-gray-400 mt-0.5">
+                        24 hours to 72 hours
+                      </span>
+                    </div>
                     <div
                       className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
                         deliveryMethod === "regular"
@@ -788,6 +808,79 @@ export default function CheckoutPageCom() {
                       }`}
                     >
                       {deliveryMethod === "regular" && (
+                        <div className="w-2 h-2 rounded-full bg-[#D4A97A]" />
+                      )}
+                    </div>
+                  </button>
+                  
+                  {/* Express Delivery */}
+                  <button
+                    onClick={() => {
+                      setDeliveryMethod("express");
+                      if (paymentType === "cod") {
+                        setPaymentType("online");
+                        toast("Cash on Delivery is disabled for Express Delivery.", {
+                          icon: '🚚',
+                          style: {
+                            borderRadius: '10px',
+                            background: '#333',
+                            color: '#fff',
+                          },
+                        });
+                      }
+                    }}
+                    className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all cursor-pointer ${
+                      deliveryMethod === "express"
+                        ? "border-[#D4A97A] bg-amber-50/10 text-gray-900 dark:text-white"
+                        : "border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-gray-400"
+                    }`}
+                  >
+                    <div className="text-left flex flex-col">
+                      <span className="text-sm font-bold">
+                        Express Delivery
+                      </span>
+                      <span className="text-xs text-gray-400 dark:text-gray-400 mt-0.5">
+                        Single day delivery
+                      </span>
+                    </div>
+                    <div
+                      className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                        deliveryMethod === "express"
+                          ? "border-[#D4A97A]"
+                          : "border-gray-300 dark:border-zinc-700"
+                      }`}
+                    >
+                      {deliveryMethod === "express" && (
+                        <div className="w-2 h-2 rounded-full bg-[#D4A97A]" />
+                      )}
+                    </div>
+                  </button>
+
+                  {/* Regular Delivery */}
+                  <button
+                    onClick={() => setDeliveryMethod("extreme")}
+                    className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all cursor-pointer ${
+                      deliveryMethod === "extreme"
+                        ? "border-[#D4A97A] bg-amber-50/10 text-gray-900 dark:text-white"
+                        : "border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-gray-400"
+                    }`}
+                  >
+                    <div className="text-left flex flex-col">
+                      <span className="text-sm font-bold">
+                        Extreme Fast Delivery
+                      </span>
+                      <span className="text-xs text-gray-400 dark:text-gray-400 mt-0.5">
+                        15min - 60min
+                      </span>
+                    </div>
+                    <div
+                      className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                        deliveryMethod === "extreme"
+                          ? "border-[#D4A97A]"
+                          : "border-gray-300 dark:border-zinc-700"
+                      }`}
+                    >
+                      {deliveryMethod === "extreme" && (
                         <div className="w-2 h-2 rounded-full bg-[#D4A97A]" />
                       )}
                     </div>
@@ -802,7 +895,14 @@ export default function CheckoutPageCom() {
                         : "border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-gray-400"
                     }`}
                   >
-                    <span className="text-sm font-bold">Shop Pickup</span>
+                    <div className="text-left flex flex-col">
+                      <span className="text-sm font-bold">
+                        Shop Pickup
+                      </span>
+                      <span className="text-xs text-gray-400 dark:text-gray-400 mt-0.5">
+                        Can choose store and pickup any store
+                      </span>
+                    </div>
                     <div
                       className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
                         deliveryMethod === "pickup"

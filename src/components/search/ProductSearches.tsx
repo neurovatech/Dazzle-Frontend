@@ -54,6 +54,25 @@ interface NormalizedProduct {
 
 interface ProductSearchesProps { query?: string; onClose?: () => void; }
 
+const brands = [
+  {
+    name: "Apple",
+    image: "https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg",
+  },
+  {
+    name: "Samsung",
+    image: "https://upload.wikimedia.org/wikipedia/commons/2/24/Samsung_Logo.svg",
+  },
+  {
+    name: "Laptops",
+    image: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=60&h=60&fit=crop",
+  },
+  {
+    name: "Smart-watch",
+    image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=60&h=60&fit=crop",
+  },
+];
+
 // ── Skeleton loader ─────────────────────────────────────────────────
 function ProductSkeleton() {
   return (
@@ -268,6 +287,32 @@ export default function ProductSearches({ query, onClose }: ProductSearchesProps
             </button>
           ))}
         </div>
+
+
+        <p className="text-sm font-semibold text-gray-800 dark:text-white my-3">Choose From Brands</p>
+        <div className="flex flex-wrap gap-x-4 gap-y-4">
+          {brands.map((brand, i) => (
+            <button
+              key={i}
+              className="flex flex-col items-center gap-1.5 group"
+            >
+              <div className="w-14 h-14 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden hover:border-[#D4A97A] transition-colors">
+                <Image
+                  src={brand.image}
+                  alt={brand.name}
+                  width={56}
+                  height={56}
+                  className="w-full h-full object-contain p-2"
+                  unoptimized
+                />
+              </div>
+              <span className="text-xs text-gray-600 dark:text-white group-hover:text-[#b8864e] transition-colors">
+                {brand.name}
+              </span>
+            </button>
+          ))}
+        </div>
+
       </div>
 
       {/* Right panel — keyword products */}
