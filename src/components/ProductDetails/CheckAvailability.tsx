@@ -8,6 +8,642 @@ import GlobalModal from "@/components/share/GlobalModal";
 import { MapPin, Navigation, Info } from "lucide-react";
 import { api } from "@/lib/api";
 
+/* ------------------------------------------------------------------ */
+/*  EXCHANGE MODAL DATA                                                 */
+/* ------------------------------------------------------------------ */
+
+const EXCHANGE_CATEGORIES = [
+  { id: "phone", label: "Phone" },
+  { id: "laptop", label: "Laptop" },
+  { id: "tablet", label: "Tablet" },
+];
+
+const EXCHANGE_BRANDS: Record<string, { id: string; label: string; logo: React.ReactNode }[]> = {
+  phone: [
+    {
+      id: "apple",
+      label: "Apple",
+      logo: (
+        <svg viewBox="0 0 24 24" className="w-8 h-8" fill="currentColor">
+          <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
+        </svg>
+      ),
+    },
+    {
+      id: "samsung",
+      label: "Samsung",
+      logo: (
+        <svg viewBox="0 0 24 24" className="w-8 h-8" fill="currentColor">
+          <path d="M2.042 12c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10S2.042 17.523 2.042 12zm10-8.5A8.5 8.5 0 003.542 12a8.5 8.5 0 008.5 8.5 8.5 8.5 0 008.5-8.5 8.5 8.5 0 00-8.5-8.5zm-1.5 5h3v1.5h-1.5V15h-1.5V8.5zm3.5 0h1.5V10H14V8.5z" />
+        </svg>
+      ),
+    },
+    {
+      id: "xiaomi",
+      label: "Xiaomi",
+      logo: (
+        <span className="text-xs font-black text-orange-500">MI</span>
+      ),
+    },
+    {
+      id: "oppo",
+      label: "OPPO",
+      logo: (
+        <span className="text-xs font-black text-green-600">OPPO</span>
+      ),
+    },
+  ],
+  laptop: [
+    { id: "apple", label: "Apple", logo: <svg viewBox="0 0 24 24" className="w-8 h-8" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" /></svg> },
+    { id: "dell", label: "Dell", logo: <span className="text-xs font-black text-blue-700">DELL</span> },
+    { id: "hp", label: "HP", logo: <span className="text-xs font-black text-blue-500">HP</span> },
+  ],
+  tablet: [
+    { id: "apple", label: "Apple", logo: <svg viewBox="0 0 24 24" className="w-8 h-8" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" /></svg> },
+    { id: "samsung", label: "Samsung", logo: <span className="text-xs font-black text-blue-600">Samsung</span> },
+  ],
+};
+
+const EXCHANGE_MODELS: Record<string, string[]> = {
+  apple: ["iPhone 15 Pro Max", "iPhone 15 Pro", "iPhone 15 Plus", "iPhone 15", "iPhone 14 Pro Max", "iPhone 14 Pro"],
+  samsung: ["Galaxy S24 Ultra", "Galaxy S24+", "Galaxy S24", "Galaxy A55", "Galaxy A35"],
+  xiaomi: ["Redmi Note 13 Pro", "Poco X6 Pro", "Mi 13"],
+  oppo: ["Find X7", "Reno 11", "A98"],
+  dell: ["XPS 15", "Inspiron 15", "G15"],
+  hp: ["Spectre x360", "Envy 15", "Victus"],
+};
+
+const STORAGE_OPTIONS = ["64 GB", "128 GB", "256 GB", "512 GB", "1 TB"];
+const RAM_OPTIONS = ["4 GB", "6 GB", "8 GB", "12 GB", "16 GB"];
+
+const DELIVERY_LOCATIONS = [
+  "Dhaka", "Chittagong", "Sylhet", "Rajshahi", "Khulna", "Barishal", "Mymensingh", "Rangpur",
+];
+
+const PICKUP_STORES = [
+  "Dazzle Banani Flagship Store",
+  "Dazzle Dhanmondi Express",
+  "Dazzle Mirpur Hub",
+  "Dazzle Uttara Branch",
+];
+
+/* ------------------------------------------------------------------ */
+/*  EXCHANGE MODAL COMPONENT                                            */
+/* ------------------------------------------------------------------ */
+
+type ExchangeStep = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+
+function ExchangeModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  const [step, setStep] = useState<ExchangeStep>(1);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(["phone"]);
+  const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
+  const [selectedModel, setSelectedModel] = useState<string | null>(null);
+  const [selectedStorage, setSelectedStorage] = useState<string | null>(null);
+  const [selectedRam, setSelectedRam] = useState<string | null>(null);
+  const [deliveryType, setDeliveryType] = useState<"regular" | "store">("regular");
+  const [selectedLocation, setSelectedLocation] = useState<string>("");
+  const [selectedStore, setSelectedStore] = useState<string>("");
+
+  const activeCategoryId = selectedCategories[selectedCategories.length - 1] ?? "phone";
+  const brands = EXCHANGE_BRANDS[activeCategoryId] ?? [];
+  const models = selectedBrand ? (EXCHANGE_MODELS[selectedBrand] ?? []) : [];
+
+  // estimated price calculation (dummy)
+  const estimatedPrice = useMemo(() => {
+    if (!selectedStorage) return 0;
+    const gb = parseInt(selectedStorage) || 0;
+    const base = activeCategoryId === "laptop" ? 25000 : 15000;
+    return base + gb * 50;
+  }, [selectedStorage, activeCategoryId]);
+
+  const handleCategoryToggle = (id: string) => {
+    setSelectedCategories((prev) =>
+      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
+    );
+    setSelectedBrand(null);
+    setSelectedModel(null);
+    setSelectedStorage(null);
+    setSelectedRam(null);
+  };
+
+  const handleClose = () => {
+    setStep(1);
+    setSelectedCategories(["phone"]);
+    setSelectedBrand(null);
+    setSelectedModel(null);
+    setSelectedStorage(null);
+    setSelectedRam(null);
+    setDeliveryType("regular");
+    setSelectedLocation("");
+    setSelectedStore("");
+    onClose();
+  };
+
+  const handleBack = () => {
+    if (step > 1) setStep((s) => (s - 1) as ExchangeStep);
+    else handleClose();
+  };
+
+  const canProceed = () => {
+    if (step === 1) return true;
+    if (step === 2) return selectedCategories.length > 0 && !!selectedBrand;
+    if (step === 3) return !!selectedModel;
+    if (step === 4) return !!selectedStorage;
+    if (step === 5) return !!selectedRam;
+    if (step === 6) return true;
+    if (step === 7) return deliveryType === "regular" ? !!selectedLocation : !!selectedStore;
+    return true;
+  };
+
+  const stepTitle =
+    step === 1 ? "Exchange" :
+    step === 2 ? "Exchange" :
+    step === 3 ? "Exchange" :
+    step === 4 ? "Exchange" :
+    step === 5 ? "Exchange" :
+    step === 6 ? "Exchange" :
+    "Exchange";
+
+  return (
+    <GlobalModal isOpen={isOpen} onClose={handleClose} onBack={step > 1 ? handleBack : undefined} title={stepTitle}>
+      <div className="flex flex-col" style={{ minHeight: 480 }}>
+
+        {/* ── STEP 1: Intro ── */}
+        {step === 1 && (
+          <div className="flex flex-col items-center px-6 py-6 gap-4">
+            {/* Hero image */}
+            <div className="w-full rounded-2xl overflow-hidden bg-gradient-to-br from-amber-50 to-orange-100 dark:from-[#4a3820] dark:to-[#3a2c18] flex items-center justify-center" style={{ height: 180 }}>
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <div className="w-20 h-32 bg-gray-800 rounded-2xl shadow-2xl flex items-center justify-center">
+                    <svg viewBox="0 0 24 24" className="w-10 h-10 text-white" fill="currentColor">
+                      <path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z"/>
+                    </svg>
+                  </div>
+                  <div className="absolute -right-3 -bottom-2 w-10 h-16 bg-white dark:bg-gray-700 rounded-xl shadow-xl flex items-center justify-center rotate-12">
+                    <svg viewBox="0 0 24 24" className="w-6 h-6 text-orange-500" fill="currentColor">
+                      <path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99z"/>
+                    </svg>
+                  </div>
+                </div>
+                <div className="flex flex-col items-center gap-1">
+                  <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+                    <svg viewBox="0 0 24 24" className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                    </svg>
+                  </div>
+                  <div className="w-1 h-8 bg-orange-300 rounded-full"/>
+                </div>
+                <div className="w-20 h-32 bg-orange-500 rounded-2xl shadow-2xl flex items-center justify-center">
+                  <svg viewBox="0 0 24 24" className="w-10 h-10 text-white" fill="currentColor">
+                    <path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <div className="w-full">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">Phone Exchange Program</h2>
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mt-3 mb-2">How It Works</h3>
+              <div className="space-y-2">
+                {[
+                  "Welcome to Dazzle Mobile & Gadget Shop – Your Premier Destination for Cutting-Edge Devices in Bangladesh.",
+                  "Welcome to Dazzle Mobile & Gadget Shop – Your Premier Destination for Cutting-Edge Devices in Bangladesh.",
+                  "Welcome to Dazzle Mobile & Gadget Shop – Your Premier Destination for Cutting-Edge Devices in Bangladesh.",
+                  "Welcome to Dazzle Mobile & Gadget Shop – Your Premier Destination for Cutting-Edge Devices in Bangladesh.",
+                ].map((text, i) => (
+                  <div key={i} className="flex items-start gap-2">
+                    <span className="mt-1 w-4 h-4 rounded-full bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 text-[10px] font-bold flex items-center justify-center shrink-0">{i + 1}</span>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">{text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <button
+              onClick={() => setStep(2)}
+              className="w-full py-3.5 bg-[#7B4F1E] hover:bg-[#6C4419] text-white font-bold rounded-xl transition text-sm tracking-wide mt-2"
+            >
+              EXCHANGE NOW
+            </button>
+          </div>
+        )}
+
+        {/* ── STEP 2: Select Category + Brand ── */}
+        {step === 2 && (
+          <div className="flex flex-col px-5 py-5 gap-4 flex-1">
+            {/* Category tabs */}
+            <div>
+              <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Select Category</p>
+              <div className="flex gap-2 flex-wrap">
+                {EXCHANGE_CATEGORIES.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => handleCategoryToggle(cat.id)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition cursor-pointer ${
+                      selectedCategories.includes(cat.id)
+                        ? "bg-orange-500 border-orange-500 text-white"
+                        : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-orange-400"
+                    }`}
+                  >
+                    {cat.label}
+                    {selectedCategories.includes(cat.id) && (
+                      <svg viewBox="0 0 24 24" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={3}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                      </svg>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Brand select */}
+            <div>
+              <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Select Brand</p>
+              <div className="grid grid-cols-4 gap-2">
+                {brands.map((brand) => (
+                  <button
+                    key={brand.id}
+                    onClick={() => { setSelectedBrand(brand.id); setSelectedModel(null); }}
+                    className={`flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl border-2 transition cursor-pointer aspect-square ${
+                      selectedBrand === brand.id
+                        ? "border-orange-500 bg-orange-50 dark:bg-orange-950/30"
+                        : "border-gray-100 dark:border-gray-700 hover:border-orange-300 bg-white dark:bg-gray-800"
+                    }`}
+                  >
+                    <div className="text-gray-800 dark:text-white">{brand.logo}</div>
+                    <span className="text-[10px] font-semibold text-gray-600 dark:text-gray-300">{brand.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* How it works */}
+            <div className="mt-auto">
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">How It Works</h3>
+              <div className="space-y-1.5">
+                {["Welcome to Dazzle Mobile & Gadget Shop – Your Premier Destination for Cutting-Edge Devices in Bangladesh.","Welcome to Dazzle Mobile & Gadget Shop – Your Premier Destination for Cutting-Edge Devices in Bangladesh."].map((text, i) => (
+                  <div key={i} className="flex items-start gap-2">
+                    <span className="mt-1 w-4 h-4 rounded-full bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 text-[10px] font-bold flex items-center justify-center shrink-0">{i + 1}</span>
+                    <p className="text-[11px] text-gray-600 dark:text-gray-400 leading-relaxed">{text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Footer buttons */}
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={handleBack}
+                className="flex-1 py-3 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-semibold rounded-xl text-sm transition hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
+              >
+                BACK
+              </button>
+              <button
+                onClick={() => canProceed() && setStep(3)}
+                disabled={!canProceed()}
+                className="flex-1 py-3 bg-[#7B4F1E] hover:bg-[#6C4419] disabled:opacity-40 text-white font-bold rounded-xl text-sm transition cursor-pointer"
+              >
+                CONTINUE
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── STEP 3: Select Model ── */}
+        {step === 3 && (
+          <div className="flex flex-col px-5 py-5 gap-4 flex-1">
+            <div>
+              <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Select Category</p>
+              <div className="flex gap-2 flex-wrap">
+                {selectedCategories.map((catId) => {
+                  const cat = EXCHANGE_CATEGORIES.find(c => c.id === catId);
+                  return cat ? (
+                    <span key={cat.id} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-orange-500 text-white text-xs font-semibold">
+                      {cat.label}
+                      <svg viewBox="0 0 24 24" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </span>
+                  ) : null;
+                })}
+                {selectedBrand && (
+                  <span className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-orange-500 text-white text-xs font-semibold capitalize">
+                    {selectedBrand}
+                    <svg viewBox="0 0 24 24" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Select Model</p>
+              <div className="grid grid-cols-2 gap-2">
+                {models.map((model) => (
+                  <button
+                    key={model}
+                    onClick={() => setSelectedModel(model)}
+                    className={`p-3 rounded-xl border-2 text-xs font-semibold text-center transition cursor-pointer ${
+                      selectedModel === model
+                        ? "border-orange-500 bg-orange-50 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400"
+                        : "border-gray-100 dark:border-gray-700 hover:border-orange-300 text-gray-700 dark:text-gray-300"
+                    }`}
+                  >
+                    {model}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-auto">
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">How It Works</h3>
+              <div className="space-y-1.5">
+                {["Welcome to Dazzle Mobile & Gadget Shop – Your Premier Destination for Cutting-Edge Devices in Bangladesh."].map((text, i) => (
+                  <div key={i} className="flex items-start gap-2">
+                    <span className="mt-1 w-4 h-4 rounded-full bg-orange-100 dark:bg-orange-900/40 text-orange-600 text-[10px] font-bold flex items-center justify-center shrink-0">{i + 1}</span>
+                    <p className="text-[11px] text-gray-600 dark:text-gray-400 leading-relaxed">{text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button onClick={handleBack} className="flex-1 py-3 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-semibold rounded-xl text-sm transition hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer">BACK</button>
+              <button onClick={() => canProceed() && setStep(4)} disabled={!canProceed()} className="flex-1 py-3 bg-[#7B4F1E] hover:bg-[#6C4419] disabled:opacity-40 text-white font-bold rounded-xl text-sm transition cursor-pointer">CONTINUE</button>
+            </div>
+          </div>
+        )}
+
+        {/* ── STEP 4: Select Storage ── */}
+        {step === 4 && (
+          <div className="flex flex-col px-5 py-5 gap-4 flex-1">
+            <div>
+              <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Select Category</p>
+              <div className="flex gap-2 flex-wrap">
+                {selectedCategories.map((catId) => {
+                  const cat = EXCHANGE_CATEGORIES.find(c => c.id === catId);
+                  return cat ? (
+                    <span key={cat.id} className="px-3 py-1.5 rounded-lg bg-orange-500 text-white text-xs font-semibold">{cat.label}</span>
+                  ) : null;
+                })}
+                {selectedBrand && <span className="px-3 py-1.5 rounded-lg bg-orange-500 text-white text-xs font-semibold capitalize">{selectedBrand}</span>}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Select Storage</p>
+              <div className="flex flex-wrap gap-2">
+                {STORAGE_OPTIONS.map((opt) => (
+                  <button
+                    key={opt}
+                    onClick={() => setSelectedStorage(opt)}
+                    className={`px-4 py-2 rounded-xl border-2 text-xs font-bold transition cursor-pointer ${
+                      selectedStorage === opt
+                        ? "border-orange-500 bg-orange-50 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400"
+                        : "border-gray-100 dark:border-gray-700 hover:border-orange-300 text-gray-700 dark:text-gray-300"
+                    }`}
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Selected Model</p>
+              <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-xl text-xs text-gray-600 dark:text-gray-300 font-medium">
+                {selectedModel ?? "—"}
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-auto pt-2">
+              <button onClick={handleBack} className="flex-1 py-3 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-semibold rounded-xl text-sm transition hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer">BACK</button>
+              <button onClick={() => canProceed() && setStep(5)} disabled={!canProceed()} className="flex-1 py-3 bg-[#7B4F1E] hover:bg-[#6C4419] disabled:opacity-40 text-white font-bold rounded-xl text-sm transition cursor-pointer">CONTINUE</button>
+            </div>
+          </div>
+        )}
+
+        {/* ── STEP 5: Select RAM ── */}
+        {step === 5 && (
+          <div className="flex flex-col px-5 py-5 gap-4 flex-1">
+            <div>
+              <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Select Category</p>
+              <div className="flex gap-2 flex-wrap">
+                {selectedCategories.map((catId) => {
+                  const cat = EXCHANGE_CATEGORIES.find(c => c.id === catId);
+                  return cat ? <span key={cat.id} className="px-3 py-1.5 rounded-lg bg-orange-500 text-white text-xs font-semibold">{cat.label}</span> : null;
+                })}
+                {selectedBrand && <span className="px-3 py-1.5 rounded-lg bg-orange-500 text-white text-xs font-semibold capitalize">{selectedBrand}</span>}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Select RAM</p>
+              <div className="flex flex-wrap gap-2">
+                {RAM_OPTIONS.map((opt) => (
+                  <button
+                    key={opt}
+                    onClick={() => setSelectedRam(opt)}
+                    className={`px-4 py-2 rounded-xl border-2 text-xs font-bold transition cursor-pointer ${
+                      selectedRam === opt
+                        ? "border-orange-500 bg-orange-50 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400"
+                        : "border-gray-100 dark:border-gray-700 hover:border-orange-300 text-gray-700 dark:text-gray-300"
+                    }`}
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">How It Works</p>
+              <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30 rounded-xl p-3">
+                <p className="text-[11px] text-amber-700 dark:text-amber-400 leading-relaxed">
+                  Selling your Apple {selectedModel || "iPhone"} 13 pro max (2023) mobile phone can bring you <span className="font-bold">৳ {estimatedPrice.toLocaleString()}</span>
+                </p>
+              </div>
+              <div className="mt-2 flex items-center justify-between bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3">
+                <span className="text-xs text-gray-500 dark:text-gray-400">Phone Price</span>
+                <span className="text-sm font-bold text-gray-800 dark:text-white">৳{estimatedPrice.toLocaleString()}</span>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-auto pt-2">
+              <button onClick={handleBack} className="flex-1 py-3 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-semibold rounded-xl text-sm transition hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer">BACK</button>
+              <button onClick={() => canProceed() && setStep(6)} disabled={!canProceed()} className="flex-1 py-3 bg-[#7B4F1E] hover:bg-[#6C4419] disabled:opacity-40 text-white font-bold rounded-xl text-sm transition cursor-pointer">CONTINUE</button>
+            </div>
+          </div>
+        )}
+
+        {/* ── STEP 6: Condition & Price ── */}
+        {step === 6 && (
+          <div className="flex flex-col px-5 py-5 gap-4 flex-1">
+            <div>
+              <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Select Category</p>
+              <div className="flex gap-2 flex-wrap">
+                {selectedCategories.map((catId) => {
+                  const cat = EXCHANGE_CATEGORIES.find(c => c.id === catId);
+                  return cat ? <span key={cat.id} className="px-3 py-1.5 rounded-lg bg-orange-500 text-white text-xs font-semibold">{cat.label}</span> : null;
+                })}
+                {selectedBrand && <span className="px-3 py-1.5 rounded-lg bg-orange-500 text-white text-xs font-semibold capitalize">{selectedBrand}</span>}
+              </div>
+            </div>
+
+            {/* Summary card */}
+            <div className="bg-gradient-to-br from-orange-50 to-amber-50 dark:from-[#4a3820] dark:to-[#3a2c18] border border-orange-100 dark:border-orange-900/40 rounded-2xl p-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500 dark:text-gray-400">Model</span>
+                <span className="text-xs font-semibold text-gray-800 dark:text-white">{selectedModel}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500 dark:text-gray-400">Storage</span>
+                <span className="text-xs font-semibold text-gray-800 dark:text-white">{selectedStorage}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500 dark:text-gray-400">RAM</span>
+                <span className="text-xs font-semibold text-gray-800 dark:text-white">{selectedRam}</span>
+              </div>
+              <div className="border-t border-orange-100 dark:border-orange-900/40 pt-2 flex items-center justify-between">
+                <span className="text-sm font-bold text-gray-700 dark:text-gray-200">Estimated Value</span>
+                <span className="text-lg font-extrabold text-orange-600 dark:text-orange-400">৳{estimatedPrice.toLocaleString()}</span>
+              </div>
+            </div>
+
+            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30 rounded-xl p-3">
+              <p className="text-[11px] text-amber-700 dark:text-amber-400 leading-relaxed">
+                Get FREE home pick-up for your old used device. Select your city.
+              </p>
+            </div>
+
+            <div className="flex gap-3 mt-auto pt-2">
+              <button onClick={handleBack} className="flex-1 py-3 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-semibold rounded-xl text-sm transition hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer">BACK</button>
+              <button onClick={() => setStep(7)} className="flex-1 py-3 bg-[#7B4F1E] hover:bg-[#6C4419] text-white font-bold rounded-xl text-sm transition cursor-pointer">CONTINUE</button>
+            </div>
+          </div>
+        )}
+
+        {/* ── STEP 7: Location & Delivery ── */}
+        {step === 7 && (
+          <div className="flex flex-col px-5 py-5 gap-4 flex-1">
+            <div>
+              <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Select Category</p>
+              <div className="flex gap-2 flex-wrap">
+                {selectedCategories.map((catId) => {
+                  const cat = EXCHANGE_CATEGORIES.find(c => c.id === catId);
+                  return cat ? <span key={cat.id} className="px-3 py-1.5 rounded-lg bg-orange-500 text-white text-xs font-semibold">{cat.label}</span> : null;
+                })}
+                {selectedBrand && <span className="px-3 py-1.5 rounded-lg bg-orange-500 text-white text-xs font-semibold capitalize">{selectedBrand}</span>}
+              </div>
+            </div>
+
+            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30 rounded-xl p-3">
+              <p className="text-[11px] text-amber-700 dark:text-amber-400 leading-relaxed">
+                Get FREE home pick-up for your old used device. Select your city.
+              </p>
+            </div>
+
+            {/* Location dropdown */}
+            <div>
+              <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Location</p>
+              <select
+                value={selectedLocation}
+                onChange={(e) => setSelectedLocation(e.target.value)}
+                className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-orange-400 cursor-pointer"
+              >
+                <option value="">Select location</option>
+                {DELIVERY_LOCATIONS.map((loc) => (
+                  <option key={loc} value={loc}>{loc}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Delivery options */}
+            <div>
+              <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Delivery Options</p>
+              <div className="space-y-2">
+                <label
+                  className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition ${
+                    deliveryType === "regular"
+                      ? "border-orange-500 bg-orange-50 dark:bg-orange-950/20"
+                      : "border-gray-100 dark:border-gray-700 hover:border-orange-300"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="delivery"
+                    value="regular"
+                    checked={deliveryType === "regular"}
+                    onChange={() => setDeliveryType("regular")}
+                    className="accent-orange-500"
+                  />
+                  <div>
+                    <p className="text-xs font-bold text-gray-800 dark:text-white">Regular Delivery</p>
+                    <p className="text-[10px] text-gray-400 dark:text-gray-500">Call / WhatsApp and pickup any time</p>
+                  </div>
+                </label>
+
+                <label
+                  className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition ${
+                    deliveryType === "store"
+                      ? "border-orange-500 bg-orange-50 dark:bg-orange-950/20"
+                      : "border-gray-100 dark:border-gray-700 hover:border-orange-300"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="delivery"
+                    value="store"
+                    checked={deliveryType === "store"}
+                    onChange={() => setDeliveryType("store")}
+                    className="accent-orange-500"
+                  />
+                  <div>
+                    <p className="text-xs font-bold text-gray-800 dark:text-white">Store Pickup</p>
+                    <p className="text-[10px] text-gray-400 dark:text-gray-500">Call / WhatsApp and pickup any time</p>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            {/* Store picker if store selected */}
+            {deliveryType === "store" && (
+              <div>
+                <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Choose Pickup Store</p>
+                <select
+                  value={selectedStore}
+                  onChange={(e) => setSelectedStore(e.target.value)}
+                  className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-orange-400 cursor-pointer"
+                >
+                  <option value="">Choose Pickup Store</option>
+                  {PICKUP_STORES.map((store) => (
+                    <option key={store} value={store}>{store}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <div className="flex gap-3 mt-auto pt-2">
+              <button onClick={handleBack} className="flex-1 py-3 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-semibold rounded-xl text-sm transition hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer">BACK</button>
+              <button
+                onClick={() => {
+                  if (canProceed()) {
+                    alert("Exchange request submitted successfully! Our team will contact you shortly.");
+                    handleClose();
+                  }
+                }}
+                disabled={!canProceed()}
+                className="flex-1 py-3 bg-[#7B4F1E] hover:bg-[#6C4419] disabled:opacity-40 text-white font-bold rounded-xl text-sm transition cursor-pointer"
+              >
+                CONTINUE
+              </button>
+            </div>
+          </div>
+        )}
+
+      </div>
+    </GlobalModal>
+  );
+}
+
 // Simulated branch coordinates (Dhaka, Bangladesh)
 const BRANCHES = [
   {
@@ -158,6 +794,7 @@ export default function CheckAvailability({
   onExternalEmiClose,
 }: any) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isExchangeOpen, setIsExchangeOpen] = useState(false);
   const [userCoords, setUserCoords] = useState<{
     lat: number;
     lon: number;
@@ -276,14 +913,14 @@ export default function CheckAvailability({
   return (
     <div className="lg:flex gap-3 my-6">
       {/* Minimum Booking */}
-      <button className="flex-1 w-full mb-4 lg:mb-0 flex items-center justify-between gap-2 bg-linear-to-r from-orange-600 to-orange-500 text-white font-semibold text-sm px-4 py-3 rounded-xl shadow-sm hover:opacity-90 transition-opacity cursor-pointer">
+      <button onClick={() => setIsOpen(true)} className="flex-1 w-full mb-4 lg:mb-0 flex items-center justify-between gap-2 bg-linear-to-r from-orange-600 to-orange-500 text-white font-semibold text-sm px-4 py-3 rounded-xl shadow-sm hover:opacity-90 transition-opacity cursor-pointer">
         <div className="flex items-center gap-2">
           <span className="bg-white rounded-lg p-1.5">
             <CheckHome />
           </span>
           <div className="flex flex-col items-start">
-            <span>Minimum Booking</span>
-            <span> {product?.minBookingPrice} BDT</span>
+            <span>Check Availability </span>
+            {/* <span> {product?.minBookingPrice} BDT</span> */}
           </div>
         </div>
         <svg
@@ -298,8 +935,8 @@ export default function CheckAvailability({
         </svg>
       </button>
 
-      {/* Purchase Points */}
-      <button className="flex-1 w-full mb-4 lg:mb-0 flex items-center justify-between gap-2 bg-linear-to-r from-emerald-600 to-teal-500 text-white font-semibold text-sm px-4 py-3 rounded-xl shadow-sm hover:opacity-90 transition-opacity cursor-pointer">
+      {/* Exchange */}
+      <button onClick={() => setIsExchangeOpen(true)} className="flex-1 w-full mb-4 lg:mb-0 flex items-center justify-between gap-2 bg-linear-to-r from-emerald-600 to-teal-500 text-white font-semibold text-sm px-4 py-3 rounded-xl shadow-sm hover:opacity-90 transition-opacity cursor-pointer">
         <div className="flex items-center gap-2">
           <span className="bg-white rounded-lg p-1.5">
             <svg
@@ -320,8 +957,8 @@ export default function CheckAvailability({
             </svg>
           </span>
           <div className="flex flex-col items-start">
-            <span>Purchase Points</span>
-            <span> {product?.purchasePoints} Points</span>
+            <span>Exchange</span>
+            {/* <span> {product?.purchasePoints} Points</span> */}
           </div>
         </div>
         <svg
@@ -541,6 +1178,9 @@ export default function CheckAvailability({
     </div>
   </div>
 </GlobalModal>
+
+      {/* Exchange Modal */}
+      <ExchangeModal isOpen={isExchangeOpen} onClose={() => setIsExchangeOpen(false)} />
     </div>
   );
 }

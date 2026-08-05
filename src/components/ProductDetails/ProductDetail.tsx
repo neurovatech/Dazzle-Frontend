@@ -13,6 +13,7 @@ import ProductColorVariants from "./ProductColorVariants";
 import DazzleCare, { CareOption } from "./DazzleCare";
 import ContactOptions from "./ContactOptions";
 import CheckAvailability from "./CheckAvailability";
+import TransparentProfitMeterArea from "./TransparentProfitMeterArea";
 import FrequentlyBoughtTogether from "./FrequentlyBoughtTogether";
 import ProductSpecifications from "./ProductSpecifications";
 import Breadcrumb from "@/components/share/Breadcrumb";
@@ -592,6 +593,9 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
                 externalEmiOpen={emiOpen}
                 onExternalEmiClose={() => setEmiOpen(false)}
               />
+            </div>
+            <div>
+              <TransparentProfitMeterArea />
             </div>
             <div>
               <PriceAvailability
