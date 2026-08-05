@@ -910,6 +910,8 @@ export default function CheckAvailability({
     "",
   );
 
+  console.log(product, "productproductproductproductproduct")
+
   return (
     <div className="lg:flex gap-3 my-6">
       {/* Minimum Booking */}

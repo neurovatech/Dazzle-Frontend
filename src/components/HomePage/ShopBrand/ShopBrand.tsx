@@ -56,7 +56,7 @@ export default async function ShopBrand() {
               href={`/brands/${item.slug}`}
               className="flex flex-col items-center"
             >
-              <div className="relative w-full aspect-square bg-white border border-[#c6c6c6]  rounded-4xl p-4 md:p-6 transition-all duration-300 hover:scale-105">
+              <div className="relative w-full aspect-square bg-white  rounded-4xl p-4 md:p-6 transition-all duration-300 hover:scale-105">
                 <div className="relative w-full h-full">
                   <Image
                     src={item.logo}

@@ -28,6 +28,7 @@ import toast from "react-hot-toast";
 // import type { ProductApiData } from "@/app/(public)/product/[productSlug]/page";
 import RelatedProductSectionCom from "./RelatedProducts/RelatedProductSectionCom";
 import DescriptionProductDetails from "./DescriptionProductDetails";
+import DeliveryInfo from "./DeliveryInfo";
 
 import {
   consolidateVariants,
@@ -595,7 +596,12 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
               />
             </div>
             <div>
-              <TransparentProfitMeterArea />
+              <TransparentProfitMeterArea
+                product={product}
+                currentPrice={price}
+                dazzleCareOptions={dazzleCareOptions}
+                selectedCareIds={selectedCareIds}
+              />
             </div>
             <div>
               <PriceAvailability
@@ -609,6 +615,10 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
                 selectedPriceType={selectedPriceType}
                 onPriceTypeChange={setSelectedPriceType}
               />
+            </div>
+
+            <div>
+              <DeliveryInfo deliveryDays={""} purchasePoints={product?.purchasePoints ?? 0} minBookingAmount={product?.minBookingPrice ?? 0} />
             </div>
 
             {/* {frequentlyBoughtProducts.length > 0 && (

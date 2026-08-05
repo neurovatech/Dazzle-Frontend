@@ -1,6 +1,8 @@
 import React from "react";
 import { Bike, Star, ShoppingBag } from "lucide-react";
-
+import Bk from "@/images/bk.png";
+import ST from "@/images/st.png";
+import LK from "@/images/lk.png";
 interface DeliveryInfoProps {
   deliveryDays: string;
   purchasePoints: number;
@@ -16,22 +18,22 @@ const DeliveryInfo: React.FC<DeliveryInfoProps> = ({
 }) => {
   const items = [
     {
-      icon: <Bike size={22} className="text-orange-500" />,
+      icon: Bk,
       label: "Estimated Delivery",
-      value: deliveryDays,
-      bg: "bg-orange-50",
+      value: "0-3 Days",
+      bg: "bg-[#FFFCD3]",
     },
     {
-      icon: <Star size={22} className="text-yellow-500 fill-yellow-400" />,
+      icon: ST,
       label: "Purchase Point",
       value: purchasePoints.toString(),
-      bg: "bg-yellow-50",
+      bg: "bg-[#FFEFDE]",
     },
     {
-      icon: <ShoppingBag size={22} className="text-blue-500" />,
+      icon: LK,
       label: "Minimum Booking Amount",
       value: formatPrice(minBookingAmount),
-      bg: "bg-blue-50",
+      bg: "bg-[#F0F4FF]",
     },
   ];
 
@@ -40,10 +42,10 @@ const DeliveryInfo: React.FC<DeliveryInfoProps> = ({
       {items.map((item) => (
         <div
           key={item.label}
-          className={`${item.bg} rounded-2xl p-3 flex flex-col items-center text-center gap-1.5`}
+          className={`${item.bg} rounded-2xl px-3 py-6 flex flex-col items-center text-center gap-1.5`}
         >
-          {item.icon}
-          <p className="text-[10px] sm:text-xs text-gray-500 font-medium leading-tight">{item.label}</p>
+          <img src={item.icon.src} alt={item.label} className="w-6 h-6" />
+          <p className="text-[10px] sm:text-xs text-[#222222] font-medium leading-tight">{item.label}</p>
           <p className="text-sm sm:text-base font-extrabold text-gray-800">{item.value}</p>
         </div>
       ))}
