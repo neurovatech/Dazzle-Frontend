@@ -147,9 +147,8 @@ export default async function Home() {
           />
         )}
       </div>
-      <div className="hidden">
-        <ShopSelector />
-      </div>
+      {/* Shop Selector — floating button + modal */}
+      <ShopSelector />
 
       {/* Categories  */}
       <div className="flex flex-col flex-1 max-w-355 mx-auto">
