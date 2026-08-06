@@ -590,6 +590,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
             <div>
               <CheckAvailability
                 product={product}
+                selectedVariant={selectedVariant}
                 currentPrice={selectedVariant?.mrp}
                 externalEmiOpen={emiOpen}
                 onExternalEmiClose={() => setEmiOpen(false)}

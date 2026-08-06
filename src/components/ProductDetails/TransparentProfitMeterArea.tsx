@@ -1,6 +1,7 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import GlobalModal from "@/components/share/GlobalModal";
 import { CareOption } from "./DazzleCare";
 
@@ -40,46 +41,45 @@ export default function TransparentProfitMeterArea({
   const [showPriceCheck, setShowPriceCheck] = useState(false);
 
   // ── Instant Replacement Calculator state ──────────────────────────────────
-  // slider: days (min 180 = 0.5 yr, max 1825 = 5 yr), default 600
-  const [keepDays, setKeepDays] = useState(600);
-  // Which dazzle-care item is selected inside the calculator
-  const [calcCareId, setCalcCareId] = useState<string | null>(
-    selectedCareIds[0] ?? null
-  );
+  // Which dazzle-care item is selected inside the calculator (default to first option)
+  const [calcCareId, setCalcCareId] = useState<string | null>(() => {
+    return selectedCareIds[0] ?? dazzleCareOptions[0]?.id ?? null;
+  });
+
+  // Ensure first dazzleCareOption is selected by default when options are loaded
+  useEffect(() => {
+    if (dazzleCareOptions.length > 0) {
+      if (!calcCareId || !dazzleCareOptions.some((o) => o.id === calcCareId)) {
+        setCalcCareId(selectedCareIds[0] ?? dazzleCareOptions[0].id);
+      }
+    }
+  }, [dazzleCareOptions, selectedCareIds, calcCareId]);
 
   const price = currentPrice > 0 ? currentPrice : product?.discountedPrice ?? 0;
   const regularPrice = product?.regularPrice ?? price;
   // purchase margin (%) — use product field or fallback 3 %
   const purchaseRate: number = product?.purchaseRate ?? product?.salesOnRate ?? 3;
-  const expectedProfit = Math.round((price * purchaseRate) / 100);
+  const expectedProfit = Math.round((price * product?.profitRatio) / 100);
 
   // ── Calculator derived values ─────────────────────────────────────────────
-  const selectedCareOpt = dazzleCareOptions.find((o) => o.id === calcCareId) ?? null;
-  const careWarrantyDays = selectedCareOpt?.warrantyDays ?? 0;
+  const selectedCareOpt =
+    dazzleCareOptions.find((o) => o.id === calcCareId) ??
+    dazzleCareOptions[0] ??
+    null;
+
+  const careWarrantyDays =
+    selectedCareOpt?.warrantyDays && selectedCareOpt.warrantyDays > 0
+      ? selectedCareOpt.warrantyDays
+      : 365;
+
+  // Slider value fixed to warranty days
+  const keepDays = careWarrantyDays;
   const carePrice = selectedCareOpt?.price ?? 0;
-  const dazzleEnabled = !!selectedCareOpt && careWarrantyDays > 0;
+  const dazzleEnabled = !!selectedCareOpt;
 
-  // effective lifetime (days): if dazzle toggle is on → keep + care warranty
-  const effectiveDays = dazzleEnabled
-    ? keepDays + careWarrantyDays
-    : keepDays;
-
-  // total cost = product price + care plan (if selected)
-  const totalCost = price + (dazzleEnabled ? carePrice : 0);
-
-  // cost per day
-  const costPerDay = effectiveDays > 0 ? totalCost / effectiveDays : 0;
-
-  // base cost per day (without dazzle)
-  const baseCostPerDay = keepDays > 0 ? price / keepDays : 0;
-
-  // savings % due to dazzle
-  const savingsPct =
-    dazzleEnabled && baseCostPerDay > 0
-      ? Math.round(((baseCostPerDay - costPerDay) / baseCostPerDay) * 100)
-      : 0;
-
-  const keepYrs = (keepDays / 365).toFixed(2);
+  // cost per day: Dazzle Care option price divided by warranty days
+  const costPerDay = keepDays > 0 ? carePrice / keepDays : 0;
+  const keepYrs = (keepDays / 365).toFixed(1);
 
   // ── Live Other Price Check ────────────────────────────────────────────────
   // Simulate competitors charging slightly more
@@ -90,8 +90,11 @@ export default function TransparentProfitMeterArea({
 
   // ── handlers ─────────────────────────────────────────────────────────────
   const handleCareToggle = useCallback((id: string) => {
-    setCalcCareId((prev) => (prev === id ? null : id));
+    setCalcCareId(id);
   }, []);
+
+
+  console.log(product, "productproductproductproductproductproductproductproductproductproductproductproductproductproductproductproductproductproductproduct");
 
   return (
     <div className="lg:flex gap-3 my-6">
@@ -168,17 +171,17 @@ export default function TransparentProfitMeterArea({
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-500">Product price:</span>
             <span className="font-semibold">
-              {price > 0 ? fmt(price) + " BDT" : "Price on request"}
+              {price > 0 ? fmt(price) + "" : "Price on request"}
             </span>
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-500">Purchase:</span>
-            <span className="font-semibold">{purchaseRate}%</span>
+            <span className="font-semibold">{product?.profitRatio}%</span>
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-500">Expected profit:</span>
             <span className="font-semibold text-[#7A4F1E]">
-              ~{fmt(expectedProfit)} BDT
+              ~{fmt(expectedProfit)} 
             </span>
           </div>
 
@@ -230,7 +233,7 @@ export default function TransparentProfitMeterArea({
                 YOU PAY ONCE
               </p>
               <p className="text-lg font-bold text-gray-800">
-                {fmt(totalCost)}
+                {fmt(price)}
               </p>
             </div>
           </div>
@@ -249,8 +252,8 @@ export default function TransparentProfitMeterArea({
               max={1825}
               step={30}
               value={keepDays}
-              onChange={(e) => setKeepDays(Number(e.target.value))}
-              className="w-full accent-[#7A4F1E] h-1.5 cursor-pointer"
+              disabled
+              className="w-full accent-[#7A4F1E] h-1.5 cursor-not-allowed opacity-70"
             />
             <div className="flex justify-between text-[10px] text-gray-400 mt-1">
               {["0.5y", "1y", "2y", "3y", "4y", "5y"].map((l) => (
@@ -314,10 +317,10 @@ export default function TransparentProfitMeterArea({
               {/* Dazzle benefit explanation */}
               {dazzleEnabled && (
                 <p className="text-xs text-gray-500 leading-relaxed">
-                  If anything breaks in {(careWarrantyDays / 365).toFixed(0)} years we replace it
-                  once, free. Your effective lifetime stretches to{" "}
-                  <strong>{effectiveDays} days</strong> — the per-day cost drops
-                  by <strong>~{Math.abs(savingsPct)}%</strong>.
+                  If anything breaks in {(careWarrantyDays / 365).toFixed(1)} years we replace it
+                  once, free. Your guarantee lifetime is{" "}
+                  <strong>{keepDays} days</strong> — the cost per day is{" "}
+                  <strong>{fmt(costPerDay)}/day</strong>.
                 </p>
               )}
             </div>
