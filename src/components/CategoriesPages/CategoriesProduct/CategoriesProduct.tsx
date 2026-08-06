@@ -296,23 +296,27 @@ function CategoriesProduct({
         </button>
 
         <div className="lg:col-span-9 h-full">
-          <div className="bg-[#EEEEEE] dark:bg-[#2a2420] rounded-lg py-6 px-3 mb-6">
-            <div className="flex pb-4 px-4">
-              <h1 className="md:text-[32px] text-[18px] font-bold text-transparent bg-clip-text bg-[linear-gradient(90deg,#101518_0%,#E9CCAE_46.15%,#B57908_100%)] dark:text-white">
-                Top Selling
-              </h1>
+          {trendingNowSlot && (
+            <div className="bg-[#EEEEEE] dark:bg-[#2a2420] rounded-lg py-6 px-3 mb-6">
+              <div className="flex pb-4 px-4">
+                <h1 className="md:text-[32px] text-[18px] font-bold text-transparent bg-clip-text bg-[linear-gradient(90deg,#101518_0%,#E9CCAE_46.15%,#B57908_100%)] dark:text-white">
+                  Top Selling
+                </h1>
+              </div>
+              {trendingNowSlot}
             </div>
-            {trendingNowSlot}
-          </div>
+          )}
 
-          <div className="bg-[#6D3F0E] dark:bg-[#2a2420] rounded-lg py-6 px-3 mb-6">
-            <div className="flex pb-4 px-4">
-              <h1 className="text-[20px] sm:text-[24px] md:text-[32px] font-bold transition-colors bg-linear-to-r from-white to-[#CB843B] text-transparent bg-clip-text hover:brightness-110 dark:text-white">
-                Running Offer
-              </h1>
+          {trendingNowSlot && (
+            <div className="bg-[#6D3F0E] dark:bg-[#2a2420] rounded-lg py-6 px-3 mb-6">
+              <div className="flex pb-4 px-4">
+                <h1 className="text-[20px] sm:text-[24px] md:text-[32px] font-bold transition-colors bg-linear-to-r from-white to-[#CB843B] text-transparent bg-clip-text hover:brightness-110 dark:text-white">
+                  Running Offer
+                </h1>
+              </div>
+              {trendingNowSlot}
             </div>
-            {trendingNowSlot}
-          </div>
+          )}
 
           <AllProducts
             categorySlug={categorySlug}
