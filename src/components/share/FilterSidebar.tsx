@@ -27,7 +27,7 @@ interface FilterSidebarProps {
   attributes?: AttributeGroup[];
   priceData?: PriceData;
   selectedAttributes?: string[];
-  onToggleAttribute?: (guid: string) => void;
+  onToggleAttribute?: (value: string) => void;
   minPrice?: number;
   maxPrice?: number;
   onPriceChange?: (min: number, max: number) => void;
@@ -161,6 +161,8 @@ export default function FilterSidebar({
     },
     [localMinPrice, localMaxPrice, defaultMin, defaultMax, onPriceChange]
   );
+
+  console.log(openSections, "openSections");
 
   return (
     <div className="bg-white dark:bg-[#3e3329] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700/60 p-5 sticky top-6 transition-colors duration-200">
@@ -371,14 +373,14 @@ export default function FilterSidebar({
             {isOpen && (
               <div className="mt-3 grid grid-cols-2 gap-y-2 gap-x-4">
                 {group.items.map((item) => {
-                  const isChecked = selectedAttributes.includes(item.attributeGuid);
+                  const isChecked = selectedAttributes.includes(item.attributeVariation);
                   return (
                     <label
                       key={item.attributeGuid}
                       className="flex items-center gap-2 cursor-pointer select-none"
                       onClick={(e) => {
                         e.preventDefault();
-                        onToggleAttribute?.(item.attributeGuid);
+                        onToggleAttribute?.(item.attributeVariation);
                       }}
                     >
                       <div

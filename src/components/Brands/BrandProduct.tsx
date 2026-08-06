@@ -190,10 +190,10 @@ export default function BrandProducts({
     window.history.pushState(null, "", newUrl);
   };
 
-  const handleToggleAttribute = (guid: string) => {
-    const nextAttrs = selectedAttributes.includes(guid)
-      ? selectedAttributes.filter((id) => id !== guid)
-      : [...selectedAttributes, guid];
+  const handleToggleAttribute = (value: string) => {
+    const nextAttrs = selectedAttributes.includes(value)
+      ? selectedAttributes.filter((v) => v !== value)
+      : [...selectedAttributes, value];
 
     setSelectedAttributes(nextAttrs);
     setActivePage(1);
