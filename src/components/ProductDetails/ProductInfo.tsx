@@ -194,6 +194,8 @@ export default function ProductInfo({
       }),
     );
   };
+  
+  console.log(alldata, "alldataalldata")
 
   return (
     <div className="space-y-5 text-gray-800 dark:text-gray-100">
@@ -310,7 +312,7 @@ export default function ProductInfo({
             {/* Sold in last 12 hours */}
             <div className="flex items-center gap-2 rounded-full bg-red-50 px-4 py-2 text-sm font-medium text-gray-700">
               🔥
-              <span>1 sold in last 12 hours</span>
+              <span>{alldata?.metaTags?.soldCount} sold in last {alldata?.metaTags?.soldTime} hours</span>
             </div>
 
             {/* Customer review */}
@@ -332,7 +334,7 @@ export default function ProductInfo({
                 />
               </svg>
 
-              <span>217 customer review</span>
+              <span>{alldata?.metaTags?.reviewPoints} customer review</span>
             </div>
 
             {/* Viewing now */}
@@ -354,7 +356,7 @@ export default function ProductInfo({
                 />
               </svg>
 
-              <span>12 people viewing this product now</span>
+              <span>{alldata?.metaTags?.totalReview} people viewing this product now</span>
             </div>
           </div>
 

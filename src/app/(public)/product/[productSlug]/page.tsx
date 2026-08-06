@@ -55,6 +55,7 @@ export interface ProductApiData {
     tags?: string;
     badge?: string;
     title?: string;
+    description?: string;
     keywords?: string;
     canonical?: string;
   };
@@ -76,38 +77,74 @@ interface ProductApiResponse {
   data: ProductApiData;
 }
 
+function stripHtml(input?: string): string {
+  if (!input) return '';
+  return input
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+ 
+function truncate(input: string, max = 160): string {
+  if (input.length <= max) return input;
+  return input.slice(0, max - 1).trimEnd() + '…';
+}
+
+
 // ── Metadata ─────────────────────────────────────────────────────────
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { productSlug } = await params;
-
-  try {
-    const res = await api.get<ProductApiResponse>(`/product/${productSlug}`, {
+ 
+  const res = await api
+    .get<ProductApiResponse>(`/product/${productSlug}`, {
       next: { revalidate: 3600 },
-    } as RequestInit);
-
-    if (res?.found && res?.data) {
-      const p = res.data;
-      return {
-        title: p.metaTags?.title ?? `${p.productName} - Buy Online at Best Price in BD - Dazzle`,
-        description:
-          p.shortDesc ||
-          `Buy ${p.productName} in Bangladesh from Dazzle. Get the best price, official brand warranty, and fast delivery.`,
-        keywords: p.metaTags?.keywords,
-      };
-    }
-  } catch {
-    // fallback
+    } as RequestInit)
+    .catch(() => null);
+ 
+  if (!res?.found || !res?.data) {
+    // No API data available at all — nothing to build metadata from.
+    return {};
   }
-
-  const decodedSlug = decodeURIComponent(productSlug);
-  const title = decodedSlug
-    .split('-')
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(' ');
-
+ 
+  const p = res.data;
+  const meta = p.metaTags;
+ 
+  // Title: metaTags.title is the SEO-authored title. If it's ever missing,
+  // fall back to raw API fields only (productName / brandName) — no copy.
+  const title = meta?.title || p.productName || p.brandName;
+ 
+  // Description: metaTags.description is the SEO-authored copy. If missing,
+  // derive from the product's own shortDesc/description fields only.
+  const description = truncate(
+    stripHtml(meta?.description) || stripHtml(p.shortDesc) || stripHtml(p.description)
+  );
+ 
+  const keywords = meta?.keywords || meta?.tags;
+ 
+  const canonicalUrl = meta?.canonical;
+ 
+  const ogImage = p.thumbnails?.[0]?.mediaFileUrl || p.thumbnailImg;
+ 
   return {
-    title: `${title} - Buy Online at Best Price in BD - Dazzle`,
-    description: `Buy ${title} in Bangladesh from Dazzle. Get the best price, official brand warranty, and fast delivery on original devices and gadgets.`,
+    title,
+    description,
+    keywords,
+    alternates: canonicalUrl ? { canonical: canonicalUrl } : undefined,
+    openGraph: {
+      title,
+      description,
+      url: canonicalUrl,
+      type: 'website',
+      images: ogImage ? [{ url: ogImage, alt: p.productName }] : undefined,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: ogImage ? [ogImage] : undefined,
+    },
   };
 }
 
