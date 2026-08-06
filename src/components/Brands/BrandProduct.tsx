@@ -3,10 +3,10 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import FilterSidebar, { AttributeGroup } from "@/components/share/FilterSidebar";
+import FilterSidebar, { AttributeGroup, PriceData } from "@/components/share/FilterSidebar";
 import BrandProductListClient from "@/components/Brands/BrandProductListClient";
 import { SlidersHorizontal, X } from "lucide-react";
-// import type { ProductItem } from "@/app/(public)/brands/[slug]/page";
+import { api } from "@/lib/api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -21,6 +21,7 @@ interface Props {
   brandSlug: string;
   categories: CategoryItem[];
   attributes?: AttributeGroup[];
+  priceData?: PriceData;
   initialProducts: ProductItem[];
   initialTotalCount: number;
   initialTotalPages: number;
@@ -57,6 +58,7 @@ export default function BrandProducts({
   brandSlug,
   categories,
   attributes = [],
+  priceData,
   initialProducts,
   initialTotalCount,
   initialTotalPages,
@@ -82,8 +84,47 @@ export default function BrandProducts({
   const [minPrice, setMinPrice] = useState<number | undefined>(initialMinPrice);
   const [maxPrice, setMaxPrice] = useState<number | undefined>(initialMaxPrice);
   const [stockStatus, setStockStatus] = useState<string | null>(initialStockStatus);
-
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [currentAttributes, setCurrentAttributes] = useState<AttributeGroup[]>(attributes);
+  const [currentPriceData, setCurrentPriceData] = useState<PriceData | undefined>(priceData);
+
+  useEffect(() => {
+    setCurrentAttributes(attributes);
+  }, [attributes]);
+
+  useEffect(() => {
+    setCurrentPriceData(priceData);
+  }, [priceData]);
+
+  useEffect(() => {
+    let active = true;
+    const fetchDynamicAttributes = async () => {
+      try {
+        const queryParams = new URLSearchParams();
+        if (brandSlug) queryParams.set("brandSlug", brandSlug);
+        if (activeCategory) queryParams.set("categorySlug", activeCategory);
+        if (stockStatus !== null) queryParams.set("stockStatus", stockStatus);
+        if (minPrice !== undefined) queryParams.set("minDiscountedPrice", String(minPrice));
+        if (maxPrice !== undefined) queryParams.set("maxDiscountedPrice", String(maxPrice));
+
+        const res = await api.get<{ data: AttributeGroup[]; priceData?: PriceData }>(
+          `/products/attributes?${queryParams.toString()}`,
+          { cache: "no-store" }
+        );
+        if (active && res) {
+          if (Array.isArray(res.data)) setCurrentAttributes(res.data);
+          if (res.priceData) setCurrentPriceData(res.priceData);
+        }
+      } catch (err) {
+        console.error("Error fetching brand dynamic attributes:", err);
+      }
+    };
+
+    fetchDynamicAttributes();
+    return () => {
+      active = false;
+    };
+  }, [brandSlug, activeCategory, stockStatus, minPrice, maxPrice]);
 
   // Sync state if browser navigation (back/forward) happens via next/navigation
   useEffect(() => {
@@ -293,7 +334,8 @@ export default function BrandProducts({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mt-4 items-start md:px-6.5 px-4 relative">
         <div className="lg:col-span-3 h-full md:block hidden">
           <FilterSidebar
-            attributes={attributes}
+            attributes={currentAttributes}
+            priceData={currentPriceData}
             selectedAttributes={selectedAttributes}
             onToggleAttribute={handleToggleAttribute}
             minPrice={minPrice}
@@ -356,7 +398,8 @@ export default function BrandProducts({
 
               <div className="lg:p-4 overflow-y-auto flex-1">
                 <FilterSidebar
-                  attributes={attributes}
+                  attributes={currentAttributes}
+                  priceData={currentPriceData}
                   selectedAttributes={selectedAttributes}
                   onToggleAttribute={handleToggleAttribute}
                   minPrice={minPrice}

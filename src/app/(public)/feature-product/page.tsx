@@ -41,7 +41,7 @@ interface ShowcaseItemsResponse {
 }
 
 export interface ProductCardItem {
-  uuid: string;
+  productUuid: string;
   title: string;
   slug: string;
   price: number;
@@ -69,7 +69,7 @@ export default async function FeatureProductsPages() {
       const list = Array.isArray(res?.data) ? res.data : [];
    
       products = list.map((item) => ({
-        uuid: item.productUuid,
+        productUuid: item.productUuid,
         title: item.productName,
         slug: item.productSlug,
         price: item.discountedPrice,

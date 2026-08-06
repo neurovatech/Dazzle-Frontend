@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import CategoriesProduct from "@/components/CategoriesPages/CategoriesProduct/CategoriesProduct";
 import Breadcrumb from "@/components/share/Breadcrumb";
 import ProductListSectionCom from "@/components/HomePage/ProductList/ProductListSectionCom";
@@ -162,13 +163,17 @@ export default async function CategoriesPage({ params, searchParams }: PageProps
 
   // ── Fetch attributes for this category ───────────────────────────────────────
   let attributes: AttributeGroup[] = [];
+  let priceData: any = undefined;
   try {
-    const attrRes = await api.get<{ data: AttributeGroup[] }>(
+    const attrRes = await api.get<{ data: AttributeGroup[]; priceData?: any }>(
       `/products/attributes?categorySlug=${categorySlug}`,
       { cache: "no-store" }
     );
     if (attrRes && Array.isArray(attrRes.data)) {
       attributes = attrRes.data;
+    }
+    if (attrRes && attrRes.priceData) {
+      priceData = attrRes.priceData;
     }
   } catch (err) {
     console.error("Error fetching category attributes:", err);
@@ -187,9 +192,6 @@ export default async function CategoriesPage({ params, searchParams }: PageProps
         <Breadcrumb items={breadcrumbItems} />
       </div>
 
-
-
-
       <CategoriesProduct
         categorySlug={categorySlug}
         currentPage={currentPage}
@@ -200,6 +202,7 @@ export default async function CategoriesPage({ params, searchParams }: PageProps
         currentSearch={search ?? ""}
         brands={brands}
         attributes={attributes}
+        priceData={priceData}
         trendingNowSlot={<ProductListSectionCom />}
       />
     </div>

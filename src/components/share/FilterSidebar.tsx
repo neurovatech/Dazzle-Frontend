@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
@@ -12,8 +13,19 @@ export interface AttributeGroup {
   items: AttributeItem[];
 }
 
+export interface PriceRange {
+  minPrice: number;
+  maxPrice: number;
+}
+
+export interface PriceData {
+  regularPrice?: PriceRange;
+  discountedPrice?: PriceRange;
+}
+
 interface FilterSidebarProps {
   attributes?: AttributeGroup[];
+  priceData?: PriceData;
   selectedAttributes?: string[];
   onToggleAttribute?: (guid: string) => void;
   minPrice?: number;
@@ -25,19 +37,23 @@ interface FilterSidebarProps {
 
 const sortOptions = ["Recommend", "Newest", "Lowest - Highest", "Highest - Lowest"];
 
-const MIN = 0;
-const MAX = 500000;
-
 export default function FilterSidebar({
   attributes = [],
+  priceData,
   selectedAttributes = [],
   onToggleAttribute,
-  minPrice = MIN,
-  maxPrice = MAX,
+  minPrice,
+  maxPrice,
   onPriceChange,
   stockStatus = null,
   onStockStatusToggle,
 }: FilterSidebarProps) {
+  const defaultMin = priceData?.discountedPrice?.minPrice ?? 0;
+  const defaultMax =
+    priceData?.discountedPrice?.maxPrice && priceData.discountedPrice.maxPrice > 0
+      ? priceData.discountedPrice.maxPrice
+      : 500000;
+
   // Normalize and group attributes by trimmed name (e.g. merge "Color", "Color ", "color")
   const normalizedGroups = useMemo(() => {
     if (!attributes || attributes.length === 0) return [];
@@ -66,17 +82,19 @@ export default function FilterSidebar({
   const [sortSelected, setSortSelected] = useState(0);
 
   // Budget local state for dual slider
-  const [localMinPrice, setLocalMinPrice] = useState<number>(minPrice);
-  const [localMaxPrice, setLocalMaxPrice] = useState<number>(maxPrice);
+  const [localMinPrice, setLocalMinPrice] = useState<number>(minPrice ?? defaultMin);
+  const [localMaxPrice, setLocalMaxPrice] = useState<number>(
+    maxPrice && maxPrice > 0 ? maxPrice : defaultMax
+  );
   const trackRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setLocalMinPrice(minPrice);
-  }, [minPrice]);
+    setLocalMinPrice(minPrice ?? defaultMin);
+  }, [minPrice, defaultMin]);
 
   useEffect(() => {
-    setLocalMaxPrice(maxPrice);
-  }, [maxPrice]);
+    setLocalMaxPrice(maxPrice && maxPrice > 0 ? maxPrice : defaultMax);
+  }, [maxPrice, defaultMax]);
 
   // Default all attribute sections open
   useEffect(() => {
@@ -98,7 +116,16 @@ export default function FilterSidebar({
     );
   };
 
-  const getPercent = (val: number) => ((val - MIN) / (MAX - MIN)) * 100;
+  const getPercent = useCallback(
+    (val: number) => {
+      if (defaultMax <= defaultMin) return 0;
+      return Math.min(
+        Math.max(((val - defaultMin) / (defaultMax - defaultMin)) * 100, 0),
+        100
+      );
+    },
+    [defaultMin, defaultMax]
+  );
 
   const handleThumbPointer = useCallback(
     (thumb: "min" | "max") => (e: React.PointerEvent<HTMLDivElement>) => {
@@ -110,12 +137,15 @@ export default function FilterSidebar({
 
       const onMove = (ev: PointerEvent) => {
         const pct = Math.min(Math.max((ev.clientX - rect.left) / rect.width, 0), 1);
-        const v = Math.round(pct * (MAX - MIN) + MIN);
+        const rawV = Math.round(pct * (defaultMax - defaultMin) + defaultMin);
+        const step = defaultMax - defaultMin > 10000 ? 500 : 100;
+        const v = Math.round(rawV / step) * step;
+
         if (thumb === "min") {
-          currentMin = Math.min(v, currentMax - 1000);
+          currentMin = Math.min(Math.max(v, defaultMin), currentMax - step);
           setLocalMinPrice(currentMin);
         } else {
-          currentMax = Math.max(v, currentMin + 1000);
+          currentMax = Math.max(Math.min(v, defaultMax), currentMin + step);
           setLocalMaxPrice(currentMax);
         }
       };
@@ -129,7 +159,7 @@ export default function FilterSidebar({
       window.addEventListener("pointermove", onMove);
       window.addEventListener("pointerup", onUp);
     },
-    [localMinPrice, localMaxPrice, onPriceChange]
+    [localMinPrice, localMaxPrice, defaultMin, defaultMax, onPriceChange]
   );
 
   return (

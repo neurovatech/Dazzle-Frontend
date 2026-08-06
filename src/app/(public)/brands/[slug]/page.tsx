@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import BrandProducts, { CategoryItem } from "@/components/Brands/BrandProduct";
@@ -59,6 +60,7 @@ export interface BrandAttributesResponse {
   limit: number;
   totalPages: number;
   data: AttributeGroup[];
+  priceData?: any;
 }
 
 interface PageProps {
@@ -136,6 +138,9 @@ export default async function BrandDetailsPage({ params }: PageProps) {
       ? attrResult.value.data
       : [];
 
+  const priceData: any =
+    attrResult.status === "fulfilled" ? attrResult.value?.priceData : undefined;
+
   const breadcrumbItems = [
     { label: "Home",    href: "/" },
     { label: "Brands",  href: "/brands" },
@@ -154,6 +159,7 @@ export default async function BrandDetailsPage({ params }: PageProps) {
           brandSlug={slug}
           categories={categories}
           attributes={attributes}
+          priceData={priceData}
           initialProducts={initialProductData.data}
           initialTotalCount={initialProductData.totalCount}
           initialTotalPages={initialProductData.totalPages}

@@ -3,6 +3,118 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_BASE || "https://apix.bigpoint.com.
 interface FetchOptions extends RequestInit {
   params?: Record<string, string>;
   token?: string;
+  apiKey?: string;
+  isRetry?: boolean;
+}
+
+let isRefreshing = false;
+let refreshPromise: Promise<{ apiKey: string; token: string } | null> | null = null;
+
+function getAuthCredentials(): { apiKey: string | null; token: string | null } {
+  if (typeof window === "undefined") return { apiKey: null, token: null };
+
+  let token = localStorage.getItem("token");
+  let apiKey = localStorage.getItem("apiKey");
+
+  if (!token || !apiKey) {
+    try {
+      const persisted = localStorage.getItem("persist:dazzle_auth");
+      if (persisted) {
+        const parsed = JSON.parse(persisted);
+        if (!token && parsed.token) token = JSON.parse(parsed.token);
+        if (!apiKey && parsed.apiKey) apiKey = JSON.parse(parsed.apiKey);
+      }
+    } catch {}
+  }
+
+  return { apiKey, token };
+}
+
+function triggerSessionExpired() {
+  if (typeof window !== "undefined") {
+    try {
+      localStorage.removeItem("token");
+      localStorage.removeItem("apiKey");
+      import("@/store/store").then(({ store }) => {
+        import("@/store/slices/authSlice").then(({ logout }) => {
+          store.dispatch(logout());
+        });
+      });
+    } catch {}
+    window.dispatchEvent(new CustomEvent("session-expired"));
+  }
+}
+
+async function refreshJwtToken(): Promise<{ apiKey: string; token: string } | null> {
+  if (isRefreshing && refreshPromise) {
+    return refreshPromise;
+  }
+
+  isRefreshing = true;
+  refreshPromise = (async () => {
+    try {
+      const { apiKey, token } = getAuthCredentials();
+      if (!apiKey || !token) {
+        triggerSessionExpired();
+        return null;
+      }
+
+      const formattedToken = token.startsWith("Bearer ") ? token : `Bearer ${token}`;
+
+      const res = await fetch(`${BASE_URL}/refresh-jwt-token`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": apiKey,
+          "Authorization": formattedToken,
+        },
+      });
+
+      const responseData = await res.json().catch(() => null);
+
+      if (res.ok && responseData?.statusCode === 200 && responseData?.data) {
+        const newApiKey = responseData.data["x-api-key"] || apiKey;
+        const newToken = responseData.data.Authorization || responseData.data.authorization || token;
+
+        if (typeof window !== "undefined") {
+          localStorage.setItem("apiKey", newApiKey);
+          localStorage.setItem("token", newToken);
+        }
+
+        try {
+          const { store } = await import("@/store/store");
+          const { setCredentials } = await import("@/store/slices/authSlice");
+          const currentUser = store.getState().auth.user || {
+            usersCommuuid: "",
+            userFullName: "",
+            email: "",
+            emailVerifiedToken: "",
+            createdAt: new Date().toISOString(),
+          };
+          store.dispatch(
+            setCredentials({
+              user: currentUser,
+              apiKey: newApiKey,
+              token: newToken,
+            })
+          );
+        } catch {}
+
+        return { apiKey: newApiKey, token: newToken };
+      } else {
+        triggerSessionExpired();
+        return null;
+      }
+    } catch {
+      triggerSessionExpired();
+      return null;
+    } finally {
+      isRefreshing = false;
+      refreshPromise = null;
+    }
+  })();
+
+  return refreshPromise;
 }
 
 /**
@@ -13,7 +125,7 @@ export async function apiFetch<T = unknown>(
   endpoint: string,
   options: FetchOptions = {}
 ): Promise<T> {
-  const { params, token, headers: customHeaders, ...customOptions } = options;
+  const { params, token: explicitToken, apiKey: explicitApiKey, isRetry, headers: customHeaders, ...customOptions } = options;
 
   // 1. Build URL with query params
   let url = endpoint.startsWith("http") ? endpoint : `${BASE_URL}${endpoint.startsWith("/") ? "" : "/"}${endpoint}`;
@@ -37,39 +149,26 @@ export async function apiFetch<T = unknown>(
     headers.set("Content-Type", "application/json");
   }
 
-  // 3. Authorization Token handling
-  if (token) {
-    headers.set("Authorization", `Bearer ${token}`);
-  } else {
-    // Attempt auto-token resolution
-    if (typeof window === "undefined") {
-      // Server-side: Import and read cookies dynamically
-      try {
-        const { cookies } = await import("next/headers");
-        const cookieStore = await cookies();
-        const serverToken = cookieStore.get("token")?.value;
-        if (serverToken) {
-          headers.set("Authorization", `Bearer ${serverToken}`);
-        }
-      } catch (err) {
-        // cookies() might fail if not inside a request context (e.g. during static generation)
+  // 3. Authorization & X-API-Key handling
+  const { apiKey: storedApiKey, token: storedToken } = getAuthCredentials();
+  const activeToken = explicitToken || storedToken;
+  const activeApiKey = explicitApiKey || storedApiKey;
+
+  if (activeToken) {
+    headers.set("Authorization", activeToken.startsWith("Bearer ") ? activeToken : `Bearer ${activeToken}`);
+  } else if (typeof window === "undefined") {
+    try {
+      const { cookies } = await import("next/headers");
+      const cookieStore = await cookies();
+      const serverToken = cookieStore.get("token")?.value;
+      if (serverToken) {
+        headers.set("Authorization", serverToken.startsWith("Bearer ") ? serverToken : `Bearer ${serverToken}`);
       }
-    } else {
-      // Client-side: Read token from document cookies or localStorage
-      const clientToken = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("token="))
-        ?.split("=")[1];
-      
-      if (clientToken) {
-        headers.set("Authorization", `Bearer ${clientToken}`);
-      } else {
-        const storageToken = localStorage.getItem("token");
-        if (storageToken) {
-          headers.set("Authorization", `Bearer ${storageToken}`);
-        }
-      }
-    }
+    } catch {}
+  }
+
+  if (activeApiKey) {
+    headers.set("X-API-Key", activeApiKey);
   }
 
   // 4. Perform the fetch request with SSR retry for ECONNRESET
@@ -78,7 +177,6 @@ export async function apiFetch<T = unknown>(
     headers,
   };
 
-  // SSR-এ network blip হলে max 2 বার retry করবে
   const MAX_RETRIES = typeof window === "undefined" ? 2 : 0;
   let lastError: unknown;
 
@@ -86,14 +184,52 @@ export async function apiFetch<T = unknown>(
     try {
       const response = await fetch(url, fetchConfig);
 
-      // 5. Handle response and errors
+      // 5. Handle 401 Unauthorized / Token Expiration for client requests
+      const isAuthEndpoint =
+        endpoint.includes("refresh-jwt-token") ||
+        endpoint.includes("login-with-mobile") ||
+        endpoint.includes("login-mobile-otp") ||
+        endpoint.includes("user-login");
+
+      if (response.status === 401 && !isRetry && !isAuthEndpoint && typeof window !== "undefined") {
+        const refreshed = await refreshJwtToken();
+        if (refreshed) {
+          return apiFetch<T>(endpoint, {
+            ...options,
+            token: refreshed.token,
+            apiKey: refreshed.apiKey,
+            isRetry: true,
+          });
+        }
+      }
+
       if (!response.ok) {
         let errorData: Record<string, unknown> = {};
         try {
           errorData = (await response.json()) as Record<string, unknown>;
         } catch {
-          errorData = { message: response.statusText };
+          errorData = { message: response.statusText, statusCode: response.status };
         }
+
+        // If error message indicates JWT token expired on non-auth endpoint
+        const msg = String(errorData.message || "").toLowerCase();
+        if (
+          (response.status === 401 || msg.includes("jwt token has expired")) &&
+          !isRetry &&
+          !isAuthEndpoint &&
+          typeof window !== "undefined"
+        ) {
+          const refreshed = await refreshJwtToken();
+          if (refreshed) {
+            return apiFetch<T>(endpoint, {
+              ...options,
+              token: refreshed.token,
+              apiKey: refreshed.apiKey,
+              isRetry: true,
+            });
+          }
+        }
+
         throw new Error(JSON.stringify(errorData));
       }
 
@@ -109,12 +245,10 @@ export async function apiFetch<T = unknown>(
         (err.message.includes("ECONNRESET") ||
           err.message.includes("fetch failed"));
 
-      // Retry শুধু ECONNRESET বা network error-এর জন্য, last attempt-এও fail করলে throw
       if (!isConnReset || attempt === MAX_RETRIES) {
         throw err;
       }
 
-      // Retry-এর আগে সামান্য wait (300ms)
       await new Promise((r) => setTimeout(r, 300));
     }
   }

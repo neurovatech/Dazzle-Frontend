@@ -49,9 +49,11 @@ interface OtpVerifyResponse {
   status: "success" | "error";
   message: string;
   data?: {
-    authorization: any;
     "x-api-key": string;
     Authorization: string;
+    authorization?: string;
+    CreatedAt?: string;
+    ExpireAt?: string;
   };
   errors?: string[];
 }
@@ -60,17 +62,19 @@ interface OtpVerifyResponse {
 const mobileSchema = yup.object({
   mobile: yup
     .string()
-    .required("Mobile number is required")
-    .matches(/^\S+$/, "Mobile must not contain spaces")
-    .matches(/^\d+$/, "Mobile must contain numbers only"),
+    .required("mobile is required.")
+    .matches(/^\S+$/, "mobile must not contain spaces.")
+    .matches(/^\d+$/, "mobile must contain numbers only."),
 });
 type MobileSchema = yup.InferType<typeof mobileSchema>;
 
 const otpVerifySchema = yup.object({
   otp: yup
     .string()
-    .required("OTP is required")
-    .matches(/^\d{6}$/, "OTP must be exactly 6 digits"),
+    .required("otp is required.")
+    .matches(/^\S+$/, "otp must not contain spaces.")
+    .matches(/^\d+$/, "otp must contain numbers only.")
+    .matches(/^\d{6}$/, "otp must be 6 digits."),
 });
 
 // ─── API Functions ────────────────────────────────────────────────────────────
@@ -189,25 +193,32 @@ const MobileOtpModal: React.FC<MobileOtpModalProps> = ({ onClose }) => {
     mutationFn: verifyMobileOtp,
     onSuccess: (response) => {
       if (response.statusCode === 200 && response.data) {
-        toast.success("Login successful!");
-        const authHeader = response.data.authorization;
+        toast.success(response.message || "Mobile login completed successfully.");
+        const authHeader:any = response.data.Authorization || response.data.authorization;
+        const apiKey = response.data["x-api-key"];
+
+        if (typeof window !== "undefined") {
+          localStorage.setItem("token", authHeader);
+          localStorage.setItem("apiKey", apiKey);
+        }
+
         dispatch(
           setCredentials({
             user: {
               usersCommuuid: "",
-              userFullName: "",
-              email: "",
+              userFullName: "Mobile User",
+              email: sentMobile,
               emailVerifiedToken: "",
-              createdAt: "",
+              createdAt: response.data.CreatedAt || new Date().toISOString(),
             },
-            apiKey: response.data["x-api-key"],
+            apiKey: apiKey,
             token: authHeader,
           }),
         );
         onClose();
         const searchParams = new URLSearchParams(window.location.search);
         const redirectUrl = searchParams.get("redirect");
-        router.push("/");
+        router.push(redirectUrl || "/");
       } else {
         toast.error(response.message || "OTP verification failed.");
       }
@@ -216,14 +227,21 @@ const MobileOtpModal: React.FC<MobileOtpModalProps> = ({ onClose }) => {
       if (error instanceof Error) {
         try {
           const parsed = JSON.parse(error.message) as OtpVerifyResponse;
-          toast.error(parsed.message || "Invalid OTP.");
-          setOtpError(parsed.message || "Invalid OTP. Please try again.");
-          setOtpDigits(Array(6).fill(""));
-          setOtpValue("");
+          if (parsed.errors && parsed.errors.length > 0) {
+            parsed.errors.forEach((err) => toast.error(err));
+            setOtpError(parsed.errors.join(", "));
+          } else {
+            const msg = parsed.message || "Invalid OTP.";
+            toast.error(msg);
+            setOtpError(msg);
+          }
         } catch {
           toast.error("OTP verification failed.");
+          setOtpError("OTP verification failed.");
         }
       }
+      setOtpDigits(Array(6).fill(""));
+      setOtpValue("");
     },
   });
 
@@ -433,6 +451,13 @@ const LoginForm: React.FC = () => {
         if (response.data) {
           const authHeader =
             response.data.authorization || response.data.Authorization;
+          const apiKey = response.data["x-api-key"];
+
+          if (typeof window !== "undefined") {
+            localStorage.setItem("token", authHeader);
+            localStorage.setItem("apiKey", apiKey);
+          }
+
           dispatch(
             setCredentials({
               user: {
@@ -442,7 +467,7 @@ const LoginForm: React.FC = () => {
                 emailVerifiedToken: "",
                 createdAt: new Date().toISOString(),
               },
-              apiKey: response.data["x-api-key"],
+              apiKey: apiKey,
               token: authHeader,
             }),
           );

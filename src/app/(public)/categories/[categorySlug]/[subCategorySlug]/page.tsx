@@ -169,13 +169,17 @@ export default async function SubCategoriesPage({ params, searchParams }: PagePr
 
   // ── Fetch attributes for this subcategory ────────────────────────────────────
   let attributes: any = [];
+  let priceData: any = undefined;
   try {
-    const attrRes = await api.get<{ data: any }>(
-      `/products/attributes?subCategorySlug=${subCategorySlug}`,
+    const attrRes = await api.get<{ data: any; priceData?: any }>(
+      `/products/attributes?categorySlug=${categorySlug}&subCategorySlug=${subCategorySlug}`,
       { cache: "no-store" }
     );
     if (attrRes && Array.isArray(attrRes.data)) {
       attributes = attrRes.data;
+    }
+    if (attrRes && attrRes.priceData) {
+      priceData = attrRes.priceData;
     }
   } catch (err) {
     console.error("Error fetching sub-category attributes:", err);
@@ -207,6 +211,7 @@ export default async function SubCategoriesPage({ params, searchParams }: PagePr
         currentSearch={search ?? ""}
         brands={brands}
         attributes={attributes}
+        priceData={priceData}
       />
     </div>
   );

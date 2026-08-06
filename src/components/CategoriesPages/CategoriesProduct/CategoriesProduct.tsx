@@ -7,7 +7,9 @@ import { useSearchParams } from "next/navigation";
 import AllProducts from "@/components/CategoriesPages/CategoriesProduct/AllProducts";
 import FilterSidebar, {
   AttributeGroup,
+  PriceData,
 } from "@/components/share/FilterSidebar";
+import { api } from "@/lib/api";
 import { ProductItem } from "@/app/(public)/categories/[categorySlug]/page";
 import type { BrandItem } from "@/app/(public)/categories/[categorySlug]/page";
 import Banner from "@/components/CategoriesPages/CategoriesBanner/Banner";
@@ -28,6 +30,7 @@ interface CategoriesProductProps {
   currentSearch: string;
   brands?: BrandItem[];
   attributes?: AttributeGroup[];
+  priceData?: PriceData;
   banners?: any;
   trendingNowSlot?: React.ReactNode;
 }
@@ -45,6 +48,7 @@ function CategoriesProduct({
   currentSearch,
   brands = [],
   attributes = [],
+  priceData,
   banners,
   trendingNowSlot,
 }: CategoriesProductProps) {
@@ -75,8 +79,49 @@ function CategoriesProduct({
     initialStockStatus,
   );
   const [activePage, setActivePage] = useState<number>(initialPage);
+  const [currentAttributes, setCurrentAttributes] = useState<AttributeGroup[]>(attributes);
+  const [currentPriceData, setCurrentPriceData] = useState<PriceData | undefined>(priceData);
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+  useEffect(() => {
+    setCurrentAttributes(attributes);
+  }, [attributes]);
+
+  useEffect(() => {
+    setCurrentPriceData(priceData);
+  }, [priceData]);
+
+  useEffect(() => {
+    let active = true;
+    const fetchDynamicAttributes = async () => {
+      try {
+        const queryParams = new URLSearchParams();
+        if (categorySlug) queryParams.set("categorySlug", categorySlug);
+        if (subCategorySlug) queryParams.set("subCategorySlug", subCategorySlug);
+        if (selectedBrandSlug) queryParams.set("brandSlug", selectedBrandSlug);
+        if (stockStatus !== null) queryParams.set("stockStatus", stockStatus);
+        if (minPrice !== undefined) queryParams.set("minDiscountedPrice", String(minPrice));
+        if (maxPrice !== undefined) queryParams.set("maxDiscountedPrice", String(maxPrice));
+
+        const res = await api.get<{ data: AttributeGroup[]; priceData?: PriceData }>(
+          `/products/attributes?${queryParams.toString()}`,
+          { cache: "no-store" }
+        );
+        if (active && res) {
+          if (Array.isArray(res.data)) setCurrentAttributes(res.data);
+          if (res.priceData) setCurrentPriceData(res.priceData);
+        }
+      } catch (err) {
+        console.error("Error fetching dynamic attributes:", err);
+      }
+    };
+
+    fetchDynamicAttributes();
+    return () => {
+      active = false;
+    };
+  }, [categorySlug, subCategorySlug, selectedBrandSlug, stockStatus, minPrice, maxPrice]);
 
   useEffect(() => {
     const page = Number(searchParams.get("page") ?? String(currentPage));
@@ -275,7 +320,8 @@ function CategoriesProduct({
         <div className="lg:col-span-3 md:block hidden h-full">
           <div className="sticky overflow-y-auto scrollbar-hide w-full pb-4">
             <FilterSidebar
-              attributes={attributes}
+              attributes={currentAttributes}
+              priceData={currentPriceData}
               selectedAttributes={selectedAttributes}
               onToggleAttribute={handleToggleAttribute}
               minPrice={minPrice}
@@ -360,7 +406,8 @@ function CategoriesProduct({
 
               <div className="lg:p-4 overflow-y-auto flex-1">
                 <FilterSidebar
-                  attributes={attributes}
+                  attributes={currentAttributes}
+                  priceData={currentPriceData}
                   selectedAttributes={selectedAttributes}
                   onToggleAttribute={handleToggleAttribute}
                   minPrice={minPrice}

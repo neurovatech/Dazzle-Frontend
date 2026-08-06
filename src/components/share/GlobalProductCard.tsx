@@ -41,6 +41,7 @@ interface ProductCardProps {
   originalPrice?: number;
   isBestDeal?: boolean;
   slug?: string;
+  uuid?: string;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -56,18 +57,21 @@ const ProductCard: React.FC<ProductCardProps> = ({
   originalPrice = 0,
   isBestDeal = false,
   slug,
+  uuid,
 }) => {
   const dispatch      = useAppDispatch();
   const wishlistItems = useAppSelector((state) => state.wishlist.items);
-  const itemId        = productUuid || "";
+  const itemId        = productUuid || uuid || "";
   const isWishlisted  = wishlistItems.some((i) => i.productUuid === itemId);
 
   const [addedToCart, setAddedToCart] = useState(false);
   const [loadingCart, setLoadingCart] = useState(false);
   const [imgError, setImgError]       = useState(false);
-  // isTba = true হলে পণ্যটি স্টকে নেই
+
   const [isTba, setIsTba]             = useState(!inStock);
   const cartItems = useAppSelector((state) => state.cart.items);
+
+
 
   const handleAddToCart = async () => {
     if (!itemId) {
