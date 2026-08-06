@@ -299,14 +299,14 @@ export default function FilterSidebar({
               return (
                 <label
                   key={option.value}
-                  className="flex items-center gap-2 cursor-pointer select-none"
+                  className="flex items-start gap-2 cursor-pointer select-none"
                   onClick={(e) => {
                     e.preventDefault();
                     onStockStatusToggle?.(option.value);
                   }}
                 >
                   <div
-                    className={`w-4 h-4 rounded flex items-center justify-center border transition-colors ${
+                    className={`w-4 h-4 rounded flex items-center justify-center border transition-colors shrink-0 mt-0.5 ${
                       isChecked
                         ? "bg-gray-900 dark:bg-gray-100 border-gray-900 dark:border-gray-100"
                         : "border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
@@ -377,14 +377,14 @@ export default function FilterSidebar({
                   return (
                     <label
                       key={item.attributeGuid}
-                      className="flex items-center gap-2 cursor-pointer select-none"
+                      className="flex items-start gap-2 cursor-pointer select-none"
                       onClick={(e) => {
                         e.preventDefault();
                         onToggleAttribute?.(item.attributeVariation);
                       }}
                     >
                       <div
-                        className={`w-4 h-4 rounded flex items-center justify-center border transition-colors ${
+                        className={`w-4 h-4 rounded flex items-center justify-center border transition-colors shrink-0 mt-0.5 ${
                           isChecked
                             ? "bg-gray-900 dark:bg-gray-100 border-gray-900 dark:border-gray-100"
                             : "border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"

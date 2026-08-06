@@ -15,11 +15,22 @@ interface ProductDocument {
   productSlug: string;
   categoryName: string;
   categorySlug: string;
+  categoryThumbnailUrl?: string;
+  categoryUuid?: string;
+  brand_name?: string;
+  brand_slug?: string;
+  brand_thumb_img?: string;
   thumbnailsUrl: string;
   regularPrice: number;
   discountedPrice: number;
-  disRate: number;
+  disRate?: number | { source: string; parsedValue: number };
   isStockAvailable: boolean;
+  isFreeShipping?: boolean;
+  isTba?: boolean;
+  is_active?: boolean;
+  is_featured?: boolean;
+  productBadge?: string;
+  productCode?: string;
 }
 interface ProductHit { document: ProductDocument; }
 interface SearchApiResponse { found: number; hits: ProductHit[]; }
@@ -54,22 +65,16 @@ interface NormalizedProduct {
 
 interface ProductSearchesProps { query?: string; onClose?: () => void; }
 
-const brands = [
+const defaultBrands = [
   {
     name: "Apple",
+    slug: "apple",
     image: "https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg",
   },
   {
     name: "Samsung",
+    slug: "samsung",
     image: "https://upload.wikimedia.org/wikipedia/commons/2/24/Samsung_Logo.svg",
-  },
-  {
-    name: "Laptops",
-    image: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=60&h=60&fit=crop",
-  },
-  {
-    name: "Smart-watch",
-    image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=60&h=60&fit=crop",
   },
 ];
 
@@ -189,6 +194,24 @@ export default function ProductSearches({ query, onClose }: ProductSearchesProps
     ).values()
   );
 
+  // Unique brands from keyword results (or fallback to defaultBrands)
+  const hitsBrands = Array.from(
+    new Map(
+      (keywordQuery.data?.hits ?? [])
+        .filter((h) => h.document.brand_name && h.document.brand_slug)
+        .map((h) => [
+          h.document.brand_slug,
+          {
+            name: h.document.brand_name!,
+            slug: h.document.brand_slug!,
+            image: h.document.brand_thumb_img || "",
+          },
+        ])
+    ).values()
+  );
+
+  const displayedBrands = hitsBrands.length > 0 ? hitsBrands : defaultBrands;
+
   // Normalise keyword products
   const keywordProducts: NormalizedProduct[] = (keywordQuery.data?.hits ?? []).map((h) => ({
     id:               h.document.id,
@@ -291,25 +314,34 @@ export default function ProductSearches({ query, onClose }: ProductSearchesProps
 
         <p className="text-sm font-semibold text-gray-800 dark:text-white my-3">Choose From Brands</p>
         <div className="flex flex-wrap gap-x-4 gap-y-4">
-          {brands.map((brand, i) => (
-            <button
-              key={i}
+          {displayedBrands.map((brand, i) => (
+            <Link
+              key={brand.slug || i}
+              href={`/brands/${brand.slug}`}
+              onClick={() => {
+                addRecentSearch(brand.name);
+                onClose?.();
+              }}
               className="flex flex-col items-center gap-1.5 group"
             >
-              <div className="w-14 h-14 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden hover:border-[#D4A97A] transition-colors">
-                <Image
-                  src={brand.image}
-                  alt={brand.name}
-                  width={56}
-                  height={56}
-                  className="w-full h-full object-contain p-2"
-                  unoptimized
-                />
+              <div className="w-14 h-14 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden hover:border-[#D4A97A] transition-colors p-1">
+                {brand.image ? (
+                  <Image
+                    src={brand.image}
+                    alt={brand.name}
+                    width={56}
+                    height={56}
+                    className="w-full h-full object-contain"
+                    unoptimized
+                  />
+                ) : (
+                  <span className="text-xs font-bold text-gray-400">{brand.name[0]}</span>
+                )}
               </div>
-              <span className="text-xs text-gray-600 dark:text-white group-hover:text-[#b8864e] transition-colors">
+              <span className="text-xs text-gray-600 dark:text-white group-hover:text-[#b8864e] transition-colors text-center max-w-[70px] truncate">
                 {brand.name}
               </span>
-            </button>
+            </Link>
           ))}
         </div>
 
