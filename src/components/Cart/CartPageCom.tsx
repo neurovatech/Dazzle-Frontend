@@ -7,8 +7,10 @@ import PaymentMethodModal from "./PaymentMethodModal";
 import AddCouponModal from "./AddCouponModal";
 import Breadcrumb from "@/components/share/Breadcrumb";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
 import { DeliveryOption } from "./CartSidebar";
+import { LogIn, X } from "lucide-react";
 
 type AddressData = {
   name: string;
@@ -26,7 +28,18 @@ type ModalType =
   | "coupon";
 
 export default function CartPageCom() {
+  const router = useRouter();
   const cartItems = useAppSelector((state) => state.cart.items);
+  const token = useAppSelector((state) => state.auth.token);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+
+  const handleCheckout = () => {
+    if (!token) {
+      setShowLoginModal(true);
+    } else {
+      router.push("/checkout");
+    }
+  };
 
   const [savedAddress, setSavedAddress] = useState<AddressData | null>(null);
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
@@ -194,12 +207,12 @@ export default function CartPageCom() {
                 >
                   Continue Shopping
                 </Link>
-                <Link
-                  href="/checkout"
-                  className="flex-1 inline-flex items-center justify-center text-sm font-medium text-white hover:opacity-80 transition bg-[#101518] dark:bg-[#2a2420] rounded-lg px-3 py-3"
+                <button
+                  onClick={handleCheckout}
+                  className="flex-1 inline-flex items-center justify-center text-sm font-medium text-white hover:opacity-80 transition bg-[#101518] dark:bg-[#2a2420] rounded-lg px-3 py-3 cursor-pointer"
                 >
                   Checkout
-                </Link>
+                </button>
               </div>
             </div>
           </div>
@@ -256,6 +269,58 @@ export default function CartPageCom() {
         bookProductPrice="৳ 1,00,000"
         selectedDelivery={selectedDelivery}
       />
+
+      {/* ── Login Required Modal ── */}
+      {showLoginModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowLoginModal(false)}
+          />
+
+          {/* Modal card */}
+          <div className="relative z-10 w-full max-w-sm bg-white dark:bg-[#1c1a17] rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-800 p-6 flex flex-col items-center gap-5">
+            {/* Close button */}
+            <button
+              onClick={() => setShowLoginModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition cursor-pointer"
+            >
+              <X size={18} />
+            </button>
+
+            {/* Icon */}
+            <div className="w-16 h-16 rounded-full bg-amber-100 dark:bg-amber-950/40 flex items-center justify-center">
+              <LogIn size={30} className="text-[#D4A97A]" />
+            </div>
+
+            {/* Text */}
+            <div className="text-center">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1">Login Required</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Please log in to proceed to checkout. Your cart items will be saved.
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 w-full">
+              <button
+                onClick={() => setShowLoginModal(false)}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-sm font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition cursor-pointer"
+              >
+                Cancel
+              </button>
+              <Link
+                href="/auth/login"
+                className="flex-1 py-2.5 rounded-xl bg-[#D4A97A] hover:bg-[#c89a6b] text-white text-sm font-bold text-center transition"
+                onClick={() => setShowLoginModal(false)}
+              >
+                Login Now
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

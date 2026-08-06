@@ -648,20 +648,25 @@ export default function CheckoutPageCom() {
                   {/* Cash on Delivery */}
                   <button
                     onClick={() => {
-                      if (deliveryMethod === "express") {
-                        toast.error("Cash on Delivery is not available for Express Delivery.", {
-                          style: {
-                            borderRadius: '10px',
-                            background: '#333',
-                            color: '#fff',
-                          },
-                        });
+                      if (deliveryMethod === "express" || deliveryMethod === "extreme") {
+                        toast.error(
+                          deliveryMethod === "extreme"
+                            ? "Cash on Delivery is not available for Extreme Fast Delivery."
+                            : "Cash on Delivery is not available for Express Delivery.",
+                          {
+                            style: {
+                              borderRadius: '10px',
+                              background: '#333',
+                              color: '#fff',
+                            },
+                          }
+                        );
                         return;
                       }
                       setPaymentType("cod");
                     }}
                     className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${
-                      deliveryMethod === "express" ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                      (deliveryMethod === "express" || deliveryMethod === "extreme") ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
                     } ${
                       paymentType === "cod"
                         ? "border-[#D4A97A] bg-amber-50/10 text-gray-900 dark:text-white"
@@ -856,9 +861,22 @@ export default function CheckoutPageCom() {
                     </div>
                   </button>
 
-                  {/* Regular Delivery */}
+                  {/* Extreme Fast Delivery */}
                   <button
-                    onClick={() => setDeliveryMethod("extreme")}
+                    onClick={() => {
+                      setDeliveryMethod("extreme");
+                      if (paymentType === "cod") {
+                        setPaymentType("online");
+                        toast("Cash on Delivery is disabled for Extreme Fast Delivery.", {
+                          icon: '⚡',
+                          style: {
+                            borderRadius: '10px',
+                            background: '#333',
+                            color: '#fff',
+                          },
+                        });
+                      }
+                    }}
                     className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all cursor-pointer ${
                       deliveryMethod === "extreme"
                         ? "border-[#D4A97A] bg-amber-50/10 text-gray-900 dark:text-white"
