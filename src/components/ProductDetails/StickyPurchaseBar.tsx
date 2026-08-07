@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 import type { CareOption } from "./DazzleCare";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { X, LogIn } from "lucide-react";
 
 
 const StoreIcon = () => (
@@ -89,8 +90,10 @@ export default function StickyPurchaseBar({
 }: StickyPurchaseBarProps) {
   const dispatch = useAppDispatch();
   const cartItems = useAppSelector((state) => state.cart.items);
+  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
   const router = useRouter();
   const [loadingBuyNow, setLoadingBuyNow] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   // ── Unique cart id = variantUuid + care plan id (if any) ──────
   const planId          = selectedCareOptions[0]?.id ?? "";
@@ -147,6 +150,11 @@ export default function StickyPurchaseBar({
   };
 
   const handleBuyNow = async () => {
+    // Not logged in → show login modal
+    if (!isAuthenticated) {
+      setShowLoginModal(true);
+      return;
+    }
     setLoadingBuyNow(true);
     try {
       const success = handleAddToCart();
@@ -230,11 +238,11 @@ export default function StickyPurchaseBar({
             </div>
 
             {/* Add to Cart + Buy Now */}
-            <div className="flex items-center gap-3 shrink-0">
+            <div className="flex items-center md:gap-3 gap-1 shrink-0">
               <button
                 onClick={handleAddToCart}
                 disabled={isUnavailable}
-                className={`shrink-0 px-6 sm:px-8 py-3 text-sm sm:text-base font-semibold rounded-full transition-all duration-200 whitespace-nowrap shadow-sm
+                className={`shrink-0 md:px-6 px-3 sm:px-8 md:py-3 py-1 text-sm sm:text-base font-semibold rounded-full transition-all duration-200 whitespace-nowrap shadow-sm
                   ${isUnavailable
                     ? "bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-60"
                     : addedToCart
@@ -255,7 +263,7 @@ export default function StickyPurchaseBar({
               <button
                 onClick={handleBuyNow}
                 disabled={isUnavailable || loadingBuyNow}
-                className={`shrink-0 px-6 sm:px-8 py-3 text-sm sm:text-base font-semibold rounded-full transition-all duration-200 whitespace-nowrap shadow-sm cursor-pointer
+                className={`shrink-0 md:px-6 px-3 sm:px-8 md:py-3 py-1 text-sm sm:text-base font-semibold rounded-full transition-all duration-200 whitespace-nowrap shadow-sm cursor-pointer
                   ${isUnavailable || loadingBuyNow
                     ? "bg-gray-300 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-60"
                     : "bg-[#222222] hover:bg-[#444444] active:bg-[#000000] text-white"
@@ -271,6 +279,7 @@ export default function StickyPurchaseBar({
                   </span>
                 ) : "Buy Now"}
               </button>
+              
             </div>
           </div>
         </div>
