@@ -351,7 +351,7 @@ function CategoriesProduct({
         </div>
       )}
 
-      <div className="flex md:px-12.5 px-4 pt-2 flex-wrap items-center justify-between gap-3 pb-3 relative">
+      <div className="flex md:px-12.5 px-4 pt-2 mt-[15px] flex-wrap items-center justify-between gap-3 pb-3 relative">
           <div>
             <h3 className="md:text-[32px] text-[20px] font-bold text-transparent bg-clip-text bg-[linear-gradient(90deg,#101518_0%,#E9CCAE_46.15%,#B57908_100%)] dark:text-white">
               Products of{" "}

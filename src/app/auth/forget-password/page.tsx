@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 import React from "react";
 import ForgetPassword from "@/components/Auth/ForgetPassword";
 
@@ -11,7 +12,7 @@ const ForgetPasswordPage: React.FC = () => {
             <sup className="text-xs font-normal align-super ml-0.5 dark:text-white">™</sup>
           </h1>
           <p className="text-sm text-gray-500 mt-1 dark:text-white">
-            Welcome Back You ve Been Missed!
+            Welcome Back! You've Been Missed!
           </p>
         </div>
         <ForgetPassword />

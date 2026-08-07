@@ -279,14 +279,14 @@ const ProductCard: React.FC<ProductCardProps> = ({
         {/* Title & Stock */}
         <div className="mb-1 sm:mb-2 text-left">
           <h3
-  className="text-[#575757] font-bold text-[11px] sm:text-xs md:text-sm leading-snug line-clamp-2 h-9 [text-shadow:0_1px_2px_rgba(0,0,0,0.15)]"
+  className="font-bold text-[11px] sm:text-xs md:text-sm leading-snug line-clamp-2 h-9 text-transparent bg-clip-text bg-[linear-gradient(90deg,#101518_0%,#E9CCAE_46.15%,#472f00_100%)] dark:text-white"
   title={title}
 >
   {title}
 </h3>
            <div
             role="tooltip"
-            className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-[60] w-max max-w-[220px] whitespace-normal rounded-lg bg-gray-900 text-white text-[10px] sm:text-xs px-2.5 py-1.5 shadow-lg opacity-0 scale-95 origin-bottom transition-all duration-300 group-hover:opacity-100 group-hover:scale-100"
+            className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-[60] w-max max-w-[220px] whitespace-normal rounded-lg bg-gray-900 text-white text-[10px] sm:text-xs px-2.5 py-1.5 shadow-lg opacity-0 scale-95 origin-bottom transition-all duration-300 group-hover:opacity-100 group-hover:scale-100 "
           >
             {title}
             {/* little arrow */}
