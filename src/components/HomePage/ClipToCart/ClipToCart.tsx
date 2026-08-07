@@ -196,11 +196,11 @@ function ClipToCartCard({ product, index, onOpenModal }: {
 
   return (
     <div
-      className="group bg-[#f4e3d3] dark:bg-[#3a332b] rounded-2xl p-1.5 sm:p-2 relative transition-all duration-500 hover:shadow-2xl cursor-pointer h-full w-full flex flex-col"
+      className="group bg-[#f4e3d3] dark:bg-[#3a332b]  p-1.5 sm:p-2 relative transition-all duration-500 hover:shadow-2xl cursor-pointer h-full w-full flex flex-col"
       onClick={() => onOpenModal(index)}
     >
       {/* Media box */}
-      <div className="relative w-full h-56 sm:h-64 md:h-72 rounded-xl overflow-hidden bg-gray-100 dark:bg-black/20 shrink-0">
+      <div className="relative w-full h-56 sm:h-64 md:h-72 rounded-t-2xl overflow-hidden bg-gray-100 dark:bg-black/20 shrink-0">
         <Image
           src={!isEmpty(product.clipThumbnail) ? product.clipThumbnail! : product.image}
           alt={product.title}
@@ -220,15 +220,18 @@ function ClipToCartCard({ product, index, onOpenModal }: {
         )}
 
         {/* Product thumbnail circle — overlaps bottom edge */}
-        {product.image && (
-          <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white dark:bg-[#2e2b28] shadow-md border-4 border-white dark:border-[#2e2b28] z-10 overflow-hidden">
-            <Image src={product.image} alt={product.title} fill sizes="64px" className="object-cover" unoptimized />
-          </div>
-        )}
+        
       </div>
 
       {/* Content */}
-      <div className="bg-white dark:bg-[#2e2b28] rounded-xl mt-[-1px] pt-8 px-3 pb-3 flex flex-col flex-1">
+      <div className="bg-white dark:bg-[#2e2b28] rounded-b-lg mt-[-1px] pt-8 px-3 pb-3 flex flex-col flex-1 text-left relative">
+
+        {product.image && (
+          <div className="absolute  left-1/2 -translate-x-1/2 top-[-40px] w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white dark:bg-[#2e2b28] shadow-md border-4 border-white dark:border-[#2e2b28] z-10 overflow-hidden">
+            <Image src={product.image} alt={product.title} fill sizes="64px" className="object-cover" unoptimized />
+          </div>
+        )}
+
         {/* Brand row */}
         {product.brandName && (
           <div className="flex items-center gap-1 mb-1">
