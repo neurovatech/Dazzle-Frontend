@@ -85,6 +85,13 @@ export default function BrandProducts({
   const [maxPrice, setMaxPrice] = useState<number | undefined>(initialMaxPrice);
   const [stockStatus, setStockStatus] = useState<string | null>(initialStockStatus);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isSortOpen, setIsSortOpen] = useState(false);
+  const [currentSort, setCurrentSort] = useState<string>(
+    searchParams.get("sort") ?? "recommend"
+  );
+  const [pendingSort, setPendingSort] = useState<string>(
+    searchParams.get("sort") ?? "recommend"
+  );
   const [currentAttributes, setCurrentAttributes] = useState<AttributeGroup[]>(attributes);
   const [currentPriceData, setCurrentPriceData] = useState<PriceData | undefined>(priceData);
 
@@ -145,6 +152,9 @@ export default function BrandProducts({
     setMinPrice(minP);
     setMaxPrice(maxP);
     setStockStatus(stock);
+    const sort = searchParams.get("sort") ?? "recommend";
+    setCurrentSort(sort);
+    setPendingSort(sort);
   }, [searchParams]);
 
   // Sync state if browser navigation (back/forward) happens via browser popstate
@@ -277,6 +287,27 @@ export default function BrandProducts({
     window.history.pushState(null, "", newUrl);
   };
 
+  const handleApplySort = () => {
+    setCurrentSort(pendingSort);
+    setActivePage(1);
+    setIsSortOpen(false);
+
+    const params = new URLSearchParams(window.location.search);
+    if (pendingSort && pendingSort !== "recommend") {
+      params.set("sort", pendingSort);
+    } else {
+      params.delete("sort");
+    }
+    params.delete("page");
+
+    const newQueryString = params.toString();
+    const newUrl = newQueryString
+      ? `${window.location.pathname}?${newQueryString}`
+      : window.location.pathname;
+
+    window.history.pushState(null, "", newUrl);
+  };
+
   const handlePageChange = (page: number) => {
     setActivePage(page);
 
@@ -346,13 +377,28 @@ export default function BrandProducts({
           />
         </div>
 
-        <button
-          onClick={() => setIsFilterOpen(true)}
-          className="md:hidden flex items-center absolute right-4 gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold border border-gray-200 dark:border-white/10 text-white dark:text-gray-300 shrink-0 bg-[#6d3f0e] w-[30%] mb-3"
-        >
-          <SlidersHorizontal size={16} />
-          Filter
-        </button>
+        {/* Filter + Sort buttons — mobile only */}
+        <div className="md:hidden flex items-center absolute right-4 gap-3 bg-[#6d3f0e] px-3 py-2 rounded-full mb-3">
+          <button
+            onClick={() => setIsFilterOpen(true)}
+            className="flex items-center gap-1.5 text-sm font-semibold text-white shrink-0"
+          >
+            <SlidersHorizontal size={16} />
+            Filter
+          </button>
+
+          <span className="text-white/50">|</span>
+
+          <button
+            onClick={() => { setPendingSort(currentSort); setIsSortOpen(true); }}
+            className="flex items-center gap-1.5 text-sm font-semibold text-white shrink-0"
+          >
+            <svg width="14" height="17" viewBox="0 0 14 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3.33333 11.6667H0L5 16.6667V0H3.33333V11.6667ZM8.33333 2.5V16.6667H10V5H13.3333L8.33333 0V2.5Z" fill="white"/>
+            </svg>
+            Sort
+          </button>
+        </div>
 
         <div className="lg:col-span-9">
           {/* React Query client list — filter/page changes never trigger SSR */}
@@ -365,6 +411,7 @@ export default function BrandProducts({
               maxPrice={maxPrice}
               stockStatus={stockStatus}
               currentPage={activePage}
+              currentSort={currentSort}
               onPageChange={handlePageChange}
               onClearFilter={handleClearFilters}
               initialProducts={initialProducts}
@@ -408,6 +455,69 @@ export default function BrandProducts({
                   stockStatus={stockStatus}
                   onStockStatusToggle={handleStockStatusToggle}
                 />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Sort Modal ── */}
+        {isSortOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center md:hidden">
+            <div className="fixed inset-0 bg-black/50" onClick={() => setIsSortOpen(false)} />
+            <div className="relative w-[90%] max-w-sm bg-white dark:bg-[#1c1a17] rounded-3xl shadow-2xl z-10 pb-6 animate-in fade-in zoom-in-95 duration-200">
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100 dark:border-white/10">
+                <button onClick={() => setIsSortOpen(false)} className="w-9 h-9 flex items-center justify-center rounded-full border border-[#d4a97a] text-[#d4a97a]">
+                  <svg width="8" height="14" viewBox="0 0 8 14" fill="none"><path d="M7 1L1 7L7 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                </button>
+                <h3 className="text-base font-bold text-gray-900 dark:text-white">Sort By</h3>
+                <button onClick={() => setIsSortOpen(false)} className="w-9 h-9 flex items-center justify-center rounded-full border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-300">
+                  <X size={16} />
+                </button>
+              </div>
+
+              {/* Options */}
+              <div className="divide-y divide-gray-100 dark:divide-white/5 px-5 mt-2">
+                {[
+                  { label: "Recommend", value: "recommend" },
+                  { label: "Newest", value: "newest" },
+                  { label: "Lowest - Highest", value: "price_asc" },
+                  { label: "Highest - Lowest", value: "price_desc" },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setPendingSort(opt.value)}
+                    className="w-full flex items-center justify-between py-4 text-sm font-medium text-gray-800 dark:text-white"
+                  >
+                    <span>{opt.label}</span>
+                    <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+                      pendingSort === opt.value
+                        ? "border-[#d4a97a] bg-[#d4a97a]"
+                        : "border-gray-300 dark:border-gray-600"
+                    }`}>
+                      {pendingSort === opt.value && (
+                        <span className="w-2 h-2 rounded-full bg-white" />
+                      )}
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Footer buttons */}
+              <div className="flex gap-3 px-5 mt-4">
+                <button
+                  onClick={() => { setPendingSort("recommend"); }}
+                  className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-full border border-gray-200 dark:border-white/10 text-sm font-semibold text-gray-700 dark:text-white"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                  CLEAR ALL
+                </button>
+                <button
+                  onClick={handleApplySort}
+                  className="flex-1 py-3.5 rounded-full bg-[#6D3F0E] text-white text-sm font-semibold"
+                >
+                  APPLY
+                </button>
               </div>
             </div>
           </div>

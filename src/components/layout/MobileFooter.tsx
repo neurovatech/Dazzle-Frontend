@@ -212,7 +212,7 @@ const token = useAppSelector((state) => state.auth.token);
   };
 
   return (
-    <div className="fixed bottom-0 z-10 w-full flex justify-center p-3">
+    <div className="fixed bottom-0 z-100 w-full flex justify-center p-3">
       <nav
         className="grid grid-cols-5 gap-1 px-2 py-2 w-full rounded-[28px]"
         style={{

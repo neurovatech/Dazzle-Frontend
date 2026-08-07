@@ -90,6 +90,7 @@ interface Props {
   maxPrice?: number;
   stockStatus?: string | null;
   currentPage: number;
+  currentSort?: string;
   onPageChange: (page: number) => void;
   onClearFilter: () => void;
   initialProducts: ProductItem[];
@@ -107,6 +108,7 @@ export default function BrandProductListClient({
   maxPrice,
   stockStatus,
   currentPage,
+  currentSort,
   onPageChange,
   onClearFilter,
   initialProducts,
@@ -123,6 +125,7 @@ export default function BrandProductListClient({
       maxPrice,
       stockStatus,
       currentPage,
+      currentSort,
     ],
     staleTime: 2 * 60 * 1000,
     placeholderData: (prev) => prev,
@@ -132,6 +135,7 @@ export default function BrandProductListClient({
       minPrice === undefined &&
       maxPrice === undefined &&
       !stockStatus &&
+      !currentSort &&
       currentPage === 1
         ? {
             statusCode: 200,
@@ -155,9 +159,8 @@ export default function BrandProductListClient({
       if (selectedAttributes.length > 0) qp.set("attributes", selectedAttributes.join(","));
       if (minPrice !== undefined) qp.set("minDiscountedPrice", String(minPrice));
       if (maxPrice !== undefined) qp.set("maxDiscountedPrice", String(maxPrice));
-      if (stockStatus !== null && stockStatus !== undefined && stockStatus !== "") {
-        qp.set("stockStatus", stockStatus);
-      }
+      if (stockStatus) qp.set("stockStatus", stockStatus);
+      if (currentSort && currentSort !== "recommend") qp.set("sort", currentSort);
       return api.get<ProductListResponse>(`/products?${qp.toString()}`);
     },
   });
@@ -178,7 +181,7 @@ export default function BrandProductListClient({
     <div>
 
       <h3 className="md:text-[32px] text-[20px] font-bold text-transparent bg-clip-text bg-[linear-gradient(90deg,#101518_0%,#E9CCAE_46.15%,#B57908_100%)] dark:text-white">
-            Products of {categorySlug ? categorySlug : brandSlug}
+            Products of <span className="capitalize"> {categorySlug ? categorySlug : brandSlug} </span>
           </h3>
 
       {/* Count + clear */}

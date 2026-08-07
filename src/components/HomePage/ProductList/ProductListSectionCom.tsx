@@ -72,7 +72,7 @@ export default async function ProductListSectionCom() {
   }
 
   return (
-    <div className=" px-4">
+    <div className=" md:px-4">
       <ProductList products={products} />
     </div>
   );

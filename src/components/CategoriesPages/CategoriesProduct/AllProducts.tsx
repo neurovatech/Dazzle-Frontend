@@ -203,10 +203,10 @@ function AllProducts({
   return (
     <div className="w-full">
       {/* ── Header ── */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-3">
+      {/* <div className="flex flex-wrap items-center justify-between gap-3 pb-3">
         <div>
           <h3 className="md:text-[32px] text-[20px] font-bold text-transparent bg-clip-text bg-[linear-gradient(90deg,#101518_0%,#E9CCAE_46.15%,#B57908_100%)] dark:text-white">
-            Products of {subCategorySlug || categorySlug}
+            Products of <span className="capitalize"> {subCategorySlug || categorySlug} </span> 
           </h3>
           <p className="text-xs text-gray-400 mt-0.5">
             {displayTotal.toLocaleString()} products found
@@ -225,7 +225,7 @@ function AllProducts({
             )}
           </p>
         </div>
-      </div>
+      </div> */}
 
       {/* ── Loading skeleton ── */}
       {isLoading && <ProductGridSkeleton />}
