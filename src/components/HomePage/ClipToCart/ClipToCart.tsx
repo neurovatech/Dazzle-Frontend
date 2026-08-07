@@ -196,7 +196,7 @@ function ClipToCartCard({ product, index, onOpenModal }: {
 
   return (
     <div
-      className="group bg-[#f4e3d3] dark:bg-[#3a332b]  p-1.5 sm:p-2 relative transition-all duration-500 hover:shadow-2xl cursor-pointer h-full w-full flex flex-col"
+      className="group bg-[#f4e3d3] dark:bg-[#3a332b] rounded-2xl  p-1.5 sm:p-2 relative transition-all duration-500 hover:shadow-2xl cursor-pointer h-full w-full flex flex-col"
       onClick={() => onOpenModal(index)}
     >
       {/* Media box */}
