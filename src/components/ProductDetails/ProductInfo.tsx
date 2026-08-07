@@ -92,11 +92,12 @@ export default function ProductInfo({
   // Redux dispatch
   const dispatch = useAppDispatch();
   const cartItems = useAppSelector((state) => state.cart.items);
+
   const handleAddToCart = () => {
     if (isVariantUnavailable) return;
-    const variantName = selectedVariant?.name ?? "";
+
+    const variantName  = selectedVariant?.name ?? "";
     const productTitle = title ?? "";
-    // Ensure product name is always in the cart title
     const cartName = variantName
       ? variantName.startsWith(productTitle)
         ? variantName
@@ -109,30 +110,23 @@ export default function ProductInfo({
           plan.price > 0 ? plan.price.toLocaleString() + " BDT" : "included"
         })`
       : "";
-
     const fullName = `${cartName}${carePlanSuffix}`;
-    const targetProductUuid = alldata?.productUuid || alldata?.id || "";
-    const targetVariantUuid =
-      selectedVariant?.variantUuid || selectedVariant?.id || "";
-    const targetAccessoriesUuid =
-      selectedCareOptions.map((o: any) => o.id).join(",") || "";
 
-    const targetId = targetVariantUuid || targetProductUuid || code;
-    const isAlreadyInCart = cartItems.some(
-      (item) => item.id === targetId || item.variantUuid === targetVariantUuid,
-    );
+    const targetProductUuid  = alldata?.productUuid || alldata?.id || "";
+    const targetVariantUuid  = selectedVariant?.variantUuid || selectedVariant?.id || "";
+    const planId             = plan?.id ?? "";
 
-    if (isAlreadyInCart) {
-      toast.error("Product already added to cart!");
-      return;
-    }
+    // Unique id = variantUuid + plan (same variant + same plan = same cart row)
+    const targetCartId = `${targetVariantUuid || targetProductUuid || code}${planId ? `__${planId}` : ""}`;
+
+    const isAlreadyInCart = cartItems.some((item) => item.id === targetCartId);
 
     dispatch(
       addToCart({
-        id: targetVariantUuid || targetProductUuid || code,
+        id: targetCartId,
         variantUuid: targetVariantUuid || targetProductUuid || "",
         productUuid: targetProductUuid,
-        accessoriesUuid: targetAccessoriesUuid,
+        accessoriesUuid: planId,
         name: fullName,
         brand: brand,
         image:
@@ -148,7 +142,10 @@ export default function ProductInfo({
         slug: alldata?.productSlug || "",
       }),
     );
-    toast.success(`${cartName} added to cart! 🛒`);
+
+    if (!isAlreadyInCart) {
+      toast.success(`${cartName} added to cart! 🛒`);
+    }
   };
 
   // Admin profit meter hidden state

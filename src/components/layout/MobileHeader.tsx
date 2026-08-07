@@ -24,14 +24,12 @@ interface Props {
 }
 
 export default function MobileHeader({ categories }: Props) {
-
-
   const token = useAppSelector((state) => state.auth.token);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState(
     categories && categories.length > 0
       ? categories[0].category_name
-      : (exploreCategories[0]?.label ?? "Phones")
+      : (exploreCategories[0]?.label ?? "Phones"),
   );
   const [selectedBrand, setSelectedBrand] = useState("");
 
@@ -40,7 +38,7 @@ export default function MobileHeader({ categories }: Props) {
 
   const menuRef = useRef<HTMLDivElement>(null);
 
-   const cartItems = useAppSelector((state) => state.cart.items);
+  const cartItems = useAppSelector((state) => state.cart.items);
   const cartCount = cartItems.length;
 
   const [bounce, setBounce] = useState(false);
@@ -54,7 +52,6 @@ export default function MobileHeader({ categories }: Props) {
     }
     prevCount.current = cartCount;
   }, [cartCount]);
-  
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -70,7 +67,8 @@ export default function MobileHeader({ categories }: Props) {
     };
   }, []);
 
-  const panelCategories = categories && categories.length > 0 ? categories : exploreCategories;
+  const panelCategories =
+    categories && categories.length > 0 ? categories : exploreCategories;
 
   const panelProps = {
     categories: panelCategories,
@@ -80,35 +78,39 @@ export default function MobileHeader({ categories }: Props) {
     onSelectBrand: setSelectedBrand,
   };
 
-
   return (
     <div className="md:hidden p-3" ref={menuRef}>
       {/* Top row */}
       <div className="flex items-center justify-between py-3.5">
         <Link href="/" className="shrink-0 mr-2">
           <div className="text-3xl flex font-black text-white tracking-tighter leading-none">
-            <Image src="https://dazzle.sgp1.cdn.digitaloceanspaces.com/site/header-logo-white.svg" width={130} height={30} alt="Dazzle logo" />
-
+            <Image
+              src="https://dazzle.sgp1.cdn.digitaloceanspaces.com/site/header-logo-white.svg"
+              width={130}
+              height={30}
+              alt="Dazzle logo"
+            />
           </div>
         </Link>
 
         <div className="flex items-center gap-2">
           <Link
-            // href={token ? "/profile" : "/auth/login"}
             href="/shop-location"
-            className="w-10 h-10 rounded-xl bg-background flex items-center justify-center"
+            className="w-10 h-10 rounded-xl bg-background flex items-center justify-center text-[#222222] dark:text-white"
           >
-            <Locationicon  />
+            <Locationicon />
           </Link>
 
           <Link
-            href="/cart" className="relative w-10 h-10 rounded-xl bg-white dark:bg-[#2e2b28] flex items-center justify-center">
+            href="/cart"
+            className="relative w-10 h-10 rounded-xl bg-white dark:bg-[#2e2b28] flex items-center justify-center"
+          >
             <span className={bounce ? "animate-bounce" : ""}>
-                  <CartIcon />
-                </span>
-                {cartCount > 0 && (
-                  <span
-                    className={`
+              <CartIcon />
+            </span>
+            {cartCount > 0 && (
+              <span
+                className={`
                       absolute -top-1.5 -right-1.5
                       min-w-[20px] h-5 px-1
                       bg-[#E6A817] text-white
@@ -118,10 +120,10 @@ export default function MobileHeader({ categories }: Props) {
                       shadow-md
                       ${bounce ? "animate-bounce" : ""}
                     `}
-                  >
-                    {cartCount > 99 ? "99+" : cartCount}
-                  </span>
-                )}
+              >
+                {cartCount > 99 ? "99+" : cartCount}
+              </span>
+            )}
           </Link>
         </div>
       </div>
@@ -134,7 +136,11 @@ export default function MobileHeader({ categories }: Props) {
           onClick={() => setMobileMenuOpen((prev) => !prev)}
           className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-gray-300 dark:bg-[#2e2b28]"
         >
-          {mobileMenuOpen ? <CloseIcon color={iconColor}   /> : <MobileMenuIcon color={iconColor} />}
+          {mobileMenuOpen ? (
+            <CloseIcon color={iconColor} />
+          ) : (
+            <MobileMenuIcon color={iconColor} />
+          )}
         </button>
       </div>
 

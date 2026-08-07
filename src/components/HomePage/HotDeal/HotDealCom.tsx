@@ -47,7 +47,7 @@ function HotDealCom({
       {navigation && (
         <button
           onClick={() => swiperRef.current?.slidePrev()}
-          className="absolute left-0 top-[45%] -translate-y-1/2 -translate-x-2 z-10 flex items-center justify-center w-9 h-9 rounded-full bg-white dark:bg-gray-800 shadow-md border border-gray-200 dark:border-gray-700 hover:bg-[#D4A97A] hover:text-white transition-colors"
+          className="absolute left-[-10px] top-[45%] -translate-y-1/2 -translate-x-2 z-10 flex items-center justify-center w-9 h-9 rounded-full bg-white dark:bg-gray-800 shadow-md border border-gray-200 dark:border-gray-700 hover:bg-[#D4A97A] hover:text-white transition-colors"
           aria-label="Previous slide"
         >
           <ChevronLeft className="w-5 h-5" />
@@ -107,7 +107,7 @@ function HotDealCom({
       {navigation && (
         <button
           onClick={() => swiperRef.current?.slideNext()}
-          className="absolute right-0 top-[45%] -translate-y-1/2 translate-x-2 z-10 flex items-center justify-center w-9 h-9 rounded-full bg-white dark:bg-gray-800 shadow-md border border-gray-200 dark:border-gray-700 hover:bg-[#D4A97A] hover:text-white transition-colors"
+          className="absolute right-[-10px] top-[45%] -translate-y-1/2 translate-x-2 z-10 flex items-center justify-center w-9 h-9 rounded-full bg-white dark:bg-gray-800 shadow-md border border-gray-200 dark:border-gray-700 hover:bg-[#D4A97A] hover:text-white transition-colors"
           aria-label="Next slide"
         >
           <ChevronRight className="w-5 h-5" />

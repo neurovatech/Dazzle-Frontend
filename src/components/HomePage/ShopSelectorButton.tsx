@@ -48,7 +48,7 @@ export default function ShopSelectorButton({
   onClick,
 }: ShopSelectorButtonProps) {
   return (
-    <div className="fixed right-0 md:top-50 top-30 z-[999] flex justify-center items-center">
+    <div className="fixed right-0 md:top-70 top-60 z-[999] hidden justify-center items-center">
       <button
         onClick={onClick}
         aria-label="Open shop selector"

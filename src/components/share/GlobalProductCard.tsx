@@ -64,12 +64,16 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const itemId        = productUuid || uuid || "";
   const isWishlisted  = wishlistItems.some((i) => i.productUuid === itemId);
 
-  const [addedToCart, setAddedToCart] = useState(false);
   const [loadingCart, setLoadingCart] = useState(false);
   const [imgError, setImgError]       = useState(false);
 
   const [isTba, setIsTba]             = useState(!inStock);
   const cartItems = useAppSelector((state) => state.cart.items);
+
+  // Cart-এ product আছে কিনা check — persistent "Added" দেখাবে
+  const addedToCart = cartItems.some(
+    (item) => item.productUuid === itemId || item.variantUuid === itemId || item.id === itemId
+  );
 
 
 
@@ -137,8 +141,6 @@ const ProductCard: React.FC<ProductCardProps> = ({
       );
 
       toast.success(`Added to cart! 🛒`);
-      setAddedToCart(true);
-      setTimeout(() => setAddedToCart(false), 2000);
     } catch (error) {
       console.error("[GlobalProductCard] get-default-variant error:", error);
       // Fallback: API fail হলে productUuid দিয়ে cart-এ add করো
@@ -167,8 +169,6 @@ const ProductCard: React.FC<ProductCardProps> = ({
         })
       );
       toast.success(`Added to cart! 🛒`);
-      setAddedToCart(true);
-      setTimeout(() => setAddedToCart(false), 2000);
     } finally {
       setLoadingCart(false);
     }
@@ -243,8 +243,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
         </Link>
 
         {/* Action Row */}
-        <div className="flex items-center justify-between">
-          <div className="flex gap-1 sm:gap-2 ml-auto p-2 sm:p-2.5 lg:p-3 -mr-1.5 sm:-mr-2 lg:-mr-4 rounded-tl-2xl sm:rounded-tl-3xl">
+        <div className="flex items-center justify-between relative z-50">
+          <div className="flex gap-1 sm:gap-2 ml-auto p-1 -mr-1.5 sm:-mr-2 lg:-mr-4 rounded-tl-2xl sm:rounded-tl-3xl">
             {/* Wishlist toggle */}
             <button
               onClick={handleWishlist}
@@ -277,10 +277,18 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
       <div className="p-2 sm:p-3 lg:p-4 flex flex-col flex-1">
         {/* Title & Stock */}
-        <div className="mb-1 sm:mb-2 text-left h-9 sm:h-10">
-          <h3 className="text-[#575757] font-bold text-[11px] sm:text-xs md:text-sm leading-snug line-clamp-2" title={title}>
+        <div className="mb-1 sm:mb-2 text-left">
+          <h3 className="text-[#575757] font-bold text-[11px] sm:text-xs md:text-sm leading-snug line-clamp-2 truncate" title={title}>
             {title}
           </h3>
+           <div
+            role="tooltip"
+            className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-[60] w-max max-w-[220px] whitespace-normal rounded-lg bg-gray-900 text-white text-[10px] sm:text-xs px-2.5 py-1.5 shadow-lg opacity-0 scale-95 origin-bottom transition-all duration-300 group-hover:opacity-100 group-hover:scale-100"
+          >
+            {title}
+            {/* little arrow */}
+            <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
+          </div>
         </div>
 
         {/* Price */}

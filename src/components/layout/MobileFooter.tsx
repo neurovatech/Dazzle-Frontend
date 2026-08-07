@@ -33,7 +33,7 @@ const OfferIcon = ({ active }: { active: boolean }) => (
     xmlns="http://www.w3.org/2000/svg"
     width="24"
     height="24"
-    style={{ opacity: active ? 1 : 0.4, transition: "opacity 0.2s" }}
+    // style={{ opacity: active ? 1 : 0.4, transition: "opacity 0.2s" }}
   >
     <path d="M252 128
              C 230 95, 210 55, 165 32

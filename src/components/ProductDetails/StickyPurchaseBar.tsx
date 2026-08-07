@@ -1,11 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
+import { useState } from "react";
 import QuantitySelector from "./QuantitySelector";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { addToCart } from "@/store/slices/cartSlice";
 import toast from "react-hot-toast";
 import type { CareOption } from "./DazzleCare";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 
 const StoreIcon = () => (
@@ -87,6 +89,15 @@ export default function StickyPurchaseBar({
 }: StickyPurchaseBarProps) {
   const dispatch = useAppDispatch();
   const cartItems = useAppSelector((state) => state.cart.items);
+  const router = useRouter();
+  const [loadingBuyNow, setLoadingBuyNow] = useState(false);
+
+  // ── Unique cart id = variantUuid + care plan id (if any) ──────
+  const planId          = selectedCareOptions[0]?.id ?? "";
+  const targetCartId    = `${variantUuid || productId || ""}${planId ? `__${planId}` : ""}`;
+
+  // "Added" — only if THIS exact variant+plan combo is already in cart
+  const addedToCart = cartItems.some((item) => item.id === targetCartId);
 
   // ── Combined prices (product + selected care plan) ────────────
   const combinedOfferPrice    = (productPrice ?? 0) + careTotalOffer;
@@ -109,25 +120,14 @@ export default function StickyPurchaseBar({
   const cartName = `${variantName}${carePlanSuffix}`;
 
   const handleAddToCart = () => {
-    if ((!productId && !variantUuid) || isUnavailable) return;
-    const targetVariantUuid = variantUuid || productId || "";
-    const targetAccessoriesUuid = selectedCareOptions.map((o: any) => o.id).join(",") || "";
-
-    const isAlreadyInCart = cartItems.some(
-      (item) => item.id === targetVariantUuid || item.variantUuid === targetVariantUuid
-    );
-
-    if (isAlreadyInCart) {
-      toast.error("Product already added to cart!");
-      return;
-    }
+    if ((!productId && !variantUuid) || isUnavailable) return false;
 
     dispatch(
       addToCart({
-        id: targetVariantUuid,
-        variantUuid: targetVariantUuid,
+        id: targetCartId,                          // unique per variant+plan combo
+        variantUuid: variantUuid || productId || "",
         productUuid: productId || "",
-        accessoriesUuid: targetAccessoriesUuid,
+        accessoriesUuid: planId,
         name: cartName,
         brand: "",
         image: productImage || "",
@@ -138,7 +138,26 @@ export default function StickyPurchaseBar({
         slug: productSlug || "",
       })
     );
-    toast.success(`${productName || "Product"} added to cart! 🛒`);
+
+    if (!addedToCart) {
+      // Only toast on first add — not on qty update
+      toast.success(`${productName || "Product"} added to cart! 🛒`);
+    }
+    return true;
+  };
+
+  const handleBuyNow = async () => {
+    setLoadingBuyNow(true);
+    try {
+      const success = handleAddToCart();
+      if (success) {
+        router.push("/checkout");
+      }
+    } catch (err) {
+      console.error("[StickyPurchaseBar] Buy now error:", err);
+    } finally {
+      setLoadingBuyNow(false);
+    }
   };
 
   return (
@@ -210,18 +229,49 @@ export default function StickyPurchaseBar({
               <QuantitySelector value={qty} onChange={(val) => onQtyChange?.(val)} />
             </div>
 
-            {/* Add to Cart */}
-            <button
-              onClick={handleAddToCart}
-              disabled={isUnavailable}
-              className={`shrink-0 px-6 sm:px-8 py-3 text-sm sm:text-base font-semibold rounded-full transition-colors duration-150 whitespace-nowrap shadow-sm
-                ${isUnavailable
-                  ? "bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-60"
-                  : "bg-[#E9CCAE] hover:bg-[#D4B89A] active:bg-[#C0A486] text-black cursor-pointer"
-                }`}
-            >
-              {isUnavailable ? "Not Available" : "Add to cart"}
-            </button>
+            {/* Add to Cart + Buy Now */}
+            <div className="flex items-center gap-3 shrink-0">
+              <button
+                onClick={handleAddToCart}
+                disabled={isUnavailable}
+                className={`shrink-0 px-6 sm:px-8 py-3 text-sm sm:text-base font-semibold rounded-full transition-all duration-200 whitespace-nowrap shadow-sm
+                  ${isUnavailable
+                    ? "bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-60"
+                    : addedToCart
+                    ? "bg-green-500 text-white cursor-pointer"
+                    : "bg-[#E9CCAE] hover:bg-[#D4B89A] active:bg-[#C0A486] text-black cursor-pointer"
+                  }`}
+              >
+                {isUnavailable ? "Not Available" : addedToCart ? (
+                  <span className="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                    Added!
+                  </span>
+                ) : "Add to cart"}
+              </button>
+
+              <button
+                onClick={handleBuyNow}
+                disabled={isUnavailable || loadingBuyNow}
+                className={`shrink-0 px-6 sm:px-8 py-3 text-sm sm:text-base font-semibold rounded-full transition-all duration-200 whitespace-nowrap shadow-sm cursor-pointer
+                  ${isUnavailable || loadingBuyNow
+                    ? "bg-gray-300 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-60"
+                    : "bg-[#222222] hover:bg-[#444444] active:bg-[#000000] text-white"
+                  }`}
+              >
+                {loadingBuyNow ? (
+                  <span className="flex items-center gap-2">
+                    <svg className="w-4 h-4 animate-spin shrink-0" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                    </svg>
+                    Processing...
+                  </span>
+                ) : "Buy Now"}
+              </button>
+            </div>
           </div>
         </div>
       </div>
