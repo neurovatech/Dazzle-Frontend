@@ -33,8 +33,14 @@ export default function GlobalModal({
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-9999 flex items-center justify-center bg-black/50 px-4 py-4">
-      <div className="relative w-full max-w-[600px] max-h-[calc(100vh-2rem)] rounded-2xl bg-white dark:bg-[#3e3329] shadow-2xl flex flex-col">
+    <div
+      className="fixed inset-0 z-9999 flex items-center justify-center bg-black/50 px-4 py-4"
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full max-w-[600px] max-h-[calc(100vh-2rem)] rounded-2xl bg-white dark:bg-[#3e3329] shadow-2xl flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex shrink-0 justify-between items-center px-5 py-4 border-b border-gray-100">
           <button

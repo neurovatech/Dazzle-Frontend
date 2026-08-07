@@ -288,7 +288,7 @@ img {
 /* Mobile footer spacing (so content doesn't hide behind fixed bottom nav) */
 @media (max-width: 1023px) {
   body {
-    padding-bottom: 4.5rem;
+    /* padding-bottom: 4.5rem; */
   }
 }
 

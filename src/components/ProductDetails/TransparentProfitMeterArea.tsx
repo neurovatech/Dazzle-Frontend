@@ -75,10 +75,16 @@ export default function TransparentProfitMeterArea({
 
   const handleCareToggle = useCallback((id: string) => { setCalcCareId(id); }, []);
 
+  // ── Reset live data when variant changes ─────────────────────────────────
+  useEffect(() => {
+    setLiveData(null);
+    setLiveError(null);
+  }, [variantUUID]);
+
   // ── Fetch live price check ────────────────────────────────────────────────
   const handleOpenPriceCheck = async () => {
     setShowPriceCheck(true);
-    if (liveData) return; // already fetched
+    if (liveData) return; // already fetched for this variant
 
     const pUUID = (productUUID ?? "").replace(/-/g, "");
     const vUUID = (variantUUID ?? "").replace(/-/g, "");

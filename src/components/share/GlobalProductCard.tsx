@@ -278,9 +278,12 @@ const ProductCard: React.FC<ProductCardProps> = ({
       <div className="p-2 sm:p-3 lg:p-4 flex flex-col flex-1">
         {/* Title & Stock */}
         <div className="mb-1 sm:mb-2 text-left">
-          <h3 className="text-[#575757] font-bold text-[11px] sm:text-xs md:text-sm leading-snug line-clamp-2 truncate" title={title}>
-            {title}
-          </h3>
+          <h3
+  className="text-[#575757] font-bold text-[11px] sm:text-xs md:text-sm leading-snug line-clamp-2 h-9 [text-shadow:0_1px_2px_rgba(0,0,0,0.15)]"
+  title={title}
+>
+  {title}
+</h3>
            <div
             role="tooltip"
             className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-[60] w-max max-w-[220px] whitespace-normal rounded-lg bg-gray-900 text-white text-[10px] sm:text-xs px-2.5 py-1.5 shadow-lg opacity-0 scale-95 origin-bottom transition-all duration-300 group-hover:opacity-100 group-hover:scale-100"
