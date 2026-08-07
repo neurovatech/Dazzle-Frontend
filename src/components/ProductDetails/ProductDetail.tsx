@@ -602,6 +602,8 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
                 currentPrice={price}
                 dazzleCareOptions={dazzleCareOptions}
                 selectedCareIds={selectedCareIds}
+                productUUID={product?.productUuid}
+                variantUUID={selectedVariant?.id}
               />
             </div>
             <div>
