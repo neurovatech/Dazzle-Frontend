@@ -72,7 +72,7 @@ export default async function HotDealSectionCom() {
   }
 
   return (
-    <div className=" px-4">
+    <div className="">
       <HotDealCom products={products} />
     </div>
   );

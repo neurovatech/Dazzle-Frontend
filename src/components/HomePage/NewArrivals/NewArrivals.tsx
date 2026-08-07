@@ -141,7 +141,7 @@ function NewArrivals({
   return (
     <div className="relative flex flex-wrap gap-6">
       {/* Left Arrow */}
-      {navigation && (
+      {/* {navigation && (
         <button
           onClick={() => swiperRef.current?.slidePrev()}
           className="absolute left-[-10px] top-[45%] -translate-y-1/2 -translate-x-2 z-10 flex items-center justify-center w-9 h-9 rounded-full bg-white dark:bg-gray-800 shadow-md border border-gray-200 dark:border-gray-700 hover:bg-[#D4A97A] hover:text-white transition-colors"
@@ -149,7 +149,7 @@ function NewArrivals({
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
-      )}
+      )} */}
 
       <Swiper
         modules={[Navigation, Pagination, Scrollbar, A11y, Autoplay]}
@@ -195,7 +195,7 @@ function NewArrivals({
       </Swiper>
 
       {/* Right Arrow */}
-      {navigation && (
+      {/* {navigation && (
         <button
           onClick={() => swiperRef.current?.slideNext()}
           className="absolute right-[-10px] top-[45%] -translate-y-1/2 translate-x-2 z-10 flex items-center justify-center w-9 h-9 rounded-full bg-white dark:bg-gray-800 shadow-md border border-gray-200 dark:border-gray-700 hover:bg-[#D4A97A] hover:text-white transition-colors"
@@ -203,7 +203,7 @@ function NewArrivals({
         >
           <ChevronRight className="w-5 h-5" />
         </button>
-      )}
+      )} */}
     </div>
   );
 }

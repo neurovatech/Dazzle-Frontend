@@ -44,7 +44,7 @@ function TrendingNow({
   return (
     <div className=" w-full">
       <div className="relative">
-        {navigation && (
+        {/* {navigation && (
           <button
             onClick={() => swiperRef.current?.slidePrev()}
             className="absolute left-0 top-[45%] -translate-y-1/2 -translate-x-2 z-10 flex items-center justify-center w-9 h-9 rounded-full bg-white dark:bg-gray-800 shadow-md border border-gray-200 dark:border-gray-700 hover:bg-[#D4A97A] hover:text-white transition-colors"
@@ -52,7 +52,7 @@ function TrendingNow({
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
-        )}
+        )} */}
         <Swiper
           modules={[Navigation, Pagination, Scrollbar, A11y, Autoplay]}
           loop={products.length > 5}
@@ -94,7 +94,7 @@ function TrendingNow({
         ))}
       </Swiper>
 
-      {navigation && (
+      {/* {navigation && (
         <button
           type="button"
           onClick={() => swiperRef.current?.slideNext()}
@@ -103,7 +103,7 @@ function TrendingNow({
         >
           <ChevronRight className="w-5 h-5" />
         </button>
-      )}
+      )} */}
     </div>
     </div>
   );

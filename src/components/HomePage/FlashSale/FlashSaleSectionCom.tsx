@@ -72,7 +72,7 @@ export default async function FlashSaleSectionCom() {
   }
 
   return (
-    <div className=" px-4">
+    <div className="">
       <NewArrivals products={products} />
     </div>
   );

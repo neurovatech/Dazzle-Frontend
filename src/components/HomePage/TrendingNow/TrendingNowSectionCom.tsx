@@ -72,7 +72,7 @@ export default async function TrendingNowSectionCom() {
   }
 
   return (
-    <div className=" px-4">
+    <div className="">
       <TrendingNow products={products} />
     </div>
   );
