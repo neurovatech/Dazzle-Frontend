@@ -165,7 +165,7 @@ export default function Footer() {
 
   // const pathname = usePathname();
   return (
-    <div className="overflow-hidden">
+    <div className="overflow-hidden bg-[#fffbf6] dark:bg-[#2e2b28]">
       {/* {!pathname.startsWith("/product") &&
        !pathname.startsWith("/blogs") &&
        !pathname.startsWith("/shop-location") &&

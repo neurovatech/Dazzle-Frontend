@@ -37,10 +37,10 @@ interface InfoBoxProps {
 }
 
 const infoBoxes: InfoBoxProps[] = [
-  { bg: "bg-blue-50" },
-  { bg: "bg-purple-50" },
+  { bg: "bg-blue-50 shadow-sm" },
+  { bg: "bg-purple-50 shadow-sm" },
   { bg: "bg-white border border-gray-100 shadow-sm" },
-  { bg: "bg-yellow-50" },
+  { bg: "bg-yellow-50 shadow-sm" },
 ];
 
 async function getBlogs(){
