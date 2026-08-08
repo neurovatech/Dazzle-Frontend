@@ -80,7 +80,7 @@ function CategoriesCard({
                 className="flex flex-col items-center"
               >
                 {/* Fixed-size box so every image container is the same height */}
-                <div className="relative w-full aspect-square bg-[#F5F5F5]  rounded-4xl p-6 md:p-8 transition-all duration-300 hover:scale-105">
+                <div className="relative w-full aspect-square bg-[#F5F5F5]  rounded-4xl p-6 md:p-8 transition-all duration-300 hover:scale-105 hover:bg-[#fcf5ed] hover:border-[#E9CCAE] border border-[#F5F5F5]">
                   <Image
                     src={hasImage ? item.thumbnail_img : NoImg}
                     alt={hasName ? item.category_name : "Category"}

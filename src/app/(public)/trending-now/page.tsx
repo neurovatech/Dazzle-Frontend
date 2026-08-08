@@ -3,6 +3,7 @@ import SortDropdown from "@/components/share/SortDropdown";
 import ProductCard from "@/components/share/GlobalProductCard";
 import { api } from "@/lib/api";
 
+import Newest from "@/components/HomePage/FlashSale/Newest";
 interface ShowcaseThumbnail {
   fileUuid: string;
   mediaFileUrl: string;
@@ -83,6 +84,7 @@ export default async function TrendingProductsPages() {
     } catch (error) {
       console.error("Error fetching feature products SSR:", error);
     }
+  
   return (
     <div className="flex flex-col flex-1 max-w-355 mx-auto">
       <div className="md:px-12.5 px-4">
@@ -100,6 +102,7 @@ export default async function TrendingProductsPages() {
         <SortDropdown />{" "}
       </div> */}
       <div className="lg:col-span-12 h-full">
+
         <div className="grid md:grid-cols-5 grid-cols-2 lg:gap-4 gap-2">
           {products.map((product, i) => (
             <div key={i}>

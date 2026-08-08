@@ -4,6 +4,7 @@ import ArrowAngleRightIcon from "@/icon/ArrowAngleRightIcon";
 import Image from "next/image";
 import { api } from "@/lib/api";
 import BlogCard from "@/components/Blogs/BlogCard";
+import BlogInformationSection from "@/components/Blogs/BlogInformationSection";
 interface BlogPost {
   id: number;
   image: string;
@@ -100,6 +101,11 @@ async function LatestBlog() {
           <BlogCard key={post.uuid} post={post} />
         ))}
       </div>
+
+<div className="">
+  <BlogInformationSection />
+</div>
+
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 cursor-pointer">
         {infoBoxes.map((box: InfoBoxProps, i: number) => (

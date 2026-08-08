@@ -16,6 +16,7 @@ import Link from "next/link";
 import { api } from "@/lib/api";
 import { Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
+import FooterEfcted from "@/images/footer_effected.svg";
 // import LatestBlog from "./LatestBlog";
 // import { usePathname } from "next/navigation";
 
@@ -238,7 +239,10 @@ export default function Footer() {
 
         {/* <div className="absolute bottom-0 opacity-200 left-1/2 h-130 w-130 -translate-x-1/2 bg-[#463d34]/50 blur-3xl rounded-t-[200px]" /> */}
 
-        <div className="absolute left-1/2 top-2/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[950px] rounded-full bg-[#E9CCAE] opacity-20 blur-[500px] pointer-events-none" />
+        <div className="absolute left-1/2 top-2/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[950px] rounded-full bg-[#E9CCAE5C] opacity-40 blur-[500px] pointer-events-none" />
+
+        {/* <img src={FooterEfcted} alt="footer effec" /> */}
+        {/* <Image src={FooterEfcted} alt="bKash" className="w-full mx-auto absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-40 bottom-0" /> */}
 
         <div className="-mt-20 sm:-mt-30 rounded-t-4xl bg-[#101518] px-4 pb-8 pt-28 sm:pt-40 text-white sm:px-6 md:px-10 lg:px-16">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-8 sm:gap-10 lg:gap-15">
@@ -307,7 +311,11 @@ export default function Footer() {
                   Download Our App:
                 </p>
                 <div className="flex flex-wrap gap-1 sm:gap-2">
-                  <Link target="_blank" href="https://play.google.com/store/apps/details?id=com.bd.com.dazzle.app&hl=en" className="">
+                  <Link
+                    target="_blank"
+                    href="https://play.google.com/store/apps/details?id=com.bd.com.dazzle.app&hl=en"
+                    className=""
+                  >
                     <Image
                       className="border-2 border-[#282828] rounded-xl"
                       src="https://dazzle.sgp1.cdn.digitaloceanspaces.com/site/google-play.svg"
@@ -316,9 +324,9 @@ export default function Footer() {
                       alt="App Store"
                     />
                   </Link>
-                  <Link target="_blank" href="https://apps.apple.com/us/app/dazzle-your-ai-photo-rizz/id6737238234" className="">
+                  {/* <Link target="_blank" href="https://apps.apple.com/us/app/dazzle-your-ai-photo-rizz/id6737238234" className="">
                     <Image src="https://dazzle.sgp1.cdn.digitaloceanspaces.com/site/app-store.svg" width={130} height={40} alt="Google Play" />
-                  </Link>
+                  </Link> */}
                 </div>
               </div>
             </div>

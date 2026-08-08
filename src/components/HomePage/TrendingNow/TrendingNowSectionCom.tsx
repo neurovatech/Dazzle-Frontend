@@ -1,6 +1,6 @@
 import TrendingNow from "./TrendingNow";
 import { api } from "@/lib/api";
-
+import GlobalTabs from "@/components/share/GlobalTabs";
 interface ShowcaseThumbnail {
   fileUuid: string;
   mediaFileUrl: string;
@@ -71,9 +71,20 @@ export default async function TrendingNowSectionCom() {
     console.error("Error fetching hot deal products SSR:", error);
   }
 
+    const tabsData = [
+      {
+        label: "Newest",
+        content: <TrendingNow products={products} />,
+      },
+      {
+        label: "Popular",
+        content: <TrendingNow products={products} />,
+      }
+    ];
+
   return (
     <div className="">
-      <TrendingNow products={products} />
+      <GlobalTabs tabs={tabsData} />
     </div>
   );
 }

@@ -603,177 +603,11 @@ export default function CheckoutPageCom() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left Column - Payment & Delivery */}
           <div className="lg:col-span-7 xl:col-span-8 space-y-6">
-            {/* 1. Payment Method Card */}
+
             <div className="bg-white dark:bg-[#1C1A17] rounded-3xl border border-gray-100 dark:border-zinc-800 p-6 sm:p-8 shadow-sm">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-8 h-8 rounded-full border-2 border-[#D4A97A] flex items-center justify-center text-[#D4A97A] font-bold text-sm">
                   1
-                </div>
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                  Payment
-                </h2>
-              </div>
-
-              {/* Payment Type Section */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm font-semibold">
-                  <CreditCard size={18} />
-                  <span>Payment Type</span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Online Payment */}
-                  <button
-                    onClick={() => setPaymentType("online")}
-                    className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all cursor-pointer ${
-                      paymentType === "online"
-                        ? "border-[#D4A97A] bg-amber-50/10 text-gray-900 dark:text-white"
-                        : "border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-gray-400"
-                    }`}
-                  >
-                    <span className="text-sm font-bold">Online Payment</span>
-                    <div
-                      className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                        paymentType === "online"
-                          ? "border-[#D4A97A]"
-                          : "border-gray-300 dark:border-zinc-700"
-                      }`}
-                    >
-                      {paymentType === "online" && (
-                        <div className="w-2 h-2 rounded-full bg-[#D4A97A]" />
-                      )}
-                    </div>
-                  </button>
-
-                  {/* Cash on Delivery */}
-                  <button
-                    onClick={() => {
-                      if (deliveryMethod === "express" || deliveryMethod === "extreme") {
-                        toast.error(
-                          deliveryMethod === "extreme"
-                            ? "Cash on Delivery is not available for Extreme Fast Delivery."
-                            : "Cash on Delivery is not available for Express Delivery.",
-                          {
-                            style: {
-                              borderRadius: '10px',
-                              background: '#333',
-                              color: '#fff',
-                            },
-                          }
-                        );
-                        return;
-                      }
-                      setPaymentType("cod");
-                    }}
-                    className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${
-                      (deliveryMethod === "express" || deliveryMethod === "extreme") ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
-                    } ${
-                      paymentType === "cod"
-                        ? "border-[#D4A97A] bg-amber-50/10 text-gray-900 dark:text-white"
-                        : "border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-gray-400"
-                    }`}
-                  >
-                    <div className="text-left">
-                      <span className="text-sm font-bold block">
-                        Cash on Delivery
-                      </span>
-                      <span className="text-[10px] text-amber-600 font-semibold">
-                        (1% Extra COD Charge)
-                      </span>
-                    </div>
-                    <div
-                      className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                        paymentType === "cod"
-                          ? "border-[#D4A97A]"
-                          : "border-gray-300 dark:border-zinc-700"
-                      }`}
-                    >
-                      {paymentType === "cod" && (
-                        <div className="w-2 h-2 rounded-full bg-[#D4A97A]" />
-                      )}
-                    </div>
-                  </button>
-                </div>
-              </div>
-
-              {/* Payment Gateway Method (bKash or SSLCommerz) */}
-              {paymentType === "online" && (
-                <div className="space-y-4 mt-6 pt-6 border-t border-gray-100 dark:border-zinc-800/60">
-                  <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm font-semibold">
-                    <CreditCard size={18} />
-                    <span>Payment Method</span>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {/* bKash */}
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod("bkash")}
-                      className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all cursor-pointer h-20 ${
-                        paymentMethod === "bkash"
-                          ? "border-[#e2136e] bg-pink-50/20 dark:bg-pink-950/20 text-gray-900 dark:text-white"
-                          : "border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-gray-400 hover:border-pink-200"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <Image
-                          src={Bikask}
-                          alt="bKash"
-                          className="w-40 mx-auto"
-                        />
-                      </div>
-                      <div
-                        className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                          paymentMethod === "bkash"
-                            ? "border-[#e2136e]"
-                            : "border-gray-300 dark:border-zinc-700"
-                        }`}
-                      >
-                        {paymentMethod === "bkash" && (
-                          <div className="w-2 h-2 rounded-full bg-[#e2136e]" />
-                        )}
-                      </div>
-                    </button>
-
-                    {/* Card (SSLCommerz) */}
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod("card")}
-                      className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all cursor-pointer h-20 ${
-                        paymentMethod === "card"
-                          ? "border-[#D4A97A] bg-amber-50/20 dark:bg-amber-950/20 text-gray-900 dark:text-white"
-                          : "border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-gray-400 hover:border-amber-200"
-                      }`}
-                    >
-                      <div className="flex flex-col items-start gap-1">
-                        <Image
-                          src={SSl}
-                          alt="SSLCommerz"
-                          className="w-40 mx-auto"
-                        />
-                      </div>
-                      <div
-                        className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                          paymentMethod === "card"
-                            ? "border-[#D4A97A]"
-                            : "border-gray-300 dark:border-zinc-700"
-                        }`}
-                      >
-                        {paymentMethod === "card" && (
-                          <div className="w-2 h-2 rounded-full bg-[#D4A97A]" />
-                        )}
-                      </div>
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* 2. Delivery Card */}
-            <div className="bg-white dark:bg-[#1C1A17] rounded-3xl border border-gray-100 dark:border-zinc-800 p-6 sm:p-8 shadow-sm">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-8 h-8 rounded-full border-2 border-[#D4A97A] flex items-center justify-center text-[#D4A97A] font-bold text-sm">
-                  2
                 </div>
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                   Delivery
@@ -1190,6 +1024,174 @@ export default function CheckoutPageCom() {
                 />
               </div>
             </div>
+
+         
+            <div className="bg-white dark:bg-[#1C1A17] rounded-3xl border border-gray-100 dark:border-zinc-800 p-6 sm:p-8 shadow-sm">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-8 h-8 rounded-full border-2 border-[#D4A97A] flex items-center justify-center text-[#D4A97A] font-bold text-sm">
+                  1
+                </div>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                  Payment
+                </h2>
+              </div>
+
+              {/* Payment Type Section */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm font-semibold">
+                  <CreditCard size={18} />
+                  <span>Payment Type</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Online Payment */}
+                  <button
+                    onClick={() => setPaymentType("online")}
+                    className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all cursor-pointer ${
+                      paymentType === "online"
+                        ? "border-[#D4A97A] bg-amber-50/10 text-gray-900 dark:text-white"
+                        : "border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-gray-400"
+                    }`}
+                  >
+                    <span className="text-sm font-bold">Online Payment</span>
+                    <div
+                      className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                        paymentType === "online"
+                          ? "border-[#D4A97A]"
+                          : "border-gray-300 dark:border-zinc-700"
+                      }`}
+                    >
+                      {paymentType === "online" && (
+                        <div className="w-2 h-2 rounded-full bg-[#D4A97A]" />
+                      )}
+                    </div>
+                  </button>
+
+                  {/* Cash on Delivery */}
+                  <button
+                    onClick={() => {
+                      if (deliveryMethod === "express" || deliveryMethod === "extreme") {
+                        toast.error(
+                          deliveryMethod === "extreme"
+                            ? "Cash on Delivery is not available for Extreme Fast Delivery."
+                            : "Cash on Delivery is not available for Express Delivery.",
+                          {
+                            style: {
+                              borderRadius: '10px',
+                              background: '#333',
+                              color: '#fff',
+                            },
+                          }
+                        );
+                        return;
+                      }
+                      setPaymentType("cod");
+                    }}
+                    className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all ${
+                      (deliveryMethod === "express" || deliveryMethod === "extreme") ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                    } ${
+                      paymentType === "cod"
+                        ? "border-[#D4A97A] bg-amber-50/10 text-gray-900 dark:text-white"
+                        : "border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-gray-400"
+                    }`}
+                  >
+                    <div className="text-left">
+                      <span className="text-sm font-bold block">
+                        Cash on Delivery
+                      </span>
+                      <span className="text-[10px] text-amber-600 font-semibold">
+                        (1% Extra COD Charge)
+                      </span>
+                    </div>
+                    <div
+                      className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                        paymentType === "cod"
+                          ? "border-[#D4A97A]"
+                          : "border-gray-300 dark:border-zinc-700"
+                      }`}
+                    >
+                      {paymentType === "cod" && (
+                        <div className="w-2 h-2 rounded-full bg-[#D4A97A]" />
+                      )}
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Payment Gateway Method (bKash or SSLCommerz) */}
+              {paymentType === "online" && (
+                <div className="space-y-4 mt-6 pt-6 border-t border-gray-100 dark:border-zinc-800/60">
+                  <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm font-semibold">
+                    <CreditCard size={18} />
+                    <span>Payment Method</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* bKash */}
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod("bkash")}
+                      className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all cursor-pointer h-20 ${
+                        paymentMethod === "bkash"
+                          ? "border-[#e2136e] bg-pink-50/20 dark:bg-pink-950/20 text-gray-900 dark:text-white"
+                          : "border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-gray-400 hover:border-pink-200"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Image
+                          src={Bikask}
+                          alt="bKash"
+                          className="w-40 mx-auto"
+                        />
+                      </div>
+                      <div
+                        className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                          paymentMethod === "bkash"
+                            ? "border-[#e2136e]"
+                            : "border-gray-300 dark:border-zinc-700"
+                        }`}
+                      >
+                        {paymentMethod === "bkash" && (
+                          <div className="w-2 h-2 rounded-full bg-[#e2136e]" />
+                        )}
+                      </div>
+                    </button>
+
+                    {/* Card (SSLCommerz) */}
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod("card")}
+                      className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all cursor-pointer h-20 ${
+                        paymentMethod === "card"
+                          ? "border-[#D4A97A] bg-amber-50/20 dark:bg-amber-950/20 text-gray-900 dark:text-white"
+                          : "border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-gray-400 hover:border-amber-200"
+                      }`}
+                    >
+                      <div className="flex flex-col items-start gap-1">
+                        <Image
+                          src={SSl}
+                          alt="SSLCommerz"
+                          className="w-40 mx-auto"
+                        />
+                      </div>
+                      <div
+                        className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                          paymentMethod === "card"
+                            ? "border-[#D4A97A]"
+                            : "border-gray-300 dark:border-zinc-700"
+                        }`}
+                      >
+                        {paymentMethod === "card" && (
+                          <div className="w-2 h-2 rounded-full bg-[#D4A97A]" />
+                        )}
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            
           </div>
 
           {/* Right Column - Product Description & totals */}
