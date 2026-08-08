@@ -78,37 +78,35 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
   return (
     <>
       <div className="flex flex-col gap-4 rounded-2xl bg-white dark:bg-[#3e3329] dark:border-gray-700/60 transition-colors duration-200">
-
         {/* ── Main Image ── */}
         <div
-  className="relative rounded-2xl overflow-hidden aspect-square flex items-center justify-center cursor-zoom-in group"
-  onClick={() => openLightbox(selected)}
->
-  {badges && (
-    <div className="absolute top-6 z-10 left-6 flex flex-col gap-1.5 justify-start bg-[#ff7575] text-white text-[9px] sm:text-xs font-bold px-1.5 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-md">
-      {badges} %
-    </div>
-  )}
+          className="relative rounded-2xl overflow-hidden aspect-square flex items-center justify-center cursor-zoom-in group"
+          onClick={() => openLightbox(selected)}
+        >
+          {badges && (
+            <div className="absolute top-6 z-10 left-6 flex flex-col gap-1.5 justify-start bg-[#ff7575] text-white text-[9px] sm:text-xs font-bold px-1.5 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-md">
+              {badges} %
+            </div>
+          )}
 
-  {/* Image */}
-  <div className="relative w-full h-full">
-    <Image
-      src={images[selected]}
-      alt={`Product image ${selected + 1}`}
-      fill
-      className="object-contain transition-all duration-300 mt-[10px]"
-      // sizes="(max-width: 768px) 80vw, 40vw"
-      priority
-    />
-  </div>
+          {/* Image */}
+          <div className="relative w-full h-full">
+            <Image
+              src={images[selected]}
+              alt={`Product image ${selected + 1}`}
+              fill
+              className="object-contain transition-all duration-300 mt-[10px]"
+              // sizes="(max-width: 768px) 80vw, 40vw"
+              priority
+            />
+          </div>
 
-  {/* Zoom hint overlay */}
-  <div className="absolute inset-0 bg-black/0 transition-colors duration-200 z-10 rounded-2xl flex items-center justify-center pointer-events-none">
-    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-white/80 dark:bg-black/50 rounded-full p-2 shadow">
-      <ZoomIn size={20} className="text-gray-600 dark:text-gray-300" />
-    </div>
-  </div>
-</div>
+          <div className="absolute inset-0 bg-black/0 transition-colors duration-200 z-10 rounded-2xl flex items-center justify-center pointer-events-none">
+            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-white/80 dark:bg-black/50 rounded-full p-2 shadow">
+              <ZoomIn size={20} className="text-gray-600 dark:text-gray-300" />
+            </div>
+          </div>
+        </div>
 
         {/* ── Thumbnails ── */}
         <ProductImageThumbnails
@@ -126,7 +124,10 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
         >
           {/* Close button */}
           <button
-            onClick={(e) => { e.stopPropagation(); closeLightbox(); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              closeLightbox();
+            }}
             className="absolute top-4 right-4 z-[10000] w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
             aria-label="Close"
           >
@@ -157,14 +158,20 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
           {images.length > 1 && (
             <>
               <button
-                onClick={(e) => { e.stopPropagation(); lightboxPrev(); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  lightboxPrev();
+                }}
                 className="absolute left-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/10 hover:bg-white/25 flex items-center justify-center text-white transition-colors z-[10000]"
                 aria-label="Previous"
               >
                 <ChevronLeft size={24} />
               </button>
               <button
-                onClick={(e) => { e.stopPropagation(); lightboxNext(); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  lightboxNext();
+                }}
                 className="absolute right-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/10 hover:bg-white/25 flex items-center justify-center text-white transition-colors z-[10000]"
                 aria-label="Next"
               >

@@ -50,7 +50,6 @@ export default function FrequentlyBoughtTogether({
 
   if (!products || products.length === 0) return null;
 
-  // Use raw numeric prices if available, else parse from display string
   const parsePrice = (p: Product, field: "price" | "originalPrice") => {
     if (field === "price")
       return p.rawPrice ?? Number((p.price ?? "").replace(/[^\d.]/g, "")) ?? 0;
