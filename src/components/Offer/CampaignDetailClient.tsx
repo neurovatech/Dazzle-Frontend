@@ -325,11 +325,11 @@ export default function CampaignDetailClient({
       {isFetchingMore && <ProductGridSkeleton count={LIMIT} cols="4" />}
 
       {/* All loaded */}
-      {!hasMore && allProducts.length > 0 && !isFetchingMore && (
+      {/* {!hasMore && allProducts.length > 0 && !isFetchingMore && (
         <p className="text-center text-xs text-gray-400 py-6">
           ✅ সব {allProducts.length.toLocaleString()} টি পণ্য দেখানো হয়েছে
         </p>
-      )}
+      )} */}
     </div>
   );
 }

@@ -248,11 +248,11 @@ export default function BrandProductListClient({
       {isFetchingMore && <ProductGridSkeleton count={4} cols="4" />}
 
       {/* All loaded */}
-      {!hasMore && allProducts.length > 0 && !isFetchingMore && !isFirstLoad && (
+      {/* {!hasMore && allProducts.length > 0 && !isFetchingMore && !isFirstLoad && (
         <p className="text-center text-xs text-gray-400 py-6">
           ✅ সব {allProducts.length.toLocaleString()} টি পণ্য দেখানো হয়েছে
         </p>
-      )}
+      )} */}
     </div>
   );
 }
