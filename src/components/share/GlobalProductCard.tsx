@@ -216,26 +216,16 @@ const ProductCard: React.FC<ProductCardProps> = ({
           ) : <span />}
         </div>
 
-        {/* Product Image — fixed-height container keeps every card aligned */}
-        <Link  href={`/product/${slug || title?.toLowerCase().replace(/\s+/g, "-")}`} className="block px-3">
-          <div className="relative flex justify-center items-center h-32 sm:h-40 md:h-44 lg:h-50 transition-all duration-500">
-            {/* <div
-              className="absolute inset-0 m-auto rounded-full pointer-events-none"
-              style={{
-                width: "75%", height: "75%",
-                background: "#E9CCAEBA",
-                backdropFilter: "blur(71px)",
-                WebkitBackdropFilter: "blur(71px)",
-                filter: "blur(32px)", zIndex: 0,
-              }}
-            /> */}
-            <div className="relative z-10 w-full h-full transition-transform duration-500 group-hover:scale-110">
+        {/* Product Image — fixed-height, never crops, contains full image */}
+        <Link href={`/product/${slug || title?.toLowerCase().replace(/\s+/g, "-")}`} className="block px-3">
+          <div className="relative flex justify-center items-center h-32 sm:h-40 md:h-44 lg:h-50 overflow-hidden transition-all duration-500">
+            <div className="relative z-10 w-full h-full transition-transform duration-500 group-hover:scale-105">
               <Image
                 src={imgSrc}
                 alt={title || "Product image"}
                 fill
                 sizes="(max-width: 640px) 45vw, (max-width: 1024px) 25vw, 200px"
-                className="object-contain w-full mx-auto"
+                className="object-contain"
                 onError={() => setImgError(true)}
               />
             </div>
