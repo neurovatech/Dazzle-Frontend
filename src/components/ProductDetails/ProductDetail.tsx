@@ -415,7 +415,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
   console.log(frequentlyBoughtProducts, "090909");
 
   return (
-    <div className="min-h-screen font-sans">
+    <div className="min-h-screen font-sans bg-[#fffbf6] dark:bg-[#2e2b28]">
       <div className="max-w-350 mx-auto lg:px-4 px-2">
         <MarqueeBulletinBar />
         <Breadcrumb items={breadcrumbItems} />
@@ -465,11 +465,13 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
                   ))}
                 </div>
               )} */}
-              {frequentlyBoughtProducts.length > 0 && (
+              <div className="hidden lg:block">
+                {frequentlyBoughtProducts.length > 0 && (
                 <FrequentlyBoughtTogether
                   products={frequentlyBoughtProducts}
                 />
               )}
+              </div>
 
               <div className="hidden lg:block space-y-6 pt-2">
                 <ContactOptions
@@ -564,19 +566,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
             )}
 
             {/* {dazzleCareOptions.length > 0 && ( */}
-              <div className="pt-5">
-                <BuyMore
-                  items={frequentlyBoughtProducts.map((p: any) => ({
-                    id: p.id,
-                    name: p.name,
-                    image: p.image,
-                    price: p.rawPrice ?? 0,
-                    originalPrice: p.rawOriginalPrice ?? 0,
-                    slug: p.slug,
-                    inStock: p.inStock,
-                  }))}
-                />
-              </div>
+              
             {/* )} */}
             {dazzleCareOptions.length > 0 && (
               <div className="pt-5">
@@ -620,6 +610,20 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
               />
             </div>
 
+            <div className="pb-5">
+                <BuyMore
+                  items={frequentlyBoughtProducts.map((p: any) => ({
+                    id: p.id,
+                    name: p.name,
+                    image: p.image,
+                    price: p.rawPrice ?? 0,
+                    originalPrice: p.rawOriginalPrice ?? 0,
+                    slug: p.slug,
+                    inStock: p.inStock,
+                  }))}
+                />
+              </div>
+
             <div>
               <DeliveryInfo deliveryDays={""} purchasePoints={product?.purchasePoints ?? 0} minBookingAmount={product?.minBookingPrice ?? 0} />
             </div>
@@ -637,6 +641,14 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
               </div>
             )} */}
           </div>
+
+          <div className=" block lg:hidden">
+                {frequentlyBoughtProducts.length > 0 && (
+                <FrequentlyBoughtTogether
+                  products={frequentlyBoughtProducts}
+                />
+              )}
+              </div>
 
           <div className="lg:col-span-12 space-y-6">
             {/* Specification & Description Tab Buttons */}

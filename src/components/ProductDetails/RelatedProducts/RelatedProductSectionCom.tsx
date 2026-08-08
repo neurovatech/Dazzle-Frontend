@@ -96,7 +96,7 @@ export default function RelatedProductSectionCom({ categorySlug }: RelatedProduc
   if (products.length === 0) return null;
 
   return (
-    <div className="px-4">
+    <div className="lg:px-4">
       <RelatedProduct products={products} />
     </div>
   );

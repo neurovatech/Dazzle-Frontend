@@ -163,7 +163,7 @@ const Profile: React.FC = () => {
 
           <div className="grid grid-cols-[280px_1fr] gap-8">
             {/* Sidebar */}
-            <div className="h-fit sticky top-6 z-99">
+            <div className="h-fit sticky top-6 z-20">
               <ProfileSideNav
                 activeLabel={activeLabel}
                 darkMode={darkMode}

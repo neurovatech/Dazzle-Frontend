@@ -15,7 +15,7 @@ const ProductImageThumbnails: React.FC<ProductImageThumbnailsProps> = ({
   onSelect,
 }) => {
   return (
-    <div className="flex gap-2.5 justify-center flex-wrap">
+    <div className="flex gap-2.5 justify-center flex-wrap pb-5 lg:pb-0">
       {images.map((img, i) => (
         <button
           key={i}

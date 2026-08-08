@@ -123,7 +123,7 @@ export default async function Header() {
 
   return (
     <header
-      className="w-full font-sans transition-colors duration-300 sticky top-0 z-50 rounded-b-[20px] md:px-4 px-2 dark:bg-[#1a1a1a] dark:text-white"
+      className="w-full font-sans relative transition-colors duration-300  rounded-b-[20px] md:px-4 px-2 dark:bg-[#1a1a1a] dark:text-white"
       style={{
         backgroundImage: `url(${BgImages.src})`,
         backgroundRepeat: "no-repeat",

@@ -300,7 +300,7 @@ const [viewers, setViewers] = useState(() => Math.floor(Math.random() * 100) + 1
               />
             </svg>
 
-            <span className="font-bold bg-gradient-to-r from-[#6D3F0E] to-[#D3791B] bg-clip-text text-transparent flex dark:text-white">
+            <span className="font-bold bg-gradient-to-r from-[#6D3F0E] to-[#D3791B] bg-clip-text text-transparent flex dark:text-white text-[12px] lg:text-[16px]">
               1 Year Official Warranty Support Except USA Variant
             </span>
           </div>

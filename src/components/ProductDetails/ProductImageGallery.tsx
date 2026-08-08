@@ -52,16 +52,20 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
     setLightboxIndex((prev) => (prev + 1) % images.length);
   }, [images.length]);
 
-  // Keyboard navigation
+  // Keyboard navigation + body scroll lock
   useEffect(() => {
     if (!lightboxOpen) return;
+    document.body.style.overflow = "hidden";
     const handler = (e: KeyboardEvent) => {
       if (e.key === "ArrowLeft") lightboxPrev();
       if (e.key === "ArrowRight") lightboxNext();
       if (e.key === "Escape") closeLightbox();
     };
     window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
+    return () => {
+      window.removeEventListener("keydown", handler);
+      document.body.style.overflow = "";
+    };
   }, [lightboxOpen, lightboxPrev, lightboxNext]);
 
   const handleLightboxThumbClick = (i: number) => {
@@ -117,26 +121,26 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
       {/* ── Lightbox ── */}
       {lightboxOpen && (
         <div
-          className="fixed inset-0 z-[9999] bg-black/90 flex flex-col items-center justify-center"
+          className="fixed inset-0 z-10000 bg-black/90 flex flex-col items-center justify-center"
           onClick={closeLightbox}
         >
           {/* Close button */}
           <button
-            onClick={closeLightbox}
-            className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+            onClick={(e) => { e.stopPropagation(); closeLightbox(); }}
+            className="absolute top-4 right-4 z-[10000] w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
             aria-label="Close"
           >
             <X size={20} />
           </button>
 
           {/* Counter */}
-          <p className="absolute top-5 left-1/2 -translate-x-1/2 text-white/60 text-sm">
+          <p className="absolute top-5 left-1/2 -translate-x-1/2 text-white/60 text-sm z-[10000] pointer-events-none">
             {lightboxIndex + 1} / {images.length}
           </p>
 
-          {/* Main lightbox image */}
+          {/* Main lightbox image — stopPropagation so clicking image doesn't close */}
           <div
-            className="relative w-[90vw] h-[75vh] max-w-3xl"
+            className="relative w-[90vw] h-[75vh] max-w-3xl z-[10000]"
             onClick={(e) => e.stopPropagation()}
           >
             <Image
@@ -154,14 +158,14 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
             <>
               <button
                 onClick={(e) => { e.stopPropagation(); lightboxPrev(); }}
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/10 hover:bg-white/25 flex items-center justify-center text-white transition-colors"
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/10 hover:bg-white/25 flex items-center justify-center text-white transition-colors z-[10000]"
                 aria-label="Previous"
               >
                 <ChevronLeft size={24} />
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); lightboxNext(); }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/10 hover:bg-white/25 flex items-center justify-center text-white transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/10 hover:bg-white/25 flex items-center justify-center text-white transition-colors z-[10000]"
                 aria-label="Next"
               >
                 <ChevronRight size={24} />
@@ -172,7 +176,7 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
           {/* Lightbox thumbnails strip */}
           {images.length > 1 && (
             <div
-              className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 overflow-x-auto max-w-[90vw] px-2 pb-1"
+              className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 overflow-x-auto max-w-[90vw] px-2 pb-1 z-[10000]"
               onClick={(e) => e.stopPropagation()}
             >
               {images.map((img, i) => (

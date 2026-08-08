@@ -285,7 +285,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
         {/* Title & Stock */}
         <div className="mb-1 sm:mb-2 text-left">
           <h3
-            className="font-bold text-[11px] sm:text-xs md:text-sm leading-snug line-clamp-2 h-9 text-=[#575757] dark:text-white"
+            className="font-bold text-[11px] sm:text-xs md:text-sm leading-snug line-clamp-2 h-10 text-=[#575757] dark:text-white"
             title={title}
           >
             {title}
