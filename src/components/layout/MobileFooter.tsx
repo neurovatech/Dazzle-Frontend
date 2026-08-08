@@ -232,15 +232,14 @@ export default function MobileFooter() {
   };
 
   return (
-    <div className="fixed bottom-0 z-100 w-full flex justify-center px-3 pt-3">
+     <div className="fixed bottom-2 z-100 w-full flex justify-center px-3 pt-3">
       <nav
-        className="grid grid-cols-5 gap-1 px-2 pt-2 w-full rounded-t-[28px]"
+        className="grid grid-cols-5 gap-1 px-2 py-2 w-full rounded-[28px]"
         style={{
           background:
-            "linear-gradient(90deg, rgba(0, 0, 0, 1) 0%, #43372A 100%)",
+            "linear-gradient(90deg, rgba(0, 0, 0, 0.84) 0%, #43372A 100%)",
           boxShadow:
             "0 8px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05)",
-            opacity: 1
         }}
       >
         {navItems.map((item) => {
@@ -253,7 +252,7 @@ export default function MobileFooter() {
               onClick={() => setActive(item.id)}
               className={`
                 w-full flex flex-col items-center justify-center gap-1
-                py-2 rounded-t-[18px]
+                py-2 rounded-[18px]
                 transition-all duration-300 ease-out
                 ${isActive ? "bg-[#2a2520]" : "hover:bg-[#232018]"}
             `}

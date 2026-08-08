@@ -386,7 +386,7 @@ export default function BrandProducts({
         </div>
 
         {/* Filter + Sort buttons — mobile only */}
-        <div className="md:hidden flex items-center absolute right-4 gap-3 bg-[#6d3f0e] px-3 py-2 rounded-full mb-3">
+        <div className="md:hidden flex items-center fixed gap-3 bg-[#6d3f0e] px-3 py-2 rounded-full mb-3 bottom-20 z-88 left-1/2 transform -translate-x-1/2 shadow-[0px_4px_19.9px_0px_#00000066]">
           <button
             onClick={() => setIsFilterOpen(true)}
             className="flex items-center gap-1.5 text-sm font-semibold text-white shrink-0"

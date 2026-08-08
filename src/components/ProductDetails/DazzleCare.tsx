@@ -24,7 +24,7 @@ interface DazzleCareProps {
 }
 
 const formatPrice = (n: number) =>
-  n > 0 ? "৳" + n.toLocaleString("en-US") : "Price on request";
+  n > 0 ? "৳" + n.toLocaleString("en-US") : "0";
 
 const DazzleCare: React.FC<DazzleCareProps> = ({ options, onSelectionChange }) => {
   const [open, setOpen]       = useState(true);

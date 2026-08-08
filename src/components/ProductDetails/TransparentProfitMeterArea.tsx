@@ -180,7 +180,7 @@ export default function TransparentProfitMeterArea({
         <div className="px-6 py-5 space-y-3 text-[#222222]">
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-500">Product price:</span>
-            <span className="font-semibold">{price > 0 ? fmt(price) : "Price on request"}</span>
+            <span className="font-semibold">{price > 0 ? fmt(price) : "0"}</span>
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-500">Purchase rate:</span>

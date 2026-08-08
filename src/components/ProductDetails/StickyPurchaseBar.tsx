@@ -209,7 +209,7 @@ export default function StickyPurchaseBar({
                 <>
                   {/* Main price — offer or regular depending on selection */}
                   <p className="text-xl sm:text-2xl font-bold leading-tight text-gray-900 dark:text-white">
-                    {displayPrice > 0 ? `${displayPrice.toLocaleString()} BDT` : "Price on request"}
+                    {displayPrice > 0 ? `${displayPrice.toLocaleString()} BDT` : "0"}
                   </p>
 
                   {/* EMI line — always from regular price */}
@@ -242,7 +242,7 @@ export default function StickyPurchaseBar({
               <button
                 onClick={handleAddToCart}
                 disabled={isUnavailable}
-                className={`shrink-0 md:px-6 px-3 sm:px-8 md:py-3 py-1 text-sm sm:text-base font-semibold rounded-full transition-all duration-200 whitespace-nowrap shadow-sm
+                className={`shrink-0 md:px-6 px-3 sm:px-8 md:py-3 py-3 text-sm sm:text-base font-semibold rounded-full transition-all duration-200 whitespace-nowrap shadow-sm
                   ${isUnavailable
                     ? "bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-60"
                     : addedToCart
@@ -251,7 +251,7 @@ export default function StickyPurchaseBar({
                   }`}
               >
                 {isUnavailable ? "Not Available" : addedToCart ? (
-                  <span className="flex items-center gap-2">
+                  <span className="flex items-center md:gap-2 gap-1">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                     </svg>
@@ -263,14 +263,14 @@ export default function StickyPurchaseBar({
               <button
                 onClick={handleBuyNow}
                 disabled={isUnavailable || loadingBuyNow}
-                className={`shrink-0 md:px-6 px-3 sm:px-8 md:py-3 py-1 text-sm sm:text-base font-semibold rounded-full transition-all duration-200 whitespace-nowrap shadow-sm cursor-pointer
+                className={`shrink-0 md:px-6 px-3 sm:px-8 md:py-3 py-3 text-sm sm:text-base font-semibold rounded-full transition-all duration-200 whitespace-nowrap shadow-sm cursor-pointer
                   ${isUnavailable || loadingBuyNow
                     ? "bg-gray-300 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-60"
                     : "bg-[#222222] hover:bg-[#444444] active:bg-[#000000] text-white"
                   }`}
               >
                 {loadingBuyNow ? (
-                  <span className="flex items-center gap-2">
+                  <span className="flex items-center md:gap-2 gap-1">
                     <svg className="w-4 h-4 animate-spin shrink-0" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />

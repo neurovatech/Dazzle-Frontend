@@ -312,7 +312,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
           image: img,
           name: item.productName,
           inStock: !item.isTba,
-          price: offerPrice > 0 ? `৳${offerPrice.toLocaleString("en-US")}` : "Price on request",
+          price: offerPrice > 0 ? `৳${offerPrice.toLocaleString("en-US")}` : "0",
           originalPrice:
             regPrice > offerPrice
               ? `৳${regPrice.toLocaleString("en-US")}`
@@ -436,7 +436,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
         productPrice={price}
         productOriginalPrice={originalPrice}
         productSlug={product?.productSlug}
-        price={price > 0 ? price : "Price on request"}
+        price={price > 0 ? price : "0"}
         qty={qty}
         onQtyChange={setQty}
         isUnavailable={price === 0}

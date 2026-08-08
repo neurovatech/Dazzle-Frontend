@@ -274,7 +274,7 @@ function ClipToCartCard({ product, index, onOpenModal }: {
               )}
             </div>
           ) : (
-            <span className="text-xs text-gray-400">Price on request</span>
+            <span className="text-xs text-gray-400">0</span>
           )}
 
           <button

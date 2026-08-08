@@ -359,7 +359,7 @@ function CategoriesProduct({
         </div>
       )}
 
-      <div className="flex md:px-12.5 px-4 pt-2 mt-[15px] flex-wrap items-center justify-between gap-3 pb-3 relative">
+      <div className="flex md:px-12.5 px-4 pt-2 md:mt-[15px] flex-wrap items-center justify-between gap-3 md:pb-3 relative">
           <div className="md:hidden block">
             <h3 className="md:text-[32px] text-[20px] font-bold text-transparent bg-clip-text bg-[linear-gradient(90deg,#101518_0%,#E9CCAE_46.15%,#B57908_100%)] dark:text-white">
               Products of{" "}
@@ -378,7 +378,7 @@ function CategoriesProduct({
           </p> */}
           </div>
 
-           <div className="absolute right-4 z-20  gap-3 bg-[#6d3f0e] px-3 py-2 rounded-full flex justify-center items-center md:hidden">
+           <div className="md:hidden flex items-center fixed gap-3 bg-[#6d3f0e] px-3 py-2 rounded-full mb-3 bottom-20 z-88 left-1/2 transform -translate-x-1/2 shadow-[0px_4px_19.9px_0px_#00000066]">
           <button
             onClick={() => setIsFilterOpen(true)}
             className="md:hidden flex items-center  gap-1.5 rounded-xl text-sm font-semibold  dark:border-white/10 text-white dark:text-gray-300 shrink-0 bg-[#6d3f0e]"
@@ -404,7 +404,7 @@ function CategoriesProduct({
       <Banner banners={banners} />
 
       {/* ── Products grid ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:mt-0 mt-6 items-stretch md:px-12.5 px-4 relative">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:mt-0 mt-2 items-stretch md:px-12.5 px-4 relative">
         <div className="lg:col-span-3 md:block hidden h-full">
           <div className="sticky overflow-y-auto scrollbar-hide w-full pb-4">
             <FilterSidebar

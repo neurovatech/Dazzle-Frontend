@@ -22,7 +22,7 @@ interface BuyMoreProps {
 }
 
 const formatPrice = (n: number) =>
-  n > 0 ? "৳" + n.toLocaleString("en-US") : "Price on request";
+  n > 0 ? "৳" + n.toLocaleString("en-US") : "0";
 
 const BuyMore: React.FC<BuyMoreProps> = ({ items }: any) => {
   const dispatch  = useAppDispatch();
