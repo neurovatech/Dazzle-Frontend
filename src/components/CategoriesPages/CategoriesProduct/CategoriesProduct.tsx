@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import AllProducts from "@/components/CategoriesPages/CategoriesProduct/AllProducts";
 import FilterSidebar, {
@@ -88,6 +88,14 @@ function CategoriesProduct({
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [pendingSort, setPendingSort] = useState<string>(currentSort ?? "recommend");
+  const productListRef = useRef<HTMLDivElement>(null);
+
+  const closeFilterAndScroll = () => {
+    setIsFilterOpen(false);
+    setTimeout(() => {
+      productListRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+  };
 
   useEffect(() => {
     setCurrentAttributes(attributes);
@@ -440,7 +448,9 @@ function CategoriesProduct({
             </div>
           )}
 
-          <AllProducts
+          {/* productList area  */}
+          <div ref={productListRef} className="scroll-mt-4">
+            <AllProducts
             categorySlug={categorySlug}
             subCategorySlug={subCategorySlug}
             currentPage={activePage}
@@ -456,6 +466,7 @@ function CategoriesProduct({
             stockStatus={stockStatus}
             onClearFilter={handleClearFilters}
           />
+          </div>
         </div>
 
         {isFilterOpen && (
@@ -463,7 +474,7 @@ function CategoriesProduct({
             {/* Backdrop */}
             <div
               className="fixed inset-0 bg-black/50 transition-opacity"
-              onClick={() => setIsFilterOpen(false)}
+              onClick={closeFilterAndScroll}
             />
 
             {/* Left Side Drawer */}
@@ -473,7 +484,7 @@ function CategoriesProduct({
                   Filter
                 </h3>
                 <button
-                  onClick={() => setIsFilterOpen(false)}
+                  onClick={closeFilterAndScroll}
                   className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300"
                 >
                   <X size={20} />

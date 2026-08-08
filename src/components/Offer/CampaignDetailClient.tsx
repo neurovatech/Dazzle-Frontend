@@ -1,7 +1,6 @@
 "use client";
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { SlidersHorizontal } from "lucide-react";
 import { api } from "@/lib/api";
 import ProductCard from "@/components/share/GlobalProductCard";
 import ProductGridSkeleton from "@/components/Skeleton/ProductCardSkeleton";
@@ -80,41 +79,102 @@ export default function CampaignDetailClient({
   campaignImage,
   endedAt,
 }: Props) {
+  // ── Infinite scroll state ─────────────────────────────────────────────────
+  const [allProducts, setAllProducts] = useState<CampaignProduct[]>(initialData?.data ?? []);
   const [page, setPage]               = useState(1);
-  const [showFilter, setShowFilter]   = useState(false);
+  const [hasMore, setHasMore]         = useState((initialData?.totalPages ?? 1) > 1);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const loaderRef = useRef<HTMLDivElement>(null);
 
-  // input state (not yet applied)
+  const [showFilter, setShowFilter]   = useState(false);
   const [minPrice, setMinPrice]       = useState("");
   const [maxPrice, setMaxPrice]       = useState("");
   const [stockStatus, setStockStatus] = useState<"" | "0" | "1">("");
-
-  // applied state — triggers React Query refetch
   const [appliedMin, setAppliedMin]     = useState("");
   const [appliedMax, setAppliedMax]     = useState("");
   const [appliedStock, setAppliedStock] = useState<"" | "0" | "1">("");
 
   const hasActiveFilter = !!(appliedMin || appliedMax || appliedStock);
+  const totalCount = initialData?.totalCount ?? allProducts.length;
 
-  // ── Single direct API call — no fallbacks, UUID resolved SSR ──────────────
-  const { data, isLoading, isError, isPlaceholderData } = useQuery<CampaignDetailResponse>({
-    queryKey:        ["campaign", slug, page, appliedMin, appliedMax, appliedStock],
-    staleTime:       2 * 60 * 1000,
-    placeholderData: (prev) => prev ?? initialData,
-    initialData:     page === 1 && !appliedMin && !appliedMax && !appliedStock
-                       ? initialData : undefined,
-    queryFn: () => {
-      const params = new URLSearchParams({ page: String(page), limit: String(LIMIT) });
+  // Reset when filters change
+  useEffect(() => {
+    setAllProducts(initialData?.data ?? []);
+    setPage(1);
+    setHasMore((initialData?.totalPages ?? 1) > 1);
+  }, [appliedMin, appliedMax, appliedStock]);
+
+  const fetchNextPage = useCallback(async () => {
+    if (isFetchingMore || !hasMore) return;
+    const nextPage = page + 1;
+    setIsFetchingMore(true);
+    try {
+      const params = new URLSearchParams({ page: String(nextPage), limit: String(LIMIT) });
       if (appliedMin)   params.set("minDiscountedPrice", appliedMin);
       if (appliedMax)   params.set("maxDiscountedPrice", appliedMax);
-      if (appliedStock) params.set("stockStatus",        appliedStock);
-      // Direct call — slug is already the resolved UUID/ID from SSR
-      return api.get<CampaignDetailResponse>(`campaign/${slug}?${params.toString()}`);
-    },
-  });
+      if (appliedStock) params.set("stockStatus", appliedStock);
+      const res = await api.get<CampaignDetailResponse>(`campaign/${slug}?${params.toString()}`);
+      const newItems = res?.data ?? [];
+      if (newItems.length > 0) {
+        setAllProducts((prev) => [...prev, ...newItems]);
+        setPage(nextPage);
+        setHasMore(nextPage < (res?.totalPages ?? 1));
+      } else {
+        setHasMore(false);
+      }
+    } catch (err) {
+      console.error("[CampaignDetailClient] infinite scroll error:", err);
+    } finally {
+      setIsFetchingMore(false);
+    }
+  }, [isFetchingMore, hasMore, page, slug, appliedMin, appliedMax, appliedStock]);
 
-  const products   = data?.data       ?? [];
-  const totalPages = data?.totalPages ?? 1;
-  const totalCount = data?.totalCount ?? 0;
+  // Intersection Observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isFetchingMore) {
+          fetchNextPage();
+        }
+      },
+      { threshold: 0.1 }
+    );
+    const el = loaderRef.current;
+    if (el) observer.observe(el);
+    return () => { if (el) observer.unobserve(el); };
+  }, [fetchNextPage, hasMore, isFetchingMore]);
+
+  // Apply filters — refetch from page 1
+  const handleApply = async () => {
+    setAppliedMin(minPrice);
+    setAppliedMax(maxPrice);
+    setAppliedStock(stockStatus);
+    setShowFilter(false);
+    // fetch page 1 with new filters
+    setIsFetchingMore(true);
+    try {
+      const params = new URLSearchParams({ page: "1", limit: String(LIMIT) });
+      if (minPrice)   params.set("minDiscountedPrice", minPrice);
+      if (maxPrice)   params.set("maxDiscountedPrice", maxPrice);
+      if (stockStatus) params.set("stockStatus", stockStatus);
+      const res = await api.get<CampaignDetailResponse>(`campaign/${slug}?${params.toString()}`);
+      setAllProducts(res?.data ?? []);
+      setPage(1);
+      setHasMore((res?.totalPages ?? 1) > 1);
+    } catch (err) {
+      console.error("[CampaignDetailClient] filter fetch error:", err);
+    } finally {
+      setIsFetchingMore(false);
+    }
+  };
+
+  const handleClear = () => {
+    setMinPrice(""); setMaxPrice(""); setStockStatus("");
+    setAppliedMin(""); setAppliedMax(""); setAppliedStock("");
+    setAllProducts(initialData?.data ?? []);
+    setPage(1);
+    setHasMore((initialData?.totalPages ?? 1) > 1);
+  };
 
   const endDate  = endedAt ? new Date(endedAt) : undefined;
   const bannerSrc = (() => {
@@ -123,20 +183,6 @@ export default function CampaignDetailClient({
       ? campaignImage
       : `${BASE_URL}${campaignImage.startsWith("/") ? "" : "/"}${campaignImage}`;
   })();
-
-  const handleApply = () => {
-    setAppliedMin(minPrice);
-    setAppliedMax(maxPrice);
-    setAppliedStock(stockStatus);
-    setPage(1);
-    setShowFilter(false);
-  };
-
-  const handleClear = () => {
-    setMinPrice(""); setMaxPrice(""); setStockStatus("");
-    setAppliedMin(""); setAppliedMax(""); setAppliedStock("");
-    setPage(1);
-  };
 
   return (
     <div>
@@ -224,7 +270,7 @@ export default function CampaignDetailClient({
       )}
 
       {/* Count */}
-      {!isLoading && totalCount > 0 && (
+      {totalCount > 0 && (
         <p className="text-xs text-gray-400 mb-4">
           {totalCount.toLocaleString()} products found
           {hasActiveFilter && (
@@ -235,16 +281,8 @@ export default function CampaignDetailClient({
         </p>
       )}
 
-      {/* ── First load skeleton ── */}
-      {isLoading && <ProductGridSkeleton count={LIMIT} cols="4" />}
-
-      {/* ── Error ── */}
-      {isError && (
-        <p className="text-sm text-red-500 text-center py-10">Failed to load products.</p>
-      )}
-
       {/* ── Empty ── */}
-      {!isLoading && !isError && products.length === 0 && (
+      {allProducts.length === 0 && !isFetchingMore && (
         <div className="text-center py-20">
           <p className="text-gray-400 text-sm">No products found for this campaign.</p>
           {hasActiveFilter && (
@@ -255,49 +293,42 @@ export default function CampaignDetailClient({
         </div>
       )}
 
-      {/* ── Product grid + skeleton overlay on refetch ── */}
-      {!isLoading && !isError && products.length > 0 && (
-        <>
-          <div className="relative">
-            {isPlaceholderData && (
-              <div className="absolute inset-0 z-10 pointer-events-none">
-                <ProductGridSkeleton count={LIMIT} cols="4" />
-              </div>
-            )}
-            <div className={`transition-opacity duration-150 ${isPlaceholderData ? "opacity-30" : "opacity-100"}`}>
-              <div className="grid md:grid-cols-4 xl:grid-cols-5 grid-cols-2 gap-3">
-                {products.map((product: CampaignProduct) => {
-                  const imgSrc = product.thumbnails?.mediaFileUrl || NoImg.src;
-                  const price  = product.discountedPrice || product.regularPrice || 0;
-                  return (
-                    <ProductCard
-                      key={product.productUuid}
-                      productUuid={product.productUuid}
-                      image={imgSrc}
-                      title={product.productName}
-                      price={price}
-                      originalPrice={product.regularPrice || 0}
-                      discount={product.disRate || 0}
-                      badge={product.productBadge || undefined}
-                      inStock={!product.isTba}
-                      isBestDeal={product.disRate > 0}
-                      slug={product.productSlug || product.productUuid}
-                    />
-                  );
-                })}
-              </div>
-            </div>
-          </div>
+      {/* ── Product grid ── */}
+      {allProducts.length > 0 && (
+        <div className="grid md:grid-cols-4 xl:grid-cols-5 grid-cols-2 gap-3">
+          {allProducts.map((product: CampaignProduct, i: number) => {
+            const imgSrc = product.thumbnails?.mediaFileUrl || NoImg.src;
+            const price  = product.discountedPrice || product.regularPrice || 0;
+            return (
+              <ProductCard
+                key={`${product.productUuid}-${i}`}
+                productUuid={product.productUuid}
+                image={imgSrc}
+                title={product.productName}
+                price={price}
+                originalPrice={product.regularPrice || 0}
+                discount={product.disRate || 0}
+                badge={product.productBadge || undefined}
+                inStock={!product.isTba}
+                isBestDeal={product.disRate > 0}
+                slug={product.productSlug || product.productUuid}
+              />
+            );
+          })}
+        </div>
+      )}
 
-          <Pagination page={page} totalPages={totalPages} onPageChange={(p) => {
-            setPage(p);
-            window.scrollTo({ top: 0, behavior: "smooth" });
-          }} />
+      {/* Loader trigger */}
+      <div ref={loaderRef} className="h-10 w-full" />
 
-          <p className="text-center text-xs text-gray-400 mt-3">
-            Page {page} of {totalPages} — {products.length} of {totalCount.toLocaleString()} products
-          </p>
-        </>
+      {/* Loading more */}
+      {isFetchingMore && <ProductGridSkeleton count={LIMIT} cols="4" />}
+
+      {/* All loaded */}
+      {!hasMore && allProducts.length > 0 && !isFetchingMore && (
+        <p className="text-center text-xs text-gray-400 py-6">
+          ✅ সব {allProducts.length.toLocaleString()} টি পণ্য দেখানো হয়েছে
+        </p>
       )}
     </div>
   );

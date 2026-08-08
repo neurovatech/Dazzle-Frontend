@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import FilterSidebar, { AttributeGroup, PriceData } from "@/components/share/FilterSidebar";
 import BrandProductListClient from "@/components/Brands/BrandProductListClient";
@@ -92,6 +92,14 @@ export default function BrandProducts({
   const [pendingSort, setPendingSort] = useState<string>(
     searchParams.get("sort") ?? "recommend"
   );
+  const productListRef = useRef<HTMLDivElement>(null);
+
+  const closeFilterAndScroll = () => {
+    setIsFilterOpen(false);
+    setTimeout(() => {
+      productListRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+  };
   const [currentAttributes, setCurrentAttributes] = useState<AttributeGroup[]>(attributes);
   const [currentPriceData, setCurrentPriceData] = useState<PriceData | undefined>(priceData);
 
@@ -401,6 +409,8 @@ export default function BrandProducts({
         </div>
 
         <div className="lg:col-span-9">
+          {/* productList area */}
+          <div ref={productListRef} className="scroll-mt-4">
           {/* React Query client list — filter/page changes never trigger SSR */}
           <Suspense>
             <BrandProductListClient
@@ -419,6 +429,7 @@ export default function BrandProducts({
               initialTotalPages={initialTotalPages}
             />
           </Suspense>
+          </div>
         </div>
 
         {isFilterOpen && (
@@ -426,7 +437,7 @@ export default function BrandProducts({
             {/* Backdrop */}
             <div
               className="fixed inset-0 bg-black/50 transition-opacity"
-              onClick={() => setIsFilterOpen(false)}
+              onClick={closeFilterAndScroll}
             />
 
             {/* Left Side Drawer */}
@@ -436,7 +447,7 @@ export default function BrandProducts({
                   Filter
                 </h3>
                 <button
-                  onClick={() => setIsFilterOpen(false)}
+                  onClick={closeFilterAndScroll}
                   className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300"
                 >
                   <X size={20} />

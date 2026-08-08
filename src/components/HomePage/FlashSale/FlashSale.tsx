@@ -37,7 +37,7 @@ function FlashSale({
   if (products.length === 0) {
     return (
       <p className="text-sm text-gray-500 dark:text-gray-400">
-        No hot deal products available.
+        No Flash Sale products available.
       </p>
     );
   }

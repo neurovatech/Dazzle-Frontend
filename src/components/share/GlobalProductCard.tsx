@@ -248,7 +248,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
             {/* Wishlist toggle */}
             <button
               onClick={handleWishlist}
-              className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full border flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 ${
+              className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 ${
                 isWishlisted
                   ? "bg-red-50 border-red-300 text-red-500"
                   : "bg-white border-gray-200 text-gray-500 hover:border-red-300 hover:text-red-400"
@@ -266,7 +266,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
             </button>
             {/* Compare */}
             <Link href="/product-compare"
-              className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border border-gray-200 bg-white flex items-center justify-center text-gray-500 hover:border-purple-300 hover:text-purple-500 transition-all duration-300 hover:scale-110 active:scale-95"
+              className="w-8 h-8 rounded-full border border-gray-200 bg-white flex items-center justify-center text-gray-500 hover:border-purple-300 hover:text-purple-500 transition-all duration-300 hover:scale-110 active:scale-95"
               aria-label="Compare"
             >
               <CompareIcon />
@@ -279,7 +279,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
         {/* Title & Stock */}
         <div className="mb-1 sm:mb-2 text-left">
           <h3
-  className="font-bold text-[11px] sm:text-xs md:text-sm leading-snug line-clamp-2 h-9 text-transparent bg-clip-text bg-[linear-gradient(90deg,#101518_0%,#E9CCAE_46.15%,#472f00_100%)] dark:text-white"
+  className="font-bold text-[11px] sm:text-xs md:text-sm leading-snug line-clamp-2 h-9 text-=[#575757] dark:text-white"
   title={title}
 >
   {title}

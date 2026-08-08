@@ -36,7 +36,7 @@ function TrendingNow({
   if (products.length === 0) {
     return (
       <p className="text-sm text-gray-500 dark:text-gray-400">
-        No hot deal products available.
+        No Trending Now products available.
       </p>
     );
   }
