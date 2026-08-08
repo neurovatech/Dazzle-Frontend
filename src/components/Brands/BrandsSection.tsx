@@ -13,7 +13,7 @@ export default async function BrandsSection() {
   let brands: Brand[] = [];
   try {
     const res = await api.get<{ data: Record<string, unknown>[] }>(
-      "/brands?order=1&page=1&limit=8",
+      "/brands?order01&page=1&limit=8",
       { cache: "no-store" }
     );
 

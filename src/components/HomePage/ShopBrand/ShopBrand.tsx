@@ -14,7 +14,7 @@ export default async function ShopBrand() {
   let brands: Brand[] = [];
   try {
     const res = await api.get<{ data: Record<string, unknown>[] }>(
-      "/brands?order=1&page=1&limit=8",
+      "/brands?order=0&page=1&limit=8",
       { cache: "no-store" },
     );
 
