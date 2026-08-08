@@ -1,5 +1,6 @@
 import NewArrivals from "./FlashSale";
 import { api } from "@/lib/api";
+import GlobalTabs from "@/components/share/GlobalTabs";
 
 interface ShowcaseThumbnail {
   fileUuid: string;
@@ -71,9 +72,25 @@ export default async function FlashSaleSectionCom() {
     console.error("Error fetching hot deal products SSR:", error);
   }
 
+  const tabsData = [
+    {
+      label: "Newest",
+      content: <NewArrivals products={products} />,
+    },
+    {
+      label: "Popular",
+      content: <NewArrivals products={products} />,
+    },
+  ];
+
   return (
     <div className="">
-      <NewArrivals products={products} />
+      <GlobalTabs tabs={tabsData} />
     </div>
   );
 }
+
+
+
+
+

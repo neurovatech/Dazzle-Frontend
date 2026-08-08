@@ -1,7 +1,7 @@
 import NewArrivals from "./NewArrivals";
 import { api } from "@/lib/api";
 import NoImg from "@/images/no_images.png";
-
+import GlobalTabs from "@/components/share/GlobalTabs";
 interface ShowcaseThumbnail {
   fileUuid: string;
   mediaFileUrl: string;
@@ -64,7 +64,7 @@ export default async function NewArrivalsSectionCom() {
       originalPrice: item.regularPrice,
       discount: Math.round(item.disRate),
       badge: item.productBadge,
-      isBestDeal: item.disRate > 15, // adjust threshold as needed, API has no direct flag
+      isBestDeal: item.disRate > 15,
       inStock: !item.isTba,
       image: item.thumbnails?.mediaFileUrl ?? NoImg,
     }));
@@ -72,9 +72,21 @@ export default async function NewArrivalsSectionCom() {
     console.error("Error fetching hot deal products SSR:", error);
   }
 
+  const tabsData = [
+    {
+      label: "Newest",
+      content: <NewArrivals products={products} />,
+    },
+    {
+      label: "Popular",
+      content: <NewArrivals products={products} />,
+    },
+  ];
+
   return (
     <div className="">
-      <NewArrivals products={products} />
+      {/* <NewArrivals products={products} /> */}
+      <GlobalTabs tabs={tabsData} />
     </div>
   );
 }

@@ -424,7 +424,7 @@ export default function Footer() {
               </svg>
             </div>
 
-            <span className=" p-5 block lg:w-[50%] m-auto -mt-7.5 text-[#C6C6C6] ">
+            <span className=" p-5 block lg:w-[50%] m-auto -mt-7.5 pb-18 md:pb-0 text-[#C6C6C6] ">
               {siteSettings?.copyrightText}
             </span>
           </div>
