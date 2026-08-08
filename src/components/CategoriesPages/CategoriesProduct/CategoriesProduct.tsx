@@ -470,7 +470,7 @@ function CategoriesProduct({
         </div>
 
         {isFilterOpen && (
-          <div className="fixed inset-0 z-50 md:hidden flex">
+          <div className="fixed inset-0 z-99 md:hidden flex">
             {/* Backdrop */}
             <div
               className="fixed inset-0 bg-black/50 transition-opacity"
