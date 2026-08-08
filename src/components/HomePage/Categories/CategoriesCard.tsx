@@ -1,17 +1,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import NoImg from "@/images/no_images.png";
+import { api } from "@/lib/api";
 
 interface CategoryItem {
   uuid: string;
   thumbnail_img: string;
   category_name: string;
   category_slug: string;
+  is_featured?: boolean;
+  is_active?: boolean;
 }
 
 interface CategoriesCardProps {
@@ -21,26 +23,94 @@ interface CategoriesCardProps {
   currentPage?: number;
 }
 
+interface CategoriesApiResponse {
+  data: any[];
+  totalPages?: number;
+  totalCount?: number;
+}
+
 const isEmpty = (value: string | null | undefined): boolean =>
   !value || value.trim() === "";
+
+const LIMIT = 16;
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 function CategoriesCard({
   seeAllBtn = true,
-  categories = [],
-  totalPages = 1,
-  currentPage = 1,
+  categories: initialCategories = [],
+  totalPages: initialTotalPages = 1,
+  currentPage: initialPage = 1,
 }: CategoriesCardProps) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
 
-  const goToPage = (page: number) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("page", String(page));
-    router.push(`${pathname}?${params.toString()}`);
-  };
+  // ── Infinite scroll only on /categories page (seeAllBtn=false) ───────────
+  const [allCategories, setAllCategories] = useState<CategoryItem[]>(initialCategories);
+  const [page, setPage]                   = useState(initialPage);
+  const [hasMore, setHasMore]             = useState(
+    !seeAllBtn && initialTotalPages > initialPage
+  );
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const loaderRef = useRef<HTMLDivElement>(null);
+
+  // Reset when SSR data changes
+  useEffect(() => {
+    setAllCategories(initialCategories);
+    setPage(initialPage);
+    setHasMore(!seeAllBtn && initialTotalPages > initialPage);
+  }, [initialCategories, initialTotalPages, initialPage, seeAllBtn]);
+
+  const fetchNextPage = useCallback(async () => {
+    if (isFetchingMore || !hasMore) return;
+    const nextPage = page + 1;
+    setIsFetchingMore(true);
+    try {
+      const res = await api.get<CategoriesApiResponse>(
+        `/categories?page=${nextPage}&limit=${LIMIT}`,
+        { cache: "no-store" }
+      );
+      const list = Array.isArray(res) ? res : res?.data ?? [];
+      const newItems: CategoryItem[] = list.map((c: any) => ({
+        uuid:           String(c.uuid ?? ""),
+        category_name:  String(c.category_name ?? ""),
+        category_slug:  String(c.category_slug ?? ""),
+        thumbnail_img:  c.thumbnail_img ? String(c.thumbnail_img) : "",
+        is_featured:    Boolean(c.is_featured),
+        is_active:      Boolean(c.is_active),
+      }));
+
+      if (newItems.length > 0) {
+        setAllCategories((prev) => [...prev, ...newItems]);
+        setPage(nextPage);
+        const totalPgs = Number(Array.isArray(res) ? 1 : (res as any)?.totalPages ?? 1);
+        setHasMore(nextPage < totalPgs);
+      } else {
+        setHasMore(false);
+      }
+    } catch (err) {
+      console.error("[CategoriesCard] infinite scroll fetch failed:", err);
+    } finally {
+      setIsFetchingMore(false);
+    }
+  }, [isFetchingMore, hasMore, page]);
+
+  // ── Intersection Observer — only when on full /categories page ────────────
+  useEffect(() => {
+    if (seeAllBtn) return; // homepage widget — no infinite scroll needed
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isFetchingMore) {
+          fetchNextPage();
+        }
+      },
+      { threshold: 0.1 }
+    );
+    const el = loaderRef.current;
+    if (el) observer.observe(el);
+    return () => { if (el) observer.unobserve(el); };
+  }, [fetchNextPage, hasMore, isFetchingMore, seeAllBtn]);
+
+  // Display list — homepage uses initialCategories as-is (no append)
+  const displayCategories = seeAllBtn ? initialCategories : allCategories;
 
   return (
     <div className="md:px-12.5 px-4">
@@ -52,7 +122,7 @@ function CategoriesCard({
         {seeAllBtn && (
           <Link
             href="/categories"
-            className="text-sm font-medium text-primary  bg-orange-50 border-orange-200 px-4 py-2 rounded-[10px] dark:text-[#2e2b28]  hover:underline hover:text-[#CB843B]! transition-colors duration-300"
+            className="text-sm font-medium text-primary bg-orange-50 border-orange-200 px-4 py-2 rounded-[10px] dark:text-[#2e2b28] hover:underline hover:text-[#CB843B]! transition-colors duration-300"
           >
             See all
           </Link>
@@ -62,10 +132,10 @@ function CategoriesCard({
       {/* ── Grid ── */}
       <div className="py-4">
         <div className="grid grid-cols-4 md:grid-cols-4 lg:grid-cols-8 gap-4">
-          {categories.map((item) => {
+          {displayCategories.map((item) => {
             const hasImage = !isEmpty(item.thumbnail_img);
-            const hasName = !isEmpty(item.category_name);
-            const hasSlug = !isEmpty(item.category_slug);
+            const hasName  = !isEmpty(item.category_name);
+            const hasSlug  = !isEmpty(item.category_slug);
 
             const href = hasSlug
               ? `/categories/${item.category_slug}`
@@ -74,13 +144,8 @@ function CategoriesCard({
                 : "/categories";
 
             return (
-              <Link
-                key={item.uuid}
-                href={href}
-                className="flex flex-col items-center"
-              >
-                {/* Fixed-size box so every image container is the same height */}
-                <div className="relative w-full aspect-square bg-[#F5F5F5]  rounded-4xl p-6 md:p-8 transition-all duration-300 hover:scale-105 hover:bg-[#fcf5ed] hover:border-[#E9CCAE] border border-[#F5F5F5]">
+              <Link key={item.uuid} href={href} className="flex flex-col items-center">
+                <div className="relative w-full aspect-square bg-[#F5F5F5] rounded-4xl p-6 md:p-8 transition-all duration-300 hover:scale-105 hover:bg-[#fcf5ed] hover:border-[#E9CCAE] border border-[#F5F5F5]">
                   <Image
                     src={hasImage ? item.thumbnail_img : NoImg}
                     alt={hasName ? item.category_name : "Category"}
@@ -93,14 +158,11 @@ function CategoriesCard({
                     }}
                   />
                 </div>
-
                 <h2 className="w-full text-[14px] sm:text-[14px] font-medium text-primary pt-1 sm:pt-2 text-center transition-colors duration-300 group-hover:text-[#CB843B] line-clamp-2 leading-tight min-h-[22px] sm:min-h-[26px] lg:min-h-[36px] flex items-start justify-center">
                   {hasName ? (
                     item.category_name
                   ) : (
-                    <span className="text-gray-400 dark:text-gray-500 italic">
-                      No name
-                    </span>
+                    <span className="text-gray-400 dark:text-gray-500 italic">No name</span>
                   )}
                 </h2>
               </Link>
@@ -109,67 +171,30 @@ function CategoriesCard({
         </div>
       </div>
 
-      {/* ── Pagination — only on full /categories page ── */}
-      {!seeAllBtn && totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 pb-6 mt-2">
-          <button
-            onClick={() => goToPage(currentPage - 1)}
-            disabled={currentPage === 1}
-            className="w-8 h-8 rounded-full bg-gray-100 dark:bg-[#2E2E2E] hover:bg-[#CB843B]/10 dark:hover:bg-[#CB843B]/20 flex items-center justify-center disabled:opacity-30 transition"
-            aria-label="Previous page"
-          >
-            <ChevronLeft className="w-4 h-4 text-gray-700 dark:text-white" />
-          </button>
+      {/* ── Infinite scroll loader (only on full /categories page) ── */}
+      {!seeAllBtn && (
+        <>
+          <div ref={loaderRef} className="h-10 w-full" />
 
-          {Array.from({ length: totalPages }).map((_, i) => {
-            const page = i + 1;
-            const isActive = page === currentPage;
-            const show =
-              page === 1 ||
-              page === totalPages ||
-              Math.abs(page - currentPage) <= 1;
-            const showEllipsisBefore =
-              page === currentPage - 2 && currentPage - 2 > 1;
-            const showEllipsisAfter =
-              page === currentPage + 2 && currentPage + 2 < totalPages;
+          {/* Loading skeleton */}
+          {isFetchingMore && (
+            <div className="grid grid-cols-4 md:grid-cols-4 lg:grid-cols-8 gap-4 pb-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="flex flex-col items-center gap-2">
+                  <div className="w-full aspect-square rounded-4xl bg-gray-100 dark:bg-gray-800 animate-pulse" />
+                  <div className="w-3/4 h-3 rounded bg-gray-100 dark:bg-gray-800 animate-pulse" />
+                </div>
+              ))}
+            </div>
+          )}
 
-            if (showEllipsisBefore || showEllipsisAfter) {
-              return (
-                <span
-                  key={`ellipsis-${i}`}
-                  className="text-gray-400 dark:text-gray-500 text-sm px-1"
-                >
-                  …
-                </span>
-              );
-            }
-            if (!show) return null;
-
-            return (
-              <button
-                key={page}
-                onClick={() => goToPage(page)}
-                className={`w-8 h-8 rounded-full text-sm font-medium transition-all duration-200 ${
-                  isActive
-                    ? "bg-[#CB843B] text-white scale-110"
-                    : "bg-gray-100 dark:bg-[#2E2E2E] text-gray-700 dark:text-white hover:bg-[#CB843B]/20"
-                }`}
-                aria-label={`Page ${page}`}
-              >
-                {page}
-              </button>
-            );
-          })}
-
-          <button
-            onClick={() => goToPage(currentPage + 1)}
-            disabled={currentPage === totalPages}
-            className="w-8 h-8 rounded-full bg-gray-100 dark:bg-[#2E2E2E] hover:bg-[#CB843B]/10 dark:hover:bg-[#CB843B]/20 flex items-center justify-center disabled:opacity-30 transition"
-            aria-label="Next page"
-          >
-            <ChevronRight className="w-4 h-4 text-gray-700 dark:text-white" />
-          </button>
-        </div>
+          {/* All loaded */}
+          {/* {!hasMore && displayCategories.length > 0 && !isFetchingMore && (
+            <p className="text-center text-xs text-gray-400 py-6">
+              ✅ সব {displayCategories.length} টি ক্যাটাগরি দেখানো হয়েছে
+            </p>
+          )} */}
+        </>
       )}
     </div>
   );

@@ -106,7 +106,10 @@ function ReelModal({ isOpen, initialIndex, products, onClose }: {
   const hasVideo = !isEmpty(product.videoUrl);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+    <div
+      className="fixed inset-0 z-100 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+      onClick={onClose}
+    >
       <button onClick={onClose} className="absolute top-4 right-4 z-50 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-all">
         <X className="w-5 h-5" />
       </button>
@@ -117,7 +120,13 @@ function ReelModal({ isOpen, initialIndex, products, onClose }: {
         <ChevronDown className="w-6 h-6" />
       </button>
 
-      <div className="relative w-full max-w-150 mx-4 md:mx-0 rounded-2xl overflow-hidden shadow-2xl" style={{ height: "min(85vh, 720px)" }} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+      <div
+        className="relative w-full max-w-150 mx-4 md:mx-0 rounded-2xl overflow-hidden shadow-2xl"
+        style={{ height: "min(85vh, 720px)" }}
+        onClick={(e) => e.stopPropagation()}
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+      >
         {hasVideo ? (
           <video ref={videoRef} key={product.id} src={product.videoUrl} className="w-full h-full object-cover" autoPlay loop muted={muted} playsInline poster={product.clipThumbnail || product.image} />
         ) : (

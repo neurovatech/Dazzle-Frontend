@@ -66,7 +66,7 @@ export default function ProductInfo({
   const productPrice = alldata?.discountedPrice ?? basePrice ?? 0;
   const effectivePrice = variantPrice > 0 ? variantPrice : productPrice;
   const isVariantUnavailable = effectivePrice === 0;
-
+const [viewers, setViewers] = useState(() => Math.floor(Math.random() * 100) + 1);
   // ── Care plan totals ──────────────────────────────────────────
   const carePlans: CareOption[] = selectedCareOptions ?? [];
   const careTotalOffer = carePlans.reduce(
@@ -353,7 +353,7 @@ export default function ProductInfo({
                 />
               </svg>
 
-              <span>{alldata?.metaTags?.totalReview} people viewing this product now</span>
+              <span>{viewers} people viewing this product now</span>
             </div>
           </div>
 

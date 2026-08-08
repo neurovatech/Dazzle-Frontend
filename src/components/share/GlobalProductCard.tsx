@@ -286,11 +286,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
         {/* Price */}
         <div className="flex items-baseline gap-1 sm:gap-2 mb-2 sm:mb-4">
-          <span className="text-gray-900 font-bold text-[12px] sm:text-sm md:text-base lg:text-lg xl:text-xl">
+          <span className="text-gray-900 font-bold text-[18px] sm:text-sm md:text-base lg:text-lg xl:text-xl">
             {formatPrice(price)}
           </span>
           {originalPrice > 0 && originalPrice !== price && (
-            <span className="text-gray-400 text-[10px] sm:text-xs line-through">              
+            <span className="text-gray-400 text-[14px] sm:text-xs line-through">              
             {formatPrice(originalPrice)}
             </span>
           )}

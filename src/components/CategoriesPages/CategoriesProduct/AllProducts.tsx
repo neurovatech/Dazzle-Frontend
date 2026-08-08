@@ -172,6 +172,30 @@ function AllProducts({
         </div>
       )}
 
+      <div className="md:flex md:flex-wrap items-center justify-between gap-3 pb-3 hidden">
+        <div>
+          <h3 className="md:text-[32px] text-[20px] font-bold text-transparent bg-clip-text bg-[linear-gradient(90deg,#101518_0%,#E9CCAE_46.15%,#B57908_100%)] dark:text-white">
+            Products of <span className="capitalize"> {subCategorySlug || categorySlug} </span>
+          </h3>
+          <p className="text-xs text-gray-400 mt-0.5">
+            {displayTotal.toLocaleString()} products found
+            {selectedBrandSlug && (
+              <span className="ml-2 text-[#6D3F0E] dark:text-[#d4a97a] font-semibold">
+                · {selectedBrandSlug}
+              </span>
+            )}
+            {hasFilter && onClearFilter && (
+              <button
+                onClick={onClearFilter}
+                className="ml-3 text-[#6D3F0E] dark:text-[#d4a97a] hover:underline"
+              >
+                Clear filters
+              </button>
+            )}
+          </p>
+        </div>
+      </div>
+
       {/* ── Product grid ── */}
       {allProducts.length > 0 && (
         <div className="grid md:grid-cols-4 grid-cols-2 lg:gap-4 gap-2 py-3">

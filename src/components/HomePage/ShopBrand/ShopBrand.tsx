@@ -49,20 +49,20 @@ export default async function ShopBrand() {
         </Link>
       </div>
       <div className="p-4">
-        <div className="grid grid-cols-4 md:grid-cols-4 lg:grid-cols-8 gap-4">
+        <div className="grid grid-cols-4 md:grid-cols-4 lg:grid-cols-8 gap-1">
           {brands?.map((item) => (
             <Link
               key={item.id}
               href={`/brands/${item.slug}`}
-              className="flex flex-col items-center"
+              className="flex flex-col items-center  w-full"
             >
-              <div className="relative w-full aspect-square bg-[#fff]  rounded-4xl p-6 md:p-8 transition-all duration-300 hover:scale-105 hover:bg-[#fcf5ed] hover:border-[#E9CCAE] border border-[#F5F5F5]">
+              <div className="relative w-full aspect-square bg-white  rounded-4xl p-3 md:p-8 transition-all duration-300 hover:scale-105 hover:bg-[#fcf5ed] hover:border-[#E9CCAE] border border-[#F5F5F5]">
                 <div className="relative w-full h-full">
                   <Image
                     src={item.logo}
                     alt={item.label}
                     fill
-                    sizes="(max-width: 768px) 25vw, 12vw"
+                    sizes="(max-width: 768px) 25vw, 20vw"
                     className="object-contain transition-transform duration-300 hover:scale-110"
                   />
                 </div>
