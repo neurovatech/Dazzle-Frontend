@@ -63,6 +63,7 @@ interface StickyPurchaseBarProps {
   selectedCareOptions?: CareOption[];
   careTotalOffer?: number;
   careTotalRegular?: number;
+  minBookingPrice?: number;
 }
 
 export default function StickyPurchaseBar({
@@ -87,6 +88,7 @@ export default function StickyPurchaseBar({
   selectedCareOptions = [],
   careTotalOffer = 0,
   careTotalRegular = 0,
+  minBookingPrice = 0,
 }: StickyPurchaseBarProps) {
   const dispatch = useAppDispatch();
   const cartItems = useAppSelector((state) => state.cart.items);
@@ -127,7 +129,7 @@ export default function StickyPurchaseBar({
 
     dispatch(
       addToCart({
-        id: targetCartId,                          // unique per variant+plan combo
+        id: targetCartId,
         variantUuid: variantUuid || productId || "",
         productUuid: productId || "",
         accessoriesUuid: planId,
@@ -139,6 +141,7 @@ export default function StickyPurchaseBar({
         quantity: qty,
         inStock: true,
         slug: productSlug || "",
+        minBookingPrice: minBookingPrice ?? 0,
       })
     );
 

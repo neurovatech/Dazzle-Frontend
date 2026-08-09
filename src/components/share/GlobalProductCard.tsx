@@ -42,6 +42,7 @@ interface ProductCardProps {
   isBestDeal?: boolean;
   slug?: string;
   uuid?: string;
+  minBookingPrice?: number;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -58,6 +59,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   isBestDeal = false,
   slug,
   uuid,
+  minBookingPrice = 0,
 }) => {
   const dispatch = useAppDispatch();
   const wishlistItems = useAppSelector((state) => state.wishlist.items);
@@ -138,6 +140,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
           quantity: 1,
           inStock: finalInStock,
           slug: slug || "",
+          minBookingPrice: minBookingPrice ?? 0,
         }),
       );
 
@@ -167,6 +170,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
           quantity: 1,
           inStock: inStock,
           slug: slug || "",
+          minBookingPrice: minBookingPrice ?? 0,
         }),
       );
       toast.success(`Added to cart! 🛒`);
@@ -340,7 +344,6 @@ const ProductCard: React.FC<ProductCardProps> = ({
         {/* Bottom Actions */}
         <div className="flex gap-1 sm:gap-2 mt-auto">
           {isTba ? (
-            /* Not in Stock বাটন */
             <button
               disabled
               className="flex-1 flex items-center justify-center gap-1 py-2 sm:py-2.5 px-1 sm:px-2 rounded-xl sm:rounded-2xl text-[9px] sm:text-[11px] lg:text-[12px] font-semibold border border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-70"

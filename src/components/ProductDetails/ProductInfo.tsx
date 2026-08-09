@@ -140,6 +140,7 @@ const [viewers, setViewers] = useState(() => Math.floor(Math.random() * 100) + 1
         quantity: qty ?? 1,
         inStock: !isVariantUnavailable,
         slug: alldata?.productSlug || "",
+        minBookingPrice: alldata?.minBookingPrice ?? 0,
       }),
     );
 

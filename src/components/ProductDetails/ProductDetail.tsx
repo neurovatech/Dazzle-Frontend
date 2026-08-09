@@ -445,6 +445,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
         selectedCareOptions={selectedCareOptions}
         careTotalOffer={careTotalOffer}
         careTotalRegular={careTotalRegular}
+        minBookingPrice={product?.minBookingPrice ?? 0}
       />
 
       <div className="max-w-350 mx-auto lg:px-4 px-2 pb-16">

@@ -3,18 +3,19 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface CartItem {
-  id: string;              // unique cart id
-  productUuid?: string;    // Product UUID (PRODUCT ID)
-  variantUuid?: string;    // Selected Variant UUID
-  accessoriesUuid?: string; // DazzleCare Option ID
+  id: string;
+  productUuid?: string;
+  variantUuid?: string;
+  accessoriesUuid?: string;
   name: string;
   brand: string;
   image: string;
-  price: number;        // discounted price (offerPrice)
+  price: number;
   originalPrice: number;
   quantity: number;
   inStock: boolean;
   slug?: string;
+  minBookingPrice?: number;   // minimum booking deposit for this product
 }
 
 export interface CartState {
@@ -74,6 +75,12 @@ const cartSlice = createSlice({
     clearCart(state) {
       state.items = [];
     },
+
+    // Patch minBookingPrice on an existing cart item (fetched lazily in checkout)
+    patchMinBookingPrice(state, action: PayloadAction<{ id: string; minBookingPrice: number }>) {
+      const item = state.items.find((i) => i.id === action.payload.id);
+      if (item) item.minBookingPrice = action.payload.minBookingPrice;
+    },
   },
 });
 
@@ -83,6 +90,7 @@ export const {
   decreaseQty,
   removeFromCart,
   clearCart,
+  patchMinBookingPrice,
 } = cartSlice.actions;
 
 export default cartSlice.reducer;
