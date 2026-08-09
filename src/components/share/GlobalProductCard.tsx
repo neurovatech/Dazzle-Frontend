@@ -222,17 +222,17 @@ const ProductCard: React.FC<ProductCardProps> = ({
         {/* Product Image — fixed-height, never crops, contains full image */}
         <Link
           href={`/product/${slug || title?.toLowerCase().replace(/\s+/g, "-")}`}
-          className="block px-3"
+          className="block px-2 pt-6"
         >
-          <div className="relative flex justify-center items-center h-32 sm:h-40 md:h-44 lg:h-50 overflow-hidden transition-all duration-500">
+          <div className="relative flex justify-center items-center h-36 sm:h-40 md:h-44 lg:h-48 transition-all duration-500">
             <div className="relative z-10 w-full h-full transition-transform duration-500 group-hover:scale-105">
               <Image
                 src={imgSrc}
                 alt={title || "Product image"}
                 fill
-                className="object-contain p-2 group-hover:scale-105 transition-transform duration-300"
-                                sizes="(max-width: 640px) 45vw, (max-width: 1024px) 22vw, 180px"
-                                unoptimized
+                className="object-contain p-1 transition-transform duration-300"
+                sizes="(max-width: 640px) 45vw, (max-width: 1024px) 22vw, 180px"
+                unoptimized
                 onError={() => setImgError(true)}
               />
             </div>
@@ -241,7 +241,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
         {/* Action Row */}
         <div className="flex items-center justify-between relative z-50">
-          <div className="flex gap-1 sm:gap-2 ml-auto p-1 -mr-2 sm:-mr-2 lg:-mr-4 rounded-tl-2xl sm:rounded-tl-3xl bg-[#e7e7e7] pl-2">
+          <div className="flex gap-1 sm:gap-2 ml-auto p-1 -mr-2 sm:-mr-2 lg:-mr-4 rounded-tl-2xl sm:rounded-tl-3xl bg-[#F5F5F5] pl-2">
             {/* Wishlist toggle */}
             <button
               onClick={handleWishlist}
@@ -281,7 +281,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
         </div>
       </div>
 
-      <div className="p-2 sm:p-3 lg:p-4 flex flex-col flex-1 bg-[#E7E7E7] rounded-tl-2xl rounded-b-2xl">
+      <div className="p-2 sm:p-3 lg:p-4 flex flex-col flex-1 bg-[#F5F5F5] rounded-tl-2xl rounded-b-2xl">
         {/* Title & Stock */}
         <div className="mb-1 sm:mb-2 text-left">
           <h3
