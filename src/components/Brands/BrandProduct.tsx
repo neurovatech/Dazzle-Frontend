@@ -504,7 +504,7 @@ export default function BrandProducts({
             />
 
             {/* Center Modal */}
-            <div className="relative w-full max-w-sm bg-white dark:bg-[#1c1a17] rounded-3xl shadow-2xl z-10 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-[90vh]">
+            <div className="relative w-full max-w-sm bg-white dark:bg-[#1c1a17] rounded-3xl shadow-2xl z-10 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-[65vh]">
               <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-200 dark:border-white/10">
                 <button onClick={closeFilterAndScroll} className="w-9 h-9 flex items-center justify-center rounded-full border border-[#d4a97a] text-[#d4a97a]">
                   <svg width="8" height="14" viewBox="0 0 8 14" fill="none"><path d="M7 1L1 7L7 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
