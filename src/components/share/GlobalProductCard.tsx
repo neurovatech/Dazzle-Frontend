@@ -318,7 +318,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
             {formatPrice(price)}
           </span>
           {originalPrice > 0 && originalPrice !== price && (
-            <span className="text-gray-400 text-[14px] sm:text-xs line-through flex items-center gap-1">
+            <span className="text-gray-400 text-[16px]!  line-through flex items-center gap-1 pl-1">
               <svg
                 width="9"
                 height="10"
