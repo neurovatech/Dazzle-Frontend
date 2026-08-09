@@ -233,7 +233,7 @@ export default function StickyPurchaseBar({
               )}
             </div>
 
-            <div className="flex-1" />
+            <div className=" md:flex-1 hidden " />
 
             {/* Quantity */}
             <div className="hidden md:block">
@@ -241,7 +241,7 @@ export default function StickyPurchaseBar({
             </div>
 
             {/* Add to Cart + Buy Now */}
-            <div className="flex items-center md:gap-3 gap-1 shrink-0">
+            <div className="flex items-center md:gap-3 gap-1 shrink-0 mr-[10px] md:mr-0">
               <button
                 onClick={handleAddToCart}
                 disabled={isUnavailable}
