@@ -49,6 +49,7 @@ interface Props {
   initialProducts: ProductItem[];
   initialTotalCount: number;
   initialTotalPages: number;
+  filterApplyKey?: number;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -65,6 +66,7 @@ export default function BrandProductListClient({
   initialProducts,
   initialTotalCount,
   initialTotalPages,
+  filterApplyKey,
 }: Props) {
   const [allProducts, setAllProducts] = useState<ProductItem[]>(initialProducts);
   const [page, setPage]               = useState(1);
@@ -83,6 +85,7 @@ export default function BrandProductListClient({
     maxPrice ?? "",
     stockStatus ?? "",
     currentSort ?? "",
+    filterApplyKey ?? 0,
   ].join("|");
 
   useEffect(() => {
@@ -139,7 +142,10 @@ export default function BrandProductListClient({
     if (minPrice !== undefined)        qp.set("minDiscountedPrice", String(minPrice));
     if (maxPrice !== undefined)        qp.set("maxDiscountedPrice", String(maxPrice));
     if (stockStatus)                   qp.set("stockStatus",        stockStatus);
-    if (currentSort && currentSort !== "recommend") qp.set("sort", currentSort);
+    // Sort params — API-র জন্য সঠিক params map করা হচ্ছে
+    if (currentSort === "newest")           qp.set("latest",           "1");
+    else if (currentSort === "price_asc")   qp.set("discountedPrice",  "low-to-high");
+    else if (currentSort === "price_desc")  qp.set("discountedPrice",  "high-to-low");
     return qp.toString();
   }, [brandSlug, categorySlug, selectedAttributes, minPrice, maxPrice, stockStatus, currentSort]);
 

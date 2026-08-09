@@ -26,6 +26,7 @@ interface AllProductsProps {
   maxPrice?: number;
   stockStatus?: string | null;
   onClearFilter?: () => void;
+  filterApplyKey?: number;
 }
 
 const LIMIT = 12;
@@ -59,6 +60,7 @@ function AllProducts({
   maxPrice,
   stockStatus,
   onClearFilter,
+  filterApplyKey,
 }: AllProductsProps) {
   const router       = useRouter();
   const pathname     = usePathname();
@@ -79,24 +81,59 @@ function AllProducts({
     (stockStatus !== null && stockStatus !== undefined && stockStatus !== "")
   );
 
-  // ── Reset when filters / sort change ─────────────────────────────────────
-  useEffect(() => {
-    setAllProducts(ssrProducts);
-    setPage(1);
-    setHasMore(ssrTotalPages > 1);
-  }, [
-    ssrProducts,
-    ssrTotalPages,
-    selectedBrandSlug,
-    selectedAttributes.join(","),
-    minPrice,
-    maxPrice,
-    stockStatus,
-    currentSort,
-    currentSearch,
+  // Filter key to detect client-side changes
+  const filterKey = [
     categorySlug,
-    subCategorySlug,
-  ]);
+    subCategorySlug ?? "",
+    selectedBrandSlug ?? "",
+    selectedAttributes.join(","),
+    minPrice ?? "",
+    maxPrice ?? "",
+    stockStatus ?? "",
+    currentSort ?? "",
+    currentSearch ?? "",
+    filterApplyKey ?? 0,
+  ].join("|");
+
+  const prevFilterKeyRef = useRef(filterKey);
+  const prevSsrProductsRef = useRef(ssrProducts);
+
+  // ── Sync with SSR data or Fetch Client-side on Filter/Sort Change ──────────
+  useEffect(() => {
+    // If SSR products changed (e.g. initial load or parent SSR refetch), sync them
+    if (prevSsrProductsRef.current !== ssrProducts) {
+      prevSsrProductsRef.current = ssrProducts;
+      prevFilterKeyRef.current = filterKey;
+      setAllProducts(ssrProducts);
+      setPage(1);
+      setHasMore(ssrTotalPages > 1);
+      return;
+    }
+
+    // If client-side filters or sort changed, fetch page 1
+    if (prevFilterKeyRef.current !== filterKey) {
+      prevFilterKeyRef.current = filterKey;
+
+      const fetchPage1 = async () => {
+        setIsFetchingMore(true);
+        try {
+          const res = await api.get<ProductListResponse>(
+            `/products?${buildParams(1)}`
+          );
+          const items = res?.data ?? [];
+          setAllProducts(items);
+          setPage(1);
+          setHasMore(1 < (res?.totalPages ?? 1));
+        } catch (err) {
+          console.error("[AllProducts] client-side page 1 fetch failed:", err);
+        } finally {
+          setIsFetchingMore(false);
+        }
+      };
+
+      fetchPage1();
+    }
+  }, [filterKey, ssrProducts, ssrTotalPages]);
 
   // ── Build API query params ────────────────────────────────────────────────
   const buildParams = useCallback((pageNum: number) => {
@@ -111,7 +148,10 @@ function AllProducts({
     if (minPrice !== undefined)        p.set("minDiscountedPrice",   String(minPrice));
     if (maxPrice !== undefined)        p.set("maxDiscountedPrice",   String(maxPrice));
     if (stockStatus)                   p.set("stockStatus",          stockStatus);
-    if (currentSort)                   p.set("sort",                 currentSort);
+    // Sort params — API-র জন্য সঠিক params map করা হচ্ছে
+    if (currentSort === "newest")           p.set("latest",           "1");
+    else if (currentSort === "price_asc")   p.set("discountedPrice",  "low-to-high");
+    else if (currentSort === "price_desc")  p.set("discountedPrice",  "high-to-low");
     if (currentSearch)                 p.set("search",               currentSearch);
     return p.toString();
   }, [categorySlug, subCategorySlug, selectedBrandSlug, selectedAttributes, minPrice, maxPrice, stockStatus, currentSort, currentSearch]);

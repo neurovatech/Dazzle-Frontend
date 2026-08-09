@@ -22,7 +22,7 @@ function Banner({ banners }: BannerProps) {
   const [banner1, banner2] = banners;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 -md:mt-3 items-stretch cursor-pointer md:px-12.5 px-4 mt-4">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 -md:mt-3 items-stretch cursor-pointer md:px-12.5 px-4 mt-4 pb-6">
   {banner1 && (
     <div className="lg:col-span-3 h-[150px] md:h-[200px]">
       <Link

@@ -49,7 +49,7 @@ export default async function ShopBrand() {
         </Link>
       </div>
       <div className="md:p-4">
-        <div className="grid grid-cols-4 md:grid-cols-4 lg:grid-cols-8 gap-1">
+        <div className="grid grid-cols-4 md:grid-cols-4 lg:grid-cols-8 gap-3">
           {brands?.map((item) => (
             <Link
               key={item.id}

@@ -88,6 +88,16 @@ function CategoriesProduct({
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [pendingSort, setPendingSort] = useState<string>(currentSort ?? "recommend");
+  const [activeSort, setActiveSort] = useState<string>(currentSort ?? "recommend");
+
+  // ── Pending filter states (mobile modal এর জন্য) ────────────────────────────
+  const [pendingAttributes, setPendingAttributes] = useState<string[]>(initialAttributes);
+  const [pendingMinPrice, setPendingMinPrice] = useState<number | undefined>(initialMinPrice);
+  const [pendingMaxPrice, setPendingMaxPrice] = useState<number | undefined>(initialMaxPrice);
+  const [pendingStockStatus, setPendingStockStatus] = useState<string | null>(initialStockStatus);
+  // এই counter increment হলে AllProducts নতুন API call করবে
+  const [filterApplyKey, setFilterApplyKey] = useState(0);
+
   const productListRef = useRef<HTMLDivElement>(null);
 
   const closeFilterAndScroll = () => {
@@ -95,6 +105,55 @@ function CategoriesProduct({
     setTimeout(() => {
       productListRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 100);
+  };
+
+  // Filter modal খুললে current state থেকে pending sync করাহো
+  const openFilterModal = () => {
+    setPendingAttributes(selectedAttributes);
+    setPendingMinPrice(minPrice);
+    setPendingMaxPrice(maxPrice);
+    setPendingStockStatus(stockStatus);
+    setIsFilterOpen(true);
+  };
+
+  // Apply button ক্লিক করলে pending থ৅কে real state এ commit + API call
+  const handleApplyFilters = () => {
+    setSelectedAttributes(pendingAttributes);
+    setMinPrice(pendingMinPrice);
+    setMaxPrice(pendingMaxPrice);
+    setStockStatus(pendingStockStatus);
+    setActivePage(1);
+    setFilterApplyKey(prev => prev + 1); // এইটা AllProducts কে re-fetch দিয়ে trigger করবে
+
+    // URL update
+    const params = new URLSearchParams(window.location.search);
+    if (pendingAttributes.length > 0) params.set("attributes", pendingAttributes.join(","));
+    else params.delete("attributes");
+    if (pendingMinPrice !== undefined) params.set("minDiscountedPrice", String(pendingMinPrice));
+    else params.delete("minDiscountedPrice");
+    if (pendingMaxPrice !== undefined) params.set("maxDiscountedPrice", String(pendingMaxPrice));
+    else params.delete("maxDiscountedPrice");
+    if (pendingStockStatus) params.set("stockStatus", pendingStockStatus);
+    else params.delete("stockStatus");
+    params.delete("page");
+    const newUrl = params.toString() ? `${window.location.pathname}?${params.toString()}` : window.location.pathname;
+    window.history.pushState(null, "", newUrl);
+
+    closeFilterAndScroll();
+  };
+
+  // Pending toggle handlers (শুধু modal এর জন্য)
+  const handlePendingToggleAttribute = (value: string) => {
+    setPendingAttributes(prev =>
+      prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]
+    );
+  };
+
+  const handleClearPendingFilters = () => {
+    setPendingAttributes([]);
+    setPendingMinPrice(undefined);
+    setPendingMaxPrice(undefined);
+    setPendingStockStatus(null);
   };
 
   useEffect(() => {
@@ -302,16 +361,25 @@ function CategoriesProduct({
 
   const handleApplySort = (sort: string) => {
     setPendingSort(sort);
+    setActiveSort(sort); // ← এটা যোগ করা হয়েছে: AllProducts সঠিক sort দিয়ে API call করবে
     setActivePage(1);
     setIsSortOpen(false);
 
     const params = new URLSearchParams(window.location.search);
-    if (sort && sort !== "recommend") {
-      params.set("sort", sort);
-    } else {
-      params.delete("sort");
-    }
+    // Remove all sort-related params first
+    params.delete("sort");
+    params.delete("discountedPrice");
+    params.delete("latest");
     params.delete("page");
+
+    if (sort === "newest") {
+      params.set("sort", "newest");
+    } else if (sort === "price_asc") {
+      params.set("sort", "price_asc");
+    } else if (sort === "price_desc") {
+      params.set("sort", "price_desc");
+    }
+    // "recommend" → no sort param
 
     const newQueryString = params.toString();
     const newUrl = newQueryString
@@ -359,7 +427,7 @@ function CategoriesProduct({
         </div>
       )}
 
-      <div className="flex md:px-12.5 px-4 pt-2 md:mt-[15px] flex-wrap items-center justify-between gap-3 md:pb-3 relative">
+      <div className="md:hidden flex md:px-12.5 px-4 pt-2 md:mt-[15px] flex-wrap items-center justify-between gap-3 md:pb-3 relative">
           <div className="md:hidden block">
             <h3 className="md:text-[32px] text-[20px] font-bold text-transparent bg-clip-text bg-[linear-gradient(90deg,#101518_0%,#E9CCAE_46.15%,#B57908_100%)] dark:text-white">
               Products of{" "}
@@ -380,7 +448,7 @@ function CategoriesProduct({
 
            <div className="md:hidden flex items-center fixed gap-3 bg-[#6d3f0e] px-3 py-2 rounded-full mb-3 bottom-20 z-88 left-1/2 transform -translate-x-1/2 shadow-[0px_4px_19.9px_0px_#00000066]">
           <button
-            onClick={() => setIsFilterOpen(true)}
+            onClick={openFilterModal}
             className="md:hidden flex items-center  gap-1.5 rounded-xl text-sm font-semibold  dark:border-white/10 text-white dark:text-gray-300 shrink-0 bg-[#6d3f0e]"
           >
             <SlidersHorizontal size={16} />
@@ -457,52 +525,64 @@ function CategoriesProduct({
             products={products}
             totalPages={totalPages}
             totalCount={totalCount}
-            currentSort={currentSort}
+            currentSort={activeSort}
             currentSearch={currentSearch}
             selectedBrandSlug={selectedBrandSlug}
             selectedAttributes={selectedAttributes}
             minPrice={minPrice}
             maxPrice={maxPrice}
             stockStatus={stockStatus}
+            filterApplyKey={filterApplyKey}
             onClearFilter={handleClearFilters}
           />
           </div>
         </div>
 
         {isFilterOpen && (
-          <div className="fixed inset-0 z-99 md:hidden flex">
-            {/* Backdrop */}
+          <div className="fixed inset-0 z-[999] md:hidden flex items-center justify-center p-4">
+            {/* Glass backdrop */}
             <div
-              className="fixed inset-0 bg-black/50 transition-opacity"
+              className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
               onClick={closeFilterAndScroll}
             />
 
-            {/* Left Side Drawer */}
-            <div className="relative w-[85%] max-w-[320px] h-full bg-white dark:bg-gray-900 shadow-2xl z-10 flex flex-col overflow-hidden animate-in slide-in-from-left duration-300">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900">
-                <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-                  Filter
-                </h3>
-                <button
-                  onClick={closeFilterAndScroll}
-                  className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 text-gray-600 dark:text-gray-300"
-                >
-                  <X size={20} />
+            {/* Center Modal */}
+            <div className="relative w-full max-w-sm bg-white dark:bg-[#1c1a17] rounded-3xl shadow-2xl z-10 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-[90vh]">
+              <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-200 dark:border-white/10">
+                <button onClick={closeFilterAndScroll} className="w-9 h-9 flex items-center justify-center rounded-full border border-[#d4a97a] text-[#d4a97a]">
+                  <svg width="8" height="14" viewBox="0 0 8 14" fill="none"><path d="M7 1L1 7L7 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                </button>
+                <h3 className="text-base font-semibold text-gray-900 dark:text-white">Choose</h3>
+                <button onClick={closeFilterAndScroll} className="w-9 h-9 flex items-center justify-center rounded-full border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-300">
+                  <X size={18} />
                 </button>
               </div>
 
-              <div className="lg:p-4 overflow-y-auto flex-1">
+              <div className="overflow-y-auto flex-1 px-4 py-3">
                 <FilterSidebar
                   attributes={currentAttributes}
                   priceData={currentPriceData}
-                  selectedAttributes={selectedAttributes}
-                  onToggleAttribute={handleToggleAttribute}
-                  minPrice={minPrice}
-                  maxPrice={maxPrice}
-                  onPriceChange={handlePriceChange}
-                  stockStatus={stockStatus}
-                  onStockStatusToggle={handleStockStatusToggle}
+                  selectedAttributes={pendingAttributes}
+                  onToggleAttribute={handlePendingToggleAttribute}
+                  minPrice={pendingMinPrice}
+                  maxPrice={pendingMaxPrice}
+                  onPriceChange={(min, max) => { setPendingMinPrice(min); setPendingMaxPrice(max); }}
+                  stockStatus={pendingStockStatus}
+                  onStockStatusToggle={(s) => setPendingStockStatus(prev => prev === s ? null : s)}
                 />
+              </div>
+
+              {/* Footer */}
+              <div className="flex gap-3 px-5 py-4 border-t border-gray-100 dark:border-white/10">
+                <button onClick={handleClearPendingFilters}
+                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-full border border-gray-200 dark:border-white/10 text-sm font-semibold text-gray-700 dark:text-white">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                  CLEAR ALL
+                </button>
+                <button onClick={handleApplyFilters}
+                  className="flex-1 py-3 rounded-full bg-[#6D3F0E] text-white text-sm font-semibold">
+                  APPLY
+                </button>
               </div>
             </div>
           </div>
@@ -511,7 +591,8 @@ function CategoriesProduct({
         {/* ── Sort Modal ── */}
         {isSortOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center md:hidden">
-            <div className="fixed inset-0 bg-black/50" onClick={() => setIsSortOpen(false)} />
+            {/* Glass backdrop */}
+            <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsSortOpen(false)} />
             <div className="relative w-[90%] max-w-sm bg-white dark:bg-[#1c1a17] rounded-3xl shadow-2xl z-10 pb-6 animate-in fade-in zoom-in-95 duration-200">
               {/* Header */}
               <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100 dark:border-white/10">
