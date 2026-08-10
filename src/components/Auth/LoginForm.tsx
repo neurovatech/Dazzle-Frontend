@@ -267,7 +267,7 @@ const MobileOtpModal: React.FC<MobileOtpModalProps> = ({ onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-999999 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div className="bg-white dark:bg-[#1c1917] rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden">
         {/* Gradient bar */}
         <div className="h-1.5 w-full bg-gradient-to-r from-yellow-400 via-yellow-500 to-orange-500" />
