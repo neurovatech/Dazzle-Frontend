@@ -452,7 +452,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* ── Left: Image Gallery ── */}
           <div className="lg:col-span-5">
-            <div className="rounded-2xl shadow-sm p-3 sticky top-6 z-999 transition-colors duration-200  dark:bg-[#3e3329]">
+            <div className="rounded-2xl shadow-sm p-3 transition-colors duration-200  dark:bg-[#3e3329]">
               <ProductImageGallery
                 images={images}
                 selected={selectedColor}

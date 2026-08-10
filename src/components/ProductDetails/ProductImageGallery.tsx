@@ -83,11 +83,11 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
           className="relative rounded-2xl overflow-hidden aspect-square flex items-center justify-center cursor-zoom-in group"
           onClick={() => openLightbox(selected)}
         >
-          {badges && (
+          {/* {badges && (
             <div className="absolute top-6 z-10 left-6 flex flex-col gap-1.5 justify-start bg-[#ff7575] text-white text-[9px] sm:text-xs font-bold px-1.5 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-md">
               {badges} %
             </div>
-          )}
+          )} */}
 
           {/* Image */}
           <div className="relative w-full h-full">

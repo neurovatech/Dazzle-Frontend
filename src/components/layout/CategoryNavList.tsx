@@ -150,7 +150,7 @@ export default function CategoryNavList({ categories }: Props) {
     <>
       <nav 
         ref={navElementRef}
-        className="items-center rounded-lg flex-1 bg-background py-1.5 px-5 w-[90%] relative"
+        className="items-center rounded-lg flex-1 bg-background py-1.5 px-5 w-[90%] relative z-99999"
       >
         <div className="relative w-full flex items-center">
 
