@@ -15,6 +15,8 @@ import type { BrandItem } from "@/app/(public)/categories/[categorySlug]/page";
 import Banner from "@/components/CategoriesPages/CategoriesBanner/Banner";
 import { SlidersHorizontal, X } from "lucide-react";
 import dynamic from "next/dynamic";
+import TopSellingCom from "@/components/CategoriesPages/TopSelling/TopSellingCom";
+import RunningOfferCom from "@/components/CategoriesPages/RunningOffer/RunningOfferCom";
 
 // TrendingNowSectionCom will be passed as a prop from the Server Component
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -33,6 +35,8 @@ interface CategoriesProductProps {
   priceData?: PriceData;
   banners?: any;
   trendingNowSlot?: React.ReactNode;
+  topSellingSlot?: React.ReactNode;
+  runningOfferSlot?: React.ReactNode;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -51,6 +55,8 @@ function CategoriesProduct({
   priceData,
   banners,
   trendingNowSlot,
+  topSellingSlot,
+  runningOfferSlot,
 }: CategoriesProductProps) {
   const searchParams = useSearchParams();
 
@@ -490,27 +496,11 @@ function CategoriesProduct({
        
 
         <div className="lg:col-span-9 h-full">
-          {trendingNowSlot && (
-            <div className="bg-[#EEEEEE] dark:bg-[#2a2420] rounded-lg py-6 px-3 mb-6">
-              <div className="flex pb-4 md:px-4">
-                <h1 className="md:text-[32px] text-[18px] font-bold text-transparent bg-clip-text bg-[linear-gradient(90deg,#101518_0%,#E9CCAE_46.15%,#B57908_100%)] dark:text-white">
-                  Top Selling 
-                </h1>
-              </div>
-              {trendingNowSlot}
-            </div>
-          )}
+          {/* Top Selling — fetches showcase-items?showcaseSlug=top-selling */}
+          <TopSellingCom />
 
-          {trendingNowSlot && (
-            <div className="bg-[#6D3F0E] dark:bg-[#2a2420] rounded-lg py-6 px-3 mb-6">
-              <div className="flex pb-4 md:px-4">
-                <h1 className="text-[20px] sm:text-[24px] md:text-[32px] font-bold transition-colors bg-linear-to-r from-white to-[#CB843B] text-transparent bg-clip-text hover:brightness-110 dark:text-white">
-                  Running Offer
-                </h1>
-              </div>
-              {trendingNowSlot}
-            </div>
-          )}
+          {/* Running Offer — fetches showcase-items?showcaseSlug=running-offer */}
+          <RunningOfferCom />
 
           {/* productList area  */}
           <div ref={productListRef} className="scroll-mt-4">

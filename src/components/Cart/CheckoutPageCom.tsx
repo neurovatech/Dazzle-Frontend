@@ -25,16 +25,39 @@ interface SslPayResponse { statusCode: number; status: string; GatewayPageURL?: 
 interface BkashPayResponse { statusCode: number; status: string; bkashURL?: string; message?: string; }
 interface AddressBookItem { addressUuid: string; fullName: string; mobileNo: string; addressLabel?: string; addressLine1: string; addressLine2?: string; isDefault: boolean; isActive: boolean; districtID: number; policeStationID: number; }
 interface AddressListResponse { statusCode: number; status: string; message: string; count: number; data: AddressBookItem[]; }
-interface AreaItem { areaID: number; areaName: string; }
+interface AreaItem {
+  areaID: number;
+  areaName: string;
+  isExtremeDelivery: boolean;
+  extremeDeliveryMinMinutes?: number;
+  extremeDeliveryMaxMinutes?: number;
+  extremeDeliveryCharge: number;
+  extremeDeliveryPriority?: number;
+  isExpressDelivery: boolean;
+  expressDeliveryHours?: number;
+  expressDeliveryCharge: number;
+  expressDeliveryPriority?: number;
+  isSameDayDelivery: boolean;
+  sameDayDeliveryDays?: number;
+  sameDayDeliveryCharge: number;
+  sameDayDeliveryPriority?: number;
+  isRegularDelivery: boolean;
+  regularDeliveryMinDays?: number;
+  regularDeliveryMaxDays?: number;
+  regularDeliveryCharge: number;
+  regularDeliveryPriority?: number;
+  isFullPaymentAllowed: boolean;
+  isBookingMoneyAllowed: boolean;
+  isSSLCommerzAllowed: boolean;
+  isBkashAllowed: boolean;
+  isCashOnDeliveryAllowed: boolean;
+  codChargePercentage: number;
+  codFixedCharge: number;
+  isActive: boolean;
+}
 interface DistrictItem { distID: number; districtName: string; area: AreaItem[]; }
 interface AreaListResponse { statusCode: number; status: string; message: string; count: number; data: DistrictItem[]; }
 interface StoreItem { uuid: string; branchName: string; slug: string; address: string; }
-
-// ─── Constants ────────────────────────────────────────────────────────────────
-const DHAKA_CHITTAGONG_IDS = [1, 2]; // adjust based on actual API distIDs
-const DHAKA_CHITTAGONG_NAMES = ["dhaka", "chittagong", "চট্টগ্রাম", "ঢাকা"];
-const isDhakaChittagong = (distName: string) =>
-  DHAKA_CHITTAGONG_NAMES.some((n) => distName.toLowerCase().includes(n));
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type DeliveryType  = "home" | "pickup";
@@ -42,24 +65,28 @@ type ServiceLevel  = "regular" | "same_day" | "express" | "extreme";
 type PaymentOption = "full_online" | "booking" | "cod" | "full_at_store";
 
 // ─── Helper: radio button ──────────────────────────────────────────────────────
-function Radio({ checked, onChange, label, sub, badge }: {
-  checked: boolean; onChange: () => void; label: string; sub?: string; badge?: string;
+function Radio({ checked, onChange, label, sub, badge, disabled }: {
+  checked: boolean; onChange: () => void; label: string; sub?: string; badge?: string; disabled?: boolean;
 }) {
   return (
-    <button type="button" onClick={onChange}
+    <button type="button" onClick={disabled ? undefined : onChange} disabled={disabled}
       className={`w-full flex items-center justify-between p-4 rounded-2xl border-2 transition-all text-left ${
-        checked ? "border-[#D4A97A] bg-amber-50/10 dark:bg-amber-950/10" : "border-gray-200 dark:border-zinc-800"
+        disabled
+          ? "border-gray-100 bg-gray-50/50 opacity-50 cursor-not-allowed dark:border-zinc-900 dark:bg-zinc-900/20"
+          : checked
+          ? "border-[#D4A97A] bg-amber-50/10 dark:bg-amber-950/10 cursor-pointer"
+          : "border-gray-200 dark:border-zinc-800 cursor-pointer"
       }`}
     >
       <div>
         <div className="flex items-center gap-2">
-          <span className={`text-sm font-bold ${checked ? "text-gray-900 dark:text-white" : "text-gray-500 dark:text-gray-400"}`}>{label}</span>
+          <span className={`text-sm font-bold ${disabled ? "text-gray-400 dark:text-zinc-600" : checked ? "text-gray-900 dark:text-white" : "text-gray-500 dark:text-gray-400"}`}>{label}</span>
           {badge && <span className="text-[10px] bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200 px-2 py-0.5 rounded-full font-semibold">{badge}</span>}
         </div>
         {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
       </div>
-      <div className={`shrink-0 w-4 h-4 rounded-full border-2 flex items-center justify-center ${checked ? "border-[#D4A97A]" : "border-gray-300 dark:border-zinc-700"}`}>
-        {checked && <div className="w-2 h-2 rounded-full bg-[#D4A97A]" />}
+      <div className={`shrink-0 w-4 h-4 rounded-full border-2 flex items-center justify-center ${disabled ? "border-gray-200 dark:border-zinc-800" : checked ? "border-[#D4A97A]" : "border-gray-300 dark:border-zinc-700"}`}>
+        {checked && !disabled && <div className="w-2 h-2 rounded-full bg-[#D4A97A]" />}
       </div>
     </button>
   );
@@ -128,13 +155,23 @@ export default function CheckoutPageCom() {
     }
   }, [savedAddresses, selectedAddressUuid]);
 
+  // Auto switch to "new" address tab if there are no existing/saved addresses
+  useEffect(() => {
+    if (addressListRes && savedAddresses.length === 0) {
+      setAddressTab("new");
+    }
+  }, [addressListRes, savedAddresses]);
+
   const { data: areaListRes } = useQuery<AreaListResponse>({
     queryKey: ["areaList"],
     queryFn: () => api.get<AreaListResponse>("area-list", { headers: { "X-API-Key": apiKey || "", Authorization: authHeader } }),
   });
   const districts = areaListRes?.data || [];
+  console.log("Districts:", districts);
   const selectedDistObj = districts.find((d) => d.distID === Number(newAddr.districtId));
-  const availableAreas = selectedDistObj?.area || [];
+  const availableAreas = useMemo(() => {
+    return (selectedDistObj?.area || []).filter((a) => a.isActive);
+  }, [selectedDistObj]);
 
   const { data: storeListRes } = useQuery<{ data: StoreItem[] }>({
     queryKey: ["storeList"],
@@ -167,21 +204,28 @@ export default function CheckoutPageCom() {
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cartItems.length]);
-  // ── District check (Dhaka/Chittagong) ─────────────────────────────────────
-  const selectedDistName = useMemo(() => {
-    if (deliveryType === "pickup") return "dhaka"; // pickup = always in-city
+
+  // ── Selected Area Object ───────────────────────────────────────────────────
+  const selectedAreaObj = useMemo(() => {
+    if (deliveryType === "pickup") return undefined;
+    let targetDistrictId = 0;
+    let targetAreaId = 0;
+
     if (addressTab === "existing") {
       const addr = savedAddresses.find((a) => a.addressUuid === selectedAddressUuid);
       if (addr) {
-        const dist = districts.find((d) => d.distID === Number(addr.districtID));
-        return dist?.districtName || "";
+        targetDistrictId = Number(addr.districtID);
+        targetAreaId = Number(addr.policeStationID);
       }
-      return "";
+    } else {
+      targetDistrictId = Number(newAddr.districtId);
+      targetAreaId = Number(newAddr.areaId);
     }
-    return selectedDistObj?.districtName || "";
-  }, [deliveryType, addressTab, selectedAddressUuid, savedAddresses, districts, selectedDistObj]);
 
-  const isInCity = isDhakaChittagong(selectedDistName);
+    if (!targetDistrictId || !targetAreaId) return undefined;
+    const dist = districts.find((d) => d.distID === targetDistrictId);
+    return dist?.area.find((a) => a.areaID === targetAreaId);
+  }, [deliveryType, addressTab, selectedAddressUuid, savedAddresses, districts, newAddr.districtId, newAddr.areaId]);
 
   // ── Booking Money = sum of minBookingPrice per unique product (not × qty) ──
   const totalBookingMoney = useMemo(
@@ -190,61 +234,182 @@ export default function CheckoutPageCom() {
   );
 
   // ── Available service levels ───────────────────────────────────────────────
-  const serviceLevels: { value: ServiceLevel; label: string; sub: string; badge?: string; inCityOnly?: boolean }[] =
-    deliveryType === "pickup" ? [] : [
-      { value: "extreme",  label: "Extreme Delivery",  sub: "15 – 60 minutes",  badge: "Full Payment Only", inCityOnly: true },
-      { value: "express",  label: "Express Delivery",  sub: "4 hours",           badge: "Full Payment Only", inCityOnly: true },
-      { value: "same_day", label: "Same Day Delivery", sub: "1 day",             badge: "Full Payment Only", inCityOnly: true },
-      { value: "regular",  label: "Regular Delivery",  sub: "1 – 3 days",        inCityOnly: false },
-    ];
+  const visibleServices = useMemo(() => {
+    if (deliveryType === "pickup") return [];
+    if (!selectedAreaObj) return [];
 
-  const visibleServices = serviceLevels.filter((s) => !s.inCityOnly || isInCity);
+    const services: { value: ServiceLevel; label: string; sub: string; charge: number; badge?: string }[] = [];
 
-  // Auto-fix serviceLevel when city changes
-  useEffect(() => {
-    if (!isInCity && (serviceLevel === "extreme" || serviceLevel === "express" || serviceLevel === "same_day")) {
-      setServiceLevel("regular");
+    if (selectedAreaObj.isExtremeDelivery) {
+      const minMin = selectedAreaObj.extremeDeliveryMinMinutes || 15;
+      const maxMin = selectedAreaObj.extremeDeliveryMaxMinutes || 60;
+      services.push({
+        value: "extreme",
+        label: "Extreme Delivery",
+        sub: `${minMin} – ${maxMin} minutes`,
+        charge: Number(selectedAreaObj.extremeDeliveryCharge),
+        badge: "Full Payment Only"
+      });
     }
-  }, [isInCity, serviceLevel]);
+
+    if (selectedAreaObj.isExpressDelivery) {
+      const hours = selectedAreaObj.expressDeliveryHours || 4;
+      services.push({
+        value: "express",
+        label: "Express Delivery",
+        sub: `${hours} hours`,
+        charge: Number(selectedAreaObj.expressDeliveryCharge),
+        badge: "Full Payment Only"
+      });
+    }
+
+    if (selectedAreaObj.isSameDayDelivery) {
+      const days = selectedAreaObj.sameDayDeliveryDays || 1;
+      services.push({
+        value: "same_day",
+        label: "Same Day Delivery",
+        sub: `${days} day${days > 1 ? "s" : ""}`,
+        charge: Number(selectedAreaObj.sameDayDeliveryCharge),
+        badge: "Full Payment Only"
+      });
+    }
+
+    if (selectedAreaObj.isRegularDelivery) {
+      const minDays = selectedAreaObj.regularDeliveryMinDays || 1;
+      const maxDays = selectedAreaObj.regularDeliveryMaxDays || 3;
+      services.push({
+        value: "regular",
+        label: "Regular Delivery",
+        sub: `${minDays} – ${maxDays} days`,
+        charge: Number(selectedAreaObj.regularDeliveryCharge)
+      });
+    }
+
+    return services;
+  }, [deliveryType, selectedAreaObj]);
+
+  // Auto-fix serviceLevel when visibleServices change
+  useEffect(() => {
+    if (deliveryType === "pickup") return;
+    if (visibleServices.length > 0) {
+      const valid = visibleServices.map((s) => s.value);
+      if (!valid.includes(serviceLevel)) {
+        if (valid.includes("regular")) {
+          setServiceLevel("regular");
+        } else {
+          setServiceLevel(valid[0]);
+        }
+      }
+    }
+  }, [visibleServices, serviceLevel, deliveryType]);
 
   // ── Available payment options ──────────────────────────────────────────────
-  const isFullPaymentOnly =
-    deliveryType === "home" && (serviceLevel === "extreme" || serviceLevel === "express" || serviceLevel === "same_day");
+  const paymentOptions = useMemo(() => {
+    if (deliveryType === "pickup") {
+      return [
+        { value: "full_online" as PaymentOption, label: "Full Payment Online", sub: "SSL / bKash", disabled: false },
+        { value: "booking" as PaymentOption, label: "Booking Money", sub: `Min. Booking: ৳${totalBookingMoney.toLocaleString("en-IN")}`, disabled: totalBookingMoney === 0 },
+        { value: "full_at_store" as PaymentOption, label: "Full Payment at Store", disabled: false },
+      ];
+    }
 
-  const paymentOptions: { value: PaymentOption; label: string; sub?: string }[] =
-    deliveryType === "pickup"
-      ? [
-          { value: "full_online",    label: "Full Payment Online", sub: "SSL / bKash" },
-          { value: "booking",        label: "Booking Money", sub: `Min. Booking: ৳${totalBookingMoney.toLocaleString("en-IN")}` },
-          { value: "full_at_store",  label: "Full Payment at Store" },
-        ]
-      : isFullPaymentOnly
-      ? [
-          { value: "full_online", label: "Full Payment Online", sub: "SSL / bKash — required for this delivery" },
-        ]
-      : isInCity
-      ? [
-          { value: "full_online", label: "Full Payment Online", sub: "SSL / bKash" },
-          { value: "booking",     label: "Booking Money", sub: `Min. Booking: ৳${totalBookingMoney.toLocaleString("en-IN")}` },
-          { value: "cod",         label: "Cash on Delivery", sub: "Regular Delivery only — no extra COD charge in Dhaka/Chittagong" },
-        ]
-      : [
-          { value: "booking", label: "Booking Money", sub: `Min. Booking: ৳${totalBookingMoney.toLocaleString("en-IN")}` },
-          { value: "cod",     label: "Cash on Delivery + 1% COD Charge", sub: "1% charge on remaining amount after booking" },
-        ];
+    if (!selectedAreaObj) return [];
 
-  // Auto-fix paymentOption when options change
+    const options: { value: PaymentOption; label: string; sub?: string; disabled: boolean }[] = [];
+
+    const isFullPaymentOnly = serviceLevel === "extreme" || serviceLevel === "express" || serviceLevel === "same_day";
+
+    // Full Payment Online
+    const sslAllowed = selectedAreaObj.isSSLCommerzAllowed;
+    const bkashAllowed = selectedAreaObj.isBkashAllowed;
+    if (selectedAreaObj.isFullPaymentAllowed && (sslAllowed || bkashAllowed)) {
+      options.push({
+        value: "full_online",
+        label: "Full Payment Online",
+        sub: isFullPaymentOnly
+          ? `SSL / bKash — required for ${serviceLevel} delivery`
+          : "SSL / bKash",
+        disabled: false
+      });
+    }
+
+    // Booking Money
+    if (!isFullPaymentOnly && selectedAreaObj.isBookingMoneyAllowed) {
+      options.push({
+        value: "booking",
+        label: "Booking Money",
+        sub: `Min. Booking: ৳${totalBookingMoney.toLocaleString("en-IN")}`,
+        disabled: totalBookingMoney === 0
+      });
+    }
+
+    // Cash on Delivery
+    if (!isFullPaymentOnly && selectedAreaObj.isCashOnDeliveryAllowed) {
+      const chargeParts: string[] = [];
+      if (selectedAreaObj.codChargePercentage > 0) {
+        chargeParts.push(`${selectedAreaObj.codChargePercentage}%`);
+      }
+      if (selectedAreaObj.codFixedCharge > 0) {
+        chargeParts.push(`৳${selectedAreaObj.codFixedCharge}`);
+      }
+      const chargeText = chargeParts.length > 0
+        ? ` (${chargeParts.join(" + ")} COD charge)`
+        : "";
+      options.push({
+        value: "cod",
+        label: "Cash on Delivery",
+        sub: `Pay at your doorstep${chargeText}`,
+        disabled: false
+      });
+    }
+
+    return options;
+  }, [deliveryType, selectedAreaObj, serviceLevel, totalBookingMoney]);
+
+  // Auto-fix paymentOption when options change (exclude disabled options from active default selections)
   useEffect(() => {
-    const valid = paymentOptions.map((p) => p.value);
-    if (!valid.includes(paymentOption)) setPaymentOption(valid[0]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deliveryType, serviceLevel, isInCity]);
+    const validNonDisabled = paymentOptions.filter((p) => !p.disabled).map((p) => p.value);
+    if (validNonDisabled.length > 0 && !validNonDisabled.includes(paymentOption)) {
+      setPaymentOption(validNonDisabled[0]);
+    }
+  }, [paymentOptions, paymentOption]);
+
+  // When switching to pickup → always default to full_online
+  useEffect(() => {
+    if (deliveryType === "pickup") {
+      setPaymentOption("full_online");
+    }
+  }, [deliveryType]);
+
+  // Auto-fix paymentGateway based on allowed gateways in selected area
+  useEffect(() => {
+    if (deliveryType === "pickup") return;
+    if (!selectedAreaObj) return;
+
+    const sslAllowed = selectedAreaObj.isSSLCommerzAllowed;
+    const bkashAllowed = selectedAreaObj.isBkashAllowed;
+
+    if (sslAllowed && !bkashAllowed) {
+      setPaymentGateway("ssl");
+    } else if (bkashAllowed && !sslAllowed) {
+      setPaymentGateway("bkash");
+    }
+  }, [selectedAreaObj, deliveryType]);
 
   // ── Price Calculations ─────────────────────────────────────────────────────
   const subtotal    = cartItems.reduce((s, i) => s + i.price * i.quantity, 0);
-  const deliveryFee = deliveryType === "pickup" ? 0 : serviceLevel === "regular" ? 60 : serviceLevel === "same_day" ? 100 : serviceLevel === "express" ? 150 : 200;
+  const deliveryFee = useMemo(() => {
+    if (deliveryType === "pickup") return 0;
+    const currentService = visibleServices.find((s) => s.value === serviceLevel);
+    return currentService ? currentService.charge : 0;
+  }, [deliveryType, visibleServices, serviceLevel]);
   const remainingAfterBooking = Math.max(0, subtotal - totalBookingMoney);
-  const codCharge   = paymentOption === "cod" && !isInCity ? Math.round(remainingAfterBooking * 0.01) : 0;
+  const codCharge = useMemo(() => {
+    if (paymentOption !== "cod" || !selectedAreaObj) return 0;
+    const percentageCharge = (remainingAfterBooking * (selectedAreaObj.codChargePercentage || 0)) / 100;
+    const fixedCharge = selectedAreaObj.codFixedCharge || 0;
+    return Math.round(percentageCharge + fixedCharge);
+  }, [paymentOption, selectedAreaObj, remainingAfterBooking]);
   const amountDue   =
     paymentOption === "full_online"   ? subtotal + deliveryFee
     : paymentOption === "booking"     ? totalBookingMoney
@@ -283,6 +448,14 @@ export default function CheckoutPageCom() {
         userFullName = newAddr.fullName.trim(); email = newAddr.email.trim() || user?.email || "";
         mobile = newAddr.mobile.trim(); addressLabel = newAddr.addressLabel;
         districtId = Number(newAddr.districtId); areaId = Number(newAddr.areaId);
+      }
+
+      // Check if selected area is active
+      const matchedDist = districts.find((d) => d.distID === districtId);
+      const matchedArea = matchedDist?.area.find((a) => a.areaID === areaId);
+      if (!matchedArea || !matchedArea.isActive) {
+        toast.error("The selected delivery area is currently inactive. Please choose or add a different address.");
+        return;
       }
     }
 
@@ -392,18 +565,39 @@ export default function CheckoutPageCom() {
 
                 {addressTab === "existing" ? (
                   <div className="space-y-3">
-                    {savedAddresses.map((addr) => (
-                      <div key={addr.addressUuid} onClick={() => setSelectedAddressUuid(addr.addressUuid)}
-                        className={`border rounded-2xl p-4 cursor-pointer transition relative ${selectedAddressUuid === addr.addressUuid ? "border-[#D4A97A] bg-amber-50/20 dark:bg-zinc-800" : "border-gray-100 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-900/40 hover:border-amber-200"}`}>
-                        <div className="flex items-center gap-2 text-xs font-bold text-gray-800 dark:text-white">
-                          <MapPin size={14} className="text-[#D4A97A]" />
-                          <span>{addr.fullName} ({addr.mobileNo})</span>
-                          {addr.addressLabel && <span className="bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 text-[10px] px-2 py-0.5 rounded-full">{addr.addressLabel}</span>}
+                    {savedAddresses.map((addr) => {
+                      const dist = districts.find((d) => d.distID === Number(addr.districtID));
+                      const areaObj = dist?.area.find((a) => a.areaID === Number(addr.policeStationID));
+                      const isAreaActive = areaObj ? areaObj.isActive : true;
+
+                      return (
+                        <div key={addr.addressUuid}
+                          onClick={() => {
+                            if (!isAreaActive) {
+                              toast.error("This address belongs to an inactive delivery area.");
+                              return;
+                            }
+                            setSelectedAddressUuid(addr.addressUuid);
+                          }}
+                          className={`border rounded-2xl p-4 cursor-pointer transition relative ${
+                            !isAreaActive
+                              ? "border-red-200 bg-red-50/10 opacity-60 cursor-not-allowed"
+                              : selectedAddressUuid === addr.addressUuid
+                              ? "border-[#D4A97A] bg-amber-50/20 dark:bg-zinc-800"
+                              : "border-gray-100 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-900/40 hover:border-amber-200"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 text-xs font-bold text-gray-800 dark:text-white">
+                            <MapPin size={14} className="text-[#D4A97A]" />
+                            <span>{addr.fullName} ({addr.mobileNo})</span>
+                            {addr.addressLabel && <span className="bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 text-[10px] px-2 py-0.5 rounded-full">{addr.addressLabel}</span>}
+                            {!isAreaActive && <span className="bg-red-100 text-red-800 text-[10px] px-2 py-0.5 rounded-full font-bold ml-auto">Service Inactive</span>}
+                          </div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{addr.addressLine1}{addr.addressLine2 ? `, ${addr.addressLine2}` : ""}</p>
+                          {isAreaActive && selectedAddressUuid === addr.addressUuid && <div className="absolute top-4 right-4 bg-[#D4A97A] text-white rounded-full p-1"><Check size={12} /></div>}
                         </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{addr.addressLine1}{addr.addressLine2 ? `, ${addr.addressLine2}` : ""}</p>
-                        {selectedAddressUuid === addr.addressUuid && <div className="absolute top-4 right-4 bg-[#D4A97A] text-white rounded-full p-1"><Check size={12} /></div>}
-                      </div>
-                    ))}
+                      );
+                    })}
                     {savedAddresses.length === 0 && <p className="text-xs text-gray-400 border border-dashed rounded-xl p-4 text-center">No saved addresses. Use New Address tab.</p>}
                   </div>
                 ) : (
@@ -464,9 +658,14 @@ export default function CheckoutPageCom() {
               {deliveryType === "home" && (
                 <div className="space-y-3">
                   <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2"><Truck size={16} /> Delivery Service</p>
-                  {!isInCity && selectedDistName && (
+                  {!selectedAreaObj && (
                     <div className="text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 rounded-xl px-3 py-2">
-                      ⚠️ Outside Dhaka/Chittagong: Only Regular Delivery available. COD charge 1% on remaining amount after booking.
+                      ⚠️ Please select or add a delivery address to view available delivery services.
+                    </div>
+                  )}
+                  {selectedAreaObj && visibleServices.length === 0 && (
+                    <div className="text-xs text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/40 rounded-xl px-3 py-2">
+                      ⚠️ Delivery service is currently not available for this area.
                     </div>
                   )}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -482,7 +681,7 @@ export default function CheckoutPageCom() {
                 <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2"><CreditCard size={16} /> Payment Method</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {paymentOptions.map((opt) => (
-                    <Radio key={opt.value} checked={paymentOption === opt.value} onChange={() => setPaymentOption(opt.value)} label={opt.label} sub={opt.sub} />
+                    <Radio key={opt.value} checked={paymentOption === opt.value} onChange={() => setPaymentOption(opt.value)} label={opt.label} sub={opt.sub} disabled={opt.disabled} />
                   ))}
                 </div>
 
@@ -494,30 +693,36 @@ export default function CheckoutPageCom() {
                   </div>
                 )}
 
-                {/* COD outside city info */}
-                {paymentOption === "cod" && !isInCity && codCharge > 0 && (
+                {/* COD charge info */}
+                {paymentOption === "cod" && selectedAreaObj && codCharge > 0 && (
                   <div className="text-xs bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 rounded-xl px-3 py-2 text-amber-700 dark:text-amber-400">
-                    💰 COD Charge (1%): <strong>৳{codCharge.toLocaleString("en-IN")}</strong> (on ৳{remainingAfterBooking.toLocaleString("en-IN")} remaining after booking ৳{totalBookingMoney.toLocaleString("en-IN")})
+                    💰 COD Charge: <strong>৳{codCharge.toLocaleString("en-IN")}</strong>
+                    {selectedAreaObj.codChargePercentage > 0 && ` (${selectedAreaObj.codChargePercentage}% on remaining ৳${remainingAfterBooking.toLocaleString("en-IN")})`}
+                    {selectedAreaObj.codFixedCharge > 0 && ` (Fixed charge: ৳${selectedAreaObj.codFixedCharge})`}
                   </div>
                 )}
 
                 {/* Gateway selector (online / booking) */}
                 {(paymentOption === "full_online" || paymentOption === "booking") && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                    <button type="button" onClick={() => setPaymentGateway("bkash")}
-                      className={`flex items-center justify-between p-4 rounded-2xl border-2 h-16 transition-all cursor-pointer ${paymentGateway === "bkash" ? "border-[#e2136e] bg-pink-50/20" : "border-gray-200 dark:border-zinc-800"}`}>
-                      <Image src={Bikask} alt="bKash" className="w-32" />
-                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${paymentGateway === "bkash" ? "border-[#e2136e]" : "border-gray-300"}`}>
-                        {paymentGateway === "bkash" && <div className="w-2 h-2 rounded-full bg-[#e2136e]" />}
-                      </div>
-                    </button>
-                    <button type="button" onClick={() => setPaymentGateway("ssl")}
-                      className={`flex items-center justify-between p-4 rounded-2xl border-2 h-16 transition-all cursor-pointer ${paymentGateway === "ssl" ? "border-[#D4A97A] bg-amber-50/20" : "border-gray-200 dark:border-zinc-800"}`}>
-                      <Image src={SSl} alt="SSLCommerz" className="w-32" />
-                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${paymentGateway === "ssl" ? "border-[#D4A97A]" : "border-gray-300"}`}>
-                        {paymentGateway === "ssl" && <div className="w-2 h-2 rounded-full bg-[#D4A97A]" />}
-                      </div>
-                    </button>
+                    {(deliveryType === "pickup" || !selectedAreaObj || selectedAreaObj.isBkashAllowed) && (
+                      <button type="button" onClick={() => setPaymentGateway("bkash")}
+                        className={`flex items-center justify-between p-4 rounded-2xl border-2 h-16 transition-all cursor-pointer ${paymentGateway === "bkash" ? "border-[#e2136e] bg-pink-50/20" : "border-gray-200 dark:border-zinc-800"}`}>
+                        <Image src={Bikask} alt="bKash" className="w-32" />
+                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${paymentGateway === "bkash" ? "border-[#e2136e]" : "border-gray-300"}`}>
+                          {paymentGateway === "bkash" && <div className="w-2 h-2 rounded-full bg-[#e2136e]" />}
+                        </div>
+                      </button>
+                    )}
+                    {(deliveryType === "pickup" || !selectedAreaObj || selectedAreaObj.isSSLCommerzAllowed) && (
+                      <button type="button" onClick={() => setPaymentGateway("ssl")}
+                        className={`flex items-center justify-between p-4 rounded-2xl border-2 h-16 transition-all cursor-pointer ${paymentGateway === "ssl" ? "border-[#D4A97A] bg-amber-50/20" : "border-gray-200 dark:border-zinc-800"}`}>
+                        <Image src={SSl} alt="SSLCommerz" className="w-32" />
+                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${paymentGateway === "ssl" ? "border-[#D4A97A]" : "border-gray-300"}`}>
+                          {paymentGateway === "ssl" && <div className="w-2 h-2 rounded-full bg-[#D4A97A]" />}
+                        </div>
+                      </button>
+                    )}
                   </div>
                 )}
 
@@ -539,7 +744,7 @@ export default function CheckoutPageCom() {
           </div>
 
           {/* ── Right: Order Summary ── */}
-          <div className="lg:col-span-5 xl:col-span-4">
+          <div className="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-6 lg:self-start">
             <div className="bg-white dark:bg-[#1C1A17] rounded-3xl border border-gray-100 dark:border-zinc-800 p-6 sm:p-8 shadow-sm space-y-6">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full border-2 border-[#D4A97A] flex items-center justify-center text-[#D4A97A] font-bold text-sm shrink-0">4</div>

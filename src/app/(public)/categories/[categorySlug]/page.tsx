@@ -206,7 +206,8 @@ export default async function CategoriesPage({
           brands={brands}
           attributes={attributes}
           priceData={priceData}
-          trendingNowSlot={<ProductListSectionCom />}
+          topSellingSlot={<ProductListSectionCom showcaseSlug="top-selling" />}
+          runningOfferSlot={<ProductListSectionCom showcaseSlug="running-offer" />}
         />
       </div>
     </div>

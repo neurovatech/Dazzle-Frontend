@@ -44,12 +44,16 @@ export interface ProductCardItem {
   image: string;
 }
 
-export default async function ProductListSectionCom() {
+export default async function ProductListSectionCom({
+  showcaseSlug = "trending-now",
+}: {
+  showcaseSlug?: string;
+}) {
   let products: ProductCardItem[] = [];
 
   try {
     const res = await api.get<ShowcaseItemsResponse>(
-      "/showcase-items?showcaseSlug=trending-now",
+      `/showcase-items?showcaseSlug=${showcaseSlug}`,
       { cache: "no-store" }
     );
 
@@ -63,7 +67,7 @@ export default async function ProductListSectionCom() {
       originalPrice: item.regularPrice,
       discount: Math.round(item.disRate),
       badge: item.productBadge,
-      isBestDeal: item.disRate > 15, // adjust threshold as needed, API has no direct flag
+      isBestDeal: item.disRate > 15,
       inStock: !item.isTba,
       image: item.thumbnails?.mediaFileUrl ?? "/images/product.png",
     }));
