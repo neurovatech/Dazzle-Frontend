@@ -106,6 +106,7 @@ const MobileOtpModal: React.FC<MobileOtpModalProps> = ({ onClose }) => {
   const [canResend, setCanResend] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [mobileApiError, setMobileApiError] = useState("");
+const modalRef = useRef<HTMLDivElement>(null);
 
   // Mobile form
   const {
@@ -140,6 +141,16 @@ const MobileOtpModal: React.FC<MobileOtpModalProps> = ({ onClose }) => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, []);
+
+  useEffect(() => {
+  const handleClickOutside = (event: MouseEvent) => {
+    if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+      onClose();
+    }
+  };
+  document.addEventListener("mousedown", handleClickOutside);
+  return () => document.removeEventListener("mousedown", handleClickOutside);
+}, [onClose]);
 
   const formatTimer = (s: number) =>
     `${Math.floor(s / 60)
@@ -268,7 +279,7 @@ const MobileOtpModal: React.FC<MobileOtpModalProps> = ({ onClose }) => {
 
   return (
     <div className="fixed inset-0 z-999999 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-white dark:bg-[#1c1917] rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden">
+      <div ref={modalRef} className="bg-white dark:bg-[#1c1917] rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden">
         {/* Gradient bar */}
         <div className="h-1.5 w-full bg-gradient-to-r from-yellow-400 via-yellow-500 to-orange-500" />
 
