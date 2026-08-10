@@ -228,7 +228,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
           href={`/product/${slug || title?.toLowerCase().replace(/\s+/g, "-")}`}
           className="block px-2 pt-2"
         >
-          <div className="relative flex justify-center items-center h-40 sm:h-40 md:h-44 lg:h-48 transition-all duration-500">
+          <div className="relative flex justify-center items-center h-40 sm:h-40 md:h-44 lg:h-52 transition-all duration-500">
             <div className="relative z-10 w-full h-full transition-transform duration-500 group-hover:scale-105">
               <Image
                 src={imgSrc}
