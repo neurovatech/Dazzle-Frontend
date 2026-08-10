@@ -2,6 +2,7 @@ import NewArrivals from "./NewArrivals";
 import { api } from "@/lib/api";
 import NoImg from "@/images/no_images.png";
 import GlobalTabs from "@/components/share/GlobalTabs";
+
 interface ShowcaseThumbnail {
   fileUuid: string;
   mediaFileUrl: string;
@@ -45,47 +46,53 @@ export interface ProductCardItem {
   image: string;
 }
 
-export default async function NewArrivalsSectionCom() {
-  let products: ProductCardItem[] = [];
+function mapToProductCard(list: ShowcaseItem[]): ProductCardItem[] {
+  return list.map((item) => ({
+    uuid: item.productUuid,
+    title: item.productName,
+    slug: item.productSlug,
+    price: item.discountedPrice,
+    originalPrice: item.regularPrice,
+    discount: Math.round(item.disRate),
+    badge: item.productBadge,
+    isBestDeal: item.disRate > 15,
+    inStock: !item.isTba,
+    image: item.thumbnails?.mediaFileUrl ?? NoImg,
+  }));
+}
 
+async function fetchShowcase(endpoint: string): Promise<ProductCardItem[]> {
   try {
-    const res = await api.get<ShowcaseItemsResponse>(
-      "/products?latest=1",
-      { cache: "no-store" }
-    );
-
+    const res = await api.get<ShowcaseItemsResponse>(endpoint, {
+      cache: "no-store",
+    });
     const list = Array.isArray(res?.data) ? res.data : [];
-
-    products = list.map((item) => ({
-      uuid: item.productUuid,
-      title: item.productName,
-      slug: item.productSlug,
-      price: item.discountedPrice,
-      originalPrice: item.regularPrice,
-      discount: Math.round(item.disRate),
-      badge: item.productBadge,
-      isBestDeal: item.disRate > 15,
-      inStock: !item.isTba,
-      image: item.thumbnails?.mediaFileUrl ?? NoImg,
-    }));
+    return mapToProductCard(list);
   } catch (error) {
-    console.error("Error fetching hot deal products SSR:", error);
+    console.error(`Error fetching from ${endpoint}:`, error);
+    return [];
   }
+}
+
+export default async function NewArrivalsSectionCom() {
+  const [newestProducts, popularProducts] = await Promise.all([
+    fetchShowcase("/products?latest=1"),
+    fetchShowcase("/products?new-arrivals-popular=1"),
+  ]);
 
   const tabsData = [
     {
       label: "Newest",
-      content: <NewArrivals products={products} />,
+      content: <NewArrivals products={newestProducts} />,
     },
     {
       label: "Popular",
-      content: <NewArrivals products={products} />,
+      content: <NewArrivals products={popularProducts} />,
     },
   ];
 
   return (
     <div className="">
-      {/* <NewArrivals products={products} /> */}
       <GlobalTabs tabs={tabsData} />
     </div>
   );

@@ -1,4 +1,4 @@
-import NewArrivals from "./FlashSale";
+import FlashSale from "./FlashSale";
 import { api } from "@/lib/api";
 import GlobalTabs from "@/components/share/GlobalTabs";
 
@@ -45,41 +45,48 @@ export interface ProductCardItem {
   image: string;
 }
 
-export default async function FlashSaleSectionCom() {
-  let products: ProductCardItem[] = [];
+function mapToProductCard(list: ShowcaseItem[]): ProductCardItem[] {
+  return list.map((item) => ({
+    uuid: item.productUuid,
+    title: item.productName,
+    slug: item.productSlug,
+    price: item.discountedPrice,
+    originalPrice: item.regularPrice,
+    discount: Math.round(item.disRate),
+    badge: item.productBadge,
+    isBestDeal: item.disRate > 15,
+    inStock: !item.isTba,
+    image: item.thumbnails?.mediaFileUrl ?? "/images/product.png",
+  }));
+}
 
+async function fetchShowcase(endpoint: string): Promise<ProductCardItem[]> {
   try {
-    const res = await api.get<ShowcaseItemsResponse>(
-      "/showcase-items?showcaseSlug=flash-sale",
-      { cache: "no-store" }
-    );
-
+    const res = await api.get<ShowcaseItemsResponse>(endpoint, {
+      cache: "no-store",
+    });
     const list = Array.isArray(res?.data) ? res.data : [];
-
-    products = list.map((item) => ({
-      uuid: item.productUuid,
-      title: item.productName,
-      slug: item.productSlug,
-      price: item.discountedPrice,
-      originalPrice: item.regularPrice,
-      discount: Math.round(item.disRate),
-      badge: item.productBadge,
-      isBestDeal: item.disRate > 15, // adjust threshold as needed, API has no direct flag
-      inStock: !item.isTba,
-      image: item.thumbnails?.mediaFileUrl ?? "/images/product.png",
-    }));
+    return mapToProductCard(list);
   } catch (error) {
-    console.error("Error fetching hot deal products SSR:", error);
+    console.error(`Error fetching from ${endpoint}:`, error);
+    return [];
   }
+}
+
+export default async function FlashSaleSectionCom() {
+  const [newestProducts, popularProducts] = await Promise.all([
+    fetchShowcase("/showcase-items?showcaseSlug=flash-sale-newest"),
+    fetchShowcase("/showcase-items?showcaseSlug=flash-sale-popular"),
+  ]);
 
   const tabsData = [
     {
       label: "Newest",
-      content: <NewArrivals products={products} />,
+      content: <FlashSale products={newestProducts} />,
     },
     {
       label: "Popular",
-      content: <NewArrivals products={products} />,
+      content: <FlashSale products={popularProducts} />,
     },
   ];
 
@@ -89,8 +96,3 @@ export default async function FlashSaleSectionCom() {
     </div>
   );
 }
-
-
-
-
-

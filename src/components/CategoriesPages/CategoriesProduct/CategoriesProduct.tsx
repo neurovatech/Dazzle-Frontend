@@ -90,12 +90,10 @@ function CategoriesProduct({
   const [pendingSort, setPendingSort] = useState<string>(currentSort ?? "recommend");
   const [activeSort, setActiveSort] = useState<string>(currentSort ?? "recommend");
 
-  // ── Pending filter states (mobile modal এর জন্য) ────────────────────────────
   const [pendingAttributes, setPendingAttributes] = useState<string[]>(initialAttributes);
   const [pendingMinPrice, setPendingMinPrice] = useState<number | undefined>(initialMinPrice);
   const [pendingMaxPrice, setPendingMaxPrice] = useState<number | undefined>(initialMaxPrice);
   const [pendingStockStatus, setPendingStockStatus] = useState<string | null>(initialStockStatus);
-  // এই counter increment হলে AllProducts নতুন API call করবে
   const [filterApplyKey, setFilterApplyKey] = useState(0);
 
   const productListRef = useRef<HTMLDivElement>(null);
@@ -107,7 +105,6 @@ function CategoriesProduct({
     }, 100);
   };
 
-  // Filter modal খুললে current state থেকে pending sync করাহো
   const openFilterModal = () => {
     setPendingAttributes(selectedAttributes);
     setPendingMinPrice(minPrice);
@@ -116,14 +113,13 @@ function CategoriesProduct({
     setIsFilterOpen(true);
   };
 
-  // Apply button ক্লিক করলে pending থ৅কে real state এ commit + API call
   const handleApplyFilters = () => {
     setSelectedAttributes(pendingAttributes);
     setMinPrice(pendingMinPrice);
     setMaxPrice(pendingMaxPrice);
     setStockStatus(pendingStockStatus);
     setActivePage(1);
-    setFilterApplyKey(prev => prev + 1); // এইটা AllProducts কে re-fetch দিয়ে trigger করবে
+    setFilterApplyKey(prev => prev + 1); 
 
     // URL update
     const params = new URLSearchParams(window.location.search);
@@ -361,7 +357,7 @@ function CategoriesProduct({
 
   const handleApplySort = (sort: string) => {
     setPendingSort(sort);
-    setActiveSort(sort); // ← এটা যোগ করা হয়েছে: AllProducts সঠিক sort দিয়ে API call করবে
+    setActiveSort(sort); 
     setActivePage(1);
     setIsSortOpen(false);
 
