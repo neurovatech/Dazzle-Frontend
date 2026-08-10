@@ -29,10 +29,10 @@ async function BrandPage() {
   try {
     const res = await api.get<{ data: Record<string, unknown>[] }>(
       "/brands?order=1&page=1&limit=1000",
-      { cache: "no-store" }
+      { cache: "no-store" },
     );
 
-    const list = Array.isArray(res) ? res : res?.data ?? [];
+    const list = Array.isArray(res) ? res : (res?.data ?? []);
     brands = list
       .filter((b) => b.is_active === true)
       .map((b) => ({
@@ -51,12 +51,13 @@ async function BrandPage() {
     }
   }
 
-
   return (
-    <div className="flex flex-col flex-1 max-w-355 mx-auto">
-      <div className="md:px-12.5 px-4">
-        <Breadcrumb items={breadcrumbItems} />
-        <BrandCard brands={brands} />
+    <div className=" bg-[#fffbf6] dark:bg-[#2e2b28]">
+      <div className="flex flex-col flex-1 max-w-355 mx-auto">
+        <div className="md:px-12.5 px-4">
+          <Breadcrumb items={breadcrumbItems} />
+          <BrandCard brands={brands} />
+        </div>
       </div>
     </div>
   );

@@ -80,7 +80,9 @@ function toTitleCase(slug: string): string {
 
 // ─── SEO ──────────────────────────────────────────────────────────────────────
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const brandName = toTitleCase(slug);
   return {
@@ -100,8 +102,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 // Filter/page changes are handled fully client-side via React Query (no SSR re-render).
 
 export default async function BrandDetailsPage({ params }: PageProps) {
-  const { slug }    = await params;
-  const brandName   = toTitleCase(slug);
+  const { slug } = await params;
+  const brandName = toTitleCase(slug);
 
   // SSR fetch: categories (5 min cache) + page-1 all products (1 min cache) + brand attributes (5 min cache)
   // These give Google bots full content on first render → SEO intact
@@ -112,10 +114,10 @@ export default async function BrandDetailsPage({ params }: PageProps) {
     api.get<ProductListResponse>(
       `/products?${new URLSearchParams({
         brandSlug: slug,
-        page:      "1",
-        limit:     String(LIMIT),
+        page: "1",
+        limit: String(LIMIT),
       }).toString()}`,
-      { next: { revalidate: 60 } } // 1 min
+      { next: { revalidate: 60 } }, // 1 min
     ),
     api.get<BrandAttributesResponse>(`/products/attributes?brandSlug=${slug}`, {
       next: { revalidate: 300 }, // 5 min
@@ -130,8 +132,17 @@ export default async function BrandDetailsPage({ params }: PageProps) {
   const initialProductData: ProductListResponse =
     prodResult.status === "fulfilled" && prodResult.value?.data
       ? prodResult.value
-      : { statusCode: 200, status: "success", found: false, count: 0,
-          totalCount: 0, page: 1, limit: LIMIT, totalPages: 1, data: [] };
+      : {
+          statusCode: 200,
+          status: "success",
+          found: false,
+          count: 0,
+          totalCount: 0,
+          page: 1,
+          limit: LIMIT,
+          totalPages: 1,
+          data: [],
+        };
 
   const attributes: AttributeGroup[] =
     attrResult.status === "fulfilled" && Array.isArray(attrResult.value?.data)
@@ -142,29 +153,31 @@ export default async function BrandDetailsPage({ params }: PageProps) {
     attrResult.status === "fulfilled" ? attrResult.value?.priceData : undefined;
 
   const breadcrumbItems = [
-    { label: "Home",    href: "/" },
-    { label: "Brands",  href: "/brands" },
+    { label: "Home", href: "/" },
+    { label: "Brands", href: "/brands" },
     { label: brandName, href: `/brands/${slug}` },
   ];
 
   return (
-    <div className="flex flex-col flex-1 max-w-355 mx-auto">
-      <div className="md:px-12.5 px-4">
-        <Breadcrumb items={breadcrumbItems} />
-      </div>
+    <div className=" bg-[#fffbf6] dark:bg-[#2e2b28]">
+      <div className="flex flex-col flex-1 max-w-355 mx-auto">
+        <div className="md:px-12.5 px-4">
+          <Breadcrumb items={breadcrumbItems} />
+        </div>
 
-      {/* BrandProducts renders category buttons + FilterSidebar + Suspense-wrapped product list */}
-      <Suspense>
-        <BrandProducts
-          brandSlug={slug}
-          categories={categories}
-          attributes={attributes}
-          priceData={priceData}
-          initialProducts={initialProductData.data}
-          initialTotalCount={initialProductData.totalCount}
-          initialTotalPages={initialProductData.totalPages}
-        />
-      </Suspense>
+        {/* BrandProducts renders category buttons + FilterSidebar + Suspense-wrapped product list */}
+        <Suspense>
+          <BrandProducts
+            brandSlug={slug}
+            categories={categories}
+            attributes={attributes}
+            priceData={priceData}
+            initialProducts={initialProductData.data}
+            initialTotalCount={initialProductData.totalCount}
+            initialTotalPages={initialProductData.totalPages}
+          />
+        </Suspense>
+      </div>
     </div>
   );
 }

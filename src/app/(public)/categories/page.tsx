@@ -45,10 +45,10 @@ async function Categories({ searchParams }: CategoriesPageProps) {
   try {
     const res = await api.get<CategoriesApiResponse>(
       `/categories?page=${currentPage}&limit=${limit}`,
-      { cache: "no-store" }
+      { cache: "no-store" },
     );
 
-    const list = Array.isArray(res) ? res : res?.data ?? [];
+    const list = Array.isArray(res) ? res : (res?.data ?? []);
 
     categories = list.map((c) => ({
       uuid: String(c.uuid ?? ""),
@@ -60,7 +60,7 @@ async function Categories({ searchParams }: CategoriesPageProps) {
     }));
 
     totalPages = Number(
-      Array.isArray(res) ? 1 : (res as any)?.totalPages ?? 1
+      Array.isArray(res) ? 1 : ((res as any)?.totalPages ?? 1),
     );
   } catch (error) {
     console.error("Error fetching categories:", error);
@@ -72,16 +72,18 @@ async function Categories({ searchParams }: CategoriesPageProps) {
   ];
 
   return (
-    <div className="flex flex-col flex-1 max-w-355 mx-auto">
-      <div className="md:px-12.5 px-4">
-        <Breadcrumb items={breadcrumbItems} />
+    <div className=" bg-[#fffbf6] dark:bg-[#2e2b28]">
+      <div className="flex flex-col flex-1 max-w-355 mx-auto ">
+        <div className="md:px-12.5 px-4">
+          <Breadcrumb items={breadcrumbItems} />
+        </div>
+        <CategoriesCard
+          seeAllBtn={false}
+          categories={categories}
+          totalPages={totalPages}
+          currentPage={currentPage}
+        />
       </div>
-      <CategoriesCard
-        seeAllBtn={false}
-        categories={categories}
-        totalPages={totalPages}
-        currentPage={currentPage}
-      />
     </div>
   );
 }

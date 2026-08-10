@@ -107,7 +107,7 @@ const PreOrderPage: React.FC = () => {
   const errCls = "text-xs text-red-500 mt-1 pl-1";
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[#0F0F0F] px-4 py-10 transition-colors duration-300">
+    <div className="min-h-screen flex items-center justify-center bg-[#fffbf6]  dark:bg-[#2e2b28] px-4 py-10 transition-colors duration-300">
       <div className="w-full max-w-125">
         {/* Header */}
         <div className="text-center mb-8">

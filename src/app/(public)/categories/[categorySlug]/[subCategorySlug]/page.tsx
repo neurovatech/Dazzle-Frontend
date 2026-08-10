@@ -13,7 +13,6 @@ interface PageProps {
   searchParams: Promise<{ page?: string; sort?: string; search?: string }>;
 }
 
-
 interface WebBannerItem {
   bannerUUID: string;
   imageURL: string;
@@ -71,15 +70,17 @@ export async function generateMetadata({
 
 export const dynamic = "force-dynamic";
 
-export default async function SubCategoriesPage({ params, searchParams }: PageProps) {
+export default async function SubCategoriesPage({
+  params,
+  searchParams,
+}: PageProps) {
   const { categorySlug, subCategorySlug } = await params;
   const { page, sort, search } = await searchParams;
   const currentPage = Math.max(1, Number(page ?? 1));
   const categoryName = toTitleCase(categorySlug);
   const subCategoryName = toTitleCase(subCategorySlug);
 
-   let banners: WebBannerItem[] = [];
-
+  let banners: WebBannerItem[] = [];
 
   // ── Fetch products: products?page=1&limit=12&categorySlug=phones&subCategorySlug=iphone ──
   let productData: any = {
@@ -104,10 +105,9 @@ export default async function SubCategoriesPage({ params, searchParams }: PagePr
     if (sort) queryParams.set("sort", sort);
     if (search) queryParams.set("search", search);
 
-    const res = await api.get<any>(
-      `/products?${queryParams.toString()}`,
-      { cache: "no-store" }
-    );
+    const res = await api.get<any>(`/products?${queryParams.toString()}`, {
+      cache: "no-store",
+    });
     if (res && typeof res === "object" && "data" in res) {
       productData = res;
     }
@@ -118,7 +118,7 @@ export default async function SubCategoriesPage({ params, searchParams }: PagePr
   try {
     const res = await api.get<WebBannerResponse>(
       "/web-banner/product-categores-page",
-      { cache: "no-store" }
+      { cache: "no-store" },
     );
     if (res && typeof res === "object" && "data" in res) {
       banners = res.data;
@@ -136,13 +136,19 @@ export default async function SubCategoriesPage({ params, searchParams }: PagePr
   try {
     const brandsRes = await api.get<any>(
       `/subcategory/${subCategorySlug}/brands`,
-      { cache: "no-store" }
+      { cache: "no-store" },
     );
     let rawChild: any[] = [];
     if (brandsRes?.data) {
-      if (Array.isArray(brandsRes.data.subCategory) && brandsRes.data.subCategory.length > 0) {
+      if (
+        Array.isArray(brandsRes.data.subCategory) &&
+        brandsRes.data.subCategory.length > 0
+      ) {
         rawChild = brandsRes.data.subCategory[0].child || [];
-      } else if (Array.isArray(brandsRes.data.category) && brandsRes.data.category.length > 0) {
+      } else if (
+        Array.isArray(brandsRes.data.category) &&
+        brandsRes.data.category.length > 0
+      ) {
         rawChild = brandsRes.data.category[0].child || [];
       } else if (Array.isArray(brandsRes.data.child)) {
         rawChild = brandsRes.data.child;
@@ -173,7 +179,7 @@ export default async function SubCategoriesPage({ params, searchParams }: PagePr
   try {
     const attrRes = await api.get<{ data: any; priceData?: any }>(
       `/products/attributes?categorySlug=${categorySlug}&subCategorySlug=${subCategorySlug}`,
-      { cache: "no-store" }
+      { cache: "no-store" },
     );
     if (attrRes && Array.isArray(attrRes.data)) {
       attributes = attrRes.data;
@@ -190,29 +196,34 @@ export default async function SubCategoriesPage({ params, searchParams }: PagePr
     { label: "Home", href: "/" },
     { label: "Categories", href: "/categories" },
     { label: categoryName, href: `/categories/${categorySlug}` },
-    { label: subCategoryName, href: `/categories/${categorySlug}/${subCategorySlug}` },
+    {
+      label: subCategoryName,
+      href: `/categories/${categorySlug}/${subCategorySlug}`,
+    },
   ];
 
   return (
-    <div className="flex flex-col flex-1 max-w-355 mx-auto">
-      <div className="md:px-12.5 px-4">
-        <Breadcrumb items={breadcrumbItems} />
+    <div className=" bg-[#fffbf6] dark:bg-[#2e2b28]">
+      <div className="flex flex-col flex-1 max-w-355 mx-auto">
+        <div className="md:px-12.5 px-4">
+          <Breadcrumb items={breadcrumbItems} />
+        </div>
+        {/* <Banner banners={banners} /> */}
+        <CategoriesProduct
+          banners={banners}
+          categorySlug={categorySlug}
+          subCategorySlug={subCategorySlug}
+          currentPage={currentPage}
+          products={productData.data}
+          totalPages={productData.totalPages}
+          totalCount={productData.totalCount}
+          currentSort={sort ?? ""}
+          currentSearch={search ?? ""}
+          brands={brands}
+          attributes={attributes}
+          priceData={priceData}
+        />
       </div>
-      {/* <Banner banners={banners} /> */}
-      <CategoriesProduct
-        banners={banners}
-        categorySlug={categorySlug}
-        subCategorySlug={subCategorySlug}
-        currentPage={currentPage}
-        products={productData.data}
-        totalPages={productData.totalPages}
-        totalCount={productData.totalCount}
-        currentSort={sort ?? ""}
-        currentSearch={search ?? ""}
-        brands={brands}
-        attributes={attributes}
-        priceData={priceData}
-      />
     </div>
   );
 }
