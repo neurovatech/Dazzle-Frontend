@@ -139,7 +139,7 @@ const Profile: React.FC = () => {
               </nav>
             </div>
 
-            <div className="p-4">
+            <div className="md:p-4 px-0 py-4">
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
                 {pageTitle}
               </h1>

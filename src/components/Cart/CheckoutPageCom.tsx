@@ -158,7 +158,17 @@ export default function CheckoutPageCom() {
   });
   const districts = areaListRes?.data || [];
   const selectedDistObj = districts.find((d) => d.distID === Number(newAddr.districtId));
-  const availableAreas = selectedDistObj?.area || [];
+  const availableAreas = useMemo(
+    () => (selectedDistObj?.area || []).filter((a) => a.isActive),
+    [selectedDistObj]
+  );
+
+  // Auto-select first active area when district changes (so services show immediately)
+  useEffect(() => {
+    if (availableAreas.length > 0 && !newAddr.areaId) {
+      setNewAddr((p) => ({ ...p, areaId: availableAreas[0].areaID }));
+    }
+  }, [availableAreas, newAddr.areaId]);
 
   const { data: storeListRes } = useQuery<{ data: StoreItem[] }>({
     queryKey: ["storeList"],
@@ -537,22 +547,22 @@ export default function CheckoutPageCom() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {[["Full Name *", "fullName", "text", "Full Name"], ["Mobile *", "mobile", "tel", "01700000000"], ["Email", "email", "email", "email@example.com"]].map(([label, key, type, placeholder]) => (
+                    {[["Full Name", "fullName", "text", "Full Name"], ["Mobile", "mobile", "tel", "01700000000"], ["Email", "email", "email", "email@example.com"]].map(([label, key, type, placeholder]) => (
                       <div key={key}>
-                        <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">{label}</label>
+                        <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">{label} <span className="text-red-500"> * </span></label>
                         <input type={type} value={(newAddr as any)[key]} placeholder={placeholder}
                           onChange={(e) => setNewAddr((p) => ({ ...p, [key]: e.target.value }))}
                           className="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#D4A97A] dark:text-white" />
                       </div>
                     ))}
                     <div>
-                      <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Full Address *</label>
+                      <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Full Address <span className="text-red-500"> * </span></label>
                       <textarea rows={2} value={newAddr.addressLine1} placeholder="House, Road, Area" onChange={(e) => setNewAddr((p) => ({ ...p, addressLine1: e.target.value }))}
                         className="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#D4A97A] dark:text-white resize-none" />
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">District *</label>
+                        <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">District <span className="text-red-500"> * </span></label>
                         <select value={newAddr.districtId} onChange={(e) => setNewAddr((p) => ({ ...p, districtId: Number(e.target.value), areaId: 0 }))}
                           className="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#D4A97A] dark:text-white cursor-pointer">
                           <option value={0}>Select District</option>
@@ -560,7 +570,7 @@ export default function CheckoutPageCom() {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Police Station / Area *</label>
+                        <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Police Station / Area <span className="text-red-500"> * </span></label>
                         <select value={newAddr.areaId} onChange={(e) => setNewAddr((p) => ({ ...p, areaId: Number(e.target.value) }))} disabled={!newAddr.districtId}
                           className="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#D4A97A] dark:text-white cursor-pointer disabled:opacity-50">
                           <option value={0}>Select Area</option>
