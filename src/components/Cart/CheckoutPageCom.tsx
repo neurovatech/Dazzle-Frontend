@@ -552,7 +552,7 @@ export default function CheckoutPageCom() {
                         <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">{label} <span className="text-red-500"> * </span></label>
                         <input type={type} value={(newAddr as any)[key]} placeholder={placeholder}
                           onChange={(e) => setNewAddr((p) => ({ ...p, [key]: e.target.value }))}
-                          className="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#D4A97A] dark:text-white" />
+                          className="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#D4A97A]" />
                       </div>
                     ))}
                     <div>
