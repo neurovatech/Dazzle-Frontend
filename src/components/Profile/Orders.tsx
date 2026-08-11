@@ -34,7 +34,7 @@ function StatusBadge({ item }: { item: ApiOrderItem }) {
   return <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-700">Pending</span>;
 }
 
-// ─── Order Detail Modal ─────────────────────────────────────────────────────
+
 function OrderDetailModal({ order, onClose, authHeader, apiKey }: {
   order: ApiOrderItem; onClose: () => void; authHeader: string; apiKey: string;
 }) {
@@ -259,7 +259,7 @@ function InvoiceModal({ order, onClose, authHeader, apiKey }: {
               *** Attention Please: dazzle sells only original Products. We offer anytime double money back guarantee if the product is not original ***
             </p>
 
-            {/* Products table */}
+
             <table className="w-full text-xs border-collapse border border-gray-200 text-gray-500">
               <thead>
                 <tr className="bg-gray-50">

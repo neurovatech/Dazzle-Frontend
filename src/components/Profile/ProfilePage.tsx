@@ -51,7 +51,7 @@ const Profile: React.FC = () => {
     setMobileView(null);
   };
 
-  // ── Derived state ────────────────────────────────────────────────────────────
+
   const pageTitle: string = selectedOrder
     ? `Order ${selectedOrder.id}`
     : showOtp
@@ -60,7 +60,6 @@ const Profile: React.FC = () => {
         ? "Delivery Address"
         : activeLabel;
 
-  // ── Content renderer (shared desktop + mobile) ───────────────────────────────
   const renderContent = (): React.ReactNode => {
     if (selectedOrder)
       return (

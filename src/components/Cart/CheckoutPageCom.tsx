@@ -119,7 +119,6 @@ export default function CheckoutPageCom() {
   // ── Step 1: Delivery Type ──────────────────────────────────────────────────
   const [deliveryType, setDeliveryType] = useState<DeliveryType>("home");
 
-  // ── Step 2: Address (Home Delivery only) ──────────────────────────────────
   const [addressTab, setAddressTab] = useState<"existing" | "new">("existing");
   const [selectedAddressUuid, setSelectedAddressUuid] = useState("");
   const [selectedStoreUuid, setSelectedStoreUuid] = useState("");
@@ -132,7 +131,7 @@ export default function CheckoutPageCom() {
     if (user) setNewAddr((p) => ({ ...p, fullName: p.fullName || "", email: p.email || "" }));
   }, [user]);
 
-  // ── Step 3: Service Level & Payment ───────────────────────────────────────
+
   const [serviceLevel, setServiceLevel] = useState<ServiceLevel>("regular");
   const [paymentOption, setPaymentOption] = useState<PaymentOption>("full_online");
   const [paymentGateway, setPaymentGateway] = useState<"bkash" | "ssl">("bkash");
