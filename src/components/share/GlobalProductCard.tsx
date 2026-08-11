@@ -22,9 +22,10 @@ export interface DefaultVariantResponse {
   data?: {
     productUUID: string;
     variantUUID: string;
-    regularPrice: number;
-    offerPrice: number;
-    wholeSalePrice: number;
+    attributes?: string;          // e.g. "Cosmic Orange, CH (Dual Nano Sim), 256GB"
+    regularPrice: number | { source: string; parsedValue: number };
+    offerPrice: number | { source: string; parsedValue: number };
+    wholeSalePrice: number | { source: string; parsedValue: number };
     thumbnailURL: string;
     isTba: boolean;
   };
@@ -97,19 +98,25 @@ const ProductCard: React.FC<ProductCardProps> = ({
       let finalRegPrice = originalPrice;
       let finalImage = image;
       let finalInStock = inStock;
-
-      console.log(res?.data, "res?.datares?.datares?.datares?.data");
+      let finalAttributes = "";
 
       if (res?.data) {
         variantUUID = res.data.variantUUID || itemId;
-        finalPrice = res.data.offerPrice ?? price;
-        finalRegPrice = res.data.regularPrice ?? originalPrice;
-        if (res.data.thumbnailURL) {
-          finalImage = res.data.thumbnailURL;
-        }
+
+        // API returns price as number OR {source, parsedValue}
+        const rawOffer = res.data.offerPrice as any;
+        const rawReg   = res.data.regularPrice as any;
+        finalPrice    = typeof rawOffer === "object" ? (rawOffer?.parsedValue ?? price)        : (rawOffer ?? price);
+        finalRegPrice = typeof rawReg   === "object" ? (rawReg?.parsedValue   ?? originalPrice) : (rawReg   ?? originalPrice);
+
+        if (res.data.thumbnailURL) finalImage = res.data.thumbnailURL;
         if (res.data.isTba !== undefined) {
           finalInStock = !res.data.isTba;
           setIsTba(res.data.isTba);
+        }
+        // e.g. "Cosmic Orange, CH (Dual Nano Sim), 256GB"
+        if ((res.data as any).attributes?.trim()) {
+          finalAttributes = (res.data as any).attributes.trim();
         }
       }
 
@@ -127,12 +134,17 @@ const ProductCard: React.FC<ProductCardProps> = ({
         return;
       }
 
+      // Build name: "iPhone 17 Pro Max  (Cosmic Orange, CH (Dual Nano Sim), 256GB)"
+      const cartName = finalAttributes
+        ? `${title || "Product"}  (${finalAttributes})`
+        : (title || "Product");
+
       dispatch(
         addToCart({
           id: variantUUID,
           productUuid: itemId,
           variantUuid: variantUUID,
-          name: title || "Product",
+          name: cartName,
           brand: "",
           image: finalImage || "",
           price: finalPrice,
