@@ -68,6 +68,7 @@ type PaymentOption = "full_online" | "booking" | "cod" | "full_at_store";
 function Radio({ checked, onChange, label, sub, badge, disabled }: {
   checked: boolean; onChange: () => void; label: string; sub?: string; badge?: string; disabled?: boolean;
 }) {
+  const isFPO = badge === "Full Payment Only";
   return (
     <button type="button" onClick={onChange}
       disabled={disabled}
@@ -76,9 +77,15 @@ function Radio({ checked, onChange, label, sub, badge, disabled }: {
       }`}
     >
       <div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <span className={`text-sm font-bold ${checked ? "text-gray-900 dark:text-white" : "text-gray-500 dark:text-gray-400"}`}>{label}</span>
-          {badge && <span className="text-[10px] bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200 px-2 py-0.5 rounded-full font-semibold">{badge}</span>}
+          {badge && (
+            <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
+              isFPO
+                ? "bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300"
+                : "bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300"
+            }`}>{badge}</span>
+          )}
         </div>
         {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
       </div>
@@ -117,12 +124,12 @@ export default function CheckoutPageCom() {
   const [selectedAddressUuid, setSelectedAddressUuid] = useState("");
   const [selectedStoreUuid, setSelectedStoreUuid] = useState("");
   const [newAddr, setNewAddr] = useState({
-    fullName: user?.userFullName || "", mobile: "", email: user?.email || "",
+    fullName: "", mobile: "", email: "",
     addressLabel: "Home", addressLine1: "", districtId: 0, areaId: 0,
   });
 
   useEffect(() => {
-    if (user) setNewAddr((p) => ({ ...p, fullName: p.fullName || user.userFullName || "", email: p.email || user.email || "" }));
+    if (user) setNewAddr((p) => ({ ...p, fullName: p.fullName || "", email: p.email || "" }));
   }, [user]);
 
   // ── Step 3: Service Level & Payment ───────────────────────────────────────
@@ -266,11 +273,16 @@ export default function CheckoutPageCom() {
       });
     }
     if (selectedAreaObj.isRegularDelivery) {
+      // Show which payment methods are available for regular delivery
+      const regularBadgeParts: string[] = [];
+      if (selectedAreaObj.isCashOnDeliveryAllowed) regularBadgeParts.push("Cash on Delivery");
+
       services.push({
         value: "regular", priority: selectedAreaObj.regularDeliveryPriority ?? 4,
         label: "Regular Delivery",
         sub: `${selectedAreaObj.regularDeliveryMinDays ?? 1} – ${selectedAreaObj.regularDeliveryMaxDays ?? 3} days`,
         charge: Number(selectedAreaObj.regularDeliveryCharge ?? 0),
+        badge: regularBadgeParts.length > 0 ? regularBadgeParts.join(" · ") : undefined,
       });
     }
 
