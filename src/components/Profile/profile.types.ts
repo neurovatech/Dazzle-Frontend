@@ -16,6 +16,7 @@ export interface WishlistItem {
 }
 
 export interface ApiOrderItem {
+  productName: string;
   comerzOrderNo: string;
   createdAt: string;
   paymentType: string;

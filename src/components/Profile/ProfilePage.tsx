@@ -91,7 +91,7 @@ const Profile: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen font-sans">
+    <div className="min-h-screen font-sans bg-[#fffbf6] dark:bg-[#2e2b28]">
       <div className="md:hidden">
         {mobileView === null ? (
           <div className="md:p-4 md:pb-20">
@@ -163,7 +163,7 @@ const Profile: React.FC = () => {
 
           <div className="grid grid-cols-[280px_1fr] gap-8">
             {/* Sidebar */}
-            <div className="h-fit sticky top-6 z-20">
+            <div className="h-fit sticky top-6 z-20 bg-white dark:bg-[#1c1a17] rounded-2xl p-3">
               <ProfileSideNav
                 activeLabel={activeLabel}
                 darkMode={darkMode}
