@@ -96,9 +96,10 @@ export default function MobileHeader({ categories }: Props) {
         <div className="flex items-center gap-2">
           <Link
             href="/shop-location"
+             aria-label="Shop location"
             className="w-10 h-10 rounded-xl bg-background flex items-center justify-center text-[#222222] dark:text-white"
           >
-            <Locationicon />
+            <Locationicon aria-hidden="true" />
           </Link>
 
           <Link
@@ -134,12 +135,14 @@ export default function MobileHeader({ categories }: Props) {
 
         <button
           onClick={() => setMobileMenuOpen((prev) => !prev)}
+          aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+  aria-expanded={mobileMenuOpen}
           className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-gray-300 dark:bg-[#2e2b28]"
         >
           {mobileMenuOpen ? (
-            <CloseIcon color={iconColor} />
+            <CloseIcon color={iconColor} aria-hidden="true" />
           ) : (
-            <MobileMenuIcon color={iconColor} />
+            <MobileMenuIcon color={iconColor} aria-hidden="true" />
           )}
         </button>
       </div>
