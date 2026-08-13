@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import CategoriesProduct from "@/components/CategoriesPages/CategoriesProduct/CategoriesProduct";
+import CategoriesProductWithTopSale from "@/components/CategoriesPages/CategoriesProduct/CategoriesProductWithTopSale";
 import Breadcrumb from "@/components/share/Breadcrumb";
 import ProductListSectionCom from "@/components/HomePage/ProductList/ProductListSectionCom";
 import { api } from "@/lib/api";
@@ -195,7 +195,7 @@ export default async function CategoriesPage({
           <Breadcrumb items={breadcrumbItems} />
         </div>
 
-        <CategoriesProduct
+        <CategoriesProductWithTopSale
           categorySlug={categorySlug}
           currentPage={currentPage}
           products={productData.data}

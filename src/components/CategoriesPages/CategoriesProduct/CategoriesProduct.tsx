@@ -35,8 +35,7 @@ interface CategoriesProductProps {
   priceData?: PriceData;
   banners?: any;
   trendingNowSlot?: React.ReactNode;
-  topSellingSlot?: React.ReactNode;
-  runningOfferSlot?: React.ReactNode;
+ 
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -55,8 +54,6 @@ function CategoriesProduct({
   priceData,
   banners,
   trendingNowSlot,
-  topSellingSlot,
-  runningOfferSlot,
 }: CategoriesProductProps) {
   const searchParams = useSearchParams();
 
@@ -496,11 +493,6 @@ function CategoriesProduct({
        
 
         <div className="lg:col-span-9 h-full">
-          {/* Top Selling — fetches showcase-items?showcaseSlug=top-selling */}
-          <TopSellingCom />
-
-          {/* Running Offer — fetches showcase-items?showcaseSlug=running-offer */}
-          <RunningOfferCom />
 
           {/* productList area  */}
           <div ref={productListRef} className="scroll-mt-4">
