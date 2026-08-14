@@ -172,8 +172,7 @@ function SearchResults() {
                   alt={p.productName}
                   fill
                   className="object-contain p-2 group-hover:scale-105 transition-transform duration-300"
-                  sizes="(max-width: 640px) 45vw, (max-width: 1024px) 22vw, 180px"
-                  unoptimized
+                  sizes="(max-width: 640px) 45vw, (max-width: 1024px) 25vw, 280px"
                 />
               </div>
 

@@ -65,6 +65,7 @@ function AnusmaneDetailsCom({ post }: BlogDetailsComProps) {
           src={thumbnailUrl}
           alt={post.post_title}
           fill
+          sizes="(max-width: 1024px) 100vw, 1000px"
           className="object-cover transition-transform duration-300 group-hover:scale-105 rounded-3xl"
         />
       </div>

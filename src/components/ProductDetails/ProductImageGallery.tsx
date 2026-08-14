@@ -96,7 +96,7 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
               alt={`Product image ${selected + 1}`}
               fill
               className="object-contain transition-all duration-300 mt-[10px]"
-              // sizes="(max-width: 768px) 80vw, 40vw"
+              sizes="(max-width: 768px) 90vw, (max-width: 1280px) 45vw, 600px"
               priority
             />
           </div>

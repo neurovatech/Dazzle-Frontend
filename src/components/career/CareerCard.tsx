@@ -43,7 +43,7 @@ const CareerCard: React.FC<{ post: BlogPost }> = ({ post }) => {
   return (
     <div className="group rounded-xl overflow-hidden border border-gray-100 dark:border-[#1b1b1b] shadow-sm hover:shadow-md transition-shadow bg-white dark:bg-[#1b1b1b] duration-300">
       <div className="overflow-hidden relative w-full h-75 group">
-        <Image src={imgSrc} alt={post.post_title} fill className="object-cover transition-transform duration-300 group-hover:scale-105" />
+        <Image src={imgSrc} alt={post.post_title} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 380px" className="object-cover transition-transform duration-300 group-hover:scale-105" />
       </div>
       <div className="p-4">
         <div className="flex items-center gap-3 mb-2">

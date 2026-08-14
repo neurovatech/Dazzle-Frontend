@@ -112,7 +112,6 @@ const DazzleCare: React.FC<DazzleCareProps> = ({ options, onSelectionChange }) =
                       width={36}
                       height={36}
                       className="w-full h-full object-cover"
-                      unoptimized
                     />
                   ) : (
                     <AddFileIcon />

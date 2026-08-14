@@ -130,7 +130,10 @@ function ReelModal({ isOpen, initialIndex, products, onClose }: {
         {hasVideo ? (
           <video ref={videoRef} key={product.id} src={product.videoUrl} className="w-full h-full object-cover" autoPlay loop muted={muted} playsInline poster={product.clipThumbnail || product.image} />
         ) : (
-          <Image src={product.image} alt={product.title} fill sizes="100vw" className="object-cover" priority />
+          // No `priority` here: this section sits far below the fold, so preloading
+          // it competed for bandwidth with the real LCP (the hero banner) and
+          // delayed it. `sizes` reflects the actual card width, not the viewport.
+          <Image src={product.image} alt={product.title} fill sizes="(max-width: 640px) 90vw, (max-width: 1024px) 50vw, 420px" className="object-cover" />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20 pointer-events-none" />
 
@@ -216,7 +219,6 @@ function ClipToCartCard({ product, index, onOpenModal }: {
           fill
           sizes="(max-width: 768px) 50vw, 20vw"
           className="object-cover"
-          unoptimized
         />
 
         {/* Play button */}
@@ -237,7 +239,7 @@ function ClipToCartCard({ product, index, onOpenModal }: {
 
         {product.image && (
           <div className="absolute  left-1/2 -translate-x-1/2 top-[-40px] w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white dark:bg-[#2e2b28] shadow-md border-4 border-white dark:border-[#2e2b28] z-10 overflow-hidden">
-            <Image src={product.image} alt={product.title} fill sizes="64px" className="object-cover" unoptimized />
+            <Image src={product.image} alt={product.title} fill sizes="64px" className="object-cover" />
           </div>
         )}
 
@@ -246,7 +248,7 @@ function ClipToCartCard({ product, index, onOpenModal }: {
           <div className="flex items-center gap-1 mb-1">
             {product.brandLogo ? (
               <div className="relative w-4 h-4 shrink-0">
-                <Image src={product.brandLogo} alt={product.brandName} fill className="object-contain" unoptimized />
+                <Image src={product.brandLogo} alt={product.brandName} fill sizes="16px" className="object-contain" />
               </div>
             ) : (
               <span className="text-xs">🏷</span>
@@ -335,7 +337,7 @@ function ClipToCart({ autoplayDelay = 3000, navigation = true, pagination = true
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-4">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="animate-pulse bg-gray-100 dark:bg-[#2e2b28] rounded-2xl h-[340px]" />
+            <div key={i} className="animate-pulse bg-gray-100 dark:bg-[#2e2b28] rounded-2xl h-[350px]" />
           ))}
         </div>
       </div>

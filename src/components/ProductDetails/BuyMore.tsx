@@ -101,8 +101,8 @@ const BuyMore: React.FC<BuyMoreProps> = ({ items }: any) => {
                     src={item.image && item.image.trim() ? item.image : NoImg}
                     alt={item.name}
                     fill
+                    sizes="40px"
                     className="object-contain p-0.5"
-                    unoptimized
                   />
                 </div>
 

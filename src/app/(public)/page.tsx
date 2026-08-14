@@ -7,7 +7,6 @@ import BannerSlider, {
 import CategoriesSection from "@/components/HomePage/Categories/CategoriesSection";
 import CategoriesSkeleton from "@/components/HomePage/Categories/CategoriesSkeleton";
 import GlobalCountdown from "@/components/share/GlobalCountdown";
-import GlobalTabs from "@/components/share/GlobalTabs";
 import { Suspense } from "react";
 import {
   FlashSaleSkeleton,
@@ -24,14 +23,11 @@ import {
 import { api } from "@/lib/api";
 
 // ── Below-the-fold: lazy (dynamic) imports ──
-const Newest = dynamic(() => import("@/components/HomePage/FlashSale/Newest"));
+// (Newest/Popular/Olds were removed: they were only referenced by a `tabsData`
+//  array feeding a <GlobalTabs> that has been commented out on every usage.)
 const HotDealSectionCom = dynamic(
   () => import("@/components/HomePage/HotDeal/HotDealSectionCom"),
 );
-const Popular = dynamic(
-  () => import("@/components/HomePage/FlashSale/Popular"),
-);
-const Olds = dynamic(() => import("@/components/HomePage/FlashSale/Olds"));
 const OfferBanner = dynamic(
   () => import("@/components/HomePage/OfferBanner/OfferBanner"),
 );
@@ -101,20 +97,6 @@ async function getHeroBanners(): Promise<SlideItem[]> {
 
 export default async function Home() {
   const heroSlides = await getHeroBanners();
-  const tabsData = [
-    {
-      label: "Newest",
-      content: <Newest />,
-    },
-    {
-      label: "Popular",
-      content: <Popular />,
-    },
-    {
-      label: "Olds",
-      content: <Olds />,
-    },
-  ];
     function getNext15thDate() {
       const now = new Date();
       const currentDay = now.getDate();

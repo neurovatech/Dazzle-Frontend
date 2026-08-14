@@ -3,7 +3,7 @@ import React from "react";
 // 1. Flash Sale Skeleton
 export function FlashSaleSkeleton() {
   return (
-    <div className="bg-[#6D3F0E] md:py-10 md:mt-10! max-w-355 mx-auto md:h-165">
+    <div className="bg-[#6D3F0E] md:py-10 md:mt-10! max-w-355 mx-auto">
       <div className="md:px-12.5 px-4 pb-4 animate-pulse">
         <div className="flex justify-between items-center mb-6">
           <div className="h-10 w-48 bg-white/20 rounded-md" />
@@ -11,7 +11,7 @@ export function FlashSaleSkeleton() {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-72 bg-white/10 rounded-2xl" />
+            <div key={i} className="h-[350px] md:h-[366px] lg:h-[398px] bg-white/10 rounded-2xl" />
           ))}
         </div>
       </div>
@@ -31,14 +31,14 @@ export function OfferBannerSkeleton() {
 // 3. Trending Now Skeleton
 export function TrendingNowSkeleton() {
   return (
-    <div className="flex flex-col flex-1 max-w-355 mx-auto md:h-135 md:px-12.5 px-4 py-8">
+    <div className="flex flex-col flex-1 max-w-355 mx-auto md:px-12.5 px-4 py-8">
       <div className="flex justify-between items-center mb-6 animate-pulse">
         <div className="h-10 w-48 bg-gray-200 dark:bg-zinc-800 rounded-md" />
         <div className="h-6 w-16 bg-gray-200 dark:bg-zinc-800 rounded-md" />
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-72 bg-gray-100 dark:bg-zinc-900 rounded-2xl animate-pulse" />
+          <div key={i} className="h-[350px] md:h-[366px] lg:h-[398px] bg-gray-100 dark:bg-zinc-900 rounded-2xl animate-pulse" />
         ))}
       </div>
     </div>
@@ -71,12 +71,12 @@ export function ShopBrandSkeleton() {
 // 6. New Arrivals Skeleton
 export function NewArrivalsSkeleton() {
   return (
-    <div className="bg-[#6D3F0E] py-10 mt-10! max-w-355 mx-auto md:h-165">
+    <div className="bg-[#6D3F0E] py-10 mt-10! max-w-355 mx-auto">
       <div className="md:px-12.5 px-4 animate-pulse">
         <div className="h-10 w-48 bg-white/20 rounded-md mb-6" />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-72 bg-white/10 rounded-2xl" />
+            <div key={i} className="h-[350px] md:h-[366px] lg:h-[398px] bg-white/10 rounded-2xl" />
           ))}
         </div>
       </div>
@@ -91,7 +91,7 @@ export function MostPopularSkeleton() {
       <div className="h-10 w-48 bg-gray-200 dark:bg-zinc-800 animate-pulse rounded-md mb-6" />
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-72 bg-gray-100 dark:bg-zinc-900 rounded-2xl animate-pulse" />
+          <div key={i} className="h-[350px] md:h-[366px] lg:h-[398px] bg-gray-100 dark:bg-zinc-900 rounded-2xl animate-pulse" />
         ))}
       </div>
     </div>
@@ -105,7 +105,7 @@ export function HotDealSkeleton() {
       <div className="h-10 w-48 bg-white/20 rounded-md mb-6 animate-pulse" />
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 animate-pulse">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-72 bg-white/10 rounded-2xl" />
+          <div key={i} className="h-[350px] md:h-[366px] lg:h-[398px] bg-white/10 rounded-2xl" />
         ))}
       </div>
     </div>
@@ -119,7 +119,7 @@ export function FeatureProductsSkeleton() {
       <div className="h-10 w-48 bg-gray-200 dark:bg-zinc-800 animate-pulse rounded-md mb-6" />
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-72 bg-gray-100 dark:bg-zinc-900 rounded-2xl animate-pulse" />
+          <div key={i} className="h-[350px] md:h-[366px] lg:h-[398px] bg-gray-100 dark:bg-zinc-900 rounded-2xl animate-pulse" />
         ))}
       </div>
     </div>

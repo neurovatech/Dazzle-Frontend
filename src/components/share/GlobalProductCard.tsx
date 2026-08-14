@@ -248,8 +248,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
                 alt={title || "Product image"}
                 fill
                 className="object-contain p-1 transition-transform duration-300"
-                sizes="(max-width: 640px) 45vw, (max-width: 1024px) 22vw, 180px"
-                unoptimized
+                sizes="(max-width: 640px) 45vw, (max-width: 1024px) 25vw, 280px"
                 onError={() => setImgError(true)}
               />
             </div>

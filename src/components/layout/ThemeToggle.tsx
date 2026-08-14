@@ -42,8 +42,6 @@ export default function ThemeToggle() {
     setMounted(true);
   }, []);
 
-  if (!mounted) return null;
-
   const currentTheme =
     theme === "system" ? resolvedTheme : theme;
 
@@ -53,9 +51,22 @@ export default function ThemeToggle() {
     setTheme(isDark ? "light" : "dark");
   };
 
+  // The button is ALWAYS rendered at its final size, even before mount.
+  // Previously this returned null until mounted, so the header re-flowed once
+  // hydration completed — a layout shift on every page, above the fold.
+  // Only the icon (which depends on the resolved theme, unknown on the server)
+  // waits for mount; the 54x54 box is reserved from the first paint.
   return (
     <button
       onClick={handleToggle}
+      disabled={!mounted}
+      aria-label={
+        mounted
+          ? isDark
+            ? "Switch to light theme"
+            : "Switch to dark theme"
+          : "Toggle theme"
+      }
       className="w-13.5 h-13.5 rounded-xl bg-[#E9CCAE47] flex items-center justify-center transition-all duration-300"
     >
       <div
@@ -63,7 +74,13 @@ export default function ThemeToggle() {
           isDark ? "text-white" : "text-yellow-400"
         }`}
       >
-        {isDark ? <MoonIcon /> : <SunIcon />}
+        {/* Before mount the theme is unknown; render an invisible placeholder of
+            the same 16x16 footprint so nothing moves when the real icon swaps in. */}
+        {mounted ? (
+          isDark ? <MoonIcon /> : <SunIcon />
+        ) : (
+          <span className="block w-4 h-4" aria-hidden="true" />
+        )}
       </div>
     </button>
   );

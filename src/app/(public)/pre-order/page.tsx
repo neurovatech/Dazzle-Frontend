@@ -189,6 +189,7 @@ const PreOrderPage: React.FC = () => {
                           src={src}
                           alt={`preview-${idx}`}
                           fill
+                          sizes="(max-width: 640px) 30vw, 150px"
                           className="object-cover"
                         />
                       </div>

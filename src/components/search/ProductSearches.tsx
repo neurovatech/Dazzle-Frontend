@@ -115,7 +115,6 @@ function ProductRow({ product, onClose }: { product: NormalizedProduct; onClose?
           width={56}
           height={56}
           className="w-full h-full object-contain"
-          unoptimized
         />
       </div>
       <div className="min-w-0">
@@ -332,7 +331,6 @@ export default function ProductSearches({ query, onClose }: ProductSearchesProps
                     width={56}
                     height={56}
                     className="w-full h-full object-contain"
-                    unoptimized
                   />
                 ) : (
                   <span className="text-xs font-bold text-gray-400">{brand.name[0]}</span>
