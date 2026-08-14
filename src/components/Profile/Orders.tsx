@@ -404,7 +404,6 @@ const Orders: React.FC<OrdersProps> = () => {
                   title="View Order Details">
                   <Eye size={15} />
                 </button>
-                {/* Invoice icon → invoice modal */}
                 <button onClick={() => setInvoiceOrder(order)}
                   className="w-8 h-8 rounded-lg border border-gray-200 dark:border-zinc-700 flex items-center justify-center text-gray-500 hover:bg-gray-50 dark:hover:bg-zinc-800 transition"
                   title="View Invoice">

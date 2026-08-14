@@ -357,7 +357,6 @@ export default function BrandProducts({
     setIsSortOpen(false);
 
     const params = new URLSearchParams(window.location.search);
-    // সব সোর্ট-সানাই params প্রথমে মুছে দাও
     params.delete("sort");
     params.delete("discountedPrice");
     params.delete("latest");
@@ -370,7 +369,6 @@ export default function BrandProducts({
     } else if (pendingSort === "price_desc") {
       params.set("sort", "price_desc");
     }
-    // "recommend" → কোনো sort param লাগবে না
 
     const newQueryString = params.toString();
     const newUrl = newQueryString
