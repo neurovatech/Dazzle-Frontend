@@ -1,36 +1,25 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-"use client";
-
-import React, { useState } from "react";
-import Image from "next/image";
-import { CartIcon, CompareIcon, FaireIcon } from "@/icon";
-import { useAppSelector, useAppDispatch } from "@/store/hooks";
-import { toggleWishlist } from "@/store/slices/wishlistSlice";
-import { addToCart } from "@/store/slices/cartSlice";
-import ProductImage from "@/images/product.png";
-import NoImg from "@/images/no_images.png";
+// Server Component — no "use client".
+//
+// This card renders ~40 times on the homepage and on every listing page. It used
+// to be a single 455-line Client Component, so all of that markup (badges,
+// image wrapper, title, tooltip, price block with two inline SVGs) hydrated on
+// every instance even though none of it changes after render.
+//
+// Now only the genuinely interactive parts are client islands:
+//   • ProductCardImage    — onError fallback to the placeholder
+//   • ProductCardWishlist — Redux wishlist toggle
+//   • ProductCardBuy      — cart state, variant lookup, quick view
+//
+// The public props API is unchanged, so no call site needs updating.
+import React from "react";
 import Link from "next/link";
-import ProductQuicView from "@/components/ProductDetails/ProductQuicView";
-import toast from "react-hot-toast";
-import { api } from "@/lib/api";
+import { CompareIcon } from "@/icon";
+import ProductImage from "@/images/product.png";
+import ProductCardImage from "./ProductCardImage";
+import ProductCardWishlist from "./ProductCardWishlist";
+import ProductCardBuy from "./ProductCardBuy";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-export interface DefaultVariantResponse {
-  statusCode: number;
-  status: string;
-  message?: string;
-  data?: {
-    productUUID: string;
-    variantUUID: string;
-    attributes?: string;          // e.g. "Cosmic Orange, CH (Dual Nano Sim), 256GB"
-    regularPrice: number | { source: string; parsedValue: number };
-    offerPrice: number | { source: string; parsedValue: number };
-    wholeSalePrice: number | { source: string; parsedValue: number };
-    thumbnailURL: string;
-    isTba: boolean;
-  };
-}
+export type { DefaultVariantResponse } from "./ProductCardBuy";
 
 interface ProductCardProps {
   productUuid?: string;
@@ -47,7 +36,7 @@ interface ProductCardProps {
   minBookingPrice?: number;
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
+const formatPrice = (val: number) => (val > 0 ? "" + val.toLocaleString("en-IN") : "0");
 
 const ProductCard: React.FC<ProductCardProps> = ({
   productUuid,
@@ -63,157 +52,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
   uuid,
   minBookingPrice = 0,
 }) => {
-  const dispatch = useAppDispatch();
-  const wishlistItems = useAppSelector((state) => state.wishlist.items);
   const itemId = productUuid || uuid || "";
-  const isWishlisted = wishlistItems.some((i) => i.productUuid === itemId);
-
-  const [loadingCart, setLoadingCart] = useState(false);
-  const [imgError, setImgError] = useState(false);
-
-  const [isTba, setIsTba] = useState(!inStock);
-  const cartItems = useAppSelector((state) => state.cart.items);
-
-  // Cart-এ product আছে কিনা check — persistent "Added" দেখাবে
-  const addedToCart = cartItems.some(
-    (item) =>
-      item.productUuid === itemId ||
-      item.variantUuid === itemId ||
-      item.id === itemId,
-  );
-
-  const handleAddToCart = async () => {
-    if (!itemId) {
-      toast.error("Product ID missing");
-      return;
-    }
-
-    setLoadingCart(true);
-    try {
-      const res = await api.get<DefaultVariantResponse>(
-        `/get-default-variant/${itemId.trim()}?priceSort=1&userDefine=0`,
-      );
-
-      let variantUUID = itemId; // default fallback
-      let finalPrice = price;
-      let finalRegPrice = originalPrice;
-      let finalImage = image;
-      let finalInStock = inStock;
-      let finalAttributes = "";
-
-      if (res?.data) {
-        variantUUID = res.data.variantUUID || itemId;
-
-        // API returns price as number OR {source, parsedValue}
-        const rawOffer = res.data.offerPrice as any;
-        const rawReg   = res.data.regularPrice as any;
-        finalPrice    = typeof rawOffer === "object" ? (rawOffer?.parsedValue ?? price)        : (rawOffer ?? price);
-        finalRegPrice = typeof rawReg   === "object" ? (rawReg?.parsedValue   ?? originalPrice) : (rawReg   ?? originalPrice);
-
-        if (res.data.thumbnailURL) finalImage = res.data.thumbnailURL;
-        if (res.data.isTba !== undefined) {
-          finalInStock = !res.data.isTba;
-          setIsTba(res.data.isTba);
-        }
-        // e.g. "Cosmic Orange, CH (Dual Nano Sim), 256GB"
-        if ((res.data as any).attributes?.trim()) {
-          finalAttributes = (res.data as any).attributes.trim();
-        }
-      }
-
-      if (!finalInStock) {
-        toast.error("This product is not in stock!");
-        return;
-      }
-
-      const isAlreadyInCart = cartItems.some(
-        (item) => item.id === variantUUID || item.variantUuid === variantUUID,
-      );
-
-      if (isAlreadyInCart) {
-        toast.error("Product already added to cart!");
-        return;
-      }
-
-      // Build name: "iPhone 17 Pro Max  (Cosmic Orange, CH (Dual Nano Sim), 256GB)"
-      const cartName = finalAttributes
-        ? `${title || "Product"}  (${finalAttributes})`
-        : (title || "Product");
-
-      dispatch(
-        addToCart({
-          id: variantUUID,
-          productUuid: itemId,
-          variantUuid: variantUUID,
-          name: cartName,
-          brand: "",
-          image: finalImage || "",
-          price: finalPrice,
-          originalPrice: finalRegPrice,
-          quantity: 1,
-          inStock: finalInStock,
-          slug: slug || "",
-          minBookingPrice: minBookingPrice ?? 0,
-        }),
-      );
-
-      toast.success(`Added to cart! 🛒`);
-    } catch (error) {
-      console.error("[GlobalProductCard] get-default-variant error:", error);
-      // Fallback: API fail হলে productUuid দিয়ে cart-এ add করো
-      const isAlreadyInCart = cartItems.some(
-        (item) => item.id === itemId || item.variantUuid === itemId,
-      );
-
-      if (isAlreadyInCart) {
-        toast.error("Product already added to cart!");
-        return;
-      }
-
-      dispatch(
-        addToCart({
-          id: itemId,
-          productUuid: itemId,
-          variantUuid: itemId,
-          name: title || "Product",
-          brand: "",
-          image: image || "",
-          price: price,
-          originalPrice: originalPrice,
-          quantity: 1,
-          inStock: inStock,
-          slug: slug || "",
-          minBookingPrice: minBookingPrice ?? 0,
-        }),
-      );
-      toast.success(`Added to cart! 🛒`);
-    } finally {
-      setLoadingCart(false);
-    }
-  };
-
-  const handleWishlist = () => {
-    dispatch(
-      toggleWishlist({
-        productUuid: itemId,
-        productName: title || "",
-        productSlug: slug || "",
-        image: image || "",
-        price,
-        originalPrice,
-        discount,
-        badge: badge || "",
-        inStock,
-        isBestDeal,
-        addedAt: new Date().toISOString(),
-      }),
-    );
-  };
-
-  const formatPrice = (val: number) =>
-    val > 0 ? "" + val.toLocaleString("en-IN") : "0";
-
-  const imgSrc = !image || imgError ? NoImg : image;
+  const href = `/product/${slug || title?.toLowerCase().replace(/\s+/g, "-")}`;
 
   return (
     <div className="group relative bg-white rounded-2xl sm:rounded-3xl cursor-pointer w-full h-full flex flex-col shadow-lg transition-all duration-500 hover:shadow-sm select-none">
@@ -237,20 +77,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
         </div>
 
         {/* Product Image — fixed-height, never crops, contains full image */}
-        <Link
-          href={`/product/${slug || title?.toLowerCase().replace(/\s+/g, "-")}`}
-          className="block px-2 pt-2"
-        >
+        <Link href={href} className="block px-2 pt-2">
           <div className="relative flex justify-center items-center h-40 sm:h-40 md:h-44 lg:h-52 transition-all duration-500">
             <div className="relative z-10 w-full h-full transition-transform duration-500 group-hover:scale-105">
-              <Image
-                src={imgSrc}
-                alt={title || "Product image"}
-                fill
-                className="object-contain p-1 transition-transform duration-300"
-                sizes="(max-width: 640px) 45vw, (max-width: 1024px) 25vw, 280px"
-                onError={() => setImgError(true)}
-              />
+              <ProductCardImage src={image || ProductImage} alt={title || "Product image"} />
             </div>
           </div>
         </Link>
@@ -258,33 +88,18 @@ const ProductCard: React.FC<ProductCardProps> = ({
         {/* Action Row */}
         <div className="flex items-center justify-between relative z-50">
           <div className="flex gap-1 sm:gap-2 ml-auto p-1 -mr-2 sm:-mr-2 lg:-mr-4 rounded-tl-2xl sm:rounded-tl-3xl bg-[#F5F5F5] pl-2">
-            {/* Wishlist toggle */}
-            <button
-              onClick={handleWishlist}
-              className={`w-8 h-8 mt-1 rounded-full border flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 ${
-                isWishlisted
-                  ? "bg-red-50 border-red-300 text-red-500"
-                  : "bg-white border-gray-200 text-gray-500 hover:border-red-300 hover:text-red-400"
-              }`}
-              aria-label={
-                isWishlisted ? "Remove from wishlist" : "Add to wishlist"
-              }
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill={isWishlisted ? "currentColor" : "none"}
-                stroke="currentColor"
-                strokeWidth={2}
-                className="w-3 h-3 sm:w-4 sm:h-4"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
-                />
-              </svg>
-            </button>
+            <ProductCardWishlist
+              productUuid={itemId}
+              title={title || ""}
+              slug={slug || ""}
+              image={image || ""}
+              price={price}
+              originalPrice={originalPrice}
+              discount={discount}
+              badge={badge || ""}
+              inStock={inStock}
+              isBestDeal={isBestDeal}
+            />
             {/* Compare */}
             <Link
               href="/product-compare"
@@ -354,98 +169,16 @@ const ProductCard: React.FC<ProductCardProps> = ({
         </div>
 
         {/* Bottom Actions */}
-        <div className="flex gap-1 sm:gap-2 mt-auto">
-          {isTba ? (
-            <button
-              disabled
-              className="flex-1 flex items-center justify-center gap-1 py-2 sm:py-2.5 px-1 sm:px-2 rounded-xl sm:rounded-2xl text-[9px] sm:text-[11px] lg:text-[12px] font-semibold border border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-70"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
-                stroke="currentColor"
-                className="w-3 h-3 sm:w-4 sm:h-4 shrink-0"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
-                />
-              </svg>
-              <span>Not in Stock</span>
-            </button>
-          ) : (
-            <button
-              onClick={handleAddToCart}
-              disabled={loadingCart}
-              className={`flex-1 flex items-center justify-center gap-1 py-2 sm:py-2.5 px-1 sm:px-2 rounded-xl sm:rounded-2xl text-[9px] sm:text-[11px] lg:text-[12px] font-semibold border transition-all duration-300 active:scale-95 shadow-[0px_0px_8px_4px_#E9CCAE52] ${
-                loadingCart
-                  ? "bg-gray-100 border-gray-200 text-gray-400 cursor-wait"
-                  : addedToCart
-                    ? "bg-green-500 border-green-500 text-white"
-                    : "bg-white border-orange-200 text-gray-800 hover:bg-orange-50 hover:border-orange-400 hover:shadow-md"
-              }`}
-            >
-              {loadingCart ? (
-                <>
-                  <svg
-                    className="w-3 h-3 sm:w-4 sm:h-4 animate-spin shrink-0"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8v8H4z"
-                    />
-                  </svg>
-                  <span className="hidden sm:inline">Adding...</span>
-                </>
-              ) : addedToCart ? (
-                <>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={2.5}
-                    stroke="currentColor"
-                    className="w-3 h-3 sm:w-4 sm:h-4"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M4.5 12.75l6 6 9-13.5"
-                    />
-                  </svg>
-                  <span className="hidden sm:inline">Added!</span>
-                  <span className="sm:hidden">Added!</span>
-                </>
-              ) : (
-                <>
-                  <CartIcon className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 shrink-0" />
-                  <span className="">Add to Cart</span>
-                </>
-              )}
-            </button>
-          )}
-          <ProductQuicView
-            slug={slug}
-            productUuid={itemId}
-            title={title}
-            price={price}
-            image={image}
-          />
-        </div>
+        <ProductCardBuy
+          itemId={itemId}
+          title={title || "Product"}
+          slug={slug || ""}
+          image={image || ""}
+          price={price}
+          originalPrice={originalPrice}
+          inStock={inStock}
+          minBookingPrice={minBookingPrice}
+        />
       </div>
     </div>
   );

@@ -4,7 +4,6 @@ import ProductDetails from '@/components/ProductDetails/ProductDetail';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { api } from '@/lib/api';
-import JsonLd from '@/components/share/JsonLd';
 import {
   buildJsonLd,
   productSchema,
@@ -208,7 +207,14 @@ export default async function ProductDetailsPage({ params }: PageProps) {
 
   return (
     <div>
-      <JsonLd data={jsonLd} />
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c'),
+          }}
+        />
+      )}
       <ProductDetails product={product} />
     </div>
   );

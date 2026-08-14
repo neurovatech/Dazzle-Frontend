@@ -225,7 +225,7 @@ export default async function SubCategoriesPage({
 
   return (
     <div className=" bg-[#fffbf6] dark:bg-[#2e2b28]">
-      <JsonLd data={jsonLd} />
+      <JsonLd id="ld-subcategory" data={jsonLd} />
       <div className="flex flex-col flex-1 max-w-355 mx-auto">
         <div className="md:px-12.5 px-4">
           <Breadcrumb items={breadcrumbItems} />

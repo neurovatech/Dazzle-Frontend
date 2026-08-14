@@ -1,5 +1,8 @@
-"use client";
-
+// Server Component (no "use client").
+// This is purely presentational — no hooks, event handlers or browser APIs — and
+// it is rendered from 26 server components (nearly every category/product/blog
+// page), so keeping it in the client bundle added hydration work on almost every
+// route for markup that never changes after render.
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 
@@ -14,12 +17,15 @@ interface BreadcrumbProps {
 
 export default function Breadcrumb({ items }: BreadcrumbProps) {
   return (
-    <nav className="flex items-center text-sm text-gray-600 lg:pt-6 pt-3 pb-3">
+    <nav
+      aria-label="Breadcrumb"
+      className="flex items-center text-sm text-gray-600 lg:pt-6 pt-3 pb-3"
+    >
       {items.map((item, index) => {
         const isLast = index === items.length - 1;
 
         return (
-          <div key={index} className="flex items-center">
+          <div key={`${item.href ?? ""}-${item.label}`} className="flex items-center">
             {item.href && !isLast ? (
               <Link
                 href={item.href}

@@ -103,7 +103,7 @@ export default async function RootLayout({
       className={`${urbanist.variable}  h-full antialiased`}
     >
       <body>
-        <JsonLd data={siteJsonLd} />
+        <JsonLd id="ld-site" data={siteJsonLd} />
         <ThemeProvider>
           <ReduxProvider>
             <QueryProvider state={dehydratedState}>
