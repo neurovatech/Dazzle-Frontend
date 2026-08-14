@@ -114,7 +114,11 @@ function Bannerslider({
                   alt={slide.title || `Slide ${slide.id}`}
                   fill
                   className="object-cover"
-                  sizes="100vw"
+                  // NOT 100vw: at the md+ breakpoint Swiper shows slidesPerView=1.5,
+                  // so one slide is only ~2/3 of the (max-w-355 = 1420px-capped)
+                  // container width — ~936px at desktop, matching what Lighthouse
+                  // measured. Below 768px there's 1 slide per view, so it IS ~100vw.
+                  sizes="(max-width: 767px) 100vw, (max-width: 1420px) 66vw, 936px"
                   priority={slide.id === finalSlides[0]?.id}
                 />
               </Link>
