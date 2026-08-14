@@ -434,6 +434,30 @@ export default function CheckoutPageCom() {
   const total = subtotal + deliveryFee + codCharge;
   const fmt = (v: number) => "৳" + v.toLocaleString("en-IN");
 
+  // ── Save new address to address book — called inside handleConfirmOrder ──────
+  const saveNewAddressToBook = async (isPickupArg: boolean) => {
+    if (isPickupArg || addressTab !== "new") return;
+    if (!newAddr.fullName.trim() || !newAddr.mobile.trim() || !newAddr.districtId || !newAddr.areaId) return;
+    try {
+      await api.post(
+        "new-address-book",
+        {
+          fullName:        newAddr.fullName.trim(),
+          mobileNo:        newAddr.mobile.trim(),
+          addressLabel:    newAddr.addressLabel || "Home",
+          addressLine1:    newAddr.addressLine1.trim(),
+          districtID:      Number(newAddr.districtId),
+          policeStationID: Number(newAddr.areaId),
+          isDefault:       false,
+          isActive:        true,
+        },
+        { headers: { Authorization: authHeader, "X-API-Key": apiKey || "" } }
+      );
+    } catch {
+      // Silently ignore — address save failure should not block order success
+    }
+  };
+
   const breadcrumbItems = [{ label: "Home", href: "/" }, { label: "Cart", href: "/cart" }, { label: "Checkout", href: "#" }];
 
   // ── Order Submit ──────────────────────────────────────────────────────────
@@ -550,14 +574,15 @@ export default function CheckoutPageCom() {
       if (paymentOption === "full_online" || paymentOption === "booking") {
         if (paymentGateway === "ssl") {
           const r = await api.post<SslPayResponse>("/api/tokenized/v1/sslcommerz-pay", { orderToken }, { headers: { Authorization: authHeader, "X-API-Key": apiKey || "" } });
-          if (r?.GatewayPageURL) { dispatch(clearCart()); window.location.href = r.GatewayPageURL; return; }
+          if (r?.GatewayPageURL) { await saveNewAddressToBook(isPickup); dispatch(clearCart()); window.location.href = r.GatewayPageURL; return; }
           toast.error(r?.message || "SSLCommerz failed.");
         } else {
           const r = await api.post<BkashPayResponse>("/api/tokenized/v1/bkash-pay", { orderToken }, { headers: { Authorization: authHeader, "X-API-Key": apiKey || "" } });
-          if (r?.bkashURL) { dispatch(clearCart()); window.location.href = r.bkashURL; return; }
+          if (r?.bkashURL) { await saveNewAddressToBook(isPickup); dispatch(clearCart()); window.location.href = r.bkashURL; return; }
           toast.error(r?.message || "bKash failed.");
         }
       } else {
+        await saveNewAddressToBook(isPickup);
         dispatch(clearCart());
         setConfirmedOrder({ orderNo: resInvoice.data.orderNo || `DZL-${Date.now()}`, total: resEx.data?.total || total });
         setOrderConfirmed(true);

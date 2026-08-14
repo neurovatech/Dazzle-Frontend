@@ -114,6 +114,7 @@ export default async function SubCategoriesPage({
   } catch (error) {
     console.error("Error fetching sub-category products:", error);
   }
+  console.log(productData, "productDataproductDataproductData")
 
   try {
     const res = await api.get<WebBannerResponse>(
