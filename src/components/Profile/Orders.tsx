@@ -415,7 +415,7 @@ const Orders: React.FC<OrdersProps> = () => {
 
             {/* ── Product rows — show each item from comerzOrderItems ── */}
             {order.comerzOrderItems && order.comerzOrderItems.length > 0 ? (
-              order.comerzOrderItems.map((item) => (
+              order.comerzOrderItems.map((item:any) => (
                 <div key={item.comerzOrderItemUUID} className="border-t border-gray-100 dark:border-zinc-800 px-4 py-3 flex items-center gap-3">
                   <div className="w-8 h-8 bg-gray-100 dark:bg-zinc-700 rounded-md flex items-center justify-center shrink-0">
                     <Package size={13} className="text-gray-400" />
