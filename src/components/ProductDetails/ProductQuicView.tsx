@@ -51,18 +51,21 @@ function ProductQuicView({
 }: ProductQuicViewProps) {
   const dispatch = useAppDispatch();
   const cartItems = useAppSelector((state) => state.cart.items);
+  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
   const router = useRouter();
-
-  console.log(productUuid, "productUuidproductUuidproductUuidproductUuidproductUuid")
 
   const [open, setOpen] = useState(false);
   const [product, setProduct] = useState<ProductApiData | null>(null);
-  const [variantApiData, setVariantApiData] = useState<VariantApiResponse | null>(null);
+  const [variantApiData, setVariantApiData] =
+    useState<VariantApiResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingBuyNow, setLoadingBuyNow] = useState(false);
   const [qty, setQty] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
-  const [selectedAttrs, setSelectedAttrs] = useState<Record<string, string>>({});
+  const [selectedAttrs, setSelectedAttrs] = useState<Record<string, string>>(
+    {},
+  );
+  const [showLoginWarning, setShowLoginWarning] = useState(false);
 
   // Fetch product data & variants when modal opens
   useEffect(() => {
@@ -83,11 +86,15 @@ function ProductQuicView({
           const pUuid = res.data.productUuid || productUuid;
           if (pUuid) {
             api
-              .get<VariantApiResponse>(`/product-variants/${pUuid}`, { cache: "no-store" })
+              .get<VariantApiResponse>(`/product-variants/${pUuid}`, {
+                cache: "no-store",
+              })
               .then((vRes) => {
                 if (vRes?.data) setVariantApiData(vRes);
               })
-              .catch((vErr) => console.error("[QuickView] variant fetch failed:", vErr));
+              .catch((vErr) =>
+                console.error("[QuickView] variant fetch failed:", vErr),
+              );
           }
         }
       })
@@ -100,7 +107,7 @@ function ProductQuicView({
   // Consolidate Variants
   const { groups, variants } = useMemo(
     () => consolidateVariants(variantApiData?.data ?? []),
-    [variantApiData]
+    [variantApiData],
   );
 
   // Set default selected attributes when variants load
@@ -108,18 +115,23 @@ function ProductQuicView({
     if (groups.length === 0) return;
     const initial: Record<string, string> = {};
     groups.forEach((group) => {
-      const firstVal = variants.find((v) => v.attributes[group])?.attributes[group];
+      const firstVal = variants.find((v) => v.attributes[group])?.attributes[
+        group
+      ];
       if (firstVal) initial[group] = firstVal;
     });
     setSelectedAttrs(initial);
   }, [groups, variants]);
 
   const selectedVariant: ConsolidatedVariant | null = useMemo(() => {
-    if (groups.length === 0 || Object.keys(selectedAttrs).length < groups.length)
+    if (
+      groups.length === 0 ||
+      Object.keys(selectedAttrs).length < groups.length
+    )
       return null;
     return (
       variants.find((v) =>
-        groups.every((g) => v.attributes[g] === selectedAttrs[g])
+        groups.every((g) => v.attributes[g] === selectedAttrs[g]),
       ) ?? null
     );
   }, [groups, variants, selectedAttrs]);
@@ -130,7 +142,7 @@ function ProductQuicView({
         v.attributes[group] === option &&
         Object.entries(selectedAttrs)
           .filter(([g]) => g !== group)
-          .every(([g, val]) => v.attributes[g] === val)
+          .every(([g, val]) => v.attributes[g] === val),
     );
 
   const groupOptions = useMemo(
@@ -142,12 +154,12 @@ function ProductQuicView({
             ...new Set(
               variants
                 .map((v) => v.attributes[group])
-                .filter((val): val is string => !!val && val.trim() !== "")
+                .filter((val): val is string => !!val && val.trim() !== ""),
             ),
           ],
-        ])
+        ]),
       ),
-    [groups, variants]
+    [groups, variants],
   );
 
   const colorGroupName = groups.find((g) => g.toLowerCase() === "color");
@@ -167,20 +179,30 @@ function ProductQuicView({
   }, [product, fallbackImage]);
 
   // Derived image list based on selected color variant
+  const colorOptions = colorGroupName ? (groupOptions[colorGroupName] ?? []) : [];
+
   const images: string[] = useMemo(() => {
     if (!colorGroupName || !selectedAttrs[colorGroupName]) return baseImages;
 
     const selectedColorVal = selectedAttrs[colorGroupName];
-    const colorVariantImages = variants
-      .filter(
-        (v) =>
-          v.attributes[colorGroupName] === selectedColorVal && v.thumbnailUrl
-      )
-      .map((v) => v.thumbnailUrl);
 
+    // ① Try variant thumbnailUrl (preferred)
+    const colorVariantImages = variants
+      .filter((v) => v.attributes[colorGroupName] === selectedColorVal && v.thumbnailUrl)
+      .map((v) => v.thumbnailUrl);
     const uniqueColorImages = [...new Set(colorVariantImages)];
-    return uniqueColorImages.length > 0 ? uniqueColorImages : baseImages;
-  }, [colorGroupName, selectedAttrs, variants, baseImages]);
+    if (uniqueColorImages.length > 0) return uniqueColorImages;
+
+    // ② Fallback: baseImages[colorIndex] — each color maps to its index position
+    const colorIdx = colorOptions.indexOf(selectedColorVal);
+    if (colorIdx >= 0 && baseImages[colorIdx]) {
+      const primary = baseImages[colorIdx];
+      const rest = baseImages.filter((_, i) => i !== colorIdx);
+      return [primary, ...rest];
+    }
+
+    return baseImages;
+  }, [colorGroupName, selectedAttrs, variants, baseImages, colorOptions]);
 
   // Color & Text variant groups
   const colorVariantGroups = colorGroupName
@@ -188,14 +210,16 @@ function ProductQuicView({
         {
           label: colorGroupName,
           type: "color" as const,
-          options: (groupOptions[colorGroupName] ?? []).map((val) => {
+          options: (groupOptions[colorGroupName] ?? []).map((val, idx) => {
             const match = variants.find(
-              (v) => v.attributes[colorGroupName] === val && v.thumbnailUrl
+              (v) => v.attributes[colorGroupName] === val && v.thumbnailUrl,
             );
+            // If no variant thumbnail, use baseImages[idx] so each color shows its own image
+            const fallbackImg = baseImages[idx] || baseImages[0] || undefined;
             return {
               label: val,
               value: val,
-              image: match?.thumbnailUrl,
+              image: match?.thumbnailUrl || fallbackImg,
               disabled: !isOptionAvailable(colorGroupName, val),
             };
           }),
@@ -226,7 +250,7 @@ function ProductQuicView({
     ? selectedVariant.name.startsWith(product?.productName ?? "")
       ? selectedVariant.name
       : `${product?.productName ?? fallbackTitle ?? "Product"} ${selectedVariant.name}`
-    : product?.productName ?? fallbackTitle ?? "Product";
+    : (product?.productName ?? fallbackTitle ?? "Product");
 
   const displayPrice =
     selectedVariant?.price && selectedVariant.price > 0
@@ -238,11 +262,12 @@ function ProductQuicView({
       ? selectedVariant.mrp
       : (product?.regularPrice ?? 0);
 
-  const displayBrand    = product?.brandName       ?? "";
-  const displayCode     = product?.productCode     ?? "";
-  const displayInStock  = product != null ? product.isActive : true;
-  const displaySlug     = product?.productSlug     ?? slug ?? "";
-  const displayId       = selectedVariant?.id      ?? product?.productUuid ?? productUuid ?? slug ?? "";
+  const displayBrand = product?.brandName ?? "";
+  const displayCode = product?.productCode ?? "";
+  const displayInStock = product != null ? product.isActive : true;
+  const displaySlug = product?.productSlug ?? slug ?? "";
+  const displayId =
+    selectedVariant?.id ?? product?.productUuid ?? productUuid ?? slug ?? "";
 
   const currentImage = images[selectedImage] || fallbackImage || NoImg.src;
 
@@ -254,39 +279,39 @@ function ProductQuicView({
   const badges = (() => {
     const list: { label: string; color: string }[] = [];
     if (discount > 0) list.push({ label: `${discount}%`, color: "pink" });
-    if (product?.productBadge) list.push({ label: product.productBadge, color: "purple" });
+    if (product?.productBadge)
+      list.push({ label: product.productBadge, color: "purple" });
     return list;
   })();
 
-interface DefaultVariantResponse {
-  statusCode: number;
-  status: string;
-  message?: string;
-  data?: {
-    productUUID: string;
-    variantUUID: string;
-    regularPrice: number;
-    offerPrice: number;
-    wholeSalePrice: number;
-    thumbnailURL: string;
-    isTba: boolean;
-  };
-}
+  interface DefaultVariantResponse {
+    statusCode: number;
+    status: string;
+    message?: string;
+    data?: {
+      productUUID: string;
+      variantUUID: string;
+      regularPrice: number;
+      offerPrice: number;
+      wholeSalePrice: number;
+      thumbnailURL: string;
+      isTba: boolean;
+    };
+  }
 
-  const handleAddToCart:any = async (options?: { showToast?: boolean }) => {
+  const handleAddToCart: any = async (options?: { showToast?: boolean }) => {
     const pUuid = product?.productUuid || productUuid || "";
 
     let variantUUID = selectedVariant?.id || displayId;
     let finalPrice = displayPrice;
     let finalRegPrice = displayOriginal;
     let finalImage = currentImage;
-    let finalIsTba = !displayInStock; 
-
+    let finalIsTba = !displayInStock;
 
     if (pUuid && !selectedVariant) {
       try {
         const res = await api.get<DefaultVariantResponse>(
-          `/get-default-variant/${pUuid.trim()}?priceSort=0&userDefine=1`
+          `/get-default-variant/${pUuid.trim()}?priceSort=0&userDefine=1`,
         );
         if (res?.data) {
           variantUUID = res.data.variantUUID || variantUUID;
@@ -309,7 +334,7 @@ interface DefaultVariantResponse {
     }
 
     const isAlreadyInCart = cartItems.some(
-      (item) => item.id === variantUUID || item.variantUuid === variantUUID
+      (item) => item.id === variantUUID || item.variantUuid === variantUUID,
     );
 
     if (isAlreadyInCart) {
@@ -321,18 +346,18 @@ interface DefaultVariantResponse {
 
     dispatch(
       addToCart({
-        id:            variantUUID,
-        productUuid:   pUuid,
-        variantUuid:   variantUUID,
-        name:          displayTitle,
-        brand:         displayBrand,
-        image:         finalImage,
-        price:         finalPrice,
+        id: variantUUID,
+        productUuid: pUuid,
+        variantUuid: variantUUID,
+        name: displayTitle,
+        brand: displayBrand,
+        image: finalImage,
+        price: finalPrice,
         originalPrice: finalRegPrice,
-        quantity:      qty,
-        inStock:       !finalIsTba,
-        slug:          displaySlug,
-      })
+        quantity: qty,
+        inStock: !finalIsTba,
+        slug: displaySlug,
+      }),
     );
     if (options?.showToast !== false) {
       toast.success(`${displayTitle} added to cart! 🛒`);
@@ -341,15 +366,47 @@ interface DefaultVariantResponse {
     return true;
   };
 
+  // const handleBuyNow = async () => {
+
+  //   if (!isAuthenticated) {
+  //     setLoadingBuyNow(false);
+  //     return;
+  //   }
+
+  //   setLoadingBuyNow(true);
+  //   try {
+  //     const success = await handleAddToCart({ showToast: false });
+  //     if (success) {
+  //       router.push("/checkout");
+  //     }
+  //   } catch (err) {
+  //     console.error("[QuickView] Buy now error:", err);
+  //   } finally {
+  //     setLoadingBuyNow(false);
+  //   }
+  // };
+
   const handleBuyNow = async () => {
+    if (!isAuthenticated) {
+      setShowLoginWarning(true);
+      return;
+    }
+
+    setShowLoginWarning(false); // logged in thakle warning hide
+
+    if (loadingBuyNow) return;
+
     setLoadingBuyNow(true);
     try {
-      const success = await handleAddToCart({ showToast: false });
+      const success = await handleAddToCart();
       if (success) {
         router.push("/checkout");
+      } else {
+        toast.error("Failed to add item to cart");
       }
     } catch (err) {
-      console.error("[QuickView] Buy now error:", err);
+      console.error("[StickyPurchaseBar] Buy now error:", err);
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setLoadingBuyNow(false);
     }
@@ -357,7 +414,13 @@ interface DefaultVariantResponse {
 
   return (
     <div>
-      <GlobalModal isOpen={open} onClose={() => setOpen(false)}>
+      <GlobalModal
+        isOpen={open}
+        onClose={() => {
+          setOpen(false);
+          setShowLoginWarning(false);
+        }}
+      >
         <div className="p-5 overflow-y-auto scrollbar-hide md:max-h-138 max-h-132">
           {/* ── Image Gallery ── */}
           <div className="relative">
@@ -425,7 +488,10 @@ interface DefaultVariantResponse {
               </span>
               {displayCode && (
                 <span className="text-gray-500 dark:text-gray-400">
-                  Code: <span className="font-semibold text-gray-800 dark:text-white">#{displayCode}</span>
+                  Code:{" "}
+                  <span className="font-semibold text-gray-800 dark:text-white">
+                    #{displayCode}
+                  </span>
                 </span>
               )}
             </div>
@@ -471,7 +537,9 @@ interface DefaultVariantResponse {
 
               {/* Quantity selector */}
               <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Qty:</span>
+                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  Qty:
+                </span>
                 <div className="flex items-center border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden">
                   <button
                     onClick={() => setQty((q) => Math.max(1, q - 1))}
@@ -493,7 +561,8 @@ interface DefaultVariantResponse {
             </div>
 
             {/* Variant selector */}
-            {(colorVariantGroups.length > 0 || otherVariantGroups.length > 0) && (
+            {(colorVariantGroups.length > 0 ||
+              otherVariantGroups.length > 0) && (
               <div className="border border-[#e7e7e7] dark:border-[#4a3f36] bg-[#f7f7f7] dark:bg-[#3e3329] text-black dark:text-white rounded-2xl p-4 mt-4">
                 {colorVariantGroups.length > 0 && (
                   <ProductColorVariants
@@ -501,7 +570,7 @@ interface DefaultVariantResponse {
                     selectedValues={selectedAttrs}
                     onChange={(sel) =>
                       Object.entries(sel).forEach(([g, v]) =>
-                        handleVariantChange(g, v)
+                        handleVariantChange(g, v),
                       )
                     }
                   />
@@ -608,20 +677,56 @@ interface DefaultVariantResponse {
               </Link>
             )}
           </div>
+
+          {showLoginWarning && (
+            <div className="mt-4 flex items-center justify-start gap-2 rounded-lg border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/30 px-4 py-3 text-center text-sm text-amber-800 dark:text-amber-400">
+              <svg
+                className="w-4 h-4 shrink-0"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
+                />
+              </svg>
+              <span>
+                Please{" "}
+                <Link
+                  href="/auth/login"
+                  className=" text-gray-600 font-bold hover:underline"
+                >
+                  log in
+                </Link>{" "}
+                to continue with your purchase.
+              </span>
+            </div>
+          )}
         </div>
 
         {/* ── Footer Buttons ── */}
         <div className="rounded-b-2xl gap-4 bg-white p-4 shadow-[0px_-4px_26.6px_6px_#0000002B] flex items-center justify-between dark:bg-[#3d3228]">
-          {/* isTba true হলে NOT IN STOCK দেখাও, নাহলে ADD TO CART দেখাও */}
           {!displayInStock ? (
             <button
               disabled
               className="border border-gray-200 bg-gray-100 text-gray-400 px-4 py-2 rounded-md w-full justify-center flex items-center gap-2 cursor-not-allowed font-semibold opacity-70"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                strokeWidth={2} stroke="currentColor" className="w-4 h-4 shrink-0"
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+                className="w-4 h-4 shrink-0"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
+                />
               </svg>
               NOT IN STOCK
             </button>
@@ -644,9 +749,24 @@ interface DefaultVariantResponse {
           >
             {loadingBuyNow ? (
               <span className="flex items-center gap-2">
-                <svg className="w-4 h-4 animate-spin shrink-0" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                <svg
+                  className="w-4 h-4 animate-spin shrink-0"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v8H4z"
+                  />
                 </svg>
                 Processing...
               </span>

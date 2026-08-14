@@ -173,21 +173,34 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
         ? [product.thumbnailImg]
         : [];
 
+  // ── Color options list (for index-based image lookup) ──────────
+  const colorOptions = colorGroupName ? (groupOptions[colorGroupName] ?? []) : [];
+
   const images: string[] = useMemo(() => {
     if (!colorGroupName || !selectedAttrs[colorGroupName]) return baseImages;
 
     const selectedColorVal = selectedAttrs[colorGroupName];
-    const colorVariantImages = variants
-      .filter(
-        (v) =>
-          v.attributes[colorGroupName] === selectedColorVal && v.thumbnailUrl,
-      )
-      .map((v) => v.thumbnailUrl);
 
+    // ① Try variant thumbnailUrl (preferred)
+    const colorVariantImages = variants
+      .filter((v) => v.attributes[colorGroupName] === selectedColorVal && v.thumbnailUrl)
+      .map((v) => v.thumbnailUrl);
     const uniqueColorImages = [...new Set(colorVariantImages)];
-    return uniqueColorImages.length > 0 ? uniqueColorImages : baseImages;
+    if (uniqueColorImages.length > 0) return uniqueColorImages;
+
+    // ② Fallback: use baseImages[colorIndex] as the primary image
+    // Each color maps to a baseImage by its position in the color options list
+    const colorIdx = colorOptions.indexOf(selectedColorVal);
+    if (colorIdx >= 0 && baseImages[colorIdx]) {
+      // Show the color-specific image first, then rest of baseImages
+      const primary = baseImages[colorIdx];
+      const rest = baseImages.filter((_, i) => i !== colorIdx);
+      return [primary, ...rest];
+    }
+
+    return baseImages;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [colorGroupName, selectedAttrs, variants, baseImages]);
+  }, [colorGroupName, selectedAttrs, variants, baseImages, colorOptions]);
 
   // ── Color variant groups for ProductColorVariants ──────────────
   const colorVariantGroups = colorGroupName
@@ -199,11 +212,12 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
             const match = variants.find(
               (v) => v.attributes[colorGroupName] === val && v.thumbnailUrl,
             );
-            // const fallbackImg = baseImages[idx] || baseImages[0] || IPHONE_ORANGE.src;
+            // If no variant thumbnail, use baseImages[idx] so each color shows its image
+            const fallbackImg = baseImages[idx] || baseImages[0] || undefined;
             return {
               label: val,
               value: val,
-              image: match?.thumbnailUrl,
+              image: match?.thumbnailUrl || fallbackImg,
               disabled: !isOptionAvailable(colorGroupName, val),
             };
           }),

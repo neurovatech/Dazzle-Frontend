@@ -152,24 +152,30 @@ export default function StickyPurchaseBar({
     return true;
   };
 
-  const handleBuyNow = async () => {
-    // Not logged in → show login modal
-    if (!isAuthenticated) {
-      setShowLoginModal(true);
-      return;
+ const handleBuyNow = async () => {
+  if (!isAuthenticated) {
+    toast.error("Please log in to continue with your purchase.");
+    setShowLoginModal(true);
+    return;
+  }
+
+  if (isUnavailable || loadingBuyNow) return;
+
+  setLoadingBuyNow(true);
+  try {
+    const success = await handleAddToCart();
+    if (success) {
+      router.push("/checkout");
+    } else {
+      toast.error("Failed to add item to cart");
     }
-    setLoadingBuyNow(true);
-    try {
-      const success = handleAddToCart();
-      if (success) {
-        router.push("/checkout");
-      }
-    } catch (err) {
-      console.error("[StickyPurchaseBar] Buy now error:", err);
-    } finally {
-      setLoadingBuyNow(false);
-    }
-  };
+  } catch (err) {
+    console.error("[StickyPurchaseBar] Buy now error:", err);
+    toast.error("Something went wrong. Please try again.");
+  } finally {
+    setLoadingBuyNow(false);
+  }
+};
 
   return (
     <div>

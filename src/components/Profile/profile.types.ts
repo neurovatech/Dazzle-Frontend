@@ -16,23 +16,44 @@ export interface WishlistItem {
 }
 
 export interface ApiOrderItem {
-  productName: string;
+  productName?: string;
   comerzOrderNo: string;
   createdAt: string;
-  paymentType: string;
-  paymentMethod: string;
-  deliveryMethod: string;
+  // New boolean flags from updated API
+  isHomeDelivery: boolean;
+  isStorePickup: boolean;
+  isShopPickup?: boolean;
+  isFullPaymentAtStore: boolean;
+  orderStatus?: string;
+  // Legacy string fields (kept for compatibility)
+  paymentType?: string;
+  paymentMethod?: string;
+  deliveryMethod?: string;
+  // Financials
   productCount: number;
   productPrice: number;
   deliveryFee: number;
   discount: number;
   subTotal: number;
   paidAmount: number;
+  codCharge?: number;
+  roundOff?: number;
+  grandTotal?: number;
   total: number;
   isFullPaid: boolean;
+  isOrderExecuted?: boolean;
   isDelivered: boolean;
   isCancelled: boolean;
-  isShopPickup: boolean;
+  // Product items (from order-list API)
+  comerzOrderItems?: {
+    comerzOrderItemUUID: string;
+    productName: string;
+    variantName?: string;
+    offerPrice: number;
+    minBookingPrice: number;
+    discount: number;
+    finalPrice: number;
+  }[];
 }
 
 export interface OrderListResponse {

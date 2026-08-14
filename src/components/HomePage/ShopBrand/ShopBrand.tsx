@@ -48,7 +48,7 @@ export default async function ShopBrand() {
           See all
         </Link>
       </div>
-      <div className="md:p-4">
+      <div className="md:p-4 pt-4">
         <div className="grid grid-cols-4 md:grid-cols-4 lg:grid-cols-8 gap-3">
           {brands?.map((item) => (
             <Link

@@ -413,22 +413,37 @@ const Orders: React.FC<OrdersProps> = () => {
               </div>
             </div>
 
-            {/* ── Product rows ── */}
-            {order.productCount > 0 && (
+            {/* ── Product rows — show each item from comerzOrderItems ── */}
+            {order.comerzOrderItems && order.comerzOrderItems.length > 0 ? (
+              order.comerzOrderItems.map((item) => (
+                <div key={item.comerzOrderItemUUID} className="border-t border-gray-100 dark:border-zinc-800 px-4 py-3 flex items-center gap-3">
+                  <div className="w-8 h-8 bg-gray-100 dark:bg-zinc-700 rounded-md flex items-center justify-center shrink-0">
+                    <Package size={13} className="text-gray-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-gray-700 dark:text-gray-300 font-medium truncate">
+                      {item.productName}{item.variantName ? ` — ${item.variantName}` : ""}
+                    </p>
+                    <p className="text-[11px] text-gray-400 mt-0.5">Qty: 1</p>
+                  </div>
+                  <p className="text-xs font-semibold text-[#B57908] shrink-0">
+                    ৳{item.finalPrice.toLocaleString("en-IN")}
+                  </p>
+                </div>
+              ))
+            ) : order.productCount > 0 ? (
               <div className="border-t border-gray-100 dark:border-zinc-800 px-4 py-3 flex items-center gap-3">
                 <div className="w-8 h-8 bg-gray-100 dark:bg-zinc-700 rounded-md flex items-center justify-center shrink-0">
                   <Package size={13} className="text-gray-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-gray-700 dark:text-gray-300 font-medium truncate">
-                    {order.comerzOrderItems?.map((item: any) => item.productName).join(", ")}
-                    &nbsp;·&nbsp;{payLabel(order.paymentType)}
-                    &nbsp;·&nbsp;{order.deliveryMethod || "Regular Delivery"}
+                  <p className="text-xs text-gray-700 dark:text-gray-300 font-medium">
+                    {order.productCount} product{order.productCount !== 1 ? "s" : ""}
                   </p>
                   <p className="text-[11px] text-gray-400 mt-0.5">Qty: {order.productCount}</p>
                 </div>
               </div>
-            )}
+            ) : null}
           </div>
         ))}
 

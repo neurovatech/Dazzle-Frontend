@@ -32,10 +32,13 @@ export default function CartPageCom() {
   const cartItems = useAppSelector((state) => state.cart.items);
   const token = useAppSelector((state) => state.auth.token);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleCheckout = () => {
+    setIsLoading(true);
     if (!token) {
       setShowLoginModal(true);
+      setIsLoading(false);
     } else {
       router.push("/checkout");
     }
@@ -111,8 +114,7 @@ export default function CartPageCom() {
     maximumFractionDigits: selectedCurrency === "BDT" ? 0 : 2,
   });
 
-  console.log(cartItems, "cartItemscartItemscartItemscartItems")
-
+  console.log(cartItems, "cartItemscartItemscartItemscartItems");
 
   return (
     <div className="flex flex-col flex-1 max-w-355 mx-auto">
@@ -189,8 +191,6 @@ export default function CartPageCom() {
               </div>
               <hr className="border-dashed border-gray-300 dark:border-gray-600" />
 
-             
-
               <div className="flex justify-between my-4">
                 <span className="text-sm text-gray-500 dark:text-gray-300">
                   Total
@@ -209,9 +209,33 @@ export default function CartPageCom() {
                 </Link>
                 <button
                   onClick={handleCheckout}
-                  className="flex-1 inline-flex items-center justify-center text-sm font-medium text-white hover:opacity-80 transition bg-[#101518] dark:bg-[#2a2420] rounded-lg px-3 py-3 cursor-pointer"
+                  disabled={isLoading}
+                  className="flex-1 inline-flex items-center justify-center text-sm font-medium text-white hover:opacity-80 transition bg-[#101518] dark:bg-[#2a2420] rounded-lg px-3 py-3 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  Checkout
+                  {isLoading ? (
+                    <svg
+                      className="animate-spin h-4 w-4 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                      ></path>
+                    </svg>
+                  ) : (
+                    "Checkout"
+                  )}
                 </button>
               </div>
             </div>
@@ -296,9 +320,12 @@ export default function CartPageCom() {
 
             {/* Text */}
             <div className="text-center">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1">Login Required</h2>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
+                Login Required
+              </h2>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Please log in to proceed to checkout. Your cart items will be saved.
+                Please log in to proceed to checkout. Your cart items will be
+                saved.
               </p>
             </div>
 

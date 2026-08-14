@@ -20,7 +20,35 @@ import { api } from "@/lib/api";
 // ─── API Types ────────────────────────────────────────────────────────────────
 interface CreateInvoiceResponse { statusCode: number; status: string; message: string; data?: { orderToken: string; orderNo: string }; errors?: string[]; }
 interface CreateOrderProductResponse { statusCode: number; status: string; message: string; errors?: string[]; }
-interface ExecuteOrderResponse { statusCode: number; status: string; message: string; data?: { orderToken: string; orderNo: string; total: number; }; errors?: string[]; }
+interface ExecuteOrderResponse {
+  statusCode: number;
+  status: string;
+  message: string;
+  data?: {
+    orderToken: string;
+    orderNo: string;
+    fullName?: string;
+    isHomeDelivery?: boolean;
+    isStorePickup?: boolean;
+    isBkashPay?: boolean;
+    isSSLCommerzPay?: boolean;
+    isCashOnDelivery?: boolean;
+    isFullPaymentAtStore?: boolean;
+    orderStatus?: string;
+    productCount?: number;
+    productPrice?: number;
+    deliveryFee?: number;
+    discount?: number;
+    subTotal?: number;
+    paidAmount?: number;
+    codCharge?: number;
+    roundOff?: number;
+    grandTotal?: number;
+    total?: number;
+    isFullPaid?: boolean;
+  };
+  errors?: string[];
+}
 interface SslPayResponse { statusCode: number; status: string; GatewayPageURL?: string; message?: string; }
 interface BkashPayResponse { statusCode: number; status: string; bkashURL?: string; message?: string; }
 interface AddressBookItem { addressUuid: string; fullName: string; mobileNo: string; addressLabel?: string; addressLine1: string; addressLine2?: string; isDefault: boolean; isActive: boolean; districtID: number; policeStationID: number; }
@@ -441,17 +469,46 @@ export default function CheckoutPageCom() {
     setIsSubmitting(true);
     try {
       const browserToken = `web-session-${apiKey}-${Date.now()}`;
-      const apiPaymentType = paymentOption === "cod" ? "COD" : paymentOption === "booking" ? "Partial" : "OP";
-      const apiPaymentMethod = (paymentOption === "full_online" || paymentOption === "booking")
-        ? (paymentGateway === "bkash" ? "bkash" : "sslcommerz") : "";
-      const apiDeliveryMethod = isPickup ? "ShopPickup"
-        : serviceLevel === "extreme" ? "Extreme" : serviceLevel === "express" ? "Express"
-        : serviceLevel === "same_day" ? "SameDay" : "Regular";
 
-      const invoicePayload: any = { usersCommUuid: apiKey, browserToken, paymentType: apiPaymentType,
-        paymentMethod: apiPaymentMethod, deliveryMethod: apiDeliveryMethod, remarks: remarks.trim(), isShopPickup: isPickup };
-      if (isPickup) invoicePayload.storeUuid = selectedStoreUuid;
-      else { Object.assign(invoicePayload, { userFullName, email, mobile, addressLabel, districtId, areaId }); }
+      // ── New API: all boolean flags ────────────────────────────────────────
+      const invoicePayload: any = {
+        usersCommUuid: apiKey,
+        browserToken,
+        remarks: remarks.trim() || undefined,
+
+        // Delivery type flags
+        isShopPickup:    isPickup,
+        isHomeDelivery:  !isPickup,
+
+        // Delivery service flags (mutually exclusive)
+        isRegularDelivery:  !isPickup && serviceLevel === "regular",
+        isExtremeDelivery:  !isPickup && serviceLevel === "extreme",
+        isExpressDelivery:  !isPickup && serviceLevel === "express",
+        isSameDayDelivery:  !isPickup && serviceLevel === "same_day",
+
+        // Payment type flags
+        isFullPayment:       paymentOption === "full_online",
+        isBookingMoney:      paymentOption === "booking",
+        isCashOnDelivery:    paymentOption === "cod",
+        isFullPaymentAtStore: paymentOption === "full_at_store",
+
+        // Payment gateway flags
+        isBkashPay:      (paymentOption === "full_online" || paymentOption === "booking") && paymentGateway === "bkash",
+        isSSLCommerzPay: (paymentOption === "full_online" || paymentOption === "booking") && paymentGateway === "ssl",
+      };
+
+      // Pickup-specific fields
+      if (isPickup) {
+        invoicePayload.storeUuid = selectedStoreUuid;
+      } else {
+        // Home delivery address fields
+        invoicePayload.mobile        = mobile;
+        invoicePayload.addressLabel  = addressLabel;
+        invoicePayload.addressLine1  = newAddr.addressLine1 || (savedAddresses.find(a => a.addressUuid === selectedAddressUuid)?.addressLine1 ?? "");
+        invoicePayload.addressLine2  = savedAddresses.find(a => a.addressUuid === selectedAddressUuid)?.addressLine2 || undefined;
+        invoicePayload.districtId    = districtId;
+        invoicePayload.areaId        = areaId;
+      }
 
       const resInvoice = await api.post<CreateInvoiceResponse>("/api/tokenized/v1/create-order-invoice", invoicePayload,
         { headers: { Authorization: authHeader, "X-API-Key": apiKey || "" } });
@@ -462,10 +519,27 @@ export default function CheckoutPageCom() {
 
       for (const item of cartItems) {
         for (let q = 0; q < item.quantity; q++) {
-          const res = await api.post<CreateOrderProductResponse>("/api/tokenized/v1/create-order-product",
-            { productUuid: item.productUuid || item.id, variantUuid: item.variantUuid || item.id, usersCommUuid: apiKey, orderToken, accessoriesUuid: item.accessoriesUuid || "" },
-            { headers: { Authorization: authHeader, "X-API-Key": apiKey || "" } });
-          if (!res || res.status !== "success") { toast.error(res?.errors?.join(", ") || "Failed to add product."); setIsSubmitting(false); return; }
+          const productPayload: any = {
+            productUuid:   item.productUuid || item.id,
+            variantUuid:   item.variantUuid || item.id,
+            usersCommUuid: apiKey,
+            orderToken,
+          };
+          // accessoriesUuid is optional — only include if non-empty
+          if (item.accessoriesUuid && item.accessoriesUuid.trim()) {
+            productPayload.accessoriesUuid = item.accessoriesUuid.trim();
+          }
+
+          const res = await api.post<CreateOrderProductResponse>(
+            "/api/tokenized/v1/create-order-product",
+            productPayload,
+            { headers: { Authorization: authHeader, "X-API-Key": apiKey || "" } }
+          );
+          if (!res || res.status !== "success") {
+            toast.error(res?.errors?.join(", ") || res?.message || "Failed to add product.");
+            setIsSubmitting(false);
+            return;
+          }
         }
       }
 
@@ -497,7 +571,7 @@ export default function CheckoutPageCom() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#111] py-6 sm:py-8 font-sans">
+    <div className="min-h-screen bg-[#fffbf6] dark:bg-[#2e2b28] dark:bg-[#111] py-6 sm:py-8 font-sans">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <Breadcrumb items={breadcrumbItems} />
         <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white mt-4 mb-6">Checkout</h1>
