@@ -14,7 +14,7 @@ interface District {
 // ─── SEO ──────────────────────────────────────────────────────────────────────
 
 export const metadata: Metadata = {
-  title: "Store Locations - Dazzle",
+  title: "Store Locations",
   description:
     "Find a Dazzle store near you. Visit our branches across Bangladesh for the best smartphones, laptops, and gadgets.",
 };
@@ -31,8 +31,8 @@ const breadcrumbItems = [
 export default async function ShopLocations() {
   // Fetch districts + all stores in parallel via SSR
   const [districtsRes, allStoresRes] = await Promise.allSettled([
-    api.get<{ data: District[] }>("/store-district", { cache: "no-store" }),
-    api.get<{ data: StoreItem[] }>("/stores", { cache: "no-store" }),
+    api.get<{ data: District[] }>("/store-district", { next: { revalidate: 60 } }),
+    api.get<{ data: StoreItem[] }>("/stores", { next: { revalidate: 60 } }),
   ]);
 
   const districts: District[] =

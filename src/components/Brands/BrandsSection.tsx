@@ -14,7 +14,7 @@ export default async function BrandsSection() {
   try {
     const res = await api.get<{ data: Record<string, unknown>[] }>(
       "/brands?order01&page=1&limit=8",
-      { cache: "no-store" }
+      { next: { revalidate: 60 } }
     );
 
     const list = Array.isArray(res) ? res : res?.data ?? [];

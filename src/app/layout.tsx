@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Urbanist } from "next/font/google";
 import "./globals.css";
+import { dehydrate } from "@tanstack/react-query";
 import { ThemeProvider } from "@/context/ThemeContext";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -10,6 +11,14 @@ import QueryProvider from "@/app/providers/QueryProvider";
 import ReduxProvider from "@/app/providers/ReduxProvider";
 import { Toaster } from "react-hot-toast";
 import { getSiteSettings, stripHtml } from "@/lib/getSiteSettings";
+import { getQueryClient } from "@/lib/query-client";
+import type { SiteSettingsData } from "@/store/slices/siteSettingsSlice";
+import JsonLd from "@/components/share/JsonLd";
+import {
+  buildJsonLd,
+  organizationSchema,
+  webSiteSchema,
+} from "@/lib/structured-data";
 
 const urbanist = Urbanist({
   subsets: ["latin"],
@@ -63,11 +72,30 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Prefetch site settings here so Footer/MainNav's useSiteSettings() hydrates
+  // instantly on the client instead of firing a second, duplicate fetch.
+  // getSiteSettings() is wrapped in React's cache(), so this reuses the same
+  // in-flight/resolved request already made above for generateMetadata().
+  const queryClient = getQueryClient();
+  await queryClient.prefetchQuery({
+    queryKey: ["siteSettings"],
+    queryFn: (): Promise<SiteSettingsData> => getSiteSettings(),
+  });
+  const dehydratedState = dehydrate(queryClient);
+
+  // Sitewide structured data. getSiteSettings() is React-cached, so this reuses
+  // the same request already made for generateMetadata and the prefetch above.
+  const settings = await getSiteSettings();
+  const siteJsonLd = buildJsonLd(
+    organizationSchema(settings),
+    webSiteSchema(settings),
+  );
+
   return (
     <html
       lang="en"
@@ -75,9 +103,10 @@ export default function RootLayout({
       className={`${urbanist.variable}  h-full antialiased`}
     >
       <body>
+        <JsonLd data={siteJsonLd} />
         <ThemeProvider>
           <ReduxProvider>
-            <QueryProvider>
+            <QueryProvider state={dehydratedState}>
               <Toaster position="top-center" reverseOrder={false} />
               <NextTopLoader
                 color="#d4a97a"

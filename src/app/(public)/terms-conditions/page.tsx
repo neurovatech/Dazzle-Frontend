@@ -4,7 +4,7 @@ import React from "react";
 import { api } from "@/lib/api";
 import TermsPagesCom from "./TermsPagesCom"
 export const metadata: Metadata = {
-  title: "Terms and Conditions - Dazzle",
+  title: "Terms and Conditions",
   description:
     "Read the Terms and Conditions of Dazzle. Review the user guidelines, account security policies, information collection rules, and liability statements.",
 };
@@ -19,7 +19,7 @@ export default async function TermsConditions() {
   try {
     const res = await api.get<{ data: Record<string, unknown>[] }>(
       "/pages/terms-condition",
-      { cache: "no-store" },
+      { next: { revalidate: 60 } },
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

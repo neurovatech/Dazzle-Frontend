@@ -14,8 +14,6 @@ export default function PriceAvailability({
   const displayOfferPrice   = (offerPrice ?? 0) + careTotalOffer;
   const displayRegularPrice = (originalPrice ?? 0) + careTotalRegular;
 
-  console.log(product, "productproductproductproduct");
-
   return (
     <div className="lg:flex gap-3 my-6">
       {/* Offer Price */}

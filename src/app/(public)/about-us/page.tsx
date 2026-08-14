@@ -5,7 +5,7 @@ import { api } from "@/lib/api";
 import ShowroomExplorer from "@/components/AboutUs/ShowroomExplorer";
 
 export const metadata: Metadata = {
-  title: "About Us - Dazzle",
+  title: "About Us",
   description:
     "Learn more about Dazzle, the ultimate destination for mobile phones, laptops, and gadgets in Bangladesh. Discover our showrooms, customer base, and services.",
 };
@@ -127,7 +127,7 @@ const stats2 = [
 export default async function AboutUs() {
   let brandsCount = 0;
   try {
-    const brands = await api.get<unknown[]>("/brands", { cache: "no-store" });
+    const brands = await api.get<unknown[]>("/brands", { next: { revalidate: 60 } });
     if (Array.isArray(brands)) {
       brandsCount = brands.length;
     }

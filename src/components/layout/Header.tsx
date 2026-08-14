@@ -46,63 +46,63 @@ interface ApiResponse {
   };
 }
 
-// ─── Main Header (Server Component) ──────────────────────────────────────────
-export default async function Header() {
-  let apiBrands:any = [];
-  let apiSubBrands:any = [];
-
-  let apiCategories: ApiCategory[] = [];
-  let apiSubCategories: ApiCategory[] = [];
-
+async function fetchCategories(): Promise<{
+  apiCategories: ApiCategory[];
+  apiSubCategories: ApiCategory[];
+}> {
   try {
-  const response = await api.get<ApiResponse>("/categories/child", {
-    cache: "no-store",
-  });
-
-  if (response?.data) {
-    const cats = Array.isArray(response.data) ? response.data : [];
-
-    apiCategories = cats
-      .filter((cat) => cat.is_active)
-      .map((cat) => ({
-        ...cat,
-        child: (cat.child ?? []).filter((sub: any) => sub.is_active),
-      }));
-    apiSubCategories = cats
-      .flatMap((cat) => cat.child ?? [])
-      .filter((sub: any) => sub.is_active)
-      .map((sub: any) => ({
-        uuid: sub.uuid,
-        category_name: sub.sub_category_name,
-        category_slug: sub.sub_category_slug,
-        thumbnail_img: sub.thumbnail_img,
-        is_featured: sub.is_featured,
-        is_active: sub.is_active,
-        child: [],
-      }));
-  }
-} catch (err) {
-  console.error("[Header] categories/brands fetch failed:", err);
-}
-
-  try {
-    const response = await api.get<ApiResponse>("/categories/brands", {
-      cache: "no-store",
+    const response = await api.get<ApiResponse>("/categories/child", {
+      next: { revalidate: 300 },
     });
 
+    if (response?.data) {
+      const cats = Array.isArray(response.data) ? response.data : [];
+
+      const apiCategories = cats
+        .filter((cat) => cat.is_active)
+        .map((cat) => ({
+          ...cat,
+          child: (cat.child ?? []).filter((sub: any) => sub.is_active),
+        }));
+      const apiSubCategories = cats
+        .flatMap((cat) => cat.child ?? [])
+        .filter((sub: any) => sub.is_active)
+        .map((sub: any) => ({
+          uuid: sub.uuid,
+          category_name: sub.sub_category_name,
+          category_slug: sub.sub_category_slug,
+          thumbnail_img: sub.thumbnail_img,
+          is_featured: sub.is_featured,
+          is_active: sub.is_active,
+          child: [],
+        }));
+      return { apiCategories, apiSubCategories };
+    }
+    return { apiCategories: [], apiSubCategories: [] };
+  } catch (err) {
+    console.error("[Header] categories/child fetch failed:", err);
+    return { apiCategories: [], apiSubCategories: [] };
+  }
+}
+
+async function fetchBrands(): Promise<{ apiBrands: any; apiSubBrands: any }> {
+  try {
+    const response = await api.get<ApiResponse>("/categories/brands", {
+      next: { revalidate: 300 },
+    });
 
     if (response?.data) {
       const cats = Array.isArray(response.data.category) ? response.data.category : [];
       const subCats = Array.isArray(response.data.subCategory) ? response.data.subCategory : [];
 
-      apiBrands = cats
+      const apiBrands = cats
         .filter((cat) => cat.is_active)
         .map((cat) => ({
           ...cat,
           child: (cat.child ?? []).filter((brand) => brand.is_active),
         }));
 
-      apiSubBrands = subCats
+      const apiSubBrands = subCats
         .filter((sub) => sub.is_active)
         .map((sub) => ({
           uuid: sub.uuid,
@@ -113,13 +113,24 @@ export default async function Header() {
           is_active: sub.is_active,
           child: (sub.child ?? []).filter((brand) => brand.is_active),
         }));
+      return { apiBrands, apiSubBrands };
     }
+    return { apiBrands: [], apiSubBrands: [] };
   } catch (err) {
     console.error("[Header] categories/brands fetch failed:", err);
+    return { apiBrands: [], apiSubBrands: [] };
   }
+}
+
+// ─── Main Header (Server Component) ──────────────────────────────────────────
+export default async function Header() {
+  const [
+    { apiCategories, apiSubCategories },
+    { apiBrands, apiSubBrands },
+  ] = await Promise.all([fetchCategories(), fetchBrands()]);
 
   const explorAllData = [...apiBrands, ...apiSubBrands]
-  
+
 
   return (
     <header

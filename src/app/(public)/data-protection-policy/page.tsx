@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import FooterPagesCom from "@/components/share/FooterPagesCom";
 
 export const metadata: Metadata = {
-  title: "Data Protection Policy - Dazzle",
+  title: "Data Protection Policy",
   description:
     "Read Dazzle's Data Protection Policy before booking your product. Learn about advance payment, delivery timeline, order confirmation, cancellation, and refund terms for pre-orders.",
 };

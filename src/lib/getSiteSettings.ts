@@ -35,7 +35,7 @@ export function stripHtml(html?: string, maxLen = 160): string {
 export const getSiteSettings = cache(async (): Promise<SiteSettings> => {
   try {
     const res = await api.get<{ data: SiteSettings }>("/site-settings", {
-      cache: "no-store",
+      next: { revalidate: 300 },
     });
     return res.data ?? {};
   } catch (error) {

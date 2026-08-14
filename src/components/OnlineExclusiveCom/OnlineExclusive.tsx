@@ -177,8 +177,6 @@ function OnlineExclusive() {
   const belowBanners = belowData?.data ?? [];
   const topBanners = topData?.data ?? [];
 
-  console.log(topBanners, "topBannerstopBannerstopBanners");
-
   return (
     <div className="">
       <div className="bg-[#ebebeb] dark:bg-[#2e2b28]">

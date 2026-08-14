@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import FooterPagesCom from "@/components/share/FooterPagesCom";
 
 export const metadata: Metadata = {
-  title: "Shipping Policy - Dazzle",
+  title: "Shipping Policy",
   description:
     "Read Dazzle's Shipping Policy before booking your product. Learn about advance payment, delivery timeline, order confirmation, cancellation, and refund terms for pre-orders.",
 };

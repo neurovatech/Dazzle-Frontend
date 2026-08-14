@@ -31,7 +31,7 @@ export default async function OfferBannerFlash({
   try {
     const bannerRes = await api.get<WebBannerResponse>(
       `/web-banner/${apiEndpoint}`,
-      { cache: "no-store" },
+      { next: { revalidate: 60 } },
     );
 
     banners = Array.isArray(bannerRes?.data) ? bannerRes.data : [];

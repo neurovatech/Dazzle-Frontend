@@ -68,7 +68,7 @@ export default async function MostPopularSectionCom() {
   try {
     const res = await api.get<ShowcaseItemsResponse>(
       "/showcase-items?showcaseSlug=most-popular&limit=5",
-      { cache: "no-store" },
+      { next: { revalidate: 60 } },
     );
 
     const list = Array.isArray(res?.data) ? res.data : [];
@@ -92,7 +92,7 @@ export default async function MostPopularSectionCom() {
   try {
     const bannerRes = await api.get<WebBannerResponse>(
       "/web-banner/most-popular-below",
-      { cache: "no-store" },
+      { next: { revalidate: 60 } },
     );
 
     banners = Array.isArray(bannerRes?.data) ? bannerRes.data : [];

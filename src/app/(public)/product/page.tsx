@@ -4,7 +4,7 @@ import Product from "@/components/ProductPage/Product";
 // ─── SEO Metadata ─────────────────────────────────────────────────────────────
 
 export const metadata: Metadata = {
-  title: "Shop Mobiles, Laptops & Accessories - Dazzle",
+  title: "Shop Mobiles, Laptops & Accessories",
   description:
     "Browse Dazzle's extensive collection of premium smartphones, high-performance laptops, accessories, and audio gadgets. Best prices in Bangladesh with active warranties.",
   keywords: [

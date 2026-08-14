@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import EmiPolicyCom from "@/components/EmiPolicy/EmiPolicyCom";
 
 export const metadata: Metadata = {
-  title: "EMI Policy - Dazzle",
+  title: "EMI Policy",
   description: "Check the EMI Policy of Dazzle. Learn about offline and online credit card EMI options, payment charges, and supported banks for easy installments.",
 };
 export default function EMIPage() {

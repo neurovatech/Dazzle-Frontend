@@ -6,7 +6,7 @@ import { api } from "@/lib/api";
 import NoData from "@/components/ui/NoData";
 
 export const metadata: Metadata = {
-  title: "Announcement - Dazzle",
+  title: "Announcement",
   description: "Announcement the Dazzle team! Explore press openings, career paths, and opportunities in tech, admin, design, and operations at Dazzle Bangladesh.",
 };
 
@@ -52,7 +52,7 @@ async function getBlogs(page: number, categoryUuid?: string): Promise<BlogsRespo
     });
     if (categoryUuid) qp.set("blog_cat_uuid", categoryUuid);
 
-    const res = await api.get<unknown>(`/blogs?${qp.toString()}&IsStory=1`, { cache: "no-store" });
+    const res = await api.get<unknown>(`/blogs?${qp.toString()}&IsStory=1`, { next: { revalidate: 60 } });
     const obj = res as Record<string, unknown>;
 
     return {
@@ -69,7 +69,7 @@ async function getBlogs(page: number, categoryUuid?: string): Promise<BlogsRespo
 
 async function getBlogCategories(): Promise<BlogCategory[]> {
   try {
-    const res = await api.get<unknown>("/blog-categories", { cache: "no-store" });
+    const res = await api.get<unknown>("/blog-categories", { next: { revalidate: 60 } });
     const obj = res as Record<string, unknown>;
     return Array.isArray(obj?.data) ? (obj.data as BlogCategory[]) : [];
   } catch (error) {

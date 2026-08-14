@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import FooterPagesCom from "@/components/share/FooterPagesCom";
 
 export const metadata: Metadata = {
-  title: "Warranty Policy - Dazzle",
+  title: "Warranty Policy",
   description:
     "Read Dazzle's Warranty Policy before booking your product. Learn about advance payment, delivery timeline, order confirmation, cancellation, and refund terms for pre-orders.",
 };

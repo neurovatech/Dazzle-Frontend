@@ -193,8 +193,6 @@ const [viewers, setViewers] = useState(() => Math.floor(Math.random() * 100) + 1
     );
   };
   
-  console.log(alldata, "alldataalldata")
-
   return (
     <div className="space-y-5 text-gray-800 dark:text-gray-100">
       <div className="flex items-start justify-between gap-3 mb-0">

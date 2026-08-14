@@ -2,7 +2,14 @@
 import React from 'react';
 import ProductDetails from '@/components/ProductDetails/ProductDetail';
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import { api } from '@/lib/api';
+import JsonLd from '@/components/share/JsonLd';
+import {
+  buildJsonLd,
+  productSchema,
+  breadcrumbSchema,
+} from '@/lib/structured-data';
 
 interface PageProps {
   params: Promise<{ productSlug: string }>;
@@ -136,6 +143,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title,
       description,
       url: canonicalUrl,
+      // Kept as "website": Next.js's Metadata API restricts og:type to a fixed
+      // union that does not include "product", and forcing it with a cast would
+      // be fragile across upgrades. The practical loss is small — Facebook and
+      // WhatsApp build link previews from og:title/description/image (all set
+      // above), and Google reads product data from JSON-LD, not og:type.
       type: 'website',
       images: ogImage ? [{ url: ogImage, alt: p.productName }] : undefined,
     },
@@ -145,6 +157,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       description,
       images: ogImage ? [ogImage] : undefined,
     },
+    // Price, currency, availability and brand are published via JSON-LD
+    // Product/Offer in the page body — the format Google actually consumes for
+    // rich results. They are NOT emitted through Metadata's `other` field,
+    // because Next.js renders those as <meta name="..."> whereas OpenGraph
+    // requires <meta property="...">, so crawlers would ignore them.
   };
 }
 
@@ -153,6 +170,7 @@ export default async function ProductDetailsPage({ params }: PageProps) {
   const { productSlug } = await params;
 
   let product: ProductApiData | null = null;
+  let requestFailed = false;
 
   try {
     const res = await api.get<ProductApiResponse>(`/product/${productSlug}`, {
@@ -162,11 +180,35 @@ export default async function ProductDetailsPage({ params }: PageProps) {
       product = res.data;
     }
   } catch {
-    // product stays null — ProductDetail will show fallback/static data
+    // Distinguish "backend unreachable" from "product genuinely does not exist".
+    requestFailed = true;
   }
+
+  // A product that the API reports as not-found must return a real HTTP 404.
+  // Previously this rendered an empty shell with status 200 — a soft 404, which
+  // Google penalises and may index as a thin page.
+  // If the *request itself* failed (backend down), we keep the old behaviour and
+  // render the fallback rather than wrongly telling crawlers the page is gone.
+  if (!product && !requestFailed) {
+    notFound();
+  }
+
+  const jsonLd = product
+    ? buildJsonLd(
+        productSchema(product),
+        breadcrumbSchema([
+          { name: 'Home', path: '/' },
+          ...(product.brandName && product.brandSlug
+            ? [{ name: product.brandName, path: `/brands/${product.brandSlug}` }]
+            : []),
+          { name: product.productName, path: `/product/${product.productSlug || productSlug}` },
+        ]),
+      )
+    : undefined;
 
   return (
     <div>
+      <JsonLd data={jsonLd} />
       <ProductDetails product={product} />
     </div>
   );

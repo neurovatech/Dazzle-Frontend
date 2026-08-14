@@ -32,7 +32,7 @@ interface CampaignsResponse {
 // ─── SEO ──────────────────────────────────────────────────────────────────────
 
 export const metadata: Metadata = {
-  title: "Latest Offers & Campaigns - Dazzle",
+  title: "Latest Offers & Campaigns",
   description:
     "Explore Dazzle's latest campaigns, flash sales, and exclusive offers on smartphones, laptops, and gadgets in Bangladesh.",
   openGraph: {
@@ -55,7 +55,7 @@ export default async function OffersPage() {
 
   try {
     const res = await api.get<CampaignsResponse>("campaigns", {
-      cache: "no-store",
+      next: { revalidate: 60 },
     });
     if (res.found && res.data?.length) {
       campaigns = res.data;

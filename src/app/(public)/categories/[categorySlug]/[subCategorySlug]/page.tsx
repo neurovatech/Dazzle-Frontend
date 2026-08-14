@@ -4,6 +4,9 @@ import CategoriesProduct from "@/components/CategoriesPages/CategoriesProduct/Ca
 import Breadcrumb from "@/components/share/Breadcrumb";
 import { api } from "@/lib/api";
 import type { Metadata } from "next";
+import { lookupCategoryNames, toTitleCase } from "@/lib/category-lookup";
+import JsonLd from "@/components/share/JsonLd";
+import { buildJsonLd, breadcrumbSchema, itemListSchema } from "@/lib/structured-data";
 // import { ProductItem, ProductListResponse, BrandItem } from "@/app/(public)/categories/[categorySlug]/page";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -32,13 +35,6 @@ interface WebBannerResponse {
 
 const LIMIT = 12;
 
-function toTitleCase(slug: string): string {
-  return decodeURIComponent(slug)
-    .split("-")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
-}
-
 // ─── Metadata ─────────────────────────────────────────────────────────────────
 
 export async function generateMetadata({
@@ -47,13 +43,16 @@ export async function generateMetadata({
 }: PageProps): Promise<Metadata> {
   const { categorySlug, subCategorySlug } = await params;
   const { page } = await searchParams;
-  const categoryName = toTitleCase(categorySlug);
-  const subCategoryName = toTitleCase(subCategorySlug);
+  // Real names from the API — fall back to slug-derived if unavailable.
+  const {
+    categoryName = toTitleCase(categorySlug),
+    subCategoryName = toTitleCase(subCategorySlug),
+  } = await lookupCategoryNames(categorySlug, subCategorySlug);
   const currentPage = Number(page ?? 1);
   const pageLabel = currentPage > 1 ? ` — Page ${currentPage}` : "";
 
   return {
-    title: `${subCategoryName} - ${categoryName}${pageLabel} - Buy Online at Best Price in Bangladesh | Dazzle`,
+    title: `${subCategoryName} - ${categoryName}${pageLabel} - Buy Online at Best Price in Bangladesh`,
     description: `Shop the best selection of ${subCategoryName} in our ${categoryName} category at Dazzle. Best prices, official warranty, and fast delivery across Bangladesh.${currentPage > 1 ? ` Viewing page ${currentPage}.` : ""}`,
     alternates: {
       canonical: `/categories/${categorySlug}/${subCategorySlug}${currentPage > 1 ? `?page=${currentPage}` : ""}`,
@@ -68,8 +67,6 @@ export async function generateMetadata({
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export const dynamic = "force-dynamic";
-
 export default async function SubCategoriesPage({
   params,
   searchParams,
@@ -77,13 +74,13 @@ export default async function SubCategoriesPage({
   const { categorySlug, subCategorySlug } = await params;
   const { page, sort, search } = await searchParams;
   const currentPage = Math.max(1, Number(page ?? 1));
-  const categoryName = toTitleCase(categorySlug);
-  const subCategoryName = toTitleCase(subCategorySlug);
-
-  let banners: WebBannerItem[] = [];
+  const {
+    categoryName = toTitleCase(categorySlug),
+    subCategoryName = toTitleCase(subCategorySlug),
+  } = await lookupCategoryNames(categorySlug, subCategorySlug);
 
   // ── Fetch products: products?page=1&limit=12&categorySlug=phones&subCategorySlug=iphone ──
-  let productData: any = {
+  const defaultProductData = {
     statusCode: 200,
     status: "success",
     found: false,
@@ -95,102 +92,115 @@ export default async function SubCategoriesPage({
     data: [],
   };
 
-  try {
-    const queryParams = new URLSearchParams({
-      page: String(currentPage),
-      limit: String(LIMIT),
-      categorySlug,
-      subCategorySlug,
-    });
-    if (sort) queryParams.set("sort", sort);
-    if (search) queryParams.set("search", search);
+  async function fetchProducts(): Promise<any> {
+    try {
+      const queryParams = new URLSearchParams({
+        page: String(currentPage),
+        limit: String(LIMIT),
+        categorySlug,
+        subCategorySlug,
+      });
+      if (sort) queryParams.set("sort", sort);
+      if (search) queryParams.set("search", search);
 
-    const res = await api.get<any>(`/products?${queryParams.toString()}`, {
-      cache: "no-store",
-    });
-    if (res && typeof res === "object" && "data" in res) {
-      productData = res;
+      const res = await api.get<any>(`/products?${queryParams.toString()}`, {
+        next: { revalidate: 60 },
+      });
+      if (res && typeof res === "object" && "data" in res) {
+        return res;
+      }
+      return defaultProductData;
+    } catch (error) {
+      console.error("Error fetching sub-category products:", error);
+      return defaultProductData;
     }
-  } catch (error) {
-    console.error("Error fetching sub-category products:", error);
-  }
-  console.log(productData, "productDataproductDataproductData")
-
-  try {
-    const res = await api.get<WebBannerResponse>(
-      "/web-banner/product-categores-page",
-      { cache: "no-store" },
-    );
-    if (res && typeof res === "object" && "data" in res) {
-      banners = res.data;
-    }
-  } catch (error) {
-    console.error("Error fetching product category banners:", error);
   }
 
-  if (!banners.length) return null;
-
-  const [banner1, banner2] = banners;
+  async function fetchBanners(): Promise<WebBannerItem[]> {
+    try {
+      const res = await api.get<WebBannerResponse>(
+        "/web-banner/product-categores-page",
+        { next: { revalidate: 60 } },
+      );
+      if (res && typeof res === "object" && "data" in res) {
+        return res.data;
+      }
+      return [];
+    } catch (error) {
+      console.error("Error fetching product category banners:", error);
+      return [];
+    }
+  }
 
   // ── Fetch brands for this subcategory ───────────────────────────────────────
-  let brands: any = [];
-  try {
-    const brandsRes = await api.get<any>(
-      `/subcategory/${subCategorySlug}/brands`,
-      { cache: "no-store" },
-    );
-    let rawChild: any[] = [];
-    if (brandsRes?.data) {
-      if (
-        Array.isArray(brandsRes.data.subCategory) &&
-        brandsRes.data.subCategory.length > 0
-      ) {
-        rawChild = brandsRes.data.subCategory[0].child || [];
-      } else if (
-        Array.isArray(brandsRes.data.category) &&
-        brandsRes.data.category.length > 0
-      ) {
-        rawChild = brandsRes.data.category[0].child || [];
-      } else if (Array.isArray(brandsRes.data.child)) {
-        rawChild = brandsRes.data.child;
-      } else if (Array.isArray(brandsRes.data.brands)) {
-        rawChild = brandsRes.data.brands;
-      } else if (Array.isArray(brandsRes.data)) {
-        rawChild = brandsRes.data;
+  async function fetchBrands(): Promise<any> {
+    try {
+      const brandsRes = await api.get<any>(
+        `/subcategory/${subCategorySlug}/brands`,
+        { next: { revalidate: 60 } },
+      );
+      let rawChild: any[] = [];
+      if (brandsRes?.data) {
+        if (
+          Array.isArray(brandsRes.data.subCategory) &&
+          brandsRes.data.subCategory.length > 0
+        ) {
+          rawChild = brandsRes.data.subCategory[0].child || [];
+        } else if (
+          Array.isArray(brandsRes.data.category) &&
+          brandsRes.data.category.length > 0
+        ) {
+          rawChild = brandsRes.data.category[0].child || [];
+        } else if (Array.isArray(brandsRes.data.child)) {
+          rawChild = brandsRes.data.child;
+        } else if (Array.isArray(brandsRes.data.brands)) {
+          rawChild = brandsRes.data.brands;
+        } else if (Array.isArray(brandsRes.data)) {
+          rawChild = brandsRes.data;
+        }
       }
+      if (Array.isArray(rawChild)) {
+        return rawChild
+          .filter((b: any) => b && b.is_active)
+          .map((b: any) => ({
+            uuid: b.uuid,
+            brand_name: b.brand_name || "",
+            brand_slug: b.brand_slug || "",
+            thumbnail_img: b.thumbnail_img || "",
+            is_active: b.is_active ?? true,
+          }));
+      }
+      return [];
+    } catch (err) {
+      console.error("Error fetching sub-category brands:", err);
+      return [];
     }
-    if (Array.isArray(rawChild)) {
-      brands = rawChild
-        .filter((b: any) => b && b.is_active)
-        .map((b: any) => ({
-          uuid: b.uuid,
-          brand_name: b.brand_name || "",
-          brand_slug: b.brand_slug || "",
-          thumbnail_img: b.thumbnail_img || "",
-          is_active: b.is_active ?? true,
-        }));
-    }
-  } catch (err) {
-    console.error("Error fetching sub-category brands:", err);
   }
 
   // ── Fetch attributes for this subcategory ────────────────────────────────────
-  let attributes: any = [];
-  let priceData: any = undefined;
-  try {
-    const attrRes = await api.get<{ data: any; priceData?: any }>(
-      `/products/attributes?categorySlug=${categorySlug}&subCategorySlug=${subCategorySlug}`,
-      { cache: "no-store" },
-    );
-    if (attrRes && Array.isArray(attrRes.data)) {
-      attributes = attrRes.data;
+  async function fetchAttributes(): Promise<{ attributes: any; priceData: any }> {
+    try {
+      const attrRes = await api.get<{ data: any; priceData?: any }>(
+        `/products/attributes?categorySlug=${categorySlug}&subCategorySlug=${subCategorySlug}`,
+        { next: { revalidate: 60 } },
+      );
+      return {
+        attributes: attrRes && Array.isArray(attrRes.data) ? attrRes.data : [],
+        priceData: attrRes && attrRes.priceData ? attrRes.priceData : undefined,
+      };
+    } catch (err) {
+      console.error("Error fetching sub-category attributes:", err);
+      return { attributes: [], priceData: undefined };
     }
-    if (attrRes && attrRes.priceData) {
-      priceData = attrRes.priceData;
-    }
-  } catch (err) {
-    console.error("Error fetching sub-category attributes:", err);
   }
+
+  const [productData, banners, brands, { attributes, priceData }] =
+    await Promise.all([
+      fetchProducts(),
+      fetchBanners(),
+      fetchBrands(),
+      fetchAttributes(),
+    ]);
 
   // ── Breadcrumb ────────────────────────────────────────────────────────────────
   const breadcrumbItems = [
@@ -203,8 +213,19 @@ export default async function SubCategoriesPage({
     },
   ];
 
+  const jsonLd = buildJsonLd(
+    breadcrumbSchema([
+      { name: "Home", path: "/" },
+      { name: "Categories", path: "/categories" },
+      { name: categoryName, path: `/categories/${categorySlug}` },
+      { name: subCategoryName, path: `/categories/${categorySlug}/${subCategorySlug}` },
+    ]),
+    itemListSchema(productData.data, `${subCategoryName} Products`),
+  );
+
   return (
     <div className=" bg-[#fffbf6] dark:bg-[#2e2b28]">
+      <JsonLd data={jsonLd} />
       <div className="flex flex-col flex-1 max-w-355 mx-auto">
         <div className="md:px-12.5 px-4">
           <Breadcrumb items={breadcrumbItems} />

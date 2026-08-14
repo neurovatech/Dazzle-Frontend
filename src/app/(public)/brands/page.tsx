@@ -4,11 +4,9 @@ import Breadcrumb from "@/components/share/Breadcrumb";
 import { api } from "@/lib/api";
 
 export const metadata: Metadata = {
-  title: "Shop by Brand - Dazzle",
+  title: "Shop by Brand",
   description: "Browse premium tech and gadget brands at Dazzle.",
 };
-
-export const dynamic = "force-dynamic";
 
 export interface Brand {
   is_active: boolean;
@@ -29,7 +27,7 @@ async function BrandPage() {
   try {
     const res = await api.get<{ data: Record<string, unknown>[] }>(
       "/brands?order=1&page=1&limit=1000",
-      { cache: "no-store" },
+      { next: { revalidate: 60 } },
     );
 
     const list = Array.isArray(res) ? res : (res?.data ?? []);

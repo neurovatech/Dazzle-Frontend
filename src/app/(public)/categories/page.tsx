@@ -5,7 +5,7 @@ import Breadcrumb from "@/components/share/Breadcrumb";
 import { api } from "@/lib/api";
 
 export const metadata: Metadata = {
-  title: "Product Categories - Dazzle",
+  title: "Product Categories",
   description:
     "Explore all product categories at Dazzle, including Smartphones, Laptops, Smartwatches, Audio, Power Banks, and other gadget accessories.",
 };
@@ -45,7 +45,7 @@ async function Categories({ searchParams }: CategoriesPageProps) {
   try {
     const res = await api.get<CategoriesApiResponse>(
       `/categories?page=${currentPage}&limit=${limit}`,
-      { cache: "no-store" },
+      { next: { revalidate: 60 } },
     );
 
     const list = Array.isArray(res) ? res : (res?.data ?? []);

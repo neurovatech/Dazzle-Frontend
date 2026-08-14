@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import FooterPagesCom from "@/components/share/FooterPagesCom";
 
 export const metadata: Metadata = {
-  title: "Product Disclaimer Policy - Dazzle",
+  title: "Product Disclaimer Policy",
   description:
     "Read Dazzle's Product Disclaimer Policy before booking your product. Learn about the terms and conditions associated with our products.",
 };

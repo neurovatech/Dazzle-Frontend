@@ -47,7 +47,7 @@ async function getBlogs(){
   try {
     const res = await api.get<unknown>(
       `/blogs?page=1&datalimit=3&isCareer=0`,
-      { cache: "no-store" },
+      { next: { revalidate: 60 } },
     );
     const obj = res as Record<string, unknown>;
     return {

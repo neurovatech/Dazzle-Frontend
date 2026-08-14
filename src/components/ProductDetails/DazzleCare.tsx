@@ -44,8 +44,6 @@ const DazzleCare: React.FC<DazzleCareProps> = ({ options, onSelectionChange }) =
   const selectedOrigPrice  = selectedOpt?.originalPrice ?? 0;
 
 
-  console.log(options, "optionsoptionsoptionsoptionsoptions")
-
   return (
     <div className="rounded-2xl bg-[#222222] border border-[#3a3330] overflow-hidden">
       {/* ── Header ── */}

@@ -18,7 +18,7 @@ import type { Metadata } from "next";
 import FooterPagesCom from "@/components/share/FooterPagesCom";
 
 export const metadata: Metadata = {
-  title: "FAQ | Dazzle",
+  title: "FAQ",
   description:
     "Frequently asked questions about Dazzle — Bangladesh's leading smartphone and accessories retailer. Store locations, products, brands, warranty, and online ordering.",
 };

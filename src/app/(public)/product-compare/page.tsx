@@ -1,5 +1,14 @@
 import React from 'react'
+import type { Metadata } from 'next'
 import ProductCompareCom from "@/components/ProductCompare/ProductCompareCom"
+import { NOINDEX_METADATA } from "@/lib/seo-config"
+
+// Session-specific comparison state — generates unlimited near-duplicate URLs.
+export const metadata: Metadata = {
+  title: "Product Compare",
+  ...NOINDEX_METADATA,
+}
+
 function ProductCompare() {
   return (
     <div className="py-8 bg-white flex items-center justify-center px-4">

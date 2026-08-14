@@ -86,7 +86,7 @@ export async function generateMetadata({
   const { slug } = await params;
   const brandName = toTitleCase(slug);
   return {
-    title: `${brandName} Products — Buy Online at Best Price in Bangladesh | Dazzle`,
+    title: `${brandName} Products — Buy Online at Best Price in Bangladesh`,
     description: `Shop the complete ${brandName} collection at Dazzle. Best prices, official warranty, and fast delivery across Bangladesh.`,
     alternates: { canonical: `/brands/${slug}` },
     openGraph: {

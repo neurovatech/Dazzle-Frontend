@@ -63,7 +63,7 @@ export default async function LimitedTimeOffer() {
     try {
       const res = await api.get<ShowcaseItemsResponse>(
          "/showcase-items?showcaseSlug=hot-deal",
-        { cache: "no-store" }
+        { next: { revalidate: 60 } }
       );
    
       const list = Array.isArray(res?.data) ? res.data : [];
@@ -127,9 +127,9 @@ export default async function LimitedTimeOffer() {
       </div> */}
       <div className="lg:col-span-12 h-full">
         <div className="grid md:grid-cols-5 grid-cols-2 lg:gap-4 gap-2">
-          {products.map((product, i) => (
-            <div key={i}>
-              <ProductCard key={i} {...product} />
+          {products.map((product) => (
+            <div key={product.uuid}>
+              <ProductCard {...product} />
             </div>
           ))}
         </div>

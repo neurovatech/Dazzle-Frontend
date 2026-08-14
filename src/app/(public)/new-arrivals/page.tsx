@@ -154,7 +154,7 @@ export default async function FeatureProductsPages({
   try {
     const res = await api.get<ShowcaseItemsResponse>(
       `/products?latest=1&page=1&limit=500`,
-      { cache: "no-store" }
+      { next: { revalidate: 60 } }
     );
     initialProducts    = Array.isArray(res?.data) ? res.data : [];
     initialTotalPages  = res?.totalPages ?? 1;

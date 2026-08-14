@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Send Your Feedback - Dazzle",
+  title: "Send Your Feedback",
   description: "Share your experience with Dazzle. Send your reviews, ratings, and feedback to help us serve you better.",
 };
 

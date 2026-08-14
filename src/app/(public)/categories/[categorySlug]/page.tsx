@@ -5,6 +5,9 @@ import ProductListSectionCom from "@/components/HomePage/ProductList/ProductList
 import { api } from "@/lib/api";
 import type { AttributeGroup } from "@/components/share/FilterSidebar";
 import type { Metadata } from "next";
+import { lookupCategoryNames, toTitleCase } from "@/lib/category-lookup";
+import JsonLd from "@/components/share/JsonLd";
+import { buildJsonLd, breadcrumbSchema, itemListSchema } from "@/lib/structured-data";
 
 export type { AttributeGroup };
 
@@ -69,13 +72,6 @@ interface BrandsApiResponse {
 
 const LIMIT = 12;
 
-function toTitleCase(slug: string): string {
-  return decodeURIComponent(slug)
-    .split("-")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
-}
-
 // ─── Metadata ─────────────────────────────────────────────────────────────────
 
 export async function generateMetadata({
@@ -84,12 +80,14 @@ export async function generateMetadata({
 }: PageProps): Promise<Metadata> {
   const { categorySlug } = await params;
   const { page } = await searchParams;
-  const categoryName = toTitleCase(categorySlug);
+  // Real category name from the API — falls back to the slug if unavailable.
+  const { categoryName = toTitleCase(categorySlug) } =
+    await lookupCategoryNames(categorySlug);
   const currentPage = Number(page ?? 1);
   const pageLabel = currentPage > 1 ? ` — Page ${currentPage}` : "";
 
   return {
-    title: `${categoryName}${pageLabel} - Buy Online at Best Price in Bangladesh | Dazzle`,
+    title: `${categoryName}${pageLabel} - Buy Online at Best Price in Bangladesh`,
     description: `Shop the complete ${categoryName} collection at Dazzle. Explore all ${categoryName} products with the best prices, official warranty, and fast delivery across Bangladesh.${currentPage > 1 ? ` Viewing page ${currentPage}.` : ""}`,
     alternates: {
       canonical: `/categories/${categorySlug}${currentPage > 1 ? `?page=${currentPage}` : ""}`,
@@ -104,8 +102,6 @@ export async function generateMetadata({
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export const dynamic = "force-dynamic";
-
 export default async function CategoriesPage({
   params,
   searchParams,
@@ -113,10 +109,11 @@ export default async function CategoriesPage({
   const { categorySlug } = await params;
   const { page, sort, search } = await searchParams;
   const currentPage = Math.max(1, Number(page ?? 1));
-  const categoryName = toTitleCase(categorySlug);
+  const { categoryName = toTitleCase(categorySlug) } =
+    await lookupCategoryNames(categorySlug);
 
   // ── Fetch products: products?page=1&limit=12&categorySlug=phones ─────────────
-  let productData: ProductListResponse = {
+  const defaultProductData: ProductListResponse = {
     statusCode: 200,
     status: "success",
     found: false,
@@ -128,58 +125,70 @@ export default async function CategoriesPage({
     data: [],
   };
 
-  try {
-    const queryParams = new URLSearchParams({
-      page: String(currentPage),
-      limit: String(LIMIT),
-      categorySlug,
-    });
-    if (sort) queryParams.set("sort", sort);
-    if (search) queryParams.set("search", search);
+  async function fetchProducts(): Promise<ProductListResponse> {
+    try {
+      const queryParams = new URLSearchParams({
+        page: String(currentPage),
+        limit: String(LIMIT),
+        categorySlug,
+      });
+      if (sort) queryParams.set("sort", sort);
+      if (search) queryParams.set("search", search);
 
-    const res = await api.get<ProductListResponse>(
-      `/products?${queryParams.toString()}`,
-      { cache: "no-store" },
-    );
-    if (res && typeof res === "object" && "data" in res) {
-      productData = res;
+      const res = await api.get<ProductListResponse>(
+        `/products?${queryParams.toString()}`,
+        { next: { revalidate: 60 } },
+      );
+      if (res && typeof res === "object" && "data" in res) {
+        return res;
+      }
+      return defaultProductData;
+    } catch (error) {
+      console.error("Error fetching category products:", error);
+      return defaultProductData;
     }
-  } catch (error) {
-    console.error("Error fetching category products:", error);
   }
 
   // ── Fetch brands for this category ───────────────────────────────────────────
-  let brands: BrandItem[] = [];
-  try {
-    const brandsRes = await api.get<BrandsApiResponse>(
-      `/categories/${categorySlug}/brands`,
-      { cache: "no-store" },
-    );
-    const categoryData = brandsRes?.data?.category;
-    if (Array.isArray(categoryData) && categoryData.length > 0) {
-      brands = (categoryData[0].child ?? []).filter((b) => b.is_active);
+  async function fetchBrands(): Promise<BrandItem[]> {
+    try {
+      const brandsRes = await api.get<BrandsApiResponse>(
+        `/categories/${categorySlug}/brands`,
+        { next: { revalidate: 60 } },
+      );
+      const categoryData = brandsRes?.data?.category;
+      if (Array.isArray(categoryData) && categoryData.length > 0) {
+        return (categoryData[0].child ?? []).filter((b) => b.is_active);
+      }
+      return [];
+    } catch (err) {
+      console.error("Error fetching category brands:", err);
+      return [];
     }
-  } catch (err) {
-    console.error("Error fetching category brands:", err);
   }
 
   // ── Fetch attributes for this category ───────────────────────────────────────
-  let attributes: AttributeGroup[] = [];
-  let priceData: any = undefined;
-  try {
-    const attrRes = await api.get<{ data: AttributeGroup[]; priceData?: any }>(
-      `/products/attributes?categorySlug=${categorySlug}`,
-      { cache: "no-store" },
-    );
-    if (attrRes && Array.isArray(attrRes.data)) {
-      attributes = attrRes.data;
+  async function fetchAttributes(): Promise<{ attributes: AttributeGroup[]; priceData: any }> {
+    try {
+      const attrRes = await api.get<{ data: AttributeGroup[]; priceData?: any }>(
+        `/products/attributes?categorySlug=${categorySlug}`,
+        { next: { revalidate: 60 } },
+      );
+      return {
+        attributes: attrRes && Array.isArray(attrRes.data) ? attrRes.data : [],
+        priceData: attrRes && attrRes.priceData ? attrRes.priceData : undefined,
+      };
+    } catch (err) {
+      console.error("Error fetching category attributes:", err);
+      return { attributes: [], priceData: undefined };
     }
-    if (attrRes && attrRes.priceData) {
-      priceData = attrRes.priceData;
-    }
-  } catch (err) {
-    console.error("Error fetching category attributes:", err);
   }
+
+  const [productData, brands, { attributes, priceData }] = await Promise.all([
+    fetchProducts(),
+    fetchBrands(),
+    fetchAttributes(),
+  ]);
 
   // ── Breadcrumb ────────────────────────────────────────────────────────────────
   const breadcrumbItems = [
@@ -188,8 +197,18 @@ export default async function CategoriesPage({
     { label: categoryName, href: `/categories/${categorySlug}` },
   ];
 
+  const jsonLd = buildJsonLd(
+    breadcrumbSchema([
+      { name: "Home", path: "/" },
+      { name: "Categories", path: "/categories" },
+      { name: categoryName, path: `/categories/${categorySlug}` },
+    ]),
+    itemListSchema(productData.data, `${categoryName} Products`),
+  );
+
   return (
     <div className=" bg-[#fffbf6] dark:bg-[#2e2b28]">
+      <JsonLd data={jsonLd} />
       <div className="flex flex-col flex-1 max-w-355 mx-auto">
         <div className="md:px-12.5 px-4">
           <Breadcrumb items={breadcrumbItems} />

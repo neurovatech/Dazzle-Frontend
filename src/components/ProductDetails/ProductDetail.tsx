@@ -56,8 +56,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
   const [showDescription, setShowDescription] = useState(false);
   const descriptionRef = useRef<HTMLDivElement>(null);
 
-  console.log(product, "productproductproductproductproduct");
-
   const { data: variantApiData } = useQuery<VariantApiResponse>({
     queryKey: ["product-variants", product?.productUuid],
     queryFn: () =>
@@ -100,8 +98,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
     enabled: !!product?.productUuid,
     staleTime: 10 * 60 * 1000,
   });
-
-  console.log(variantApiData, "variantApiDatavariantApiDatavariantApiData");
 
   // ── Consolidate ────────────────────────────────────────────────
   const { groups, variants } = useMemo(
@@ -425,8 +421,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
       setSelectedColor(0);
     }
   };
-
-  console.log(frequentlyBoughtProducts, "090909");
 
   return (
     <div className="min-h-screen font-sans bg-[#fffbf6] dark:bg-[#2e2b28]">

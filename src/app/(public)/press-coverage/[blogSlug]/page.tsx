@@ -25,7 +25,7 @@ export interface BlogDetail {
 
 async function getBlogBySlug(slug: string): Promise<BlogDetail | null> {
   try {
-    const res = await api.get<unknown>(`/blogs/${slug}&isPress=1`, { cache: "no-store" });
+    const res = await api.get<unknown>(`/blogs/${slug}&isPress=1`, { next: { revalidate: 60 } });
     const obj = res as Record<string, unknown>;
     if (obj?.data && typeof obj.data === "object") {
       return obj.data as BlogDetail;
@@ -43,14 +43,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!blog) {
     return {
-      title: "Blog Not Found - Dazzle",
+      title: "Blog Not Found",
     };
   }
 
   const [metaDescription] = blog.content.split("~separator~");
 
   return {
-    title: `${blog.post_title} - Dazzle`,
+    title: `${blog.post_title}`,
     description: metaDescription?.trim() || blog.post_caption || undefined,
   };
 }

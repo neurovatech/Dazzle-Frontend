@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import fs from "fs";
 
-const BASE_URL = "https://apix.bigpoint.com.bd";
+const BASE_URL = process.env.API_BASE_URL || "https://apix.bigpoint.com.bd";
+
+// Auth tokens and per-user data flow through here — never cache or statically optimise it.
+export const dynamic = "force-dynamic";
 
 async function handleProxy(
   request: NextRequest,
@@ -57,22 +59,22 @@ async function handleProxy(
 
     const response = await fetch(targetUrl, fetchOptions);
 
-    try {
-      const cloneResponse = response.clone();
-      const text = await cloneResponse.text();
-      const logMsg = `[${new Date().toISOString()}] REQUEST: ${request.method} ${request.nextUrl.pathname} -> TARGET: ${targetUrl}\n` +
-                     `RESPONSE STATUS: ${response.status}\n` +
-                     `RESPONSE BODY (first 200 chars): ${text.substring(0, 200)}\n\n`;
-      fs.appendFileSync("d:\\dulal-work\\dazzle\\proxy-log.txt", logMsg);
-    } catch (e) {
-      console.error("Failed to write proxy log:", e);
-    }
-
     // Build response headers
     const responseHeaders = new Headers(response.headers);
     responseHeaders.delete("content-encoding");
     responseHeaders.delete("content-length");
     responseHeaders.delete("transfer-encoding");
+
+    // Strip headers that would reveal the backend host or stack to the browser.
+    responseHeaders.delete("server");
+    responseHeaders.delete("x-powered-by");
+    responseHeaders.delete("access-control-allow-origin");
+
+    // Rewrite redirects so the real backend URL never reaches the Network tab.
+    const location = responseHeaders.get("location");
+    if (location && location.startsWith(BASE_URL)) {
+      responseHeaders.set("location", `/api/proxy${location.slice(BASE_URL.length)}`);
+    }
 
     const data = await response.arrayBuffer();
 

@@ -1,10 +1,33 @@
+import { ApiError, NETWORK_ERROR_STATUS, type ApiErrorPayload } from "./api-error";
+
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE || "https://apix.bigpoint.com.bd";
+
+/** Same-origin route that forwards browser requests to the backend (see src/app/api/proxy). */
+const PROXY_PREFIX = "/api/proxy";
 
 interface FetchOptions extends RequestInit {
   params?: Record<string, string>;
   token?: string;
   apiKey?: string;
   isRetry?: boolean;
+}
+
+/**
+ * Resolves the URL a request should actually hit.
+ *
+ * - In the browser: always go through the same-origin `/api/proxy/...` route, so the
+ *   real backend host never appears in the Network tab (this includes auth endpoints).
+ * - On the server: call the backend directly — nothing is exposed to the client, and
+ *   this avoids a pointless extra hop through our own server.
+ */
+function resolveUrl(endpoint: string): string {
+  if (endpoint.startsWith("http")) return endpoint;
+
+  const path = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+
+  if (typeof window !== "undefined") return `${PROXY_PREFIX}${path}`;
+
+  return `${BASE_URL}${path}`;
 }
 
 let isRefreshing = false;
@@ -61,7 +84,8 @@ async function refreshJwtToken(): Promise<{ apiKey: string; token: string } | nu
 
       const formattedToken = token.startsWith("Bearer ") ? token : `Bearer ${token}`;
 
-      const res = await fetch(`${BASE_URL}/refresh-jwt-token`, {
+      // Routed through resolveUrl so this auth call also stays behind the proxy in the browser.
+      const res = await fetch(resolveUrl("/refresh-jwt-token"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -128,8 +152,8 @@ export async function apiFetch<T = unknown>(
   const { params, token: explicitToken, apiKey: explicitApiKey, isRetry, headers: customHeaders, ...customOptions } = options;
 
   // 1. Build URL with query params
-  let url = endpoint.startsWith("http") ? endpoint : `${BASE_URL}${endpoint.startsWith("/") ? "" : "/"}${endpoint}`;
-  
+  let url = resolveUrl(endpoint);
+
   if (params) {
     const searchParams = new URLSearchParams();
     Object.entries(params).forEach(([key, val]) => {
@@ -204,11 +228,15 @@ export async function apiFetch<T = unknown>(
       }
 
       if (!response.ok) {
-        let errorData: Record<string, unknown> = {};
+        let errorData: ApiErrorPayload = {};
         try {
-          errorData = (await response.json()) as Record<string, unknown>;
+          errorData = (await response.json()) as ApiErrorPayload;
         } catch {
           errorData = { message: response.statusText, statusCode: response.status };
+        }
+        // Guarantee the payload always carries a status code, even if the API omits it.
+        if (errorData.statusCode === undefined) {
+          errorData.statusCode = response.status;
         }
 
         // If error message indicates JWT token expired on non-auth endpoint
@@ -230,7 +258,9 @@ export async function apiFetch<T = unknown>(
           }
         }
 
-        throw new Error(JSON.stringify(errorData));
+        // ApiError keeps `message` as the JSON payload, so existing
+        // `JSON.parse(err.message)` call sites continue to work unchanged.
+        throw new ApiError(response.status, errorData, endpoint);
       }
 
       if (response.status === 204) {
@@ -240,21 +270,48 @@ export async function apiFetch<T = unknown>(
       return response.json() as Promise<T>;
     } catch (err) {
       lastError = err;
+
+      // A real HTTP response came back — retrying would just repeat the same failure.
+      if (err instanceof ApiError && !err.isNetworkError) {
+        throw err;
+      }
+
       const isConnReset =
         err instanceof Error &&
         (err.message.includes("ECONNRESET") ||
           err.message.includes("fetch failed"));
 
       if (!isConnReset || attempt === MAX_RETRIES) {
-        throw err;
+        throw new ApiError(
+          NETWORK_ERROR_STATUS,
+          { message: err instanceof Error ? err.message : String(err) },
+          endpoint
+        );
       }
 
       await new Promise((r) => setTimeout(r, 300));
     }
   }
 
-  throw lastError;
+  // Unreachable in practice (the loop always returns or throws), but keeps the
+  // contract that apiFetch only ever rejects with an ApiError.
+  throw new ApiError(
+    NETWORK_ERROR_STATUS,
+    { message: lastError instanceof Error ? lastError.message : String(lastError) },
+    endpoint
+  );
 }
+
+// Re-exported so consumers can do everything from a single import:
+//   import { api, getApiErrorMessage } from "@/lib/api";
+export {
+  ApiError,
+  isApiError,
+  toApiError,
+  getApiErrorMessage,
+  getApiErrorList,
+} from "./api-error";
+export type { ApiErrorPayload } from "./api-error";
 
 // Convenient wrappers for HTTP methods
 export const api = {

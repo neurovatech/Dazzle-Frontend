@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Corporate Connectivity Solutions - Dazzle",
+  title: "Corporate Connectivity Solutions",
   description: "Equip your business with premium smartphones, laptops, and gadget connectivity from Dazzle. Send your corporate inquiries or book a meeting.",
 };
 

@@ -63,7 +63,7 @@ function mapToProductCard(list: ShowcaseItem[]): ProductCardItem[] {
 async function fetchShowcase(endpoint: string): Promise<ProductCardItem[]> {
   try {
     const res = await api.get<ShowcaseItemsResponse>(endpoint, {
-      cache: "no-store",
+      next: { revalidate: 60 },
     });
     const list = Array.isArray(res?.data) ? res.data : [];
     return mapToProductCard(list);

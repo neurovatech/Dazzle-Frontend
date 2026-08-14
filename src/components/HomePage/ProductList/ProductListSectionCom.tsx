@@ -54,7 +54,7 @@ export default async function ProductListSectionCom({
   try {
     const res = await api.get<ShowcaseItemsResponse>(
       `/showcase-items?showcaseSlug=${showcaseSlug}`,
-      { cache: "no-store" }
+      { next: { revalidate: 60 } }
     );
 
     const list = Array.isArray(res?.data) ? res.data : [];

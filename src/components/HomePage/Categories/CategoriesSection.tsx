@@ -10,7 +10,7 @@ export default async function CategoriesSection() {
   }[] = [];
 
   try {
-    const res = await api.get<unknown>("/categories?limit=8", { cache: "no-store" });
+    const res = await api.get<unknown>("/categories?limit=8", { next: { revalidate: 60 } });
     let list: unknown[] = [];
     if (Array.isArray(res)) {
       list = res;

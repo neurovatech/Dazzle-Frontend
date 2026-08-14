@@ -64,6 +64,7 @@ export default function BrandProducts({
   initialTotalPages,
 }: Props) {
   const searchParams = useSearchParams();
+  console.log(categories, "categories")
 
   const initialCategory = searchParams.get("category") ?? null;
   const initialPage = Number(searchParams.get("page") ?? "1");
@@ -397,8 +398,6 @@ export default function BrandProducts({
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  console.log(categories, "categoriescategoriescategories")
-
   return (
     <>
       {/* ── Category filter buttons ── */}
@@ -417,7 +416,7 @@ export default function BrandProducts({
 
         {/* Category buttons */}
         {categories
-          .filter((c) => c.is_active)
+          .filter((c) => c.is_active && c.category_slug && c.category_slug.trim() !== "")
           .map((cat) => (
             <button
               key={cat.uuid}
