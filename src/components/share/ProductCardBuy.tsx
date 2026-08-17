@@ -185,7 +185,8 @@ export default function ProductCardBuy({
       {isTba ? (
         <button
           disabled
-          className="flex-1 flex items-center justify-center gap-1 py-2 sm:py-2.5 px-1 sm:px-2 rounded-xl sm:rounded-2xl text-[9px] sm:text-[11px] lg:text-[12px] font-semibold border border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-70"
+          // Figma: h-40 py-[3px] px-1 gap-2.5(10px) rounded-[13px] border, Urbanist Medium 16px/100%
+          className="flex-1 flex items-center justify-center gap-2.5 h-11 py-[3px] px-1 rounded-[13px] text-[16px] leading-none font-medium border border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-70"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -207,12 +208,13 @@ export default function ProductCardBuy({
         <button
           onClick={handleAddToCart}
           disabled={loadingCart}
-          className={`flex-1 flex items-center justify-center gap-1 py-2 sm:py-2.5 px-1 sm:px-2 rounded-xl sm:rounded-2xl text-[9px] sm:text-[11px] lg:text-[12px] font-semibold border transition-all duration-300 active:scale-95 shadow-[0px_0px_8px_4px_#E9CCAE52] ${
+          // Figma: h-40 py-[3px] px-1 gap-2.5(10px) rounded-[13px] border, Urbanist Medium 16px/100%
+          className={`flex-1 flex items-center justify-center gap-2.5 h-11 py-[5px] px-1 rounded-[13px] text-[16px] leading-none font-semibold border transition-all duration-300 active:scale-95 shadow-[0px_0px_8px_4px_#E9CCAE52] ${
             loadingCart
               ? "bg-gray-100 border-gray-200 text-gray-400 cursor-wait"
               : addedToCart
                 ? "bg-green-500 border-green-500 text-white"
-                : "bg-white border-orange-200 text-gray-800 hover:bg-orange-50 hover:border-orange-400 hover:shadow-md"
+                : "bg-white border-orange-200 text-[#6D3F0E] hover:bg-orange-50 hover:border-orange-400 hover:shadow-md"
           }`}
         >
           {loadingCart ? (
@@ -251,7 +253,7 @@ export default function ProductCardBuy({
             </>
           ) : (
             <>
-              <CartIcon className="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 shrink-0" />
+              <CartIcon className="w-5 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 shrink-0 hidden md:block" />
               <span className="">Add to Cart</span>
             </>
           )}

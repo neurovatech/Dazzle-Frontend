@@ -40,7 +40,7 @@ export default async function OfferBannerFlash({
   }
 
   return (
-    <div className="grid md:grid-cols-2 grid-cols-1 md:gap-4 gap-2 py-6 cursor-pointer rounded-xl">
+    <div className="grid md:grid-cols-2 grid-cols-2 md:gap-4 gap-2 py-6 cursor-pointer rounded-xl">
       {banners.map((banner, i) => (
         <div key={i} className="overflow-hidden rounded-xl lg:h-96.25">
           <Image

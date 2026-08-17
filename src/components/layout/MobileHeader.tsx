@@ -79,9 +79,9 @@ export default function MobileHeader({ categories }: Props) {
   };
 
   return (
-    <div className="md:hidden p-3" ref={menuRef}>
+    <div className="md:hidden lg:p-3" ref={menuRef}>
       {/* Top row */}
-      <div className="flex items-center justify-between py-3.5">
+      <div className="flex items-center justify-between lg:py-3.5 pb-3.5 pt-2">
         <Link href="/" className="shrink-0 mr-2">
           <div className="text-3xl flex font-black text-white tracking-tighter leading-none">
             <Image
@@ -130,7 +130,7 @@ export default function MobileHeader({ categories }: Props) {
       </div>
 
       {/* Search + menu */}
-      <div className="flex pb-3 relative gap-4">
+      <div className="flex pb-3 relative gap-2">
         <SearchBar />
 
         <button

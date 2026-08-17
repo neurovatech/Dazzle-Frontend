@@ -90,7 +90,7 @@ function MostPopular({
 }: MostPopularProps) {
   return (
     <div>
-      <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5 grid-cols-2 mt-5">
+      <div className="grid gap-2 md:grid-cols-3 lg:grid-cols-5 grid-cols-2 mt-5">
         {products.map((product, i) => (
           <div key={i} className={i === 4 ? "hidden lg:block" : ""}>
             <ProductCard {...product} />

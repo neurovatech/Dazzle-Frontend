@@ -38,8 +38,8 @@ const OfferBannerFlash = dynamic(
 const ClipToCartSectionCom = dynamic(
   () => import("@/components/HomePage/ClipToCart/ClipToCartSectionCom"),
 );
-const ShopBrand = dynamic(
-  () => import("@/components/HomePage/ShopBrand/ShopBrand"),
+const ShopBrandSectionCom = dynamic(
+  () => import("@/components/HomePage/ShopBrand/ShopBrandSectionCom"),
 );
 
 const NewArrivalsSectionCom = dynamic(
@@ -203,7 +203,7 @@ export default async function Home() {
       {/* Shop By Brand */}
       <Suspense fallback={<ShopBrandSkeleton />}>
         <div className="flex flex-col flex-1 max-w-355 mx-auto">
-          <ShopBrand />
+          <ShopBrandSectionCom />
         </div>
       </Suspense>
 

@@ -78,7 +78,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
         {/* Product Image — fixed-height, never crops, contains full image */}
         <Link href={href} className="block px-2 pt-2">
-          <div className="relative flex justify-center items-center h-40 sm:h-40 md:h-44 lg:h-52 transition-all duration-500">
+          <div className="relative flex justify-center items-center h-35 transition-all duration-500">
             <div className="relative z-10 w-full h-full transition-transform duration-500 group-hover:scale-105">
               <ProductCardImage src={image || ProductImage} alt={title || "Product image"} />
             </div>
@@ -87,7 +87,20 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
         {/* Action Row */}
         <div className="flex items-center justify-between relative z-50">
-          <div className="flex gap-1 sm:gap-2 ml-auto p-1 -mr-2 sm:-mr-2 lg:-mr-4 rounded-tl-2xl sm:rounded-tl-3xl bg-[#F5F5F5] pl-2">
+          <div
+  className="flex gap-1 sm:gap-2 ml-auto p-1 -mr-2 sm:-mr-2 lg:-mr-4 bg-[#F5F5F5] pl-2 [--r:20px] sm:[--r:26px] w-[110px]"
+  style={{
+    clipPath: `shape(
+      from 0 100%,
+      curve by var(--r) calc(-1 * var(--r)) with var(--r) 0,
+      vline to var(--r),
+      curve by var(--r) calc(-1 * var(--r)) with 0 calc(-1 * var(--r)),
+      hline to 100%,
+      vline to 100%,
+      hline to 0
+    )`,
+  }}
+>
             <ProductCardWishlist
               productUuid={itemId}
               title={title || ""}
@@ -114,9 +127,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
       <div className="p-2 sm:p-3 lg:p-4 flex flex-col flex-1 bg-[#F5F5F5] rounded-tl-2xl rounded-b-2xl">
         {/* Title & Stock */}
-        <div className="mb-1 sm:mb-2 text-left">
+        <div className="text-left">
           <h3
-            className="font-bold dark:text-[#222] text-[11px] sm:text-xs md:text-sm leading-snug line-clamp-2 h-10 text-=[#575757] "
+            // Figma: Urbanist SemiBold 15px, line-height 150%
+            className="font-semibold dark:text-[#222] text-[15px] leading-[1.5] line-clamp-2 h-11 text-[#575757]"
             title={title}
           >
             {title}
@@ -133,7 +147,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
         {/* Price */}
         <div className="flex items-baseline gap-2 sm:gap-2 mb-2 sm:mb-4">
-          <span className="items-center flex gap-1 font-extrabold text-[18px] sm:text-sm md:text-base lg:text-lg xl:text-xl leading-[160%] tracking-[0%] align-middle text-gray-900">
+          {/* Figma: Urbanist Bold 20px, line-height 160% */}
+          <span className="items-center flex gap-1 font-bold text-[20px] leading-[1.6] tracking-[0%] text-gray-900">
             <svg
               width="12"
               height="14"
@@ -149,7 +164,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
             {formatPrice(price)}
           </span>
           {originalPrice > 0 && originalPrice !== price && (
-            <span className="text-gray-400 text-[16px]!  line-through flex items-center gap-1 pl-1">
+            // Figma: Urbanist Regular 14px, line-height 160%, strikethrough
+            <span className="text-gray-400 text-[14px] font-normal leading-[1.6] line-through flex items-center gap-1 pl-1">
               <svg
                 width="9"
                 height="10"

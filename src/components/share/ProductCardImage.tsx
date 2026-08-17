@@ -23,7 +23,7 @@ export default function ProductCardImage({
       src={finalSrc}
       alt={alt}
       fill
-      className="object-contain p-1 transition-transform duration-300"
+      className="object-contain! p-1 transition-transform duration-300"
       sizes="(max-width: 640px) 45vw, (max-width: 1024px) 25vw, 280px"
       onError={() => setErrored(true)}
     />

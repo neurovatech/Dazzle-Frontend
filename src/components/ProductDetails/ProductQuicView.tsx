@@ -780,7 +780,7 @@ function ProductQuicView({
       {/* Trigger button */}
       <button
         onClick={() => setOpen(true)}
-        className="lg:w-12 lg:h-12 w-8 h-8 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center text-gray-500 hover:border-gray-400 hover:text-gray-700 transition-all duration-300 hover:scale-110 active:scale-95"
+        className="lg:w-11 lg:h-11 w-10 h-10 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center text-gray-500 hover:border-gray-400 hover:text-gray-700 transition-all duration-300 hover:scale-110 active:scale-95"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"

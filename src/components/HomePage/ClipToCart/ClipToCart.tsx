@@ -208,37 +208,52 @@ function ClipToCartCard({ product, index, onOpenModal }: {
 
   return (
     <div
-      className="group bg-[#f4e3d3] dark:bg-[#3a332b] rounded-2xl  p-1.5 sm:p-2 relative transition-all duration-500 hover:shadow-2xl cursor-pointer h-full w-full flex flex-col"
+      className={`
+        group cursor-pointer h-full w-full flex flex-col transition-all duration-500 hover:shadow-2xl
+        bg-[#EDD9C4] rounded-2xl overflow-hidden
+        lg:bg-[#f4e3d3] lg:dark:bg-[#3a332b] lg:rounded-2xl lg:p-2 lg:overflow-visible
+      `}
       onClick={() => onOpenModal(index)}
     >
-      {/* Media box */}
-      <div className="relative w-full h-56 sm:h-64 md:h-72 rounded-t-2xl overflow-hidden bg-gray-100 dark:bg-black/20 shrink-0">
+      <div className="
+        relative w-full overflow-hidden bg-gray-100 dark:bg-black/20 shrink-0
+        aspect-[4/5] lg:aspect-auto lg:h-56 lg:rounded-t-2xl xl:h-64 ">
         <Image
           src={!isEmpty(product.clipThumbnail) ? product.clipThumbnail! : product.image}
           alt={product.title}
           fill
-          sizes="(max-width: 768px) 50vw, 20vw"
-          className="object-cover"
+          sizes="(max-width: 1024px) 80vw, 20vw"
+          className="object-cover transition-transform duration-300 group-hover:scale-105"
         />
 
         {/* Play button */}
         {hasVideo && (
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-            <div className="w-[56px] h-[56px] rounded-full flex items-center justify-center backdrop-blur-md bg-black/30 border border-black/40 shadow-lg group-hover:scale-110 transition-transform duration-300">
+            <div className="w-[52px] h-[52px] rounded-full flex items-center justify-center backdrop-blur-md bg-black/30 border border-black/40 shadow-lg group-hover:scale-110 transition-transform duration-300">
               <Play className="w-5 h-5 text-white fill-white" />
             </div>
           </div>
         )}
 
-        {/* Product thumbnail circle — overlaps bottom edge */}
-        
+        {product.image && (
+          <div className="lg:hidden absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-16 h-16 rounded-full bg-white dark:bg-[#2e2b28] border-4 border-white dark:border-[#2e2b28] shadow-md overflow-hidden z-10">
+            <Image src={product.image} alt={product.title} fill sizes="64px" className="object-contain p-1" />
+          </div>
+        )}
       </div>
 
-      {/* Content */}
-      <div className="bg-white dark:bg-[#2e2b28] rounded-b-lg mt-[-1px] pt-8 px-3 pb-3 flex flex-col flex-1 text-left relative">
+      {/* ── Content ──
+          Mobile  : pt-10 (room for circle), orange title, column price
+          Desktop : pt-8 relative (circle positioned -top-40px), dark title, row price */}
+      <div className="
+        bg-white dark:bg-[#2e2b28] flex flex-col flex-1 text-left relative
+        pt-10 px-3 pb-3
+        lg:rounded-b-lg lg:mt-[-1px] lg:pt-8
+      ">
 
+        {/* Desktop ONLY — thumbnail circle at top of content */}
         {product.image && (
-          <div className="absolute  left-1/2 -translate-x-1/2 top-[-40px] w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white dark:bg-[#2e2b28] shadow-md border-4 border-white dark:border-[#2e2b28] z-10 overflow-hidden">
+          <div className="hidden lg:block absolute left-1/2 -translate-x-1/2 top-[-40px] w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white dark:bg-[#2e2b28] shadow-md border-4 border-white dark:border-[#2e2b28] z-10 overflow-hidden">
             <Image src={product.image} alt={product.title} fill sizes="64px" className="object-cover" />
           </div>
         )}
@@ -257,20 +272,23 @@ function ClipToCartCard({ product, index, onOpenModal }: {
           </div>
         )}
 
-        {/* Title */}
-        <p className="text-sm sm:text-base font-bold text-gray-900 dark:text-white line-clamp-2 leading-tight h-10 sm:h-12">
+        {/* Title — mobile: orange | desktop: dark */}
+        <p className="text-sm font-bold line-clamp-2 leading-tight
+          text-[#CB843B]
+          lg:text-gray-900 lg:dark:text-white lg:text-base lg:h-12
+        ">
           {product.title}
         </p>
 
-        {/* Price + Cart */}
+        {/* Price + Cart — mobile: column | desktop: row */}
         <div className="mt-auto pt-2 flex items-center justify-between gap-2">
           {(product.discountedPrice || product.regularPrice) ? (
-            <div className="flex items-end gap-1.5 flex-wrap">
-              <span className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">
+            <div className="flex flex-col lg:flex-row lg:items-end lg:gap-1.5 lg:flex-wrap">
+              <span className="text-base lg:text-lg font-bold text-gray-900 dark:text-white">
                 {formatPrice(product.discountedPrice ?? product.regularPrice)}
               </span>
               {hasDiscount && (
-                <span className="text-xs sm:text-sm text-gray-400 line-through">
+                <span className="text-xs lg:text-sm text-gray-400 line-through">
                   {formatPrice(product.regularPrice)}
                 </span>
               )}
@@ -281,7 +299,7 @@ function ClipToCartCard({ product, index, onOpenModal }: {
 
           <button
             onClick={handleCartClick}
-            className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shrink-0 transition-all duration-300 hover:scale-110 active:scale-95
+            className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-all duration-300 hover:scale-110 active:scale-95
               ${isAdded ? "bg-green-500" : "bg-[#101518] dark:bg-white"}`}
             aria-label={isAdded ? "Added to cart" : "Add to cart"}
           >
@@ -348,47 +366,40 @@ function ClipToCart({ autoplayDelay = 3000, navigation = true, pagination = true
 
   return (
     <div>
+      {/* Header */}
       <div className="flex justify-between items-center gap-6 pb-5">
         <h3 className="md:text-[32px] text-[20px] font-bold text-transparent bg-clip-text bg-[linear-gradient(90deg,#222222_0%,#965C20_43.27%,#693B0C_100%)] dark:text-white">
           Clip to Cart
         </h3>
+        <Link href="/clip-to-cart" className="text-sm font-medium text-primary bg-orange-50 border border-orange-200 px-4 py-2 rounded-[10px] dark:text-[#2e2b28] hover:underline hover:text-[#CB843B]! transition-colors duration-300">
+          See All
+        </Link>
       </div>
 
       <div className="relative">
-        {/* {navigation && (
-          <button onClick={() => swiperRef.current?.slidePrev()} className="absolute left-[-10px] top-[45%] -translate-y-1/2 -translate-x-2 z-10 flex items-center justify-center w-9 h-9 rounded-full bg-white dark:bg-gray-800 shadow-md border border-gray-200 dark:border-gray-700 hover:bg-[#D4A97A] hover:text-white transition-colors" aria-label="Previous slide">
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-        )} */}
-
         <Swiper
           modules={[Navigation, Pagination, Scrollbar, A11y, Autoplay]}
           loop={products.length > 5}
           pagination={pagination ? { clickable: true } : false}
           autoplay={autoplayDelay ? { delay: autoplayDelay, disableOnInteraction: false } : undefined}
           scrollbar={{ draggable: true }}
-          slidesPerView={2}
-          spaceBetween={8}
           onSwiper={(s) => { swiperRef.current = s; }}
+          slidesPerView={1.2}
+          spaceBetween={10}
           breakpoints={{
-            640: { slidesPerView: 2, spaceBetween: 16 },
-            768: { slidesPerView: 2, spaceBetween: 20 },
-            1024: { slidesPerView: 5, spaceBetween: 10 },
+            480:  { slidesPerView: 1.5, spaceBetween: 12 },
+            640:  { slidesPerView: 2,   spaceBetween: 14 },
+            768:  { slidesPerView: 2,   spaceBetween: 16 },
+            1024: { slidesPerView: 5,   spaceBetween: 10 },
           }}
           className="mySwiper"
         >
           {products.map((product, i) => (
-            <SwiperSlide key={product.id}>
+            <SwiperSlide key={product.id} className="h-auto">
               <ClipToCartCard product={product} index={i} onOpenModal={(idx) => { setSelectedIndex(idx); setModalOpen(true); }} />
             </SwiperSlide>
           ))}
         </Swiper>
-
-        {/* {navigation && (
-          <button onClick={() => swiperRef.current?.slideNext()} className="absolute right-[-10px] top-[45%] -translate-y-1/2 translate-x-2 z-10 flex items-center justify-center w-9 h-9 rounded-full bg-white dark:bg-gray-800 shadow-md border border-gray-200 dark:border-gray-700 hover:bg-[#D4A97A] hover:text-white transition-colors" aria-label="Next slide">
-            <ChevronRight className="w-5 h-5" />
-          </button>
-        )} */}
       </div>
 
       <ReelModal isOpen={modalOpen} initialIndex={selectedIndex} products={products} onClose={() => setModalOpen(false)} />

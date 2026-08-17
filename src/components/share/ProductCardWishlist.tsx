@@ -59,7 +59,7 @@ export default function ProductCardWishlist({
   return (
     <button
       onClick={handleWishlist}
-      className={`w-8 h-8 mt-1 rounded-full border flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 ${
+      className={`w-8 h-8 mt-1 rounded-full ml-[25px] border flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 ${
         isWishlisted
           ? "bg-red-50 border-red-300 text-red-500"
           : "bg-white border-gray-200 text-gray-500 hover:border-red-300 hover:text-red-400"
