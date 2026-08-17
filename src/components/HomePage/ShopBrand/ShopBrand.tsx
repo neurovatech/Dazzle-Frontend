@@ -115,7 +115,7 @@ export default function ShopBrand({ brands }: Props) {
                         }
                       `}
                     >
-                      <div className="relative w-full aspect-square bg-white  rounded-4xl p-3 md:p-8 transition-all duration-300 hover:scale-105">
+                      <div className="relative w-full aspect-square p-3 md:p-8 transition-all duration-300 hover:scale-105">
                         <Image
                           src={brand.logo || NoImg}
                           alt={brand.label}
