@@ -273,9 +273,7 @@ function ClipToCartCard({ product, index, onOpenModal }: {
         )}
 
         {/* Title — mobile: orange | desktop: dark */}
-        <p className="text-sm font-bold line-clamp-2 leading-tight
-          text-[#CB843B]
-          lg:text-gray-900 lg:dark:text-white lg:text-base lg:h-12
+        <p className="text-sm font-bold line-clamp-2 leading-tight text-[#CB843B] lg:text-gray-900 lg:dark:text-white lg:text-base h-12
         ">
           {product.title}
         </p>
