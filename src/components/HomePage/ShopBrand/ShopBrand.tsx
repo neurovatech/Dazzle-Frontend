@@ -67,21 +67,10 @@ export default function ShopBrand({ brands }: Props) {
     brands.find((b) => b.slug === activeBrandSlug) || brands[0];
 
   return (
-    <div className="md:px-12.5 px-4">
+    <div className="">
       {/* ── Outer Container ── */}
       <div className="bg-[#FFFBF7] dark:bg-[#1a1816] rounded-3xl px-4 dark:border-zinc-800 py-6">
-        {/* ── Header ── */}
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="md:text-[32px] text-[20px] font-bold transition-colors text-transparent bg-clip-text bg-[linear-gradient(90deg,#101518_0%,#E9CCAE_46.15%,#B57908_100%)] dark:text-white">
-            Shop by Brand
-          </h3>
-          <Link
-            href="/brands"
-            className="text-sm font-medium text-[#101518] dark:text-gray-300 hover:text-[#CB843B] transition-colors"
-          >
-            See all
-          </Link>
-        </div>
+        
 
         {/* ── Brand Slider / Grid ── */}
         <div className="mb-6 shop_brand">
