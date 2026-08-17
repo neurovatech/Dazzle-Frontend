@@ -84,7 +84,7 @@ export default function ShopBrand({ brands }: Props) {
         </div>
 
         {/* ── Brand Slider / Grid ── */}
-        <div className="mb-6">
+        <div className="mb-6 shop_brand">
           <Swiper
             slidesPerView={4}
             spaceBetween={10}
