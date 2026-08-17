@@ -1,16 +1,14 @@
+import Link from "next/link";
 import { api } from "@/lib/api";
-import ShopBrand from "./ShopBrand";
-import type { Brand } from "./ShopBrand";
+import ShopBrand, { Brand } from "./ShopBrand";
 
 export default async function ShopBrandSectionCom() {
   let brands: Brand[] = [];
-
   try {
     const res = await api.get<{ data: Record<string, unknown>[] }>(
-      "/brands?order=0&page=1&limit=20",
-      { next: { revalidate: 60 } }
+      "/brands?order=0&page=1&limit=16",
+      { next: { revalidate: 60 } },
     );
-
     const list = Array.isArray(res) ? res : (res?.data ?? []);
     brands = list
       .filter((b) => b.is_active === true)
@@ -22,14 +20,20 @@ export default async function ShopBrandSectionCom() {
         is_active: Boolean(b.is_active),
       }));
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    const isExpectedNotFound = /not found/i.test(message);
-    if (!isExpectedNotFound) {
-      console.error("Error fetching brands:", error);
-    }
+    console.error("Error fetching brands:", error);
   }
 
-  if (brands.length === 0) return null;
-
-  return <ShopBrand brands={brands} />;
+  return (
+    <div className="md:px-12.5 px-4">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="md:text-[32px] text-[20px] font-bold text-transparent bg-clip-text bg-[linear-gradient(90deg,#101518_0%,#E9CCAE_46.15%,#B57908_100%)] dark:text-white">
+          Shop by Brand
+        </h3>
+        <Link href="/brands" className="text-sm font-medium bg-orange-50 border-orange-200 px-4 py-2 rounded-[10px] hover:text-[#CB843B] transition-colors duration-300">
+          See all
+        </Link>
+      </div>
+      <ShopBrand brands={brands} />
+    </div>
+  );
 }

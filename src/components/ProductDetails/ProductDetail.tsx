@@ -49,6 +49,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
   );
   const [selectedColor, setSelectedColor] = useState(0);
   const [emiOpen, setEmiOpen] = useState(false);
+  const [storeAvailabilityOpen, setStoreAvailabilityOpen] = useState(false);
   const [selectedCareIds, setSelectedCareIds] = useState<string[]>([]);
   const [selectedPriceType, setSelectedPriceType] = useState<
     "offer" | "regular"
@@ -449,6 +450,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
         onQtyChange={setQty}
         isUnavailable={price === 0}
         onExploreFinancing={() => setEmiOpen(true)}
+        onStoreAvailability={() => setStoreAvailabilityOpen(true)}
         selectedPriceType={selectedPriceType}
         selectedCareOptions={selectedCareOptions}
         careTotalOffer={careTotalOffer}
@@ -593,6 +595,8 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
                 currentPrice={selectedVariant?.mrp}
                 externalEmiOpen={emiOpen}
                 onExternalEmiClose={() => setEmiOpen(false)}
+                externalAvailabilityOpen={storeAvailabilityOpen}
+                onExternalAvailabilityClose={() => setStoreAvailabilityOpen(false)}
               />
             </div>
             <div>

@@ -388,7 +388,8 @@ function ProductQuicView({
 
   const handleBuyNow = async () => {
     if (!isAuthenticated) {
-      setShowLoginWarning(true);
+      router.push("/auth/login");
+      // setShowLoginWarning(true);
       return;
     }
 

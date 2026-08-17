@@ -54,6 +54,7 @@ interface StickyPurchaseBarProps {
   isUnavailable?: boolean;
   monthlyDuration?: string;
   storeAvailabilityHref?: string;
+  onStoreAvailability?: () => void;
   expressDeliveryText?: string;
   standardDeliveryText?: string;
   onExploreFinancing?: () => void;
@@ -80,6 +81,7 @@ export default function StickyPurchaseBar({
   isUnavailable = false,
   monthlyDuration = "12 months",
   storeAvailabilityHref = "#",
+  onStoreAvailability,
   expressDeliveryText = "Express Delivery in 4 hrs – Dhaka",
   standardDeliveryText = "Standard Delivery: Get in 1–3 days",
   onExploreFinancing,
@@ -154,7 +156,8 @@ export default function StickyPurchaseBar({
 
  const handleBuyNow = async () => {
   if (!isAuthenticated) {
-    toast.error("Please log in to continue with your purchase.");
+    router.push("/auth/login");
+    // toast.error("Please log in to continue with your purchase.");
     setShowLoginModal(true);
     return;
   }
@@ -188,9 +191,13 @@ export default function StickyPurchaseBar({
               <StoreIcon />
               <div>
                 <p className="text-sm font-semibold text-gray-800 dark:text-white leading-tight">Store Pickup</p>
-                <Link  href={`/shop-location`} className="text-xs text-[#af7e4a] hover:underline mt-0.5 inline-block">
+                <button
+                  type="button"
+                  onClick={onStoreAvailability}
+                  className="text-xs text-[#af7e4a] hover:underline mt-0.5 inline-block cursor-pointer"
+                >
                   View store availability
-                </Link>
+                </button>
               </div>
             </div>
 

@@ -36,7 +36,8 @@ interface ProductCardProps {
   minBookingPrice?: number;
 }
 
-const formatPrice = (val: number) => (val > 0 ? "" + val.toLocaleString("en-IN") : "0");
+const formatPrice = (val: number) =>
+  val > 0 ? "" + val.toLocaleString("en-IN") : "0";
 
 const ProductCard: React.FC<ProductCardProps> = ({
   productUuid,
@@ -80,17 +81,95 @@ const ProductCard: React.FC<ProductCardProps> = ({
         <Link href={href} className="block px-2 pt-2">
           <div className="relative flex justify-center items-center h-35 transition-all duration-500">
             <div className="relative z-10 w-full h-full transition-transform duration-500 group-hover:scale-105">
-              <ProductCardImage src={image || ProductImage} alt={title || "Product image"} />
+              <ProductCardImage
+                src={image || ProductImage}
+                alt={title || "Product image"}
+              />
             </div>
           </div>
         </Link>
 
         {/* Action Row */}
         <div className="flex items-center justify-between relative z-50">
+          {isBestDeal && (
+            <button className="bg-[#087400] py-3 px-4 text-white text-[9px] sm:text-xs font-bold sm:py-1 rounded-full shadow-md gap-2 flex justify-center items-center">
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 13 13"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <g clipPath="url(#clip0_3253_13820)">
+                  <path
+                    d="M3.61152 4.13683C3.55363 4.75433 3.51301 5.84714 3.87762 6.3123C3.87762 6.3123 3.70598 5.11183 5.24465 3.60566C5.86418 2.99933 6.00738 2.17464 5.79106 1.55613C5.66817 1.20574 5.44371 0.916282 5.24871 0.714173C5.13496 0.595344 5.22231 0.399329 5.38785 0.406438C6.38926 0.451126 8.01223 0.729407 8.70184 2.46003C9.00449 3.21972 9.02684 4.0048 8.88262 4.80308C8.79121 5.31292 8.46621 6.44636 9.20762 6.5855C9.73676 6.68503 9.9927 6.26457 10.1075 5.96191C10.1552 5.83597 10.3207 5.80449 10.4101 5.90503C11.3039 6.92168 11.38 8.1191 11.1952 9.14996C10.8377 11.1426 8.81965 12.5929 6.81481 12.5929C4.31027 12.5929 2.3166 11.1599 1.79965 8.56597C1.59145 7.51886 1.69707 5.44699 3.31191 3.98449C3.43176 3.8748 3.62777 3.9723 3.61152 4.13683Z"
+                    fill="url(#paint0_radial_3253_13820)"
+                  />
+                  <path
+                    d="M7.72987 7.86271C6.80667 6.67443 7.22003 5.31857 7.44651 4.77826C7.47698 4.70717 7.39573 4.64013 7.33174 4.68381C6.93464 4.95396 6.12112 5.58974 5.74229 6.48451C5.2294 7.69412 5.26596 8.28623 5.56964 9.00935C5.75245 9.44506 5.54018 9.53748 5.43354 9.55373C5.32995 9.56998 5.23448 9.50092 5.15831 9.42881C4.93922 9.2184 4.78307 8.95111 4.70737 8.65693C4.69112 8.59396 4.60885 8.5767 4.57128 8.62849C4.2869 9.02154 4.13963 9.65224 4.13253 10.0981C4.11018 11.4763 5.2487 12.5935 6.62588 12.5935C8.36159 12.5935 9.62604 10.674 8.6287 9.06928C8.33924 8.60209 8.06706 8.29638 7.72987 7.86271Z"
+                    fill="url(#paint1_radial_3253_13820)"
+                  />
+                </g>
+                <defs>
+                  <radialGradient
+                    id="paint0_radial_3253_13820"
+                    cx="0"
+                    cy="0"
+                    r="1"
+                    gradientTransform="matrix(-7.16899 -0.0311134 -0.0511149 11.7629 6.31875 12.6245)"
+                    gradientUnits="userSpaceOnUse"
+                  >
+                    <stop offset="0.314" stopColor="#FF9800" />
+                    <stop offset="0.662" stopColor="#FF6D00" />
+                    <stop offset="0.972" stopColor="#F44336" />
+                  </radialGradient>
+                  <radialGradient
+                    id="paint1_radial_3253_13820"
+                    cx="0"
+                    cy="0"
+                    r="1"
+                    gradientTransform="matrix(-0.0757642 7.50066 5.64481 0.0570107 6.72135 5.49005)"
+                    gradientUnits="userSpaceOnUse"
+                  >
+                    <stop offset="0.214" stopColor="#FFF176" />
+                    <stop offset="0.328" stopColor="#FFF27D" />
+                    <stop offset="0.487" stopColor="#FFF48F" />
+                    <stop offset="0.672" stopColor="#FFF7AD" />
+                    <stop offset="0.793" stopColor="#FFF9C4" />
+                    <stop
+                      offset="0.822"
+                      stopColor="#FFF8BD"
+                      stopOpacity="0.804"
+                    />
+                    <stop
+                      offset="0.863"
+                      stopColor="#FFF6AB"
+                      stopOpacity="0.529"
+                    />
+                    <stop
+                      offset="0.91"
+                      stopColor="#FFF38D"
+                      stopOpacity="0.209"
+                    />
+                    <stop
+                      offset="0.941"
+                      stopColor="#FFF176"
+                      stopOpacity="0"
+                    />
+                  </radialGradient>
+                  <clipPath id="clip0_3253_13820">
+                    <rect width="13" height="13" fill="white" />
+                  </clipPath>
+                </defs>
+              </svg>
+              Best Deil
+            </button>
+          )}
+
           <div
-  className="flex gap-1 sm:gap-2 ml-auto p-1 -mr-2 sm:-mr-2 lg:-mr-4 bg-[#F5F5F5] pl-2 [--r:20px] sm:[--r:26px] w-[110px]"
-  style={{
-    clipPath: `shape(
+            className="flex gap-1 sm:gap-2 ml-auto p-1 -mr-2 sm:-mr-2 lg:-mr-4 bg-[#F5F5F5] pl-2 [--r:20px] sm:[--r:26px] w-[110px]"
+            style={{
+              clipPath: `shape(
       from 0 100%,
       curve by var(--r) calc(-1 * var(--r)) with var(--r) 0,
       vline to var(--r),
@@ -99,8 +178,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
       vline to 100%,
       hline to 0
     )`,
-  }}
->
+            }}
+          >
             <ProductCardWishlist
               productUuid={itemId}
               title={title || ""}
@@ -133,7 +212,12 @@ const ProductCard: React.FC<ProductCardProps> = ({
             className="font-semibold dark:text-[#222] text-[15px] leading-[1.5] line-clamp-2 h-11 text-[#575757]"
             title={title}
           >
-            {title}
+            {title.length > 40 ? title.slice(0, 40) + "..." : title}{" "}
+            {inStock ? (
+              <span className="text-[#03A000] font-bold"> In Stock </span>
+            ) : (
+              <span className="text-[#f00]"> Out Of Stock </span>
+            )}
           </h3>
           <div
             role="tooltip"

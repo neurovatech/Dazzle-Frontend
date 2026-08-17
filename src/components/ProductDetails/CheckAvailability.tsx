@@ -899,8 +899,17 @@ export default function CheckAvailability({
   currentPrice,
   externalEmiOpen,
   onExternalEmiClose,
+  externalAvailabilityOpen,
+  onExternalAvailabilityClose,
 }: any) {
   const [isOpen, setIsOpen] = useState(false);
+  // External "Check Availability" open support (StickyPurchaseBar's
+  // "View store availability" button triggers this from outside).
+  const availabilityModalOpen = externalAvailabilityOpen || isOpen;
+  const closeAvailabilityModal = () => {
+    setIsOpen(false);
+    onExternalAvailabilityClose?.();
+  };
   const [isExchangeOpen, setIsExchangeOpen] = useState(false);
   const [userCoords, setUserCoords] = useState<{
     lat: number;
@@ -940,7 +949,7 @@ export default function CheckAvailability({
           variantUUID,
         },
       }),
-    enabled: isOpen && !!productUUID,
+    enabled: availabilityModalOpen && !!productUUID,
   });
 
   const branchesList = stockData?.data || [];
@@ -1162,8 +1171,8 @@ export default function CheckAvailability({
 
       {/* Geolocation stock check modal */}
       <GlobalModal
-        isOpen={isOpen}
-        onClose={() => setIsOpen(false)}
+        isOpen={availabilityModalOpen}
+        onClose={closeAvailabilityModal}
         title="Branch-wise Stock Availability"
       >
         <div className="p-6 space-y-4 text-gray-800 dark:text-gray-100">
@@ -1209,7 +1218,17 @@ export default function CheckAvailability({
             </div>
           ) : (
             <div className="space-y-3 pt-2">
-              {branchesList.map((branch) => {
+              {[...branchesList]
+                .sort((a, b) => {
+                  // Nearest store first, then sort by distance
+                  const da = distances[a.uuid] ?? Infinity;
+                  const db = distances[b.uuid] ?? Infinity;
+                  const aN = nearestBranchId === a.uuid ? -1 : 0;
+                  const bN = nearestBranchId === b.uuid ? -1 : 0;
+                  if (aN !== bN) return aN - bN;
+                  return da - db;
+                })
+                .map((branch) => {
                 const distance = distances[branch.uuid];
                 const isNearest = nearestBranchId === branch.uuid;
                 const statusLower = (branch.status || "").toLowerCase();

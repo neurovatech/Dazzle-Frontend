@@ -94,6 +94,8 @@ export default function TrendingNowSectionCom() {
 
   const products = data ?? [];
 
+  console.log(data, "productsproductsproductsproductsproducts")
+
   return (
     <div className="w-full">
       {/* ── Tab buttons ── */}

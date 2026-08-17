@@ -93,6 +93,9 @@ export interface OrderTrackingData {
   subTotal: number;
   paidAmount: number;
   grandAmount: number;
+  // Optional: only rendered if the API actually returns them (never fabricated).
+  trackingCode?: string;
+  courierName?: string;
   orderFullPaid: boolean;
   orderDelivered: boolean;
   orderCancelled: boolean;
