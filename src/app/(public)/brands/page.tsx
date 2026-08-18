@@ -26,7 +26,7 @@ async function BrandPage() {
 
   try {
     const res = await api.get<{ data: Record<string, unknown>[] }>(
-      "/brands?order=1&page=1&limit=1000",
+      "/brands?order=0&page=1&limit=1000",
       { next: { revalidate: 60 } },
     );
 
