@@ -7,6 +7,9 @@ import Image from "next/image";
 import NoImg from "@/images/no_images.png";
 import { api } from "@/lib/api";
 
+import { Swiper, SwiperSlide } from "swiper/react";
+import "swiper/css";
+
 interface CategoryItem {
   uuid: string;
   thumbnail_img: string;
@@ -42,12 +45,12 @@ function CategoriesCard({
   totalPages: initialTotalPages = 1,
   currentPage: initialPage = 1,
 }: CategoriesCardProps) {
-
   // ── Infinite scroll only on /categories page (seeAllBtn=false) ───────────
-  const [allCategories, setAllCategories] = useState<CategoryItem[]>(initialCategories);
-  const [page, setPage]                   = useState(initialPage);
-  const [hasMore, setHasMore]             = useState(
-    !seeAllBtn && initialTotalPages > initialPage
+  const [allCategories, setAllCategories] =
+    useState<CategoryItem[]>(initialCategories);
+  const [page, setPage] = useState(initialPage);
+  const [hasMore, setHasMore] = useState(
+    !seeAllBtn && initialTotalPages > initialPage,
   );
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const loaderRef = useRef<HTMLDivElement>(null);
@@ -66,22 +69,24 @@ function CategoriesCard({
     try {
       const res = await api.get<CategoriesApiResponse>(
         `/categories?page=${nextPage}&limit=${LIMIT}`,
-        { cache: "no-store" }
+        { cache: "no-store" },
       );
-      const list = Array.isArray(res) ? res : res?.data ?? [];
+      const list = Array.isArray(res) ? res : (res?.data ?? []);
       const newItems: CategoryItem[] = list.map((c: any) => ({
-        uuid:           String(c.uuid ?? ""),
-        category_name:  String(c.category_name ?? ""),
-        category_slug:  String(c.category_slug ?? ""),
-        thumbnail_img:  c.thumbnail_img ? String(c.thumbnail_img) : "",
-        is_featured:    Boolean(c.is_featured),
-        is_active:      Boolean(c.is_active),
+        uuid: String(c.uuid ?? ""),
+        category_name: String(c.category_name ?? ""),
+        category_slug: String(c.category_slug ?? ""),
+        thumbnail_img: c.thumbnail_img ? String(c.thumbnail_img) : "",
+        is_featured: Boolean(c.is_featured),
+        is_active: Boolean(c.is_active),
       }));
 
       if (newItems.length > 0) {
         setAllCategories((prev) => [...prev, ...newItems]);
         setPage(nextPage);
-        const totalPgs = Number(Array.isArray(res) ? 1 : (res as any)?.totalPages ?? 1);
+        const totalPgs = Number(
+          Array.isArray(res) ? 1 : ((res as any)?.totalPages ?? 1),
+        );
         setHasMore(nextPage < totalPgs);
       } else {
         setHasMore(false);
@@ -102,11 +107,13 @@ function CategoriesCard({
           fetchNextPage();
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
     const el = loaderRef.current;
     if (el) observer.observe(el);
-    return () => { if (el) observer.unobserve(el); };
+    return () => {
+      if (el) observer.unobserve(el);
+    };
   }, [fetchNextPage, hasMore, isFetchingMore, seeAllBtn]);
 
   // Display list — homepage uses initialCategories as-is (no append)
@@ -131,11 +138,20 @@ function CategoriesCard({
 
       {/* ── Grid ── */}
       <div className="py-4">
-        <div className="grid grid-cols-4 md:grid-cols-4 lg:grid-cols-8 gap-4">
+        <Swiper
+          slidesPerView={4}
+          spaceBetween={10}
+          breakpoints={{
+            480: { slidesPerView: 2, spaceBetween: 12 },
+            640: { slidesPerView: 2, spaceBetween: 14 },
+            768: { slidesPerView: 2, spaceBetween: 16 },
+            1024: { slidesPerView: 8, spaceBetween: 16 },
+          }}
+        >
           {displayCategories.map((item) => {
             const hasImage = !isEmpty(item.thumbnail_img);
-            const hasName  = !isEmpty(item.category_name);
-            const hasSlug  = !isEmpty(item.category_slug);
+            const hasName = !isEmpty(item.category_name);
+            const hasSlug = !isEmpty(item.category_slug);
 
             const href = hasSlug
               ? `/categories/${item.category_slug}`
@@ -144,31 +160,52 @@ function CategoriesCard({
                 : "/categories";
 
             return (
-              <Link key={item.uuid} href={href} className="flex flex-col items-center">
-                <div className="relative w-full aspect-square bg-[#F5F5F5] rounded-4xl p-6 md:p-8 transition-all duration-300 hover:scale-105 hover:bg-[#fcf5ed] hover:border-[#E9CCAE] border border-[#F5F5F5]">
-                  <Image
-                    src={hasImage ? item.thumbnail_img : NoImg}
-                    alt={hasName ? item.category_name : "Category"}
-                    fill
-                    sizes="(max-width: 768px) 25vw, 12vw"
-                    className="object-contain transition-transform duration-300 hover:scale-110 p-5"
-                    onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).src =
-                        (NoImg as any).src ?? NoImg.toString();
-                    }}
-                  />
-                </div>
-                <h2 className="w-full text-[14px] sm:text-[14px] font-medium text-primary pt-1 sm:pt-2 text-center transition-colors duration-300 group-hover:text-[#CB843B] line-clamp-2 leading-tight min-h-[22px] sm:min-h-[26px] lg:min-h-[36px] flex items-start justify-center">
-                  {hasName ? (
-                    item.category_name
-                  ) : (
-                    <span className="text-gray-400 dark:text-gray-500 italic">No name</span>
-                  )}
-                </h2>
-              </Link>
+              <SwiperSlide key={item.uuid}>
+                <Link
+                  href={href}
+                  className="w-full flex flex-col items-center gap-2 group focus:outline-none cursor-pointer"
+                >
+                  {/* <div className=" bg-[#F5F5F5] rounded-4xl hover:bg-[#fcf5ed] hover:border-[#E9CCAE] border border-[#F5F5F5] relative w-full aspect-square p-3 md:p-8 transition-all duration-300 hover:scale-105"> */}
+
+                  <div
+                    className={`
+                        w-full rounded-[28px] transition-all duration-300
+    flex items-center justify-center p-3 sm:p-4
+    bg-[#F5F5F5] border border-[#F5F5F5] shadow-sm
+    dark:bg-[#342a20] dark:border-[#B57908]
+    active:bg-[#fcf5ed] active:border-[#E9CCAE]
+    md:hover:bg-[#fcf5ed] md:hover:border-[#E9CCAE]
+                      `}
+                  >
+                    <div className="relative w-full aspect-square p-3 md:p-8 transition-all duration-300 hover:scale-105">
+                      <Image
+                        src={hasImage ? item.thumbnail_img : NoImg}
+                        alt={hasName ? item.category_name : "Category"}
+                        fill
+                        sizes="(max-width: 768px) 25vw, 12vw"
+                        className=" object-contain transition-transform duration-300 hover:scale-110"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src =
+                            (NoImg as any).src ?? NoImg.toString();
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <h2 className="w-full text-[14px] sm:text-[14px] font-medium text-primary pt-1 sm:pt-2 text-center transition-colors duration-300 group-hover:text-[#CB843B] line-clamp-2 leading-tight min-h-[22px] sm:min-h-[26px] lg:min-h-[36px] flex items-start justify-center">
+                    {hasName ? (
+                      item.category_name
+                    ) : (
+                      <span className="text-gray-400 dark:text-gray-500 italic">
+                        No name
+                      </span>
+                    )}
+                  </h2>
+                </Link>
+              </SwiperSlide>
             );
           })}
-        </div>
+        </Swiper>
       </div>
 
       {/* ── Infinite scroll loader (only on full /categories page) ── */}

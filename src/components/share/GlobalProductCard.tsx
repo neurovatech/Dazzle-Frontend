@@ -79,7 +79,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
         {/* Product Image — fixed-height, never crops, contains full image */}
         <Link href={href} className="block px-2 pt-2">
-          <div className="relative flex justify-center items-center h-35 transition-all duration-500">
+          <div className="relative flex justify-center items-center h-42 transition-all duration-500">
             <div className="relative z-10 w-full h-full transition-transform duration-500 group-hover:scale-105">
               <ProductCardImage
                 src={image || ProductImage}

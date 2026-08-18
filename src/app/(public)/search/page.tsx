@@ -161,7 +161,7 @@ function SearchResults() {
               className="group bg-white dark:bg-[#1f1a16] rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col"
             >
               {/* Image */}
-              <div className="relative aspect-square bg-gray-50 dark:bg-[#2a2420] p-3">
+              <div className="relative aspect-square bg-white dark:bg-[#2a2420] p-3">
                 {p.disRate > 0 && (
                   <span className="absolute top-2 left-2 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full z-10">
                     {Math.round(p.disRate)}%
@@ -177,24 +177,24 @@ function SearchResults() {
               </div>
 
               {/* Info */}
-              <div className="p-3 flex flex-col flex-1">
-                <p className="text-xs text-gray-700 dark:text-gray-200 font-medium leading-snug line-clamp-2 group-hover:text-[#B57908] transition-colors">
+              <div className="p-3 flex flex-col flex-1 bg-[#f5f5f5]">
+                <p className="font-semibold dark:text-[#222] text-[15px]  h-11 text-[#575757] line-clamp-2 group-hover:text-[#B57908] transition-colors">
                   {p.productName}
                 </p>
-                <p className={`text-[10px] font-semibold mt-1 ${p.isStockAvailable ? "text-green-500" : "text-red-500"}`}>
+                <p className={`text-[15px] font-semibold mt-1 ${p.isStockAvailable ? "text-green-500" : "text-red-500"}`}>
                   {p.isStockAvailable ? "In Stock" : "Out of Stock"}
                 </p>
                 <div className="flex items-baseline gap-1.5 mt-auto pt-2 flex-wrap">
-                  <span className="text-sm font-bold text-gray-900 dark:text-white">
+                  <span className="items-center flex gap-1 font-bold text-[20px] leading-[1.6] tracking-[0%] text-gray-900">
                     {formatPrice(p.discountedPrice)}
                   </span>
                   {p.regularPrice > p.discountedPrice && (
-                    <span className="text-xs text-gray-400 line-through">
+                    <span className="text-gray-400 text-[14px] font-normal leading-[1.6] line-through flex items-center gap-1 pl-1">
                       {formatPrice(p.regularPrice)}
                     </span>
                   )}
                 </div>
-                <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 truncate">
+                <p className="text-[15px] text-gray-400 dark:text-gray-500 mt-1 truncate font-bold">
                   {p.categoryName}
                 </p>
               </div>

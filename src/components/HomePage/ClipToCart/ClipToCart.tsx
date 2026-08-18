@@ -208,110 +208,110 @@ function ClipToCartCard({ product, index, onOpenModal }: {
 
   return (
     <div
-      className={`
-        group cursor-pointer h-full w-full flex flex-col transition-all duration-500 hover:shadow-2xl
-        bg-[#EDD9C4] rounded-2xl overflow-hidden
-        lg:bg-[#f4e3d3] lg:dark:bg-[#3a332b] lg:rounded-2xl lg:p-2 lg:overflow-visible
-      `}
-      onClick={() => onOpenModal(index)}
-    >
-      <div className="
-        relative w-full overflow-hidden bg-gray-100 dark:bg-black/20 shrink-0
-        aspect-[4/5] lg:aspect-auto lg:h-56 lg:rounded-t-2xl xl:h-64 ">
-        <Image
-          src={!isEmpty(product.clipThumbnail) ? product.clipThumbnail! : product.image}
-          alt={product.title}
-          fill
-          sizes="(max-width: 1024px) 80vw, 20vw"
-          className="object-cover transition-transform duration-300 group-hover:scale-105"
-        />
+  className={`
+    group cursor-pointer h-full w-full flex flex-col transition-all duration-500 hover:shadow-2xl
+    bg-[#EDD9C4] rounded-2xl overflow-hidden
+    lg:bg-[#f4e3d3] lg:dark:bg-[#3a332b] lg:rounded-2xl lg:p-2 lg:overflow-visible
+  `}
+  onClick={() => onOpenModal(index)}
+>
+  {/* ── Image section wrapper (overflow-visible so the circle avatar isn't clipped) ── */}
+  <div className="relative w-full shrink-0 aspect-[4/5] lg:aspect-auto lg:h-56 xl:h-64">
 
-        {/* Play button */}
-        {hasVideo && (
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-            <div className="w-[52px] h-[52px] rounded-full flex items-center justify-center backdrop-blur-md bg-black/30 border border-black/40 shadow-lg group-hover:scale-110 transition-transform duration-300">
-              <Play className="w-5 h-5 text-white fill-white" />
-            </div>
+    {/* Inner box handles the actual image clipping/rounding */}
+    <div className="absolute inset-0 overflow-hidden bg-gray-100 dark:bg-black/20 lg:rounded-t-2xl">
+      <Image
+        src={!isEmpty(product.clipThumbnail) ? product.clipThumbnail! : product.image}
+        alt={product.title}
+        fill
+        sizes="(max-width: 1024px) 80vw, 20vw"
+        className="object-cover transition-transform duration-300 group-hover:scale-105"
+      />
+
+      {/* Play button */}
+      {hasVideo && (
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+          <div className="w-[52px] h-[52px] rounded-full flex items-center justify-center backdrop-blur-md bg-black/30 border border-black/40 shadow-lg group-hover:scale-110 transition-transform duration-300">
+            <Play className="w-5 h-5 text-white fill-white" />
           </div>
-        )}
-
-        {product.image && (
-          <div className="lg:hidden absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-16 h-16 rounded-full bg-white dark:bg-[#2e2b28] border-4 border-white dark:border-[#2e2b28] shadow-md overflow-hidden z-10">
-            <Image src={product.image} alt={product.title} fill sizes="64px" className="object-contain p-1" />
-          </div>
-        )}
-      </div>
-
-      {/* ── Content ──
-          Mobile  : pt-10 (room for circle), orange title, column price
-          Desktop : pt-8 relative (circle positioned -top-40px), dark title, row price */}
-      <div className="
-        bg-white dark:bg-[#2e2b28] flex flex-col flex-1 text-left relative
-        pt-10 px-3 pb-3
-        lg:rounded-b-lg lg:mt-[-1px] lg:pt-8
-      ">
-
-        {/* Desktop ONLY — thumbnail circle at top of content */}
-        {product.image && (
-          <div className="hidden lg:block absolute left-1/2 -translate-x-1/2 top-[-40px] w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white dark:bg-[#2e2b28] shadow-md border-4 border-white dark:border-[#2e2b28] z-10 overflow-hidden">
-            <Image src={product.image} alt={product.title} fill sizes="64px" className="object-cover" />
-          </div>
-        )}
-
-        {/* Brand row */}
-        {product.brandName && (
-          <div className="flex items-center gap-1 mb-1">
-            {product.brandLogo ? (
-              <div className="relative w-4 h-4 shrink-0">
-                <Image src={product.brandLogo} alt={product.brandName} fill sizes="16px" className="object-contain" />
-              </div>
-            ) : (
-              <span className="text-xs">🏷</span>
-            )}
-            <span className="text-xs text-gray-500 font-medium">{product.brandName}</span>
-          </div>
-        )}
-
-        {/* Title — mobile: orange | desktop: dark */}
-        <p className="text-sm font-bold line-clamp-2 leading-tight text-[#CB843B] lg:text-gray-900 lg:dark:text-white lg:text-base h-12
-        ">
-          {product.title}
-        </p>
-
-        {/* Price + Cart — mobile: column | desktop: row */}
-        <div className="mt-auto pt-2 flex items-center justify-between gap-2">
-          {(product.discountedPrice || product.regularPrice) ? (
-            <div className="flex flex-col lg:flex-row lg:items-end lg:gap-1.5 lg:flex-wrap">
-              <span className="text-base lg:text-lg font-bold text-gray-900 dark:text-white">
-                {formatPrice(product.discountedPrice ?? product.regularPrice)}
-              </span>
-              {hasDiscount && (
-                <span className="text-xs lg:text-sm text-gray-400 line-through">
-                  {formatPrice(product.regularPrice)}
-                </span>
-              )}
-            </div>
-          ) : (
-            <span className="text-xs text-gray-400">0</span>
-          )}
-
-          <button
-            onClick={handleCartClick}
-            className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-all duration-300 hover:scale-110 active:scale-95
-              ${isAdded ? "bg-green-500" : "bg-[#101518] dark:bg-white"}`}
-            aria-label={isAdded ? "Added to cart" : "Add to cart"}
-          >
-            {isAdded ? (
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="white" className="w-4 h-4">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-              </svg>
-            ) : (
-              <CartIcon className="w-4 h-4 sm:w-5 sm:h-5 text-[#E9CCAE] dark:text-black" />
-            )}
-          </button>
         </div>
-      </div>
+      )}
     </div>
+
+    {/* Circle avatar — now OUTSIDE the overflow-hidden box, and z-30 so nothing covers it */}
+    {product.image && (
+      <div className="lg:hidden absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-16 h-16 rounded-full bg-white dark:bg-[#2e2b28] border-4 border-white dark:border-[#2e2b28] shadow-md overflow-hidden z-30">
+        <Image src={product.image} alt={product.title} fill sizes="64px" className="object-contain p-1" />
+      </div>
+    )}
+  </div>
+
+  {/* ── Content ── */}
+  <div className="
+    bg-white dark:bg-[#2e2b28] flex flex-col flex-1 text-left relative
+    pt-10 px-3 pb-3
+    lg:rounded-b-lg lg:mt-[-1px] lg:pt-8
+  ">
+    {/* Desktop ONLY — thumbnail circle at top of content */}
+    {product.image && (
+      <div className="hidden lg:block absolute left-1/2 -translate-x-1/2 top-[-40px] w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white dark:bg-[#2e2b28] shadow-md border-4 border-white dark:border-[#2e2b28] z-10 overflow-hidden">
+        <Image src={product.image} alt={product.title} fill sizes="64px" className="object-cover" />
+      </div>
+    )}
+
+    {/* Brand row */}
+    {product.brandName && (
+      <div className="flex items-center gap-1 mb-1">
+        {product.brandLogo ? (
+          <div className="relative w-4 h-4 shrink-0">
+            <Image src={product.brandLogo} alt={product.brandName} fill sizes="16px" className="object-contain" />
+          </div>
+        ) : (
+          <span className="text-xs">🏷</span>
+        )}
+        <span className="text-xs text-gray-500 font-medium">{product.brandName}</span>
+      </div>
+    )}
+
+    {/* Title */}
+    <p className="text-sm font-bold line-clamp-2 leading-tight text-[#CB843B] lg:text-gray-900 lg:dark:text-white lg:text-base h-12">
+      {product.title}
+    </p>
+
+    {/* Price + Cart */}
+    <div className="mt-auto pt-2 flex items-center justify-between gap-2">
+      {(product.discountedPrice || product.regularPrice) ? (
+        <div className="flex flex-col lg:flex-row lg:items-end lg:gap-1.5 lg:flex-wrap">
+          <span className="text-base lg:text-lg font-bold text-gray-900 dark:text-white">
+            {formatPrice(product.discountedPrice ?? product.regularPrice)}
+          </span>
+          {hasDiscount && (
+            <span className="text-xs lg:text-sm text-gray-400 line-through">
+              {formatPrice(product.regularPrice)}
+            </span>
+          )}
+        </div>
+      ) : (
+        <span className="text-xs text-gray-400">0</span>
+      )}
+
+      <button
+        onClick={handleCartClick}
+        className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-all duration-300 hover:scale-110 active:scale-95
+          ${isAdded ? "bg-green-500" : "bg-[#101518] dark:bg-white"}`}
+        aria-label={isAdded ? "Added to cart" : "Add to cart"}
+      >
+        {isAdded ? (
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="white" className="w-4 h-4">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+          </svg>
+        ) : (
+          <CartIcon className="w-4 h-4 sm:w-5 sm:h-5 text-[#E9CCAE] dark:text-black" />
+        )}
+      </button>
+    </div>
+  </div>
+</div>
   );
 }
 

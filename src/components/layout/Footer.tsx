@@ -257,17 +257,17 @@ export default function Footer() {
                   <Image
                     src="https://dazzle.sgp1.cdn.digitaloceanspaces.com/site/header-logo-white.svg"
                     alt="Footer Logo"
-                    width={180}
-                    height={60}
-                    className="h-12 sm:h-15 w-[60%] sm:w-[70%] object-contain"
+                    width={150}
+              height={50}
+                    // className="h-12 sm:h-15 w-[60%] sm:w-[70%] object-contain"
                   />
                 ) : (
                   <Image
                     src="https://dazzle.sgp1.cdn.digitaloceanspaces.com/site/header-logo-white.svg"
                     alt="Dazzle Logo"
-                    width={180}
-                    height={60}
-                    className="h-12 sm:h-15 w-[60%] sm:w-[70%] object-contain"
+                    width={150}
+              height={50}
+                    // className="h-12 sm:h-15 w-[60%] sm:w-[70%] object-contain"
                   />
                 )}
               </Link>
