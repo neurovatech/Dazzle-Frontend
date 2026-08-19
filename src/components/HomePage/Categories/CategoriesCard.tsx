@@ -8,8 +8,15 @@ import NoImg from "@/images/no_images.png";
 import { api } from "@/lib/api";
 
 import { Swiper, SwiperSlide } from "swiper/react";
+import { Grid, Navigation,
+  Pagination,
+  Scrollbar,
+  A11y,
+  Autoplay, } from "swiper/modules";
 import "swiper/css";
-
+// @ts-expect-error Swiper provides this stylesheet at runtime without type declarations.
+import "swiper/css/grid";
+import type { Swiper as SwiperType } from "swiper";
 interface CategoryItem {
   uuid: string;
   thumbnail_img: string;
@@ -54,6 +61,7 @@ function CategoriesCard({
   );
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const loaderRef = useRef<HTMLDivElement>(null);
+  const swiperRef = useRef<SwiperType | null>(null);
 
   // Reset when SSR data changes
   useEffect(() => {
@@ -139,14 +147,37 @@ function CategoriesCard({
       {/* ── Grid ── */}
       <div className="py-4">
         <Swiper
+          modules={[Navigation, Grid, Pagination, Scrollbar, A11y, Autoplay]}
+          grid={{ rows: 2, fill: "row" }}
           slidesPerView={4}
           spaceBetween={10}
+          pagination={{ clickable: true }} 
           breakpoints={{
-            480: { slidesPerView: 2, spaceBetween: 12 },
-            640: { slidesPerView: 2, spaceBetween: 14 },
-            768: { slidesPerView: 2, spaceBetween: 16 },
-            1024: { slidesPerView: 8, spaceBetween: 16 },
+            480: {
+              slidesPerView: 2,
+              spaceBetween: 12,
+              grid: { rows: 2, fill: "row" },
+            },
+            640: {
+              slidesPerView: 2,
+              spaceBetween: 14,
+              grid: { rows: 2, fill: "row" },
+            },
+            768: {
+              slidesPerView: 2,
+              spaceBetween: 16,
+              grid: { rows: 2, fill: "row" },
+            },
+            1024: {
+              slidesPerView: 8,
+              spaceBetween: 16,
+              grid: { rows: 1, fill: "row" },
+            },
           }}
+          onSwiper={(swiper) => {
+          swiperRef.current = swiper;
+        }}
+        className="mySwiper w-full"
         >
           {displayCategories.map((item) => {
             const hasImage = !isEmpty(item.thumbnail_img);
@@ -163,7 +194,7 @@ function CategoriesCard({
               <SwiperSlide key={item.uuid}>
                 <Link
                   href={href}
-                  className="w-full flex flex-col items-center gap-2 group focus:outline-none cursor-pointer"
+                  className="w-full flex flex-col items-center gap-2 group focus:outline-none cursor-pointer pb-5"
                 >
                   {/* <div className=" bg-[#F5F5F5] rounded-4xl hover:bg-[#fcf5ed] hover:border-[#E9CCAE] border border-[#F5F5F5] relative w-full aspect-square p-3 md:p-8 transition-all duration-300 hover:scale-105"> */}
 
