@@ -14,7 +14,6 @@ import { Grid, Navigation,
   A11y,
   Autoplay, } from "swiper/modules";
 import "swiper/css";
-// @ts-expect-error Swiper provides this stylesheet at runtime without type declarations.
 import "swiper/css/grid";
 import type { Swiper as SwiperType } from "swiper";
 interface CategoryItem {
@@ -44,15 +43,13 @@ const isEmpty = (value: string | null | undefined): boolean =>
 
 const LIMIT = 16;
 
-// ─── Component ────────────────────────────────────────────────────────────────
-
 function CategoriesCard({
   seeAllBtn = true,
   categories: initialCategories = [],
   totalPages: initialTotalPages = 1,
   currentPage: initialPage = 1,
 }: CategoriesCardProps) {
-  // ── Infinite scroll only on /categories page (seeAllBtn=false) ───────────
+
   const [allCategories, setAllCategories] =
     useState<CategoryItem[]>(initialCategories);
   const [page, setPage] = useState(initialPage);
@@ -63,7 +60,6 @@ function CategoriesCard({
   const loaderRef = useRef<HTMLDivElement>(null);
   const swiperRef = useRef<SwiperType | null>(null);
 
-  // Reset when SSR data changes
   useEffect(() => {
     setAllCategories(initialCategories);
     setPage(initialPage);
@@ -106,7 +102,7 @@ function CategoriesCard({
     }
   }, [isFetchingMore, hasMore, page]);
 
-  // ── Intersection Observer — only when on full /categories page ────────────
+
   useEffect(() => {
     if (seeAllBtn) return; // homepage widget — no infinite scroll needed
     const observer = new IntersectionObserver(
@@ -124,7 +120,6 @@ function CategoriesCard({
     };
   }, [fetchNextPage, hasMore, isFetchingMore, seeAllBtn]);
 
-  // Display list — homepage uses initialCategories as-is (no append)
   const displayCategories = seeAllBtn ? initialCategories : allCategories;
 
   return (
