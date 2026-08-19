@@ -92,7 +92,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
         {/* Action Row */}
         <div className="flex items-center justify-between relative z-50">
           {isBestDeal && (
-            <button className="bg-[#087400] text-white text-[8px] sm:text-xs font-bold px-1 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-md w-[80%] flex justify-center items-center gap-1">
+            <button className="bg-[#087400] text-white text-[8px] sm:text-xs font-bold px-1 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-md lg:w-[50%]! w-[80%] flex justify-center items-center gap-1">
               <svg
                 width="13"
                 height="13"
@@ -162,7 +162,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
                   </clipPath>
                 </defs>
               </svg>
-              <span className=""> Best Deal </span>
+              <span className="pt-1 lg:pt-0"> Best Deal </span>
             </button>
           )}
 
