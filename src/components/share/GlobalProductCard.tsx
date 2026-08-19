@@ -92,7 +92,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
         {/* Action Row */}
         <div className="flex items-center justify-between relative z-50">
           {isBestDeal && (
-            <button className="bg-[#087400] text-white text-[9px] sm:text-xs font-bold px-1 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-md max-w-[80%] flex justify-center items-center gap-1">
+            <button className="bg-[#087400] text-white text-[8px] sm:text-xs font-bold px-1 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-md w-[80%] flex justify-center items-center gap-1">
               <svg
                 width="13"
                 height="13"
