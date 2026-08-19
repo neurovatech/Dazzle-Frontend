@@ -162,7 +162,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
                   </clipPath>
                 </defs>
               </svg>
-              <span className="pt-1 lg:pt-0"> Best Deal </span>
+              <span className="pt-.5 lg:pt-0"> Best Deal </span>
             </button>
           )}
 
