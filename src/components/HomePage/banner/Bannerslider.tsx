@@ -74,6 +74,7 @@ function Bannerslider({
               sizes="(max-width: 767px) 100vw, (max-width: 1420px) 66vw, 936px"
               priority
               fetchPriority="high"
+              quality={70}
             />
           </div>
         ) : (
@@ -134,6 +135,7 @@ function Bannerslider({
                   sizes="(max-width: 767px) 100vw, (max-width: 1420px) 66vw, 936px"
                   priority={index === 0}
                   fetchPriority={index === 0 ? "high" : "auto"}
+                  quality={70}
                 />
               </Link>
             ) : (

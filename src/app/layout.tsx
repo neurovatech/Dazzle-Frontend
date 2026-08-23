@@ -102,6 +102,15 @@ export default async function RootLayout({
       suppressHydrationWarning
       className={`${urbanist.variable}  h-full antialiased`}
     >
+      <head>
+        {/* Preconnect to CDN and API host for faster image & data fetching */}
+        <link rel="preconnect" href="https://dazzle.sgp1.cdn.digitaloceanspaces.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://dazzle.sgp1.cdn.digitaloceanspaces.com" />
+        <link rel="preconnect" href="https://dzl.sgp1.cdn.digitaloceanspaces.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://dzl.sgp1.cdn.digitaloceanspaces.com" />
+        <link rel="preconnect" href="https://apix.bigpoint.com.bd" />
+        <link rel="dns-prefetch" href="https://apix.bigpoint.com.bd" />
+      </head>
       <body>
         <JsonLd id="ld-site" data={siteJsonLd} />
         <ThemeProvider>
