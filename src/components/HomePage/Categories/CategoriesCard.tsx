@@ -8,14 +8,18 @@ import NoImg from "@/images/no_images.png";
 import { api } from "@/lib/api";
 
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Grid, Navigation,
+import {
+  Grid,
+  Navigation,
   Pagination,
   Scrollbar,
   A11y,
-  Autoplay, } from "swiper/modules";
+  Autoplay,
+} from "swiper/modules";
 import "swiper/css";
 import "swiper/css/grid";
 import type { Swiper as SwiperType } from "swiper";
+
 interface CategoryItem {
   uuid: string;
   thumbnail_img: string;
@@ -49,7 +53,6 @@ function CategoriesCard({
   totalPages: initialTotalPages = 1,
   currentPage: initialPage = 1,
 }: CategoriesCardProps) {
-
   const [allCategories, setAllCategories] =
     useState<CategoryItem[]>(initialCategories);
   const [page, setPage] = useState(initialPage);
@@ -102,7 +105,6 @@ function CategoriesCard({
     }
   }, [isFetchingMore, hasMore, page]);
 
-
   useEffect(() => {
     if (seeAllBtn) return; // homepage widget — no infinite scroll needed
     const observer = new IntersectionObserver(
@@ -140,13 +142,13 @@ function CategoriesCard({
       </div>
 
       {/* ── Grid ── */}
-      <div className="py-4 mr-2">
+      <div className="py-4">
         <Swiper
           modules={[Navigation, Grid, Pagination, Scrollbar, A11y, Autoplay]}
           grid={{ rows: 2, fill: "row" }}
           slidesPerView={4}
           spaceBetween={10}
-          pagination={{ clickable: true }} 
+          pagination={{ clickable: true }}
           breakpoints={{
             480: {
               slidesPerView: 2,
@@ -170,9 +172,9 @@ function CategoriesCard({
             },
           }}
           onSwiper={(swiper) => {
-          swiperRef.current = swiper;
-        }}
-        className="mySwiper w-full"
+            swiperRef.current = swiper;
+          }}
+          className="mySwiper w-full pt-1 pb-4"
         >
           {displayCategories.map((item) => {
             const hasImage = !isEmpty(item.thumbnail_img);
@@ -189,27 +191,25 @@ function CategoriesCard({
               <SwiperSlide key={item.uuid}>
                 <Link
                   href={href}
-                  className="w-full flex flex-col items-center gap-2 group focus:outline-none cursor-pointer pb-5"
+                  className="w-full flex flex-col items-center gap-2 group focus:outline-none cursor-pointer pb-2"
                 >
-                  {/* <div className=" bg-[#F5F5F5] rounded-4xl hover:bg-[#fcf5ed] hover:border-[#E9CCAE] border border-[#F5F5F5] relative w-full aspect-square p-3 md:p-8 transition-all duration-300 hover:scale-105"> */}
-
+                  {/* Category Box Container */}
                   <div
                     className={`
-                        w-full rounded-[28px] transition-all duration-300
-    flex items-center justify-center p-3 sm:p-4
-    bg-[#F5F5F5] border border-[#F5F5F5] shadow-sm
-    dark:bg-[#342a20] dark:border-[#B57908]
-    active:bg-[#fcf5ed] active:border-[#E9CCAE]
-    md:hover:bg-[#fcf5ed] md:hover:border-[#E9CCAE]
-                      `}
+                      w-full aspect-square rounded-[28px] overflow-hidden transition-all duration-300
+                      flex items-center justify-center p-3 sm:p-4 relative
+                      bg-[#F5F5F5] border border-[#F5F5F5] shadow-sm
+                      dark:bg-[#342a20] dark:border-[#B57908]
+                      group-hover:bg-[#fcf5ed] group-hover:border-[#E9CCAE]
+                    `}
                   >
-                    <div className="relative w-full aspect-square p-3 md:p-8 transition-all duration-300 hover:scale-105">
+                    <div className="relative w-full h-full flex items-center justify-center">
                       <Image
                         src={hasImage ? item.thumbnail_img : NoImg}
                         alt={hasName ? item.category_name : "Category"}
                         fill
                         sizes="(max-width: 768px) 25vw, 12vw"
-                        className=" object-contain transition-transform duration-300 hover:scale-110"
+                        className="object-contain p-2 transition-transform duration-300 group-hover:scale-105"
                         onError={(e) => {
                           (e.currentTarget as HTMLImageElement).src =
                             (NoImg as any).src ?? NoImg.toString();
@@ -250,13 +250,6 @@ function CategoriesCard({
               ))}
             </div>
           )}
-
-          {/* All loaded */}
-          {/* {!hasMore && displayCategories.length > 0 && !isFetchingMore && (
-            <p className="text-center text-xs text-gray-400 py-6">
-              ✅ সব {displayCategories.length} টি ক্যাটাগরি দেখানো হয়েছে
-            </p>
-          )} */}
         </>
       )}
     </div>

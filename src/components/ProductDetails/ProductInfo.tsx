@@ -49,7 +49,9 @@ export default function ProductInfo({
   brand,
   code,
   inStock,
+  stockNote,
   warrantyNote,
+  activeImage,
   stats,
   price: basePrice,
   alldata,
@@ -121,6 +123,15 @@ const [viewers, setViewers] = useState(() => Math.floor(Math.random() * 100) + 1
 
     const isAlreadyInCart = cartItems.some((item) => item.id === targetCartId);
 
+    // Selected image from gallery/color variant takes priority
+    const cartImage =
+      activeImage ||
+      selectedVariant?.thumbnailUrl ||
+      alldata?.thumbnailImg ||
+      alldata?.thumbnail ||
+      alldata?.image ||
+      "";
+
     dispatch(
       addToCart({
         id: targetCartId,
@@ -129,12 +140,7 @@ const [viewers, setViewers] = useState(() => Math.floor(Math.random() * 100) + 1
         accessoriesUuid: planId,
         name: fullName,
         brand: brand,
-        image:
-          alldata?.thumbnailImg ||
-          alldata?.thumbnail ||
-          alldata?.image ||
-          selectedVariant?.thumbnailUrl ||
-          "",
+        image: cartImage,
         price: cartPrice,
         originalPrice: combinedOriginalPrice,
         quantity: qty ?? 1,
@@ -270,7 +276,11 @@ const [viewers, setViewers] = useState(() => Math.floor(Math.random() * 100) + 1
             </svg>
 
             <span className="text-[#222222] dark:text-white">
-              Please Hurry! Only 21 left in stock
+              {alldata?.stockNote ||
+                stockNote ||
+                (alldata?.totalStock !== undefined && alldata?.totalStock !== null
+                  ? `Please Hurry! Only ${alldata.totalStock} left in stock`
+                  : "Please Hurry! Only 21 left in stock")}
             </span>
           </div>
 
@@ -300,7 +310,10 @@ const [viewers, setViewers] = useState(() => Math.floor(Math.random() * 100) + 1
             </svg>
 
             <span className="font-bold bg-gradient-to-r from-[#6D3F0E] to-[#D3791B] bg-clip-text text-transparent flex dark:text-white text-[12px] lg:text-[16px]">
-              1 Year Official Warranty Support Except USA Variant
+              {alldata?.warrantyNote ||
+                warrantyNote ||
+                alldata?.warranty ||
+                "1 Year Official Warranty Support Except USA Variant"}
             </span>
           </div>
 

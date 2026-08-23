@@ -423,6 +423,9 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
     }
   };
 
+  // ── Active Image (Selected Gallery / Color Image) ────────────
+  const activeImage = images[selectedColor] || images[0] || product?.thumbnailImg || "";
+
   return (
     <div className="min-h-screen font-sans bg-[#fffbf6] dark:bg-[#2e2b28]">
       <div className="max-w-350 mx-auto lg:px-4 px-2">
@@ -441,7 +444,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
             ? varName
             : `${prodName} ${varName}`.trim();
         })()}
-        productImage={images[0]}
+        productImage={activeImage}
         productPrice={price}
         productOriginalPrice={originalPrice}
         productSlug={product?.productSlug}
@@ -469,13 +472,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
                 onSelect={setSelectedColor}
                 badges={product?.disRate}
               />
-              {/* {frequentlyBoughtProducts.length > 0 && (
-                <div className="grid-cols-2 lg:grid-cols-3 gap-2 hidden lg:grid">
-                  {frequentlyBoughtProducts.map((prod, index) => (
-                    <ProductCard key={index} {...prod} />
-                  ))}
-                </div>
-              )} */}
               <div className="hidden lg:block">
                 {frequentlyBoughtProducts.length > 0 && (
                 <FrequentlyBoughtTogether
@@ -501,10 +497,15 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
               brand={product?.brandName ?? ""}
               brand_slug={product?.brandSlug ?? ""}
               code={product?.productCode ?? "N/A"}
-              inStock={""}
-              stockNote={""}
-              warrantyNote={""}
-              stats={{ soldLastHours: "", reviewCount: "", viewingNow: "" }}
+              inStock={!product?.isTba}
+              stockNote={product?.stockNote ?? product?.stock_note}
+              warrantyNote={product?.warrantyNote ?? product?.warranty_note ?? product?.warranty}
+              activeImage={activeImage}
+              stats={{
+                soldLastHours: product?.metaTags?.soldCount ?? 12,
+                reviewCount: product?.metaTags?.reviewPoints ?? 0,
+                viewingNow: 12,
+              }}
               price={selectedVariant?.mrp}
               originalPrice={originalPrice}
               description={product?.description}
