@@ -4,8 +4,13 @@ export function makeQueryClient(): QueryClient {
   return new QueryClient({
     defaultOptions: {
       queries: {
-        // Default stale time to prevent immediate refetching on the client side
-        staleTime: 60 * 1000, 
+        // Prevent refetching when switching browser tabs or refocusing window
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
+        // Default stale time: 5 minutes
+        staleTime: 5 * 60 * 1000,
+        // Keep in cache for 30 minutes
+        gcTime: 30 * 60 * 1000,
       },
       dehydrate: {
         // include pending queries in dehydration

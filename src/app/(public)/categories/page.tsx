@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Metadata } from "next";
-import CategoriesCard from "@/components/HomePage/Categories/CategoriesCard";
+import CategoriesCardPage from "@/components/HomePage/Categories/CategoriesCardPage";
 import Breadcrumb from "@/components/share/Breadcrumb";
 import { api } from "@/lib/api";
 
@@ -77,7 +77,7 @@ async function Categories({ searchParams }: CategoriesPageProps) {
         <div className="md:px-12.5 px-4">
           <Breadcrumb items={breadcrumbItems} />
         </div>
-        <CategoriesCard
+        <CategoriesCardPage
           seeAllBtn={false}
           categories={categories}
           totalPages={totalPages}

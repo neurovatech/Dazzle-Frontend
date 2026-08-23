@@ -48,6 +48,10 @@ export default function ShopBrand({ brands }: Props) {
   // Fetch products for active brand
   const { data: productRes, isLoading } = useQuery<ProductListResponse>({
     queryKey: ["brand-products", activeBrandSlug],
+    staleTime: 15 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
     queryFn: () =>
       api.get<ProductListResponse>(
         `/products?brandSlug=${activeBrandSlug}&limit=12&page=1`,

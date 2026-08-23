@@ -496,11 +496,11 @@ function CategoriesProductWithTopSale({
        
 
         <div className="lg:col-span-9 h-full">
-          {/* Top Selling — fetches showcase-items?showcaseSlug=top-selling */}
-          <TopSellingCom />
+          {/* Top Selling */}
+          {topSellingSlot ?? <TopSellingCom />}
 
-          {/* Running Offer — fetches showcase-items?showcaseSlug=running-offer */}
-          <RunningOfferCom />
+          {/* Running Offer */}
+          {runningOfferSlot ?? <RunningOfferCom />}
 
           {/* productList area  */}
           <div ref={productListRef} className="scroll-mt-4">

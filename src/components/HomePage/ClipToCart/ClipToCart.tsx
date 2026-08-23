@@ -326,7 +326,10 @@ function ClipToCart({ autoplayDelay = 3000, navigation = true, pagination = true
 
   const { data, isLoading } = useQuery<ApiResponse>({
     queryKey: ["showcase-clip-to-cart"],
-    staleTime: 5 * 60 * 1000,
+    staleTime: 15 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
     queryFn: () => api.get<ApiResponse>("/showcase-items?showcaseSlug=clip-to-cart"),
   });
 
@@ -343,7 +346,7 @@ function ClipToCart({ autoplayDelay = 3000, navigation = true, pagination = true
     discountedPrice: item.discountedPrice,
   })) ?? [];
 
-  if (isLoading) {
+  if (isLoading && products.length === 0) {
     return (
       <div>
         <div className="flex justify-between items-center gap-6 pb-5">

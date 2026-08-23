@@ -37,7 +37,10 @@ function mapItems(data: ShowcaseItem[]): ProductCardItem[] {
 export default function RunningOfferCom() {
   const { data, isLoading } = useQuery<ProductCardItem[]>({
     queryKey: ["showcase-running-offer"],
-    staleTime: 5 * 60 * 1000,
+    staleTime: 15 * 60 * 1000, // 15 mins cache validity
+    gcTime: 60 * 60 * 1000,    // Keep in garbage collection 1 hour
+    refetchOnWindowFocus: false, // Never refetch when switching tabs
+    refetchOnReconnect: false,
     queryFn: async () => {
       const res = await api.get<ShowcaseItemsResponse>(
         "/showcase-items?showcaseSlug=running-offer",
@@ -48,6 +51,8 @@ export default function RunningOfferCom() {
   });
 
   const products = data ?? [];
+
+  // If loading finished and there are no products, hide the component completely
   if (!isLoading && products.length === 0) return null;
 
   return (
@@ -57,7 +62,7 @@ export default function RunningOfferCom() {
           Running Offer
         </h1>
       </div>
-      {isLoading ? (
+      {isLoading && products.length === 0 ? (
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-4">
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="animate-pulse bg-[#8B5A2B] dark:bg-[#3a3330] rounded-2xl h-[220px]" />

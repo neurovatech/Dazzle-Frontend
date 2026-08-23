@@ -1,40 +1,11 @@
 "use client";
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import TrendingNow from "./TrendingNow";
 import { api } from "@/lib/api";
+import TrendingNow from "./TrendingNow";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-
-interface ShowcaseThumbnail {
-  fileUuid: string;
-  mediaFileUrl: string;
-}
-
-interface ShowcaseItem {
-  productUuid: string;
-  productCode: string;
-  productName: string;
-  productSlug: string;
-  productBadge: string;
-  isTba: boolean;
-  regularPrice: number;
-  discountedPrice: number;
-  disRate: number;
-  thumbnails: ShowcaseThumbnail;
-}
-
-interface ShowcaseItemsResponse {
-  statusCode: number;
-  status: string;
-  found: boolean;
-  count: number;
-  totalCount: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-  data: ShowcaseItem[];
-}
 
 export interface ProductCardItem {
   uuid: string;
@@ -49,16 +20,43 @@ export interface ProductCardItem {
   image: string;
 }
 
-// ─── Tab config ───────────────────────────────────────────────────────────────
+interface ShowcaseItem {
+  productUuid: string;
+  productCode: string;
+  productName: string;
+  productSlug: string;
+  productBadge: string;
+  isTba: boolean;
+  regularPrice: number;
+  discountedPrice: number;
+  disRate: number;
+  thumbnails: { fileUuid: string; mediaFileUrl: string };
+}
 
-const TABS = [
-  { label: "Newest",  slug: "trending-now-newest"  },
-  { label: "Popular", slug: "trending-now-popular" },
-] as const;
+interface ShowcaseItemsResponse {
+  statusCode: number;
+  status: string;
+  found: boolean;
+  count: number;
+  totalCount: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  data: ShowcaseItem[];
+}
 
-type TabSlug = typeof TABS[number]["slug"];
+type TabSlug =
+  | "trending-now-newest"
+  | "trending-now-best-seller"
+  | "trending-now-best-value";
 
-// ─── Map API response → ProductCardItem[] ─────────────────────────────────────
+const TABS: { label: string; slug: TabSlug }[] = [
+  { label: "Newest", slug: "trending-now-newest" },
+  { label: "Best Seller", slug: "trending-now-best-seller" },
+  { label: "Best Value", slug: "trending-now-best-value" },
+];
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function mapItems(data: ShowcaseItem[]): ProductCardItem[] {
   return data.map((item) => ({
@@ -89,12 +87,13 @@ export default function TrendingNowSectionCom() {
       );
       return mapItems(Array.isArray(res?.data) ? res.data : []);
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 15 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
   const products = data ?? [];
-
-  console.log(data, "productsproductsproductsproductsproducts")
 
   return (
     <div className="w-full">
@@ -117,7 +116,7 @@ export default function TrendingNowSectionCom() {
 
       {/* ── Content ── */}
       <div className="min-h-[200px]">
-        {isLoading ? (
+        {isLoading && products.length === 0 ? (
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-4">
             {Array.from({ length: 5 }).map((_, i) => (
               <div
