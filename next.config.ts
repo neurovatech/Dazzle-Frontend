@@ -3,12 +3,21 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
+  experimental: {
+    // Tree-shake large packages to reduce Total Blocking Time (TBT)
+    optimizePackageImports: [
+      "lucide-react",
+      "@tanstack/react-query",
+      "swiper",
+      "react-hot-toast",
+      "redux",
+      "@reduxjs/toolkit",
+    ],
+  },
   images: {
-    // Optimized images were served with `max-age=14400` (Next's 4-hour default),
-    // which PageSpeed flagged under "Use efficient cache lifetimes".
-    // 30 days is safe here because product image URLs are path-versioned by an
-    // upload id (e.g. /43465/...), so replacing an image yields a NEW url.
-    // Do NOT raise this if any workflow overwrites an image at the same path.
+    // Convert images to modern lightweight formats (AVIF and WebP) automatically
+    formats: ["image/avif", "image/webp"],
+    // Extended cache TTL for CDN images
     minimumCacheTTL: 2592000,
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },

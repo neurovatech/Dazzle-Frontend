@@ -11,6 +11,7 @@ import {
   Autoplay,
 } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
+import type { Swiper as SwiperType } from "swiper";
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
@@ -55,20 +56,36 @@ function Bannerslider({
           { id: 3, title: "Slide 3", content: "Demo Content 3" },
         ];
 
+  // SSR Fallback: Render the first slide image immediately in HTML so LCP is instant!
   if (!mounted) {
+    const firstSlide = finalSlides[0];
     return (
       <div className="w-full pb-4 md:pb-6 px-4 sm:px-6 md:px-8 lg:px-12">
-        <div className="">
+        <div>
           <MarqueeBulletinBar />
         </div>
-        <div className="w-full h-55 sm:h-75 md:h-121 animate-pulse bg-gray-200 dark:bg-zinc-800 rounded-[15px]" />
+        {firstSlide?.imageUrl ? (
+          <div className="relative w-full h-60 max-[450px]:h-50 sm:h-75 md:h-110 rounded-[15px] overflow-hidden block">
+            <Image
+              src={firstSlide.imageUrl}
+              alt={firstSlide.title || "Hero Banner"}
+              fill
+              className="object-cover"
+              sizes="(max-width: 767px) 100vw, (max-width: 1420px) 66vw, 936px"
+              priority
+              fetchPriority="high"
+            />
+          </div>
+        ) : (
+          <div className="w-full h-55 sm:h-75 md:h-121 animate-pulse bg-gray-200 dark:bg-zinc-800 rounded-[15px]" />
+        )}
       </div>
     );
   }
 
   return (
     <div className="w-full pb-4 md:pb-6 px-4 sm:px-6 md:px-8 lg:px-12">
-      <div className="">
+      <div>
         <MarqueeBulletinBar />
       </div>
       <Swiper
@@ -100,7 +117,7 @@ function Bannerslider({
         }}
         className="mySwiper"
       >
-        {finalSlides.map((slide) => (
+        {finalSlides.map((slide, index) => (
           <SwiperSlide key={slide.id}>
             {slide.imageUrl ? (
               <Link
@@ -114,12 +131,9 @@ function Bannerslider({
                   alt={slide.title || `Slide ${slide.id}`}
                   fill
                   className="object-cover"
-                  // NOT 100vw: at the md+ breakpoint Swiper shows slidesPerView=1.5,
-                  // so one slide is only ~2/3 of the (max-w-355 = 1420px-capped)
-                  // container width — ~936px at desktop, matching what Lighthouse
-                  // measured. Below 768px there's 1 slide per view, so it IS ~100vw.
                   sizes="(max-width: 767px) 100vw, (max-width: 1420px) 66vw, 936px"
-                  priority={slide.id === finalSlides[0]?.id}
+                  priority={index === 0}
+                  fetchPriority={index === 0 ? "high" : "auto"}
                 />
               </Link>
             ) : (
