@@ -105,7 +105,7 @@ export default function NewArrivalsClient({
             discount={Math.round(product.disRate || 0)}
             badge={product.productBadge || undefined}
             inStock={!product.isTba}
-            isBestDeal={product.disRate > 15}
+            isBestDeal={false}
             slug={product.productSlug || product.productUuid}
           />
         ))}

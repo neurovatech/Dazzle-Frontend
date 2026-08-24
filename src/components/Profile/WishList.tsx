@@ -54,7 +54,7 @@ const WishList = () => {
               discount={item.discount}
               badge={item.badge}
               inStock={item.inStock}
-              isBestDeal={item.isBestDeal}
+              isBestDeal={false}
               slug={item.productSlug}
             />
             {/* Remove button */}

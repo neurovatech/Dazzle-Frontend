@@ -354,7 +354,7 @@ function ExchangeModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
                     ].map((text, i) => (
                       <div key={i} className="flex items-start gap-2">
                         <span className="mt-1 w-4 h-4 rounded-full bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 text-[10px] font-bold flex items-center justify-center shrink-0">{i + 1}</span>
-                        <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">{text}</p>
+                        <p className="text-xs text-gray-600 dark:text-white leading-relaxed">{text}</p>
                       </div>
                     ))}
                   </div>
@@ -1176,7 +1176,7 @@ export default function CheckAvailability({
         title="Branch-wise Stock Availability"
       >
         <div className="p-6 space-y-4 text-gray-800 dark:text-gray-100">
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-500 dark:text-white">
             Real-time branch inventory tracker. Trigger distance calculation to
             find your nearest Dazzle branch location.
           </p>
@@ -1217,7 +1217,7 @@ export default function CheckAvailability({
               No branch availability data found for this item.
             </div>
           ) : (
-            <div className="space-y-3 pt-2">
+            <div className="space-y-3 pt-2 h-[300px] overflow-scroll">
               {[...branchesList]
                 .sort((a, b) => {
                   // Nearest store first, then sort by distance
@@ -1241,7 +1241,7 @@ export default function CheckAvailability({
                     className={`p-3.5 rounded-xl border flex items-center justify-between transition ${
                       isNearest
                         ? "border-orange-500 bg-orange-500/5 dark:bg-orange-950/10"
-                        : "border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-850/50"
+                        : "border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-[#1f1a16]"
                     }`}
                   >
                     <div className="space-y-1">

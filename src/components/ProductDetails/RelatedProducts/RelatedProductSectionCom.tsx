@@ -76,7 +76,7 @@ export default function RelatedProductSectionCom({ categorySlug }: RelatedProduc
     originalPrice: item.regularPrice,
     discount:      Math.round(item.disRate ?? 0),
     badge:         item.productBadge ?? "",
-    isBestDeal:    (item.disRate ?? 0) > 15,
+    isBestDeal:    false,
     inStock:       !item.isTba,
     image:         getThumb(item.thumbnails),
   }));

@@ -79,7 +79,7 @@ function RelatedProduct({
               originalPrice={product.originalPrice}
               discount={product.discount}
               badge={product.badge}
-              isBestDeal={product.isBestDeal}
+              isBestDeal={false}
               inStock={product.inStock}
               image={product.image}
             />

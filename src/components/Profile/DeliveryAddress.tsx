@@ -740,7 +740,7 @@ const DeliveryAddress = () => {
                 </p>
               </div>
             </div>
-            <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+            <p className="text-xs text-gray-600 dark:text-white leading-relaxed">
               Are you sure you want to permanently delete this delivery address
               from your profile?
             </p>

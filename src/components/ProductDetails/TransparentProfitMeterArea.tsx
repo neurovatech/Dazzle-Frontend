@@ -179,16 +179,16 @@ export default function TransparentProfitMeterArea({
       <GlobalModal isOpen={showProfit} onClose={() => setShowProfit(false)} title="Transparent Profit Meter">
         <div className="px-6 py-5 space-y-3 text-[#222222]">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-500">Product price:</span>
-            <span className="font-semibold">{price > 0 ? fmt(price) : "0"}</span>
+            <span className="text-gray-500 dark:text-white">Product price:</span>
+            <span className="font-semibold dark:text-white">{price > 0 ? fmt(price) : "0"}</span>
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-500">Purchase rate:</span>
-            <span className="font-semibold">{product?.profitRatio ?? 0}%</span>
+            <span className="text-gray-500 dark:text-white">Purchase rate:</span>
+            <span className="font-semibold dark:text-white">{product?.profitRatio ?? 0}%</span>
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-500">Expected profit:</span>
-            <span className="font-semibold text-[#7A4F1E]">~{fmt(expectedProfit)}</span>
+            <span className="text-gray-500 dark:text-white">Expected profit:</span>
+            <span className="font-semibold text-[#7A4F1E] dark:text-white">~{fmt(expectedProfit)}</span>
           </div>
           {regularPrice > price && (
             <>
@@ -203,7 +203,7 @@ export default function TransparentProfitMeterArea({
               </div>
             </>
           )}
-          <p className="text-xs text-gray-400 pt-2 leading-relaxed">
+          <p className="text-xs text-gray-400 dark:text-white pt-2 leading-relaxed">
             Our pricing is fully transparent. The purchase rate reflects our operating margin so you always know exactly what you&apos;re paying.
           </p>
         </div>
@@ -214,21 +214,21 @@ export default function TransparentProfitMeterArea({
         <div className="px-6 py-5 space-y-5 text-[#222222]">
           <div className="flex items-end justify-between">
             <div>
-              <p className="text-xs text-gray-500 mb-1">Cost per day · over <span className="font-semibold text-gray-700">{keepYrs} years</span></p>
-              <p className="text-4xl font-bold text-[#7A4F1E]">{fmt(costPerDay)}/day</p>
+              <p className="text-xs text-gray-500 mb-1 dark:text-white">Cost per day · over <span className="font-semibold text-gray-700 dark:text-white">{keepYrs} years</span></p>
+              <p className="text-4xl font-bold text-[#7A4F1E] dark:text-white">{fmt(costPerDay)}/day</p>
             </div>
             <div className="text-right">
-              <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">YOU PAY ONCE</p>
-              <p className="text-lg font-bold text-gray-800">{fmt(price)}</p>
+              <p className="text-xs text-gray-400 uppercase tracking-wide mb-1 dark:text-white">YOU PAY ONCE</p>
+              <p className="text-lg font-bold text-gray-800 dark:text-white">{fmt(price)}</p>
             </div>
           </div>
           <div>
-            <div className="flex items-center justify-between mb-2 text-xs text-gray-500">
+            <div className="flex items-center justify-between mb-2 text-xs text-gray-500 dark:text-white">
               <span>How long will you keep it?</span>
-              <span className="font-semibold text-gray-700">{keepYrs} yrs · {keepDays} days</span>
+              <span className="font-semibold text-gray-700 dark:text-white">{keepYrs} yrs · {keepDays} days</span>
             </div>
             <input type="range" min={180} max={1825} step={30} value={keepDays} disabled className="w-full accent-[#7A4F1E] h-1.5 cursor-not-allowed opacity-70" />
-            <div className="flex justify-between text-[10px] text-gray-400 mt-1">
+            <div className="flex justify-between text-[10px] text-gray-400 mt-1 dark:text-white">
               {["0.5y","1y","2y","3y","4y","5y"].map((l) => <span key={l}>{l}</span>)}
             </div>
           </div>
@@ -257,17 +257,17 @@ export default function TransparentProfitMeterArea({
                 })}
               </div>
               {dazzleEnabled && (
-                <p className="text-xs text-gray-500 leading-relaxed">
+                <p className="text-xs text-gray-500 leading-relaxed ">
                   If anything breaks in {(careWarrantyDays / 365).toFixed(1)} years we replace it once, free. Cost per day: <strong>{fmt(costPerDay)}/day</strong>.
                 </p>
               )}
             </div>
           ) : (
-            <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+            <div className="rounded-xl border border-gray-100 bg-gray-50 p-4 dark:text-white">
               <p className="text-sm text-gray-500">No Dazzle Care plans are available for this product.</p>
             </div>
           )}
-          <p className="text-xs text-gray-400 leading-relaxed">This calculator helps you understand the true daily value of your purchase over its expected lifetime.</p>
+          <p className="text-xs text-gray-400 leading-relaxed dark:text-white">This calculator helps you understand the true daily value of your purchase over its expected lifetime.</p>
         </div>
       </GlobalModal>
 
@@ -305,7 +305,7 @@ export default function TransparentProfitMeterArea({
             <>
               {/* Product name */}
               {liveData.productName && (
-                <p className="text-sm font-semibold text-gray-700">{liveData.productName}</p>
+                <p className="text-sm font-semibold text-gray-700 dark:text-white">{liveData.productName}</p>
               )}
 
               {/* Savings headline */}

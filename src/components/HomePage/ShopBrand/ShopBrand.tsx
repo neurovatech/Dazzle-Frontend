@@ -183,7 +183,7 @@ export default function ShopBrand({ brands }: Props) {
                       originalPrice={product.regularPrice}
                       discount={Math.round(product.disRate)}
                       badge={product.productBadge}
-                      isBestDeal={product.disRate > 15}
+                      isBestDeal={false}
                       inStock={!product.isTba}
                       image={product.thumbnails?.mediaFileUrl ?? ""}
                     />

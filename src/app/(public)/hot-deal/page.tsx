@@ -76,7 +76,7 @@ export default async function FeatureProductsPages() {
         originalPrice: item.regularPrice,
         discount: Math.round(item.disRate),
         badge: item.productBadge,
-        isBestDeal: item.disRate > 15, // adjust threshold as needed, API has no direct flag
+        isBestDeal: false,
         inStock: !item.isTba,
         image: item.thumbnails?.mediaFileUrl ?? "/images/product.png",
       }));

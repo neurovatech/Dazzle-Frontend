@@ -81,7 +81,7 @@ export default async function MostPopularSectionCom() {
       originalPrice: item.regularPrice,
       discount: Math.round(item.disRate),
       badge: item.productBadge,
-      isBestDeal: item.disRate > 15, 
+      isBestDeal: false,
       inStock: !item.isTba,
       image: item.thumbnails?.mediaFileUrl ?? "/images/product.png",
     }));
