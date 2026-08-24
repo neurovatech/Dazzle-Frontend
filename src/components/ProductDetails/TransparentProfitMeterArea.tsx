@@ -198,7 +198,7 @@ export default function TransparentProfitMeterArea({
                 <span className="line-through text-gray-400">{fmt(regularPrice)}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-500">You save:</span>
+                <span className="text-gray-500 dark:text-white">You save:</span>
                 <span className="font-semibold text-green-600">{fmt(regularPrice - price)}</span>
               </div>
             </>
@@ -313,10 +313,10 @@ export default function TransparentProfitMeterArea({
                 const avgOthers = stores.reduce((s, st) => s + st.price_bdt, 0) / stores.length;
                 const youSave = avgOthers - dazzlePrice;
                 return youSave > 0 ? (
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-white">
                     <span>You save</span>
-                    <span className="text-3xl font-bold text-[#7A4F1E]">{fmt(youSave)}</span>
-                    <span className="text-gray-500">vs avg of others</span>
+                    <span className="text-3xl font-bold text-[#7A4F1E] dark:text-[#D4A97A]">{fmt(youSave)}</span>
+                    <span className="text-gray-500 dark:text-white">vs avg of others</span>
                   </div>
                 ) : null;
               })()}
@@ -340,7 +340,7 @@ export default function TransparentProfitMeterArea({
                     <div key={i} className="flex items-center justify-between px-4 py-3 bg-white">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-bold text-gray-400">#{i + 2}</span>
-                        <span className="text-gray-700">{store.store_name}</span>
+                        <span className="text-gray-700 dark:text-[#D4A97A]">{store.store_name}</span>
                       </div>
                       <div className="flex items-center gap-3">
                         {diff > 0 && <span className="text-xs text-red-500 font-medium">+{fmt(diff)}</span>}
@@ -352,7 +352,7 @@ export default function TransparentProfitMeterArea({
                 })}
               </div>
 
-              <p className="text-xs text-gray-400 leading-relaxed">
+              <p className="text-xs text-gray-400 dark:text-white leading-relaxed">
                 Prices are fetched live from public sources and may vary slightly. Dazzle guarantees the lowest price or we match it.
               </p>
             </>
