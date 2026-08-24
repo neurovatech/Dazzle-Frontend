@@ -90,8 +90,9 @@ function validateOrderNoInput(input: string): string | null {
   if (/\s/.test(input)) {
     return "Order number must not contain spaces.";
   }
-  if (input.length < 5 || input.length > 20) {
-    return "Order number must be between 5 and 20 characters.";
+  if (input.length < 5 || input.length > 50) {
+    // return "Order number must be between 5 and 20 characters.";
+    // return "Order number must be between 5 and 20 characters.";
   }
   return null;
 }
@@ -208,7 +209,7 @@ function OrderTrackingContent() {
         <div className="w-14 h-14 rounded-2xl bg-[#7B4F1E]/10 dark:bg-[#bd9961]/20 flex items-center justify-center text-[#7B4F1E] dark:text-[#bd9961]">
           <Truck size={30} />
         </div>
-        <div>
+        <div className="">
           <h1 className="text-3xl font-extrabold text-[#101518] dark:text-white">
             Track Your Order Status
           </h1>
@@ -262,7 +263,8 @@ function OrderTrackingContent() {
             )}
 
             <p className="text-xs text-gray-400 text-left pl-1">
-              Sample format: <span className="font-semibold text-gray-600 dark:text-gray-300">DZL-10001</span> (5-20 characters, no spaces)
+              Sample format: <span className="font-semibold text-gray-600 dark:text-gray-300">DZL-10001</span> 
+              {/* Sample format: <span className="font-semibold text-gray-600 dark:text-gray-300">DZL-10001</span> (5-20 characters, no spaces) */}
             </p>
           </div>
         </form>
