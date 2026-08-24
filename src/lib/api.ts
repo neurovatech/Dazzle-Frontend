@@ -5,7 +5,7 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_BASE || "https://apix.bigpoint.com.
 /** Same-origin route that forwards browser requests to the backend (see src/app/api/proxy). */
 // const PROXY_PREFIX = "/api/proxy";
 // const PROXY_PREFIX = "ap-southeast-1.amazonaws.com";
-// const PROXY_PREFIX = "/amazonaws";
+const PROXY_PREFIX = "/amazonaws";
 
 interface FetchOptions extends RequestInit {
   params?: Record<string, string>;
