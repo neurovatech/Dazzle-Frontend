@@ -476,7 +476,7 @@ function CategoriesProductWithTopSale({
       {/* ── Products grid ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:mt-0 mt-2 items-stretch md:px-12.5 px-4 relative">
         <div className="lg:col-span-3 md:block hidden h-full">
-          <div className="sticky overflow-y-auto scrollbar-hide w-full pb-4">
+          <div className="sticky top-6 transition-colors duration-200 overflow-y-auto scrollbar-hide w-full pb-4">
             <FilterSidebar
               attributes={currentAttributes}
               priceData={currentPriceData}

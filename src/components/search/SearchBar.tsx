@@ -10,6 +10,7 @@ export default function SearchBar() {
   const [isFocused, setIsFocused] = useState(false);
   const [query, setQuery] = useState("");
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -41,7 +42,9 @@ export default function SearchBar() {
     if (e.key === "Enter" && query.trim()) {
       const term = query.trim();
       addRecentSearch(term);
+      setQuery("");
       setIsFocused(false);
+      inputRef.current?.blur();
       router.push(`/search?q=${encodeURIComponent(term)}`);
     }
   };
@@ -49,8 +52,9 @@ export default function SearchBar() {
   // When user picks a recent/trending term → navigate to search page
   const handleSelectTerm = (term: string) => {
     addRecentSearch(term);
-    setQuery(term);
+    setQuery("");
     setIsFocused(false);
+    inputRef.current?.blur();
     router.push(`/search?q=${encodeURIComponent(term)}`);
   };
 
@@ -62,6 +66,7 @@ export default function SearchBar() {
           <SearchIcon />
         </span>
         <input
+          ref={inputRef}
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}

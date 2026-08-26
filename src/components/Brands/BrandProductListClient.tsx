@@ -5,6 +5,7 @@ import ProductCard from "@/components/share/GlobalProductCard";
 import ProductGridSkeleton from "@/components/Skeleton/ProductCardSkeleton";
 import NoImg from "@/images/no_images.png";
 import { api } from "@/lib/api";
+import { scrollSession, restoreScrollY } from "@/hooks/useScrollRestoration";
 
 const LIMIT = 12;
 
@@ -68,13 +69,114 @@ export default function BrandProductListClient({
   initialTotalPages,
   filterApplyKey,
 }: Props) {
-  const [allProducts, setAllProducts] = useState<ProductItem[]>(initialProducts);
-  const [page, setPage]               = useState(1);
-  const [totalCount, setTotalCount]   = useState(initialTotalCount);
-  const [hasMore, setHasMore]         = useState(initialTotalPages > 1);
+  // ── Scroll-session key — unique per brand (+optional category filter) ──────
+  const scrollKey = `brand_${brandSlug}`;
+
+  const [allProducts, setAllProducts]     = useState<ProductItem[]>(initialProducts);
+  const [page, setPage]                   = useState(1);
+  const [totalCount, setTotalCount]       = useState(initialTotalCount);
+  const [hasMore, setHasMore]             = useState(initialTotalPages > 1);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
-  const [isFirstLoad, setIsFirstLoad] = useState(false);
-  const loaderRef = useRef<HTMLDivElement>(null);
+  const [isFirstLoad, setIsFirstLoad]     = useState(false);
+  // true while silently re-fetching previously-loaded pages on restore
+  const [isRestoring, setIsRestoring]     = useState(false);
+  const loaderRef      = useRef<HTMLDivElement>(null);
+  const didRestoreRef  = useRef(false);
+
+  // ── Build query params ────────────────────────────────────────────────────
+  const buildParams = useCallback((pageNum: number) => {
+    const qp = new URLSearchParams({
+      brandSlug,
+      page:  String(pageNum),
+      limit: String(LIMIT),
+    });
+    if (categorySlug)                  qp.set("subCategorySlug",    categorySlug);
+    if (selectedAttributes.length > 0) qp.set("attributes",         selectedAttributes.join(","));
+    if (minPrice !== undefined)        qp.set("minDiscountedPrice", String(minPrice));
+    if (maxPrice !== undefined)        qp.set("maxDiscountedPrice", String(maxPrice));
+    if (stockStatus)                   qp.set("stockStatus",        stockStatus);
+    if (currentSort === "newest")           qp.set("latest",           "1");
+    else if (currentSort === "price_asc")   qp.set("discountedPrice",  "low-to-high");
+    else if (currentSort === "price_desc")  qp.set("discountedPrice",  "high-to-low");
+    return qp.toString();
+  }, [brandSlug, categorySlug, selectedAttributes, minPrice, maxPrice, stockStatus, currentSort]);
+
+  // ── Session restore on first mount ────────────────────────────────────────
+  // Only runs once, only when NO filters are active (fresh landing / reload / back).
+  // Reads { loadedPages, scrollY }, silently fetches pages 2..N, then scrolls.
+  useEffect(() => {
+    if (didRestoreRef.current) return;
+    didRestoreRef.current = true;
+
+    const hasActiveFilters = Boolean(
+      categorySlug ||
+      selectedAttributes.length > 0 ||
+      minPrice !== undefined ||
+      maxPrice !== undefined ||
+      stockStatus
+    );
+    if (hasActiveFilters) return;
+
+    const saved = scrollSession.read(scrollKey);
+    if (!saved || saved.loadedPages <= 1) return;
+
+    const { loadedPages, scrollY } = saved;
+
+    const restore = async () => {
+      setIsRestoring(true);
+      try {
+        let accumulated: ProductItem[] = [...initialProducts];
+        let lastTotalPages = initialTotalPages;
+
+        for (let p = 2; p <= loadedPages; p++) {
+          const res = await api.get<ProductListResponse>(`/products?${buildParams(p)}`);
+          const items = res?.data ?? [];
+          accumulated = [...accumulated, ...items];
+          lastTotalPages = res?.totalPages ?? lastTotalPages;
+        }
+
+        setAllProducts(accumulated);
+        setTotalCount(accumulated.length);
+        setPage(loadedPages);
+        setHasMore(loadedPages < lastTotalPages);
+      } catch (err) {
+        console.error("[BrandProductListClient] session restore failed:", err);
+      } finally {
+        setIsRestoring(false);
+        restoreScrollY(scrollY);
+      }
+    };
+
+    restore();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // run once on mount only
+
+  // ── Save session state (beforeunload + visibilitychange + link click) ──────
+  useEffect(() => {
+    const save = () => scrollSession.save(scrollKey, page, window.scrollY);
+
+    window.addEventListener("beforeunload", save);
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") save();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
+    const onLinkClick = (e: MouseEvent) => {
+      const anchor = (e.target as HTMLElement).closest("a");
+      if (!anchor) return;
+      const href = anchor.getAttribute("href") ?? "";
+      if (href && !href.startsWith("#") && href !== window.location.pathname) {
+        scrollSession.save(scrollKey, page, window.scrollY);
+      }
+    };
+    document.addEventListener("click", onLinkClick, true);
+
+    return () => {
+      window.removeEventListener("beforeunload", save);
+      document.removeEventListener("visibilitychange", onVisibility);
+      document.removeEventListener("click", onLinkClick, true);
+    };
+  }, [scrollKey, page]);
 
   // ── Filter key — when any filter changes, reset and re-fetch from page 1 ──
   const filterKey = [
@@ -89,15 +191,13 @@ export default function BrandProductListClient({
   ].join("|");
 
   useEffect(() => {
-    // Reset & fetch page 1 with new filters
     const fetchPage1 = async () => {
       setIsFirstLoad(true);
       setAllProducts([]);
       setPage(1);
       setHasMore(false);
       try {
-        const qp = buildParams(1);
-        const res = await api.get<ProductListResponse>(`/products?${qp}`);
+        const res = await api.get<ProductListResponse>(`/products?${buildParams(1)}`);
         const items = res?.data ?? [];
         setAllProducts(items);
         setTotalCount(res?.totalCount ?? items.length);
@@ -110,7 +210,7 @@ export default function BrandProductListClient({
       }
     };
 
-    // On first render use initialProducts (SSR data), skip fetch
+    // On first render with no filters, use SSR data (restore handled separately above)
     const isDefaultState =
       !categorySlug &&
       selectedAttributes.length === 0 &&
@@ -120,38 +220,22 @@ export default function BrandProductListClient({
       (!currentSort || currentSort === "recommend");
 
     if (isDefaultState) {
-      setAllProducts(initialProducts);
-      setTotalCount(initialTotalCount);
-      setPage(1);
-      setHasMore(initialTotalPages > 1);
+      // Only reset to SSR data if we are NOT in the middle of a restore
+      if (!didRestoreRef.current || !scrollSession.read(scrollKey)) {
+        setAllProducts(initialProducts);
+        setTotalCount(initialTotalCount);
+        setPage(1);
+        setHasMore(initialTotalPages > 1);
+      }
     } else {
       fetchPage1();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterKey]);
 
-  // ── Build query params ────────────────────────────────────────────────────
-  const buildParams = useCallback((pageNum: number) => {
-    const qp = new URLSearchParams({
-      brandSlug,
-      page:  String(pageNum),
-      limit: String(LIMIT),
-    });
-    if (categorySlug)                  qp.set("subCategorySlug",    categorySlug);
-    if (selectedAttributes.length > 0) qp.set("attributes",         selectedAttributes.join(","));
-    if (minPrice !== undefined)        qp.set("minDiscountedPrice", String(minPrice));
-    if (maxPrice !== undefined)        qp.set("maxDiscountedPrice", String(maxPrice));
-    if (stockStatus)                   qp.set("stockStatus",        stockStatus);
-    // Sort params — API-র জন্য সঠিক params map করা হচ্ছে
-    if (currentSort === "newest")           qp.set("latest",           "1");
-    else if (currentSort === "price_asc")   qp.set("discountedPrice",  "low-to-high");
-    else if (currentSort === "price_desc")  qp.set("discountedPrice",  "high-to-low");
-    return qp.toString();
-  }, [brandSlug, categorySlug, selectedAttributes, minPrice, maxPrice, stockStatus, currentSort]);
-
   // ── Fetch next page ───────────────────────────────────────────────────────
   const fetchNextPage = useCallback(async () => {
-    if (isFetchingMore || !hasMore) return;
+    if (isFetchingMore || !hasMore || isRestoring) return;
     const nextPage = page + 1;
     setIsFetchingMore(true);
     try {
@@ -169,13 +253,13 @@ export default function BrandProductListClient({
     } finally {
       setIsFetchingMore(false);
     }
-  }, [isFetchingMore, hasMore, page, buildParams]);
+  }, [isFetchingMore, hasMore, isRestoring, page, buildParams]);
 
   // ── Intersection Observer ─────────────────────────────────────────────────
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMore && !isFetchingMore && !isFirstLoad) {
+        if (entries[0].isIntersecting && hasMore && !isFetchingMore && !isFirstLoad && !isRestoring) {
           fetchNextPage();
         }
       },
@@ -184,7 +268,7 @@ export default function BrandProductListClient({
     const el = loaderRef.current;
     if (el) observer.observe(el);
     return () => { if (el) observer.unobserve(el); };
-  }, [fetchNextPage, hasMore, isFetchingMore, isFirstLoad]);
+  }, [fetchNextPage, hasMore, isFetchingMore, isFirstLoad, isRestoring]);
 
   const hasActiveFilters = Boolean(
     categorySlug ||
@@ -203,19 +287,19 @@ export default function BrandProductListClient({
 
       {/* Count + clear */}
       <p className="text-xs text-gray-400 mb-4 h-4">
-        {!isFirstLoad && `${totalCount.toLocaleString()} products found`}
-        {!isFirstLoad && hasActiveFilters && (
+        {!isFirstLoad && !isRestoring && `${totalCount.toLocaleString()} products found`}
+        {!isFirstLoad && !isRestoring && hasActiveFilters && (
           <button onClick={onClearFilter} className="ml-2 text-[#6D3F0E] dark:text-[#d4a97a] hover:underline">
             Clear filters
           </button>
         )}
       </p>
 
-      {/* First load skeleton */}
-      {isFirstLoad && <ProductGridSkeleton count={LIMIT} cols="4" />}
+      {/* Restore / first-load skeleton */}
+      {(isFirstLoad || isRestoring) && <ProductGridSkeleton count={LIMIT} cols="4" />}
 
       {/* Empty */}
-      {!isFirstLoad && allProducts.length === 0 && (
+      {!isFirstLoad && !isRestoring && allProducts.length === 0 && (
         <div className="flex flex-col items-center justify-center py-16 gap-2">
           <p className="text-sm text-gray-500 dark:text-gray-400">No products found.</p>
           {hasActiveFilters && (
@@ -227,7 +311,7 @@ export default function BrandProductListClient({
       )}
 
       {/* Product grid */}
-      {!isFirstLoad && allProducts.length > 0 && (
+      {!isFirstLoad && !isRestoring && allProducts.length > 0 && (
         <div className="grid md:grid-cols-4 grid-cols-2 lg:gap-4 gap-2">
           {allProducts.map((product, i) => (
             <ProductCard
@@ -252,13 +336,6 @@ export default function BrandProductListClient({
 
       {/* Loading more skeleton */}
       {isFetchingMore && <ProductGridSkeleton count={4} cols="4" />}
-
-      {/* All loaded */}
-      {/* {!hasMore && allProducts.length > 0 && !isFetchingMore && !isFirstLoad && (
-        <p className="text-center text-xs text-gray-400 py-6">
-          ✅ সব {allProducts.length.toLocaleString()} টি পণ্য দেখানো হয়েছে
-        </p>
-      )} */}
     </div>
   );
 }

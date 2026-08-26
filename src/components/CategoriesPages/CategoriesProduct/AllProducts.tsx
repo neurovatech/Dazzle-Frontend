@@ -3,11 +3,11 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
 import ProductCard from "@/components/share/GlobalProductCard";
 import NoImg from "@/images/no_images.png";
 import { api } from "@/lib/api";
 import { ProductItem, ProductListResponse } from "@/app/(public)/categories/[categorySlug]/page";
+import { scrollSession, restoreScrollY } from "@/hooks/useScrollRestoration";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -62,16 +62,24 @@ function AllProducts({
   onClearFilter,
   filterApplyKey,
 }: AllProductsProps) {
+  // unused router/pathname/searchParams kept for potential future use
   const router       = useRouter();
   const pathname     = usePathname();
   const searchParams = useSearchParams();
+
+  // ── Scroll-session key — unique per route ─────────────────────────────────
+  const scrollKey = `cat_${categorySlug}${subCategorySlug ? `_${subCategorySlug}` : ""}`;
 
   // ── Infinite scroll state ─────────────────────────────────────────────────
   const [allProducts, setAllProducts] = useState<ProductItem[]>(ssrProducts);
   const [page, setPage]               = useState(1);
   const [hasMore, setHasMore]         = useState(ssrTotalPages > 1);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
-  const loaderRef = useRef<HTMLDivElement>(null);
+  // true while we are silently re-fetching pages to restore a previous session
+  const [isRestoring, setIsRestoring] = useState(false);
+  const loaderRef    = useRef<HTMLDivElement>(null);
+  // whether the initial session restore has already been attempted this mount
+  const didRestoreRef = useRef(false);
 
   const hasFilter = Boolean(
     selectedBrandSlug ||
@@ -81,7 +89,7 @@ function AllProducts({
     (stockStatus !== null && stockStatus !== undefined && stockStatus !== "")
   );
 
-  // Filter key to detect client-side changes
+  // Filter key to detect client-side filter/sort changes
   const filterKey = [
     categorySlug,
     subCategorySlug ?? "",
@@ -95,22 +103,126 @@ function AllProducts({
     filterApplyKey ?? 0,
   ].join("|");
 
-  const prevFilterKeyRef = useRef(filterKey);
-  const prevSsrProductsRef = useRef(ssrProducts);
+  const prevFilterKeyRef    = useRef(filterKey);
+  const prevSsrProductsRef  = useRef(ssrProducts);
 
-  // ── Sync with SSR data or Fetch Client-side on Filter/Sort Change ──────────
+  // ── Build API query params ────────────────────────────────────────────────
+  const buildParams = useCallback((pageNum: number) => {
+    const p = new URLSearchParams({
+      page:         String(pageNum),
+      limit:        String(LIMIT),
+      categorySlug,
+    });
+    if (subCategorySlug)               p.set("subCategorySlug",     subCategorySlug);
+    if (selectedBrandSlug)             p.set("brandSlug",           selectedBrandSlug);
+    if (selectedAttributes.length > 0) p.set("attributes",          selectedAttributes.join(","));
+    if (minPrice !== undefined)        p.set("minDiscountedPrice",  String(minPrice));
+    if (maxPrice !== undefined)        p.set("maxDiscountedPrice",  String(maxPrice));
+    if (stockStatus)                   p.set("stockStatus",         stockStatus);
+    if (currentSort === "newest")           p.set("latest",          "1");
+    else if (currentSort === "price_asc")   p.set("discountedPrice", "low-to-high");
+    else if (currentSort === "price_desc")  p.set("discountedPrice", "high-to-low");
+    if (currentSearch)                 p.set("search",              currentSearch);
+    return p.toString();
+  }, [categorySlug, subCategorySlug, selectedBrandSlug, selectedAttributes, minPrice, maxPrice, stockStatus, currentSort, currentSearch]);
+
+  // ── Session restore on first mount ────────────────────────────────────────
+  // Only runs once, only when NO filters are active (fresh landing / reload / back).
+  // Reads saved { loadedPages, scrollY } from sessionStorage, silently fetches
+  // pages 2..loadedPages (page 1 already comes from SSR), then scrolls.
   useEffect(() => {
-    // If SSR products changed (e.g. initial load or parent SSR refetch), sync them
+    if (didRestoreRef.current) return;
+    didRestoreRef.current = true;
+
+    // Don't restore when the user arrived with active filters — those are a
+    // deliberate new session state, not a continuation of a previous scroll.
+    if (hasFilter) return;
+
+    const saved = scrollSession.read(scrollKey);
+    if (!saved || saved.loadedPages <= 1) return;
+
+    const { loadedPages, scrollY } = saved;
+
+    const restore = async () => {
+      setIsRestoring(true);
+      try {
+        // Fetch pages 2..loadedPages in order and append to SSR page-1 data
+        let accumulated: ProductItem[] = [...ssrProducts];
+        let lastTotalPages = ssrTotalPages;
+
+        for (let p = 2; p <= loadedPages; p++) {
+          const res = await api.get<ProductListResponse>(
+            `/products?${buildParams(p)}`
+          );
+          const items = res?.data ?? [];
+          accumulated = [...accumulated, ...items];
+          lastTotalPages = res?.totalPages ?? lastTotalPages;
+        }
+
+        setAllProducts(accumulated);
+        setPage(loadedPages);
+        setHasMore(loadedPages < lastTotalPages);
+      } catch (err) {
+        console.error("[AllProducts] session restore fetch failed:", err);
+      } finally {
+        setIsRestoring(false);
+        // Scroll after DOM has been updated with all the products
+        restoreScrollY(scrollY);
+        // Keep the session entry intact — it will be overwritten on next save.
+        // Clear only after successful scroll so a hard-refresh also restores.
+      }
+    };
+
+    restore();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // intentionally empty — run once on mount only
+
+  // ── Save session state on every page/scroll change ────────────────────────
+  // We save on: beforeunload (F5, close tab), visibilitychange (mobile), and
+  // whenever the user clicks a <Link> to a product detail page.
+  useEffect(() => {
+    const save = () => {
+      scrollSession.save(scrollKey, page, window.scrollY);
+    };
+
+    window.addEventListener("beforeunload", save);
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") save();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
+    // Capture scroll position when clicking any product card link
+    const onLinkClick = (e: MouseEvent) => {
+      const anchor = (e.target as HTMLElement).closest("a");
+      if (!anchor) return;
+      const href = anchor.getAttribute("href") ?? "";
+      // Only save when navigating away to a different path
+      if (href && !href.startsWith("#") && href !== window.location.pathname) {
+        scrollSession.save(scrollKey, page, window.scrollY);
+      }
+    };
+    document.addEventListener("click", onLinkClick, true);
+
+    return () => {
+      window.removeEventListener("beforeunload", save);
+      document.removeEventListener("visibilitychange", onVisibility);
+      document.removeEventListener("click", onLinkClick, true);
+    };
+  }, [scrollKey, page]); // re-register when page number changes
+
+  // ── Sync with SSR data or fetch page-1 on filter/sort change ─────────────
+  useEffect(() => {
+    // SSR products changed (new slug navigation) — sync and reset
     if (prevSsrProductsRef.current !== ssrProducts) {
       prevSsrProductsRef.current = ssrProducts;
-      prevFilterKeyRef.current = filterKey;
+      prevFilterKeyRef.current   = filterKey;
       setAllProducts(ssrProducts);
       setPage(1);
       setHasMore(ssrTotalPages > 1);
       return;
     }
 
-    // If client-side filters or sort changed, fetch page 1
+    // Client-side filter or sort change — fetch page 1
     if (prevFilterKeyRef.current !== filterKey) {
       prevFilterKeyRef.current = filterKey;
 
@@ -135,30 +247,9 @@ function AllProducts({
     }
   }, [filterKey, ssrProducts, ssrTotalPages]);
 
-  // ── Build API query params ────────────────────────────────────────────────
-  const buildParams = useCallback((pageNum: number) => {
-    const p = new URLSearchParams({
-      page:         String(pageNum),
-      limit:        String(LIMIT),
-      categorySlug,
-    });
-    if (subCategorySlug)               p.set("subCategorySlug",      subCategorySlug);
-    if (selectedBrandSlug)             p.set("brandSlug",            selectedBrandSlug);
-    if (selectedAttributes.length > 0) p.set("attributes",           selectedAttributes.join(","));
-    if (minPrice !== undefined)        p.set("minDiscountedPrice",   String(minPrice));
-    if (maxPrice !== undefined)        p.set("maxDiscountedPrice",   String(maxPrice));
-    if (stockStatus)                   p.set("stockStatus",          stockStatus);
-    // Sort params — API-র জন্য সঠিক params map করা হচ্ছে
-    if (currentSort === "newest")           p.set("latest",           "1");
-    else if (currentSort === "price_asc")   p.set("discountedPrice",  "low-to-high");
-    else if (currentSort === "price_desc")  p.set("discountedPrice",  "high-to-low");
-    if (currentSearch)                 p.set("search",               currentSearch);
-    return p.toString();
-  }, [categorySlug, subCategorySlug, selectedBrandSlug, selectedAttributes, minPrice, maxPrice, stockStatus, currentSort, currentSearch]);
-
-  // ── Fetch next page ───────────────────────────────────────────────────────
+  // ── Fetch next page (infinite scroll) ────────────────────────────────────
   const fetchNextPage = useCallback(async () => {
-    if (isFetchingMore || !hasMore) return;
+    if (isFetchingMore || !hasMore || isRestoring) return;
     const nextPage = page + 1;
     setIsFetchingMore(true);
     try {
@@ -178,13 +269,13 @@ function AllProducts({
     } finally {
       setIsFetchingMore(false);
     }
-  }, [isFetchingMore, hasMore, page, buildParams]);
+  }, [isFetchingMore, hasMore, isRestoring, page, buildParams]);
 
-  // ── Intersection Observer — trigger when loader div is visible ────────────
+  // ── Intersection Observer ─────────────────────────────────────────────────
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMore && !isFetchingMore) {
+        if (entries[0].isIntersecting && hasMore && !isFetchingMore && !isRestoring) {
           fetchNextPage();
         }
       },
@@ -193,14 +284,14 @@ function AllProducts({
     const el = loaderRef.current;
     if (el) observer.observe(el);
     return () => { if (el) observer.unobserve(el); };
-  }, [fetchNextPage, hasMore, isFetchingMore]);
+  }, [fetchNextPage, hasMore, isFetchingMore, isRestoring]);
 
-  const displayTotal = hasFilter ? (allProducts.length) : ssrTotalCount;
+  const displayTotal = hasFilter ? allProducts.length : ssrTotalCount;
 
   return (
     <div className="w-full">
       {/* ── Empty state ── */}
-      {allProducts.length === 0 && !isFetchingMore && (
+      {allProducts.length === 0 && !isFetchingMore && !isRestoring && (
         <div className="flex flex-col items-center justify-center py-20 gap-2">
           <p className="text-4xl">😔</p>
           <p className="text-sm text-gray-500 dark:text-gray-400">No products found.</p>
@@ -236,8 +327,11 @@ function AllProducts({
         </div>
       </div>
 
+      {/* ── Restore skeleton — shown while silently re-fetching previous pages ── */}
+      {isRestoring && <ProductGridSkeleton count={LIMIT} />}
+
       {/* ── Product grid ── */}
-      {allProducts.length > 0 && (
+      {!isRestoring && allProducts.length > 0 && (
         <div className="grid md:grid-cols-4 grid-cols-2 lg:gap-4 gap-2 py-3">
           {allProducts.map((product, i) => {
             const imgSrc        = product.thumbnails?.mediaFileUrl || NoImg.src;
@@ -267,13 +361,6 @@ function AllProducts({
 
       {/* ── Loading more indicator ── */}
       {isFetchingMore && <ProductGridSkeleton count={4} />}
-
-      {/* ── All loaded message ── */}
-      {/* {!hasMore && allProducts.length > 0 && !isFetchingMore && (
-        <p className="text-center text-xs text-gray-400 py-6">
-          ✅ সব {allProducts.length.toLocaleString()} টি পণ্য দেখানো হয়েছে
-        </p>
-      )} */}
     </div>
   );
 }
