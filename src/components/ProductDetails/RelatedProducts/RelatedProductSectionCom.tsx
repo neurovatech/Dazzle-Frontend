@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import RelatedProduct from "./RelatedProduct";
 import NoImg from "@/images/no_images.png";
+import { sortInStockFirst } from "@/lib/sortProducts";
 
 // ── API response shape from /products?categorySlug=... ──────────────
 interface Thumbnail {
@@ -68,7 +69,7 @@ export default function RelatedProductSectionCom({ categorySlug }: RelatedProduc
     staleTime: 5 * 60 * 1000,
   });
 
-  const products: ProductCardItem[] = (data?.data ?? []).map((item) => ({
+  const products: ProductCardItem[] = sortInStockFirst(data?.data ?? []).map((item) => ({
     uuid:          item.productUuid,
     title:         item.productName,
     slug:          item.productSlug,

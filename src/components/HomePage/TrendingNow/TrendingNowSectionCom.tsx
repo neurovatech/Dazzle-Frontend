@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import TrendingNow from "./TrendingNow";
+import { sortInStockFirst } from "@/lib/sortProducts";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -85,7 +86,7 @@ export default function TrendingNowSectionCom() {
         `/showcase-items?showcaseSlug=${activeSlug}`,
         { cache: "no-store" }
       );
-      return mapItems(Array.isArray(res?.data) ? res.data : []);
+      return mapItems(sortInStockFirst(Array.isArray(res?.data) ? res.data : []));
     },
     staleTime: 15 * 60 * 1000,
     gcTime: 60 * 60 * 1000,

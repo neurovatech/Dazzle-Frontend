@@ -2,6 +2,7 @@ import React from "react";
 import MostPopular from "./MostPopular";
 import Link from "next/link";
 import { api } from "@/lib/api";
+import { sortInStockFirst } from "@/lib/sortProducts";
 
 interface ShowcaseThumbnail {
   fileUuid: string;
@@ -73,7 +74,7 @@ export default async function MostPopularSectionCom() {
 
     const list = Array.isArray(res?.data) ? res.data : [];
 
-    products = list.map((item) => ({
+    products = sortInStockFirst(list).map((item) => ({
       uuid: item.productUuid,
       title: item.productName,
       slug: item.productSlug,

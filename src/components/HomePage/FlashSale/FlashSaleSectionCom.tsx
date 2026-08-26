@@ -1,6 +1,7 @@
 import FlashSale from "./FlashSale";
 import { api } from "@/lib/api";
 import GlobalTabs from "@/components/share/GlobalTabs";
+import { sortInStockFirst } from "@/lib/sortProducts";
 
 interface ShowcaseThumbnail {
   fileUuid: string;
@@ -66,7 +67,7 @@ async function fetchShowcase(endpoint: string): Promise<ProductCardItem[]> {
       next: { revalidate: 60 },
     });
     const list = Array.isArray(res?.data) ? res.data : [];
-    return mapToProductCard(list);
+    return mapToProductCard(sortInStockFirst(list));
   } catch (error) {
     console.error(`Error fetching from ${endpoint}:`, error);
     return [];

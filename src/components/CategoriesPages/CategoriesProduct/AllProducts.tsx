@@ -8,6 +8,7 @@ import NoImg from "@/images/no_images.png";
 import { api } from "@/lib/api";
 import { ProductItem, ProductListResponse } from "@/app/(public)/categories/[categorySlug]/page";
 import { scrollSession, restoreScrollY } from "@/hooks/useScrollRestoration";
+import { sortInStockFirst } from "@/lib/sortProducts";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -159,7 +160,7 @@ function AllProducts({
           lastTotalPages = res?.totalPages ?? lastTotalPages;
         }
 
-        setAllProducts(accumulated);
+        setAllProducts(sortInStockFirst(accumulated));
         setPage(loadedPages);
         setHasMore(loadedPages < lastTotalPages);
       } catch (err) {
@@ -216,7 +217,7 @@ function AllProducts({
     if (prevSsrProductsRef.current !== ssrProducts) {
       prevSsrProductsRef.current = ssrProducts;
       prevFilterKeyRef.current   = filterKey;
-      setAllProducts(ssrProducts);
+      setAllProducts(sortInStockFirst(ssrProducts));
       setPage(1);
       setHasMore(ssrTotalPages > 1);
       return;
@@ -233,7 +234,7 @@ function AllProducts({
             `/products?${buildParams(1)}`
           );
           const items = res?.data ?? [];
-          setAllProducts(items);
+          setAllProducts(sortInStockFirst(items));
           setPage(1);
           setHasMore(1 < (res?.totalPages ?? 1));
         } catch (err) {
@@ -291,17 +292,7 @@ function AllProducts({
   return (
     <div className="w-full">
       {/* ── Empty state ── */}
-      {allProducts.length === 0 && !isFetchingMore && !isRestoring && (
-        <div className="flex flex-col items-center justify-center py-20 gap-2">
-          <p className="text-4xl">😔</p>
-          <p className="text-sm text-gray-500 dark:text-gray-400">No products found.</p>
-          {hasFilter && onClearFilter && (
-            <button onClick={onClearFilter} className="text-xs text-[#6D3F0E] dark:text-[#d4a97a] hover:underline">
-              Show all products
-            </button>
-          )}
-        </div>
-      )}
+    
 
       <div className="md:flex md:flex-wrap items-center justify-between gap-3 pb-3 hidden">
         <div>
@@ -326,6 +317,18 @@ function AllProducts({
           </p>
         </div>
       </div>
+
+        {allProducts.length === 0 && !isFetchingMore && !isRestoring && (
+        <div className="flex flex-col items-center justify-center py-20 gap-2">
+          <p className="text-4xl">😔</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">No products found.</p>
+          {hasFilter && onClearFilter && (
+            <button onClick={onClearFilter} className="text-xs text-[#6D3F0E] dark:text-[#d4a97a] hover:underline">
+              Show all products
+            </button>
+          )}
+        </div>
+      )}
 
       {/* ── Restore skeleton — shown while silently re-fetching previous pages ── */}
       {isRestoring && <ProductGridSkeleton count={LIMIT} />}

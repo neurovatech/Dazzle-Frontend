@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import Newest from "@/components/HomePage/FlashSale/Newest";
 import OnlineExclusiveCom from "./OnlineExclusiveCom"
+import { sortInStockFirst } from "@/lib/sortProducts";
 interface HeroBannerItem {
   bannerUUID: string;
   imageURL: string;
@@ -110,7 +111,7 @@ function OnlineExclusive() {
 
   const popularList = Array.isArray(popularData?.data) ? popularData.data : [];
 
-  const products: ProductCardItem[] = popularList.map((item) => ({
+  const products: ProductCardItem[] = sortInStockFirst(popularList).map((item) => ({
     uuid: item.productUuid,
     title: item.productName,
     slug: item.productSlug,
@@ -135,7 +136,7 @@ function OnlineExclusive() {
 
   const bsetSale = Array.isArray(popularDataTwo?.data) ? popularDataTwo.data : [];
 
-  const bestproducts: ProductCardItem[] = bsetSale.map((item) => ({
+  const bestproducts: ProductCardItem[] = sortInStockFirst(bsetSale).map((item) => ({
     uuid: item.productUuid,
     title: item.productName,
     slug: item.productSlug,
@@ -160,7 +161,7 @@ function OnlineExclusive() {
 
   const daybsetSale = Array.isArray(popularDataThree?.data) ? popularDataThree.data : [];
 
-  const daybestproducts: ProductCardItem[] = daybsetSale.map((item) => ({
+  const daybestproducts: ProductCardItem[] = sortInStockFirst(daybsetSale).map((item) => ({
     uuid: item.productUuid,
     title: item.productName,
     slug: item.productSlug,

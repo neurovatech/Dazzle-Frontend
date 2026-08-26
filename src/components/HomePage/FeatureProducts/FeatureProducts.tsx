@@ -4,6 +4,7 @@ import Banner from "@/images/o_banner.png";
 import Deals from "@/images/deals.png";
 import Image from "next/image";
 import { api } from "@/lib/api";
+import { sortInStockFirst } from "@/lib/sortProducts";
 
 interface ShowcaseThumbnail {
   fileUuid: string;
@@ -75,7 +76,7 @@ export default async function FeatureProducts() {
 
     const list = Array.isArray(res?.data) ? res.data : [];
 
-    products = list.map((item) => ({
+    products = sortInStockFirst(list).map((item) => ({
       uuid: item.productUuid,
       title: item.productName,
       slug: item.productSlug,
