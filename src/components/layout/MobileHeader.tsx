@@ -79,7 +79,7 @@ export default function MobileHeader({ categories }: Props) {
   };
 
   return (
-    <div className="md:hidden lg:p-3" ref={menuRef}>
+    <div className="md:hidden lg:p-3 px-4" ref={menuRef}>
       {/* Top row */}
       <div className="flex items-center justify-between lg:py-3.5 pb-3.5 pt-2">
         <Link href="/" className="shrink-0 mr-2">
