@@ -57,7 +57,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const href = `/product/${slug || title?.toLowerCase().replace(/\s+/g, "-")}`;
 
   return (
-    <div className="group relative bg-white rounded-2xl sm:rounded-3xl cursor-pointer w-full h-full flex flex-col shadow-lg transition-all duration-500 hover:shadow-sm select-none">
+    <div
+      data-product-uuid={itemId}
+      className="group relative bg-white rounded-2xl sm:rounded-3xl cursor-pointer w-full h-full flex flex-col shadow-lg transition-all duration-500 hover:shadow-sm select-none"
+    >
       <div className="bg-white p-2 sm:p-3 lg:p-4 pb-0! rounded-2xl sm:rounded-3xl relative">
         {/* Top Badges */}
         <div className="flex justify-between items-start mb-2 sm:mb-3 h-5 sm:h-6 absolute top-2 sm:top-3 left-2 sm:left-3 right-2 sm:right-3 z-50">

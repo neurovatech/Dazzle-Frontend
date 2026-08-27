@@ -91,7 +91,7 @@ function Bannerslider({
       </div>
       <Swiper
         modules={[Navigation, Pagination, Scrollbar, A11y, Autoplay]}
-        loop={true}
+        loop={finalSlides.length >= 2}
         pagination={pagination ? { clickable: true } : false}
         navigation={navigation}
         autoplay={

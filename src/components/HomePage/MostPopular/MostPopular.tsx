@@ -4,6 +4,7 @@ import Link from "next/link";
 import ProductCard from "@/components/share/GlobalProductCard";
 import Image from "next/image";
 import Deals from "@/images/deals.png";
+import { useHomeProductFocus } from "@/hooks/useHomeProductFocus";
 
 import {
   Navigation,
@@ -88,6 +89,7 @@ function MostPopular({
   autoplayDelay = 3000,
   navigation = true,
 }: MostPopularProps) {
+  useHomeProductFocus("home_most_popular");
   return (
     <div>
       <div className="grid gap-2 md:grid-cols-3 lg:grid-cols-5 grid-cols-2 mt-5">
@@ -101,7 +103,7 @@ function MostPopular({
       <div className="pt-6">
         <Swiper
           modules={[Navigation, Scrollbar, A11y, Autoplay]}
-          loop={true}
+          loop={banners.length >= 2}
           // pagination={pagination ? { clickable: true } : false}
           navigation={navigation}
           autoplay={

@@ -60,7 +60,7 @@ function FlashSale({
 
       <Swiper
         modules={[Navigation, Pagination, Scrollbar, A11y, Autoplay]}
-        loop={true}
+        loop={products.length >= 10}
         pagination={pagination ? { clickable: true } : false}
         autoplay={true}
         scrollbar={{ draggable: true }}

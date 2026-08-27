@@ -5,6 +5,7 @@ import Deals from "@/images/deals.png";
 import Image from "next/image";
 import { api } from "@/lib/api";
 import { sortInStockFirst } from "@/lib/sortProducts";
+import FeatureProductGrid from "./FeatureProductGrid";
 
 interface ShowcaseThumbnail {
   fileUuid: string;
@@ -235,13 +236,7 @@ export default async function FeatureProducts() {
         </Link>
       </div>
 
-      <div className="grid gap-3 sm:gap-4 grid-cols-2 grid-cols-2 md:grid-cols-3 lg:grid-cols-5 mt-5">
-        {products.map((product, i) => (
-          <div key={i} className={i === 4 ? "hidden lg:block" : ""}>
-            <ProductCard {...product} />
-          </div>
-        ))}
-      </div>
+      <FeatureProductGrid products={products} />
 
       {(primaryBanner || secondaryBanner) && (
   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 sm:gap-4 mt-6 items-stretch cursor-pointer">

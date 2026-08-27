@@ -7,7 +7,7 @@ import ProductCard from "@/components/share/GlobalProductCard";
 import NoImg from "@/images/no_images.png";
 import { api } from "@/lib/api";
 import { ProductItem, ProductListResponse } from "@/app/(public)/categories/[categorySlug]/page";
-import { scrollSession, restoreScrollY } from "@/hooks/useScrollRestoration";
+import { scrollSession, restoreScrollY, scrollToProduct } from "@/hooks/useScrollRestoration";
 import { sortInStockFirst } from "@/lib/sortProducts";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -140,14 +140,20 @@ function AllProducts({
     if (hasFilter) return;
 
     const saved = scrollSession.read(scrollKey);
-    if (!saved || saved.loadedPages <= 1) return;
+    if (!saved) return;
 
-    const { loadedPages, scrollY } = saved;
+    const { loadedPages, scrollY, productUuid } = saved;
+
+    // Page-1 only + productUuid — no fetch needed, just scroll to product
+    if (loadedPages <= 1) {
+      if (productUuid) scrollToProduct(productUuid);
+      else if (scrollY > 0) restoreScrollY(scrollY);
+      return;
+    }
 
     const restore = async () => {
       setIsRestoring(true);
       try {
-        // Fetch pages 2..loadedPages in order and append to SSR page-1 data
         let accumulated: ProductItem[] = [...ssrProducts];
         let lastTotalPages = ssrTotalPages;
 
@@ -167,10 +173,12 @@ function AllProducts({
         console.error("[AllProducts] session restore fetch failed:", err);
       } finally {
         setIsRestoring(false);
-        // Scroll after DOM has been updated with all the products
-        restoreScrollY(scrollY);
-        // Keep the session entry intact — it will be overwritten on next save.
-        // Clear only after successful scroll so a hard-refresh also restores.
+        // Scroll to the exact product the user clicked, or fall back to saved Y
+        if (productUuid) {
+          scrollToProduct(productUuid);
+        } else {
+          restoreScrollY(scrollY);
+        }
       }
     };
 
@@ -192,14 +200,16 @@ function AllProducts({
     };
     document.addEventListener("visibilitychange", onVisibility);
 
-    // Capture scroll position when clicking any product card link
+    // Capture scroll position + product uuid when clicking a product card link
     const onLinkClick = (e: MouseEvent) => {
       const anchor = (e.target as HTMLElement).closest("a");
       if (!anchor) return;
       const href = anchor.getAttribute("href") ?? "";
-      // Only save when navigating away to a different path
       if (href && !href.startsWith("#") && href !== window.location.pathname) {
-        scrollSession.save(scrollKey, page, window.scrollY);
+        // Try to get the product uuid from the nearest card's data attribute
+        const card = (e.target as HTMLElement).closest("[data-product-uuid]");
+        const uuid = card?.getAttribute("data-product-uuid") ?? undefined;
+        scrollSession.save(scrollKey, page, window.scrollY, uuid);
       }
     };
     document.addEventListener("click", onLinkClick, true);

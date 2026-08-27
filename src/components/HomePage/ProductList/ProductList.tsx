@@ -3,6 +3,7 @@ import ProductCard from "@/components/share/GlobalProductCard";
 import type { ProductCardItem } from "./ProductListSectionCom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRef } from "react";
+import { useHomeProductFocus } from "@/hooks/useHomeProductFocus";
 
 import {
   Navigation,
@@ -32,6 +33,7 @@ function ProductList({
   pagination = true,
 }: HotDealComProps) {
   const swiperRef = useRef<SwiperType | null>(null);
+  useHomeProductFocus("home_product_list");
 
   if (products.length === 0) {
     return (

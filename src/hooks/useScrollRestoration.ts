@@ -3,35 +3,13 @@
 /**
  * scrollSession — sessionStorage helpers for infinite-scroll pages.
  *
- * Saves TWO things per page key:
+ * Saves per page key:
  *   1. scrollY      — window.scrollY at the moment the user left
  *   2. loadedPages  — how many API pages were loaded into the list
- *
- * On reload / back-navigation the component reads these values, silently
- * re-fetches all the previously-loaded pages in sequence, then scrolls to
- * the saved Y offset once the DOM is tall enough.
+ *   3. productUuid  — (optional) uuid of the product card the user clicked
  *
  * SSR-safe: every function touches window/sessionStorage only when called
  * inside a useEffect (client-only), never at module evaluation time.
- *
- * Usage pattern inside a component:
- *
- *   // 1. Save state whenever it changes
- *   useEffect(() => {
- *     const save = () => scrollSession.save(key, loadedPage, window.scrollY);
- *     window.addEventListener("beforeunload", save);
- *     document.addEventListener("visibilitychange", () => {
- *       if (document.visibilityState === "hidden") save();
- *     });
- *     return () => { ... remove listeners ... };
- *   }, [key, loadedPage]);
- *
- *   // 2. On mount, read saved state and restore
- *   const saved = scrollSession.read(key);   // { loadedPages, scrollY }
- *   // → fetch pages 1..loadedPages, build allProducts, then scrollTo(scrollY)
- *
- *   // 3. After restoring, clear so fresh visits start from top
- *   scrollSession.clear(key);
  */
 
 const SCROLL_PREFIX = "__dz_scroll_";
@@ -39,14 +17,16 @@ const SCROLL_PREFIX = "__dz_scroll_";
 export interface ScrollSessionData {
   scrollY: number;
   loadedPages: number;
+  productUuid?: string;
 }
 
 export const scrollSession = {
-  save(key: string, loadedPages: number, scrollY: number) {
+  save(key: string, loadedPages: number, scrollY: number, productUuid?: string) {
     try {
       const data: ScrollSessionData = {
         scrollY: Math.round(scrollY),
         loadedPages,
+        ...(productUuid ? { productUuid } : {}),
       };
       sessionStorage.setItem(SCROLL_PREFIX + key, JSON.stringify(data));
     } catch {
@@ -83,7 +63,7 @@ export const scrollSession = {
 };
 
 /**
- * scrollTo — scrolls to a Y position only after the page is tall enough.
+ * restoreScrollY — scrolls to a Y position only after the page is tall enough.
  * Uses requestAnimationFrame loop, gives up after `timeoutMs` milliseconds.
  */
 export function restoreScrollY(
@@ -95,12 +75,39 @@ export function restoreScrollY(
   let rafId: number;
 
   const attempt = () => {
-    const maxY =
-      document.documentElement.scrollHeight - window.innerHeight;
+    const maxY = document.documentElement.scrollHeight - window.innerHeight;
     if (maxY >= targetY || Date.now() - start > timeoutMs) {
       window.scrollTo({ top: targetY, behavior: "instant" });
       onDone?.();
     } else {
+      rafId = requestAnimationFrame(attempt);
+    }
+  };
+
+  rafId = requestAnimationFrame(attempt);
+  return () => cancelAnimationFrame(rafId);
+}
+
+/**
+ * scrollToProduct — finds a product card element by data-product-uuid attribute
+ * and smoothly scrolls it into view, centered vertically.
+ * Retries via rAF for up to `timeoutMs` ms (element may not be in DOM yet).
+ */
+export function scrollToProduct(
+  productUuid: string,
+  timeoutMs = 3000,
+): () => void {
+  const start = Date.now();
+  let rafId: number;
+
+  const attempt = () => {
+    const el = document.querySelector(
+      `[data-product-uuid="${productUuid}"]`,
+    ) as HTMLElement | null;
+
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    } else if (Date.now() - start < timeoutMs) {
       rafId = requestAnimationFrame(attempt);
     }
   };

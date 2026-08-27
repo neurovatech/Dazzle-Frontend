@@ -532,7 +532,7 @@ const LoginForm: React.FC = () => {
           ) {
             const token = parsed.data["recovery-token"];
             toast.error("Your password has expired. Please reset it.");
-            router.push(`/reset-password-token/${token}`);
+            router.push(`/reset-password-token/${token}?resetType=xreset`);
             return;
           }
 

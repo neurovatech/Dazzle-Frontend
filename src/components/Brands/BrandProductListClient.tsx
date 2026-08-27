@@ -5,7 +5,7 @@ import ProductCard from "@/components/share/GlobalProductCard";
 import ProductGridSkeleton from "@/components/Skeleton/ProductCardSkeleton";
 import NoImg from "@/images/no_images.png";
 import { api } from "@/lib/api";
-import { scrollSession, restoreScrollY } from "@/hooks/useScrollRestoration";
+import { scrollSession, restoreScrollY, scrollToProduct } from "@/hooks/useScrollRestoration";
 
 const LIMIT = 12;
 
@@ -118,9 +118,16 @@ export default function BrandProductListClient({
     if (hasActiveFilters) return;
 
     const saved = scrollSession.read(scrollKey);
-    if (!saved || saved.loadedPages <= 1) return;
+    if (!saved) return;
 
-    const { loadedPages, scrollY } = saved;
+    const { loadedPages, scrollY, productUuid } = saved;
+
+    // Page-1 only — no fetch needed, just scroll to product
+    if (loadedPages <= 1) {
+      if (productUuid) scrollToProduct(productUuid);
+      else if (scrollY > 0) restoreScrollY(scrollY);
+      return;
+    }
 
     const restore = async () => {
       setIsRestoring(true);
@@ -143,7 +150,8 @@ export default function BrandProductListClient({
         console.error("[BrandProductListClient] session restore failed:", err);
       } finally {
         setIsRestoring(false);
-        restoreScrollY(scrollY);
+        if (productUuid) scrollToProduct(productUuid);
+        else restoreScrollY(scrollY);
       }
     };
 
@@ -166,7 +174,9 @@ export default function BrandProductListClient({
       if (!anchor) return;
       const href = anchor.getAttribute("href") ?? "";
       if (href && !href.startsWith("#") && href !== window.location.pathname) {
-        scrollSession.save(scrollKey, page, window.scrollY);
+        const card = (e.target as HTMLElement).closest("[data-product-uuid]");
+        const uuid = card?.getAttribute("data-product-uuid") ?? undefined;
+        scrollSession.save(scrollKey, page, window.scrollY, uuid);
       }
     };
     document.addEventListener("click", onLinkClick, true);

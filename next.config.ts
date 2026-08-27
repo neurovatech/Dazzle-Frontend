@@ -17,6 +17,8 @@ const nextConfig: NextConfig = {
   images: {
     // Convert images to modern lightweight formats (AVIF and WebP) automatically
     formats: ["image/avif", "image/webp"],
+    // Allow quality 70 and 75 (components use q=70 for product images)
+    qualities: [70, 75],
     // Extended cache TTL for CDN images
     minimumCacheTTL: 2592000,
     remotePatterns: [

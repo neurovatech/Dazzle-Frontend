@@ -2,21 +2,21 @@
 import React, { useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { CheckCircle2, ShieldAlert, KeyRound } from "lucide-react";
 
-import {
-  resetPasswordSchema,
-  ResetPasswordSchema,
-} from "@/schemas/resetPasswordSchema";
+import { resetPasswordSchema, ResetPasswordSchema } from "@/schemas/resetPasswordSchema";
 import PasswordInput from "@/components/ui/PasswordInput";
 import { api } from "@/lib/api";
+import { useAppDispatch } from "@/store/hooks";
+import { setCredentials } from "@/store/slices/authSlice";
 
 // ─── API Types ────────────────────────────────────────────────────────────────
 interface ResetPasswordPayload {
+  resetType: "xreset" | "ereset";
   resetToken: string;
   newPassword: string;
   rePassword: string;
@@ -26,6 +26,11 @@ interface ResetPasswordResponse {
   statusCode: number;
   status: "success" | "error";
   message: string;
+  data?: {
+    "x-api-key": string;
+    Authorization: string;
+    authorization?: string;
+  };
   errors?: string[];
 }
 
@@ -42,24 +47,28 @@ function getPasswordStrength(
 ): { label: string; color: string; width: string } {
   if (!pwd) return { label: "", color: "", width: "w-0" };
   let score = 0;
-  if (pwd.length >= 6) score++;
+  if (pwd.length >= 5) score++;
   if (/[A-Z]/.test(pwd)) score++;
   if (/[a-z]/.test(pwd)) score++;
   if (/[0-9]/.test(pwd)) score++;
   if (/[@$!%*?&#]/.test(pwd)) score++;
 
-  if (score <= 2) return { label: "Weak", color: "bg-red-400", width: "w-1/3" };
-  if (score <= 4) return { label: "Fair", color: "bg-yellow-400", width: "w-2/3" };
-  return { label: "Strong", color: "bg-green-500", width: "w-full" };
+  if (score <= 2) return { label: "Weak",   color: "bg-red-400",    width: "w-1/3" };
+  if (score <= 4) return { label: "Fair",   color: "bg-yellow-400", width: "w-2/3" };
+  return             { label: "Strong", color: "bg-green-500",  width: "w-full" };
 }
 
 // ─── Main Page Component ──────────────────────────────────────────────────────
 export default function ResetPasswordPage() {
-  const params = useParams();
-  const router = useRouter();
+  const params       = useParams();
+  const searchParams = useSearchParams();
+  const router       = useRouter();
+  const dispatch     = useAppDispatch();
   const [success, setSuccess] = useState(false);
 
   const resetToken = params?.resetToken as string;
+  // xreset = password expired (from login redirect), ereset = normal forgot-password flow
+  const resetType  = (searchParams.get("resetType") ?? "ereset") as "xreset" | "ereset";
 
   const {
     register,
@@ -71,19 +80,56 @@ export default function ResetPasswordPage() {
   } = useForm<ResetPasswordSchema>({
     resolver: yupResolver(resetPasswordSchema) as never,
     mode: "onTouched",
+    defaultValues: {
+      resetType,
+      resetToken,
+    },
   });
 
   const passwordValue = watch("newPassword", "");
-  const strength = getPasswordStrength(passwordValue);
+  const strength      = getPasswordStrength(passwordValue);
 
   // ─── Mutation ───────────────────────────────────────────────────────────────
   const { mutate, isPending } = useMutation({
     mutationFn: resetPassword,
     onSuccess: (response) => {
       if (response.statusCode === 200 && response.status === "success") {
+        toast.success(response.message || "Password reset successfully!");
         reset();
+
+        // Auto-login if API returns credentials
+        if (response.data) {
+          const authHeader = response.data.Authorization || response.data.authorization || "";
+          const apiKey     = response.data["x-api-key"] || "";
+
+          if (authHeader && apiKey) {
+            try {
+              if (typeof window !== "undefined") {
+                localStorage.setItem("token",  authHeader);
+                localStorage.setItem("apiKey", apiKey);
+              }
+              dispatch(
+                setCredentials({
+                  user: {
+                    usersCommuuid:      "",
+                    userFullName:       "User",
+                    email:              "",
+                    emailVerifiedToken: "",
+                    createdAt:          new Date().toISOString(),
+                  },
+                  apiKey,
+                  token: authHeader,
+                })
+              );
+              router.push("/");
+              return;
+            } catch {
+              // If auto-login fails, fall through to success state
+            }
+          }
+        }
+
         setSuccess(true);
-        toast.success("Password reset successfully!");
       } else {
         toast.error(response.message || "Failed to reset password.");
       }
@@ -96,12 +142,12 @@ export default function ResetPasswordPage() {
             parsed.errors.forEach((err) => toast.error(err));
             parsed.errors.forEach((err) => {
               const e = err.toLowerCase();
-              if (e.includes("newpassword") || e.includes("new password")) {
+              if (e.includes("newpassword") || e.includes("new password"))
                 setError("newPassword", { message: err });
-              }
-              if (e.includes("repassword") || e.includes("match")) {
+              if (e.includes("repassword") || e.includes("match"))
                 setError("rePassword", { message: err });
-              }
+              if (e.includes("token"))
+                toast.error("Invalid or expired reset link. Please request a new one.");
             });
           } else {
             toast.error(parsed.message || "Password reset failed.");
@@ -121,17 +167,16 @@ export default function ResetPasswordPage() {
       return;
     }
     mutate({
-      resetToken,
+      resetType:   data.resetType as "xreset" | "ereset",
+      resetToken:  data.resetToken,
       newPassword: data.newPassword,
-      rePassword: data.rePassword,
+      rePassword:  data.rePassword,
     });
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-10 bg-gray-50 dark:bg-[#12100E]">
       <div className="w-full max-w-md">
-
-        {/* Card */}
         <div className="bg-white dark:bg-[#1c1917] rounded-3xl shadow-xl overflow-hidden border border-gray-100 dark:border-gray-800">
           {/* Gradient top bar */}
           <div className="h-1.5 w-full bg-gradient-to-r from-yellow-400 via-yellow-500 to-orange-500" />
@@ -172,33 +217,31 @@ export default function ResetPasswordPage() {
                   </div>
                   <div>
                     <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                      Reset Password
+                      {resetType === "xreset" ? "Password Expired" : "Reset Password"}
                     </h1>
                     <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                      Enter a strong new password below
+                      {resetType === "xreset"
+                        ? "Your password has expired. Please set a new one."
+                        : "Enter a strong new password below."}
                     </p>
                   </div>
                 </div>
 
-                {/* Token info badge */}
-                {resetToken && (
-                  <div className="bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/20 rounded-2xl px-4 py-3 mb-6 flex items-start gap-2">
-                    <ShieldAlert
-                      size={15}
-                      className="text-yellow-600 dark:text-yellow-400 mt-0.5 shrink-0"
-                    />
-                    <p className="text-xs text-yellow-700 dark:text-yellow-400 leading-relaxed">
-                      You are resetting with a secure token. This link is{" "}
-                      <strong>single-use</strong> and will expire after submission.
-                    </p>
-                  </div>
-                )}
+                {/* Info badge */}
+                <div className="bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/20 rounded-2xl px-4 py-3 mb-6 flex items-start gap-2">
+                  <ShieldAlert size={15} className="text-yellow-600 dark:text-yellow-400 mt-0.5 shrink-0" />
+                  <p className="text-xs text-yellow-700 dark:text-yellow-400 leading-relaxed">
+                    {resetType === "xreset"
+                      ? "Your session password has expired. Set a new password to continue."
+                      : "You are resetting with a secure token. This link is single-use and will expire after submission."}
+                  </p>
+                </div>
 
-                <form
-                  onSubmit={handleSubmit(onSubmit)}
-                  noValidate
-                  className="flex flex-col gap-5"
-                >
+                <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-5">
+                  {/* Hidden fields — submitted with form */}
+                  <input type="hidden" {...register("resetType")} />
+                  <input type="hidden" {...register("resetToken")} />
+
                   {/* New Password */}
                   <div className="flex flex-col gap-1.5">
                     <PasswordInput
@@ -207,23 +250,15 @@ export default function ResetPasswordPage() {
                       error={errors.newPassword?.message}
                       register={register("newPassword")}
                     />
-                    {/* Password strength bar */}
                     {passwordValue && (
                       <div className="flex items-center gap-3 px-1">
                         <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all duration-500 ${strength.color} ${strength.width}`}
-                          />
+                          <div className={`h-full rounded-full transition-all duration-500 ${strength.color} ${strength.width}`} />
                         </div>
-                        <span
-                          className={`text-xs font-semibold ${
-                            strength.label === "Weak"
-                              ? "text-red-400"
-                              : strength.label === "Fair"
-                                ? "text-yellow-500"
-                                : "text-green-500"
-                          }`}
-                        >
+                        <span className={`text-xs font-semibold ${
+                          strength.label === "Weak"   ? "text-red-400" :
+                          strength.label === "Fair"   ? "text-yellow-500" : "text-green-500"
+                        }`}>
                           {strength.label}
                         </span>
                       </div>
@@ -238,7 +273,7 @@ export default function ResetPasswordPage() {
                     register={register("rePassword")}
                   />
 
-                  {/* Submit Button */}
+                  {/* Submit */}
                   <button
                     type="submit"
                     disabled={isPending}
@@ -246,15 +281,7 @@ export default function ResetPasswordPage() {
                   >
                     {isPending ? (
                       <span className="flex items-center justify-center gap-2">
-                        <svg
-                          className="animate-spin"
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        >
+                        <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <path d="M21 12a9 9 0 1 1-6.219-8.56" />
                         </svg>
                         Resetting Password...
@@ -264,13 +291,9 @@ export default function ResetPasswordPage() {
                     )}
                   </button>
 
-                  {/* Back to login */}
                   <p className="text-center text-sm text-gray-500 dark:text-gray-400">
                     Remember your password?{" "}
-                    <Link
-                      href="/auth/login"
-                      className="text-yellow-500 font-semibold hover:text-yellow-600 transition-colors"
-                    >
+                    <Link href="/auth/login" className="text-yellow-500 font-semibold hover:text-yellow-600 transition-colors">
                       Log In
                     </Link>
                   </p>
@@ -279,7 +302,6 @@ export default function ResetPasswordPage() {
             )}
           </div>
         </div>
-
       </div>
     </div>
   );

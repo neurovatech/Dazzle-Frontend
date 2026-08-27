@@ -41,7 +41,7 @@ function RelatedProduct({
     <div className="flex flex-wrap gap-6">
       <Swiper
         modules={[Navigation, Pagination, Scrollbar, A11y, Autoplay]}
-        loop={true}
+        loop={products.length >= 10}
         pagination={pagination ? { clickable: true } : false}
         navigation={navigation}
         autoplay={false}

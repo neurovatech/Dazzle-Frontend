@@ -3,6 +3,7 @@ import ProductCard from "@/components/share/GlobalProductCard";
 import type { ProductCardItem } from "./HotDealSectionCom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRef } from "react";
+import { useHomeProductFocus } from "@/hooks/useHomeProductFocus";
 
 import {
   Navigation,
@@ -33,6 +34,7 @@ function HotDealCom({
   pagination = true,
 }: HotDealComProps) {
    const swiperRef = useRef<SwiperType | null>(null);
+  useHomeProductFocus("home_hot_deal");
   if (products.length === 0) {
     return (
       <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -56,7 +58,7 @@ function HotDealCom({
 
       <Swiper
         modules={[Navigation, Pagination, Scrollbar, A11y, Autoplay]}
-        loop={true}
+        loop={products.length >= 10}
         pagination={pagination ? { clickable: true } : false}
         navigation={navigation}
         autoplay={
