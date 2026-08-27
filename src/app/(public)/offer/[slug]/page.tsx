@@ -5,6 +5,7 @@ import { api } from "@/lib/api";
 import Breadcrumb from "@/components/share/Breadcrumb";
 import CampaignDetailClient from "@/components/Offer/CampaignDetailClient";
 import type { Campaign } from "../page";
+import { SITE_NAME, OG_LOCALE, buildOgImage, absoluteUrl } from "@/lib/seo-config";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -129,16 +130,27 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     data?.campaignDescription ||
     `Shop exclusive deals from the ${name} campaign at Dazzle. Best prices on smartphones, laptops & gadgets in Bangladesh.`;
   const image = data?.campaign_image ?? data?.campaignImage;
+  const ogTitle = `${name} - Dazzle Offer`;
+  const ogImage = buildOgImage(image, name);
 
   return {
-    title: `${name} - Dazzle Offer`,
+    title: ogTitle,
     description,
+    alternates: { canonical: `/offer/${slug}` },
     openGraph: {
-      title: `${name} - Dazzle Offer`,
+      title: ogTitle,
       description,
-      url: `https://dazzle.com.bd/offer/${slug}`,
+      url: absoluteUrl(`/offer/${slug}`),
+      siteName: SITE_NAME,
+      locale: OG_LOCALE,
       type: "website",
-      images: image ? [{ url: image }] : undefined,
+      images: [ogImage],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: ogTitle,
+      description,
+      images: [ogImage.url],
     },
   };
 }

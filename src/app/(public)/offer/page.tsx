@@ -2,6 +2,7 @@ import OfferCard from "@/components/Offer/OfferCard";
 import Breadcrumb from "@/components/share/Breadcrumb";
 import { api } from "@/lib/api";
 import type { Metadata } from "next";
+import { SITE_NAME, OG_LOCALE, DEFAULT_OG_IMAGE, absoluteUrl } from "@/lib/seo-config";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -35,11 +36,21 @@ export const metadata: Metadata = {
   title: "Latest Offers & Campaigns",
   description:
     "Explore Dazzle's latest campaigns, flash sales, and exclusive offers on smartphones, laptops, and gadgets in Bangladesh.",
+  alternates: { canonical: "/offer" },
   openGraph: {
     title: "Latest Offers & Campaigns - Dazzle",
     description: "Shop the best deals and limited-time offers at Dazzle.",
-    url: "https://dazzle.com.bd/offer",
+    url: absoluteUrl("/offer"),
+    siteName: SITE_NAME,
+    locale: OG_LOCALE,
     type: "website",
+    images: [DEFAULT_OG_IMAGE],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Latest Offers & Campaigns - Dazzle",
+    description: "Shop the best deals and limited-time offers at Dazzle.",
+    images: [DEFAULT_OG_IMAGE.url],
   },
 };
 

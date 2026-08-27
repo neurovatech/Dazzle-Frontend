@@ -19,6 +19,12 @@ import {
   organizationSchema,
   webSiteSchema,
 } from "@/lib/structured-data";
+import {
+  SITE_NAME,
+  OG_LOCALE,
+  SITE_URL,
+  DEFAULT_OG_IMAGE,
+} from "@/lib/seo-config";
 
 const urbanist = Urbanist({
   subsets: ["latin"],
@@ -36,10 +42,20 @@ export async function generateMetadata(): Promise<Metadata> {
 
   const title = settings.metaTitle || settings.siteTitle || FALLBACK_TITLE;
   const description = stripHtml(settings.metaDescription) || FALLBACK_DESCRIPTION;
-  const siteName = settings.siteTitle || "Dazzle";
+  const siteName = settings.siteTitle || SITE_NAME;
 
-  const logoUrl = settings.siteLogo || FALLBACK_ICON;
   const iconUrl = settings.favicon || FALLBACK_ICON;
+
+  // Site-level share image. Deliberately NOT run through buildOgImage(): that
+  // helper assumes a CDN *content* photo (1200x1263), whereas `siteLogo` is the
+  // wordmark logo. Declaring product dimensions for a logo would be a lie that
+  // makes crawlers lay the preview out wrong. When siteLogo matches the known
+  // logo we use its real measured size; anything else ships without width/height
+  // so the crawler measures it itself rather than trusting a wrong number.
+  const ogImage =
+    !settings.siteLogo || settings.siteLogo === DEFAULT_OG_IMAGE.url
+      ? DEFAULT_OG_IMAGE
+      : { url: settings.siteLogo, alt: siteName };
 
   return {
     title: {
@@ -48,7 +64,8 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description,
     keywords: settings.metaKeywords || undefined,
-    metadataBase: new URL("https://dazzle.com.bd"),
+    metadataBase: new URL(SITE_URL),
+    alternates: { canonical: "/" },
     icons: {
       icon: iconUrl,
       shortcut: iconUrl,
@@ -56,18 +73,19 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     openGraph: {
       siteName,
-      locale: "en_BD",
+      locale: OG_LOCALE,
       type: "website",
+      url: SITE_URL,
       title,
       description,
-      images: [{ url: logoUrl }],
+      images: [ogImage],
     },
     twitter: {
       card: "summary_large_image",
       site: "@dazzlebd",
       title,
       description,
-      images: [logoUrl],
+      images: [ogImage.url],
     },
   };
 }

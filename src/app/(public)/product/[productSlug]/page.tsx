@@ -9,6 +9,14 @@ import {
   productSchema,
   breadcrumbSchema,
 } from '@/lib/structured-data';
+import {
+  SITE_NAME,
+  OG_LOCALE,
+  buildOgImage,
+  absoluteUrl,
+  PRODUCT_IMAGE_WIDTH,
+  PRODUCT_IMAGE_HEIGHT,
+} from '@/lib/seo-config';
 
 interface PageProps {
   params: Promise<{ productSlug: string }>;
@@ -131,8 +139,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
  
   const canonicalUrl = meta?.canonical;
  
-  const ogImage = p.thumbnails?.[0]?.mediaFileUrl || p.thumbnailImg;
- 
+  // Dimensions are passed explicitly here because product thumbnails on the CDN
+  // were verified to be consistently 1200x1263 — this lets crawlers render the
+  // preview on the first scrape without fetching the file to measure it.
+  const ogImage = buildOgImage(
+    p.thumbnails?.[0]?.mediaFileUrl || p.thumbnailImg,
+    p.productName,
+    { width: PRODUCT_IMAGE_WIDTH, height: PRODUCT_IMAGE_HEIGHT },
+  );
+
+  const pageUrl = canonicalUrl || absoluteUrl(`/product/${productSlug}`);
+
   return {
     title,
     description,
@@ -141,20 +158,25 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     openGraph: {
       title,
       description,
-      url: canonicalUrl,
+      url: pageUrl,
+      // siteName/locale must be repeated here: Next.js replaces the parent
+      // layout's `openGraph` wholesale rather than deep-merging it, so any
+      // page defining its own block loses them unless it restates them.
+      siteName: SITE_NAME,
+      locale: OG_LOCALE,
       // Kept as "website": Next.js's Metadata API restricts og:type to a fixed
       // union that does not include "product", and forcing it with a cast would
       // be fragile across upgrades. The practical loss is small — Facebook and
       // WhatsApp build link previews from og:title/description/image (all set
       // above), and Google reads product data from JSON-LD, not og:type.
       type: 'website',
-      images: ogImage ? [{ url: ogImage, alt: p.productName }] : undefined,
+      images: [ogImage],
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
-      images: ogImage ? [ogImage] : undefined,
+      images: [ogImage.url],
     },
     // Price, currency, availability and brand are published via JSON-LD
     // Product/Offer in the page body — the format Google actually consumes for

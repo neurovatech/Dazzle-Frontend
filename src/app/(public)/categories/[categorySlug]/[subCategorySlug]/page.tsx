@@ -5,6 +5,7 @@ import Breadcrumb from "@/components/share/Breadcrumb";
 import { api } from "@/lib/api";
 import type { Metadata } from "next";
 import { lookupCategoryNames, toTitleCase } from "@/lib/category-lookup";
+import { SITE_NAME, OG_LOCALE, buildOgImage, absoluteUrl } from "@/lib/seo-config";
 import JsonLd from "@/components/share/JsonLd";
 import { buildJsonLd, breadcrumbSchema, itemListSchema } from "@/lib/structured-data";
 // import { ProductItem, ProductListResponse, BrandItem } from "@/app/(public)/categories/[categorySlug]/page";
@@ -47,9 +48,16 @@ export async function generateMetadata({
   const {
     categoryName = toTitleCase(categorySlug),
     subCategoryName = toTitleCase(subCategorySlug),
+    subCategoryImage,
+    categoryImage,
   } = await lookupCategoryNames(categorySlug, subCategorySlug);
   const currentPage = Number(page ?? 1);
   const pageLabel = currentPage > 1 ? ` — Page ${currentPage}` : "";
+
+  const ogTitle = `${subCategoryName} - ${categoryName}${pageLabel} | Dazzle`;
+  const ogDescription = `Browse ${subCategoryName} products at Dazzle — Bangladesh's premium tech store.`;
+  // Prefer the sub-category's own artwork, then the parent category's.
+  const ogImage = buildOgImage(subCategoryImage || categoryImage, subCategoryName);
 
   return {
     title: `${subCategoryName} - ${categoryName}${pageLabel} - Buy Online at Best Price in Bangladesh`,
@@ -58,9 +66,19 @@ export async function generateMetadata({
       canonical: `/categories/${categorySlug}/${subCategorySlug}${currentPage > 1 ? `?page=${currentPage}` : ""}`,
     },
     openGraph: {
-      title: `${subCategoryName} - ${categoryName}${pageLabel} | Dazzle`,
-      description: `Browse ${subCategoryName} products at Dazzle — Bangladesh's premium tech store.`,
-      url: `/categories/${categorySlug}/${subCategorySlug}`,
+      title: ogTitle,
+      description: ogDescription,
+      url: absoluteUrl(`/categories/${categorySlug}/${subCategorySlug}`),
+      siteName: SITE_NAME,
+      locale: OG_LOCALE,
+      type: "website",
+      images: [ogImage],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: ogTitle,
+      description: ogDescription,
+      images: [ogImage.url],
     },
   };
 }

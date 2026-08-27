@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { api } from "@/lib/api";
 import LocationDetailPageCom from "@/components/shop/LocationDetailPageCom";
+import { SITE_NAME, OG_LOCALE, buildOgImage, absoluteUrl } from "@/lib/seo-config";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -55,17 +56,30 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!store) return { title: "Store Not Found - Dazzle" };
 
   const [description] = (store.description || "").split("~seperator~");
+  const ogTitle = `${store.branch_name} - Dazzle Store`;
+  const ogDescription = description?.trim() || store.address;
+  const ogImage = buildOgImage(store.thumbnail_img, store.branch_name);
 
   return {
-    title: `${store.branch_name} - Dazzle Store`,
+    title: ogTitle,
     description:
       description?.trim() ||
       `Visit Dazzle at ${store.branch_name}. Located at ${store.address}. Contact: ${store.contactno}`,
+    alternates: { canonical: `/shop-location/${slug}` },
     openGraph: {
-      title: `${store.branch_name} - Dazzle Store`,
-      description: description?.trim() || store.address,
-      url: `https://dazzle.com.bd/shop-location/${slug}`,
-      images: store.thumbnail_img ? [{ url: store.thumbnail_img }] : undefined,
+      title: ogTitle,
+      description: ogDescription,
+      url: absoluteUrl(`/shop-location/${slug}`),
+      siteName: SITE_NAME,
+      locale: OG_LOCALE,
+      type: "website",
+      images: [ogImage],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: ogTitle,
+      description: ogDescription,
+      images: [ogImage.url],
     },
   };
 }

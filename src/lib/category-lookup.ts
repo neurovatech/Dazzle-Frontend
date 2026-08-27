@@ -17,6 +17,13 @@ import { api } from "@/lib/api";
 export interface CategoryLookup {
   categoryName?: string;
   subCategoryName?: string;
+  /**
+   * Category / sub-category artwork, used as the social-share (og:image) photo
+   * so a shared category link previews with a real image instead of the tiny
+   * site wordmark. Undefined when the API has no thumbnail for that entry.
+   */
+  categoryImage?: string;
+  subCategoryImage?: string;
 }
 
 const getCategoryTree = cache(async (): Promise<any[]> => {
@@ -49,8 +56,9 @@ export const lookupCategoryNames = cache(
     // Always fall back to the slug-derived name so a failed/empty API response
     // degrades to exactly the previous behaviour rather than an empty title.
     const categoryName = cat?.category_name || toTitleCase(categorySlug);
+    const categoryImage = cat?.thumbnail_img || undefined;
 
-    if (!subCategorySlug) return { categoryName };
+    if (!subCategorySlug) return { categoryName, categoryImage };
 
     const sub = (cat?.child ?? []).find(
       (s: any) => s?.sub_category_slug === decodeURIComponent(subCategorySlug),
@@ -58,7 +66,9 @@ export const lookupCategoryNames = cache(
 
     return {
       categoryName,
+      categoryImage,
       subCategoryName: sub?.sub_category_name || toTitleCase(subCategorySlug),
+      subCategoryImage: sub?.thumbnail_img || undefined,
     };
   },
 );

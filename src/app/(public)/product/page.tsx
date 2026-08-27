@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Product from "@/components/ProductPage/Product";
+import { SITE_NAME, OG_LOCALE, DEFAULT_OG_IMAGE, absoluteUrl } from "@/lib/seo-config";
 
 // ─── SEO Metadata ─────────────────────────────────────────────────────────────
 
@@ -19,18 +20,21 @@ export const metadata: Metadata = {
     title: "Shop Mobiles, Laptops & Accessories - Dazzle",
     description:
       "Premium smartphones, laptops, accessories & gadgets. Best prices in Bangladesh.",
-    url: "https://dazzle.com.bd/product",
-    siteName: "Dazzle",
+    url: absoluteUrl("/product"),
+    siteName: SITE_NAME,
+    locale: OG_LOCALE,
     type: "website",
+    images: [DEFAULT_OG_IMAGE],
   },
   twitter: {
     card: "summary_large_image",
     title: "Shop Mobiles, Laptops & Accessories - Dazzle",
     description:
       "Premium smartphones, laptops, accessories & gadgets at the best prices in Bangladesh.",
+    images: [DEFAULT_OG_IMAGE.url],
   },
   alternates: {
-    canonical: "https://dazzle.com.bd/product",
+    canonical: "/product",
   },
 };
 

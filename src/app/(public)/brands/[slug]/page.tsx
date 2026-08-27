@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import BrandProducts, { CategoryItem } from "@/components/Brands/BrandProduct";
 import Breadcrumb from "@/components/share/Breadcrumb";
 import { api } from "@/lib/api";
+import { SITE_NAME, OG_LOCALE, DEFAULT_OG_IMAGE, absoluteUrl } from "@/lib/seo-config";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -85,14 +86,30 @@ export async function generateMetadata({
 }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const brandName = toTitleCase(slug);
+  const ogTitle = `${brandName} Products | Dazzle`;
+  const ogDescription = `Browse ${brandName} products at Dazzle — Bangladesh's premium tech store.`;
+  // No brand artwork is fetched in this metadata pass, so this resolves to the
+  // site default rather than shipping a preview with no image at all.
+  const ogImage = DEFAULT_OG_IMAGE;
+
   return {
     title: `${brandName} Products — Buy Online at Best Price in Bangladesh`,
     description: `Shop the complete ${brandName} collection at Dazzle. Best prices, official warranty, and fast delivery across Bangladesh.`,
     alternates: { canonical: `/brands/${slug}` },
     openGraph: {
-      title: `${brandName} Products | Dazzle`,
-      description: `Browse ${brandName} products at Dazzle — Bangladesh's premium tech store.`,
-      url: `/brands/${slug}`,
+      title: ogTitle,
+      description: ogDescription,
+      url: absoluteUrl(`/brands/${slug}`),
+      siteName: SITE_NAME,
+      locale: OG_LOCALE,
+      type: "website",
+      images: [ogImage],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: ogTitle,
+      description: ogDescription,
+      images: [ogImage.url],
     },
   };
 }
