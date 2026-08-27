@@ -15,10 +15,10 @@ export const registerSchema = yup.object({
 
   mobile: yup
     .string()
-    .trim()
-    .required("Phone number is required")
-    .matches(/^\d+$/, "Phone number must contain numbers only")
-    .matches(/^\S+$/, "Phone number must not contain spaces"),
+    .required("Mobile number is required.")
+    .matches(/^\d+$/, "Only numbers are allowed — no spaces or special characters.")
+    .length(11, "Mobile number must be exactly 11 digits.")
+    .matches(/^01[3-9]\d{8}$/, "Enter a valid Bangladeshi mobile number (e.g. 01700000000)."),
 
   password: yup
     .string()

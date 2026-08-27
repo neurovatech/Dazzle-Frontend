@@ -116,7 +116,11 @@ export default async function RootLayout({
         <ThemeProvider>
           <ReduxProvider>
             <QueryProvider state={dehydratedState}>
-              <Toaster position="top-center" reverseOrder={false} />
+              <Toaster
+                position="top-center"
+                reverseOrder={false}
+                containerStyle={{ zIndex: 9999999 }}
+              />
               <NextTopLoader
                 color="#d4a97a"
                 initialPosition={0.08}

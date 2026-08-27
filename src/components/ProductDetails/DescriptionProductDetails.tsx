@@ -65,18 +65,19 @@ const DescriptionProductDetails: React.FC<DescriptionProps> = ({
         {description ? (
           <div
             className="
+    dark-html-content
     prose dark:prose-invert max-w-none text-sm 
     text-gray-800 dark:text-gray-100 
     p-5 bg-[#F7F7F7] dark:bg-[#1a1613] 
     rounded-2xl border border-gray-200 dark:border-[#3a2f28] 
     leading-relaxed
 
-    [&_h1]:text-gray-900 dark:[&_h1]:text-white!
-    [&_h2]:text-gray-900 dark:[&_h2]:text-white!
+    [&_h1]:text-gray-900 dark:[&_h1]:!text-white
+    [&_h2]:text-gray-900 dark:[&_h2]:!text-white
     [&_h3]:text-gray-800 dark:[&_h3]:!text-white
     [&_h4]:text-gray-800 dark:[&_h4]:!text-white
     [&_h5]:text-gray-800 dark:[&_h5]:!text-white
-    [&_h6]:text-gray-800 dark:[&_h6]:text-white!
+    [&_h6]:text-gray-800 dark:[&_h6]:!text-white
 
     [&_p]:text-gray-700 dark:[&_p]:!text-gray-200
     [&_span]:dark:!text-gray-200
@@ -95,14 +96,23 @@ const DescriptionProductDetails: React.FC<DescriptionProps> = ({
     [&_a]:text-blue-600 dark:[&_a]:!text-[#D4A97A] dark:[&_a]:underline
 
     [&_blockquote]:text-gray-700 dark:[&_blockquote]:!text-gray-200
-    [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 dark:[&_blockquote]:border-gray-500
+    [&_blockquote]:border-l-4 [&_blockquote]:border-gray-300 dark:[&_blockquote]:!border-gray-500
 
     [&_table]:w-full [&_table]:border-collapse [&_table]:text-sm
-    [&_th]:border [&_th]:border-gray-200 [&_th]:p-3 [&_th]:bg-gray-100 [&_th]:text-left [&_th]:!text-gray-900
-    [&_td]:border [&_td]:border-gray-200 [&_td]:p-3 [&_td]:!text-gray-700
+    dark:[&_table]:!bg-[#1a1613]
+
+    [&_thead]:dark:!bg-[#2a211c]
+    [&_tr]:dark:!bg-transparent
+    dark:[&_tr:nth-child(even)]:!bg-[#221a16]
+
+    [&_th]:border [&_th]:border-gray-200 [&_th]:p-3 [&_th]:bg-gray-100 [&_th]:text-left [&_th]:text-gray-900
+    dark:[&_th]:!border-[#3a2f28] dark:[&_th]:!bg-[#2a211c] dark:[&_th]:!text-gray-100
+
+    [&_td]:border [&_td]:border-gray-200 [&_td]:p-3 [&_td]:text-gray-700
+    dark:[&_td]:!border-[#3a2f28] dark:[&_td]:!bg-[#221a16] dark:[&_td]:!text-gray-200
 
     [&_code]:text-gray-800 dark:[&_code]:!text-gray-200
-    [&_pre]:text-gray-800 dark:[&_pre]:!text-gray-200
+    [&_pre]:text-gray-800 dark:[&_pre]:!text-gray-200 dark:[&_pre]:!bg-[#2a211c]
 
     overflow-x-auto
   "

@@ -33,7 +33,11 @@ interface LoginResponse {
   statusCode: number;
   status: "success" | "error";
   message: string;
-  data?: LoginSuccessData;
+  data?: LoginSuccessData | {
+    username: string;
+    "recovery-token": string;
+    validity: string;
+  };
   errors?: string[];
 }
 
@@ -62,9 +66,10 @@ interface OtpVerifyResponse {
 const mobileSchema = yup.object({
   mobile: yup
     .string()
-    .required("mobile is required.")
-    .matches(/^\S+$/, "mobile must not contain spaces.")
-    .matches(/^\d+$/, "mobile must contain numbers only."),
+    .required("Mobile number is required.")
+    .matches(/^\d+$/, "Only numbers are allowed — no spaces or special characters.")
+    .length(11, "Mobile number must be exactly 11 digits.")
+    .matches(/^01[3-9]\d{8}$/, "Enter a valid Bangladeshi mobile number (e.g. 01700000000)."),
 });
 type MobileSchema = yup.InferType<typeof mobileSchema>;
 
@@ -278,7 +283,7 @@ const modalRef = useRef<HTMLDivElement>(null);
   };
 
   return (
-    <div className="fixed inset-0 z-999999 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div ref={modalRef} className="bg-white dark:bg-[#1c1917] rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden">
         {/* Gradient bar */}
         <div className="h-1.5 w-full bg-gradient-to-r from-yellow-400 via-yellow-500 to-orange-500" />
@@ -326,7 +331,22 @@ const modalRef = useRef<HTMLDivElement>(null);
                 label="Mobile Number"
                 placeholder="e.g. 01700000000"
                 error={errors.mobile?.message}
-                register={register("mobile")}
+                register={{
+                  ...register("mobile"),
+                  inputMode: "numeric",
+                  maxLength: 11,
+                  onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => {
+                    // Allow: backspace, delete, tab, escape, enter, arrow keys
+                    const allowed = ["Backspace","Delete","Tab","Escape","Enter","ArrowLeft","ArrowRight","ArrowUp","ArrowDown","Home","End"];
+                    if (allowed.includes(e.key)) return;
+                    // Block anything that is not a digit
+                    if (!/^\d$/.test(e.key)) e.preventDefault();
+                  },
+                  onPaste: (e: React.ClipboardEvent<HTMLInputElement>) => {
+                    const pasted = e.clipboardData.getData("text");
+                    if (!/^\d+$/.test(pasted)) e.preventDefault();
+                  },
+                }}
               />
               <button
                 type="submit"
@@ -459,7 +479,7 @@ const LoginForm: React.FC = () => {
     onSuccess: (response, variables) => {
       if (response.statusCode === 200 && response.status === "success") {
         toast.success("Login completed successfully!");
-        if (response.data) {
+        if (response.data && "x-api-key" in response.data) {
           const authHeader =
             response.data.authorization || response.data.Authorization;
           const apiKey = response.data["x-api-key"];
@@ -502,6 +522,20 @@ const LoginForm: React.FC = () => {
       if (error instanceof Error) {
         try {
           const parsed = JSON.parse(error.message) as LoginResponse;
+
+          // ── Password Expired → redirect to reset page ──────────────────
+          if (
+            parsed.statusCode === 403 &&
+            parsed.message === "Password Expired" &&
+            parsed.data &&
+            "recovery-token" in parsed.data
+          ) {
+            const token = parsed.data["recovery-token"];
+            toast.error("Your password has expired. Please reset it.");
+            router.push(`/reset-password-token/${token}`);
+            return;
+          }
+
           if (parsed.errors?.length) {
             parsed.errors.forEach((err) => toast.error(err));
             parsed.errors.forEach((err) => {

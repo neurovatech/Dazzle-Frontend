@@ -177,15 +177,15 @@ function SearchResults() {
               </div>
 
               {/* Info */}
-              <div className="p-3 flex flex-col flex-1 bg-[#f5f5f5]">
-                <p className="font-semibold dark:text-[#222] text-[15px]  h-11 text-[#575757] line-clamp-2 group-hover:text-[#B57908] transition-colors">
+              <div className="p-3 flex flex-col flex-1 bg-[#f5f5f5] dark:bg-[#2a2420]">
+                <p className="font-semibold dark:text-white text-[15px]  h-11 text-[#575757] line-clamp-2 group-hover:text-[#B57908] transition-colors">
                   {p.productName}
                 </p>
                 <p className={`text-[15px] font-semibold mt-1 ${p.isStockAvailable ? "text-green-500" : "text-red-500"}`}>
                   {p.isStockAvailable ? "In Stock" : "Out of Stock"}
                 </p>
                 <div className="flex items-baseline gap-1.5 mt-auto pt-2 flex-wrap">
-                  <span className="items-center flex gap-1 font-bold text-[20px] leading-[1.6] tracking-[0%] text-gray-900">
+                  <span className="items-center flex gap-1 font-bold text-[20px] leading-[1.6] tracking-[0%] text-gray-900 dark:text-white">
                     {formatPrice(p.discountedPrice)}
                   </span>
                   {p.regularPrice > p.discountedPrice && (
@@ -194,7 +194,7 @@ function SearchResults() {
                     </span>
                   )}
                 </div>
-                <p className="text-[15px] text-gray-400 dark:text-gray-500 mt-1 truncate font-bold">
+                <p className="text-[15px] text-gray-400 dark:text-white mt-1 truncate font-bold">
                   {p.categoryName}
                 </p>
               </div>

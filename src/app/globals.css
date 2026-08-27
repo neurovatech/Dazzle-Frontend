@@ -294,3 +294,50 @@ img {
   }
 }
 
+
+/* ── Dark mode: force override inline styles inside dangerouslySetInnerHTML HTML ── */
+.dark .dark-html-content * {
+  color: #e5e5e5 !important;
+  background-color: transparent !important;
+  border-color: #3a2f28 !important;
+}
+
+.dark .dark-html-content table {
+  background-color: #1a1613 !important;
+}
+
+.dark .dark-html-content thead,
+.dark .dark-html-content th {
+  background-color: #2a211c !important;
+  color: #f0f0f0 !important;
+  border-color: #3a2f28 !important;
+}
+
+.dark .dark-html-content td {
+  background-color: #221a16 !important;
+  color: #e0e0e0 !important;
+  border-color: #3a2f28 !important;
+}
+
+.dark .dark-html-content tr:nth-child(even) td {
+  background-color: #1e1712 !important;
+}
+
+.dark .dark-html-content a {
+  color: #D4A97A !important;
+}
+
+.dark .dark-html-content strong,
+.dark .dark-html-content b {
+  color: #ffffff !important;
+}
+
+.dark .dark-html-content h1,
+.dark .dark-html-content h2,
+.dark .dark-html-content h3,
+.dark .dark-html-content h4,
+.dark .dark-html-content h5,
+.dark .dark-html-content h6 {
+  color: #ffffff !important;
+  background-color: transparent !important;
+}

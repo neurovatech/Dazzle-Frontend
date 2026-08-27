@@ -296,7 +296,20 @@ const RegisterForm: React.FC = () => {
           label="Phone Number"
           placeholder="e.g. 01700000000"
           error={errors.mobile?.message}
-          register={register("mobile")}
+          register={{
+            ...register("mobile"),
+            inputMode: "numeric",
+            maxLength: 11,
+            onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => {
+              const allowed = ["Backspace","Delete","Tab","Escape","Enter","ArrowLeft","ArrowRight","ArrowUp","ArrowDown","Home","End"];
+              if (allowed.includes(e.key)) return;
+              if (!/^\d$/.test(e.key)) e.preventDefault();
+            },
+            onPaste: (e: React.ClipboardEvent<HTMLInputElement>) => {
+              const pasted = e.clipboardData.getData("text");
+              if (!/^\d+$/.test(pasted)) e.preventDefault();
+            },
+          }}
         />
 
         {/* Password */}
