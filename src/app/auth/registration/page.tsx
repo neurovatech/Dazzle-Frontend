@@ -1,5 +1,6 @@
 import React from "react";
 import RegisterForm from "@/components/Auth/RegisterForm";
+import GlobalLogo from "@/components/share/GlobalLogo";
 
 const RegisterPage: React.FC = () => {
   return (
@@ -8,10 +9,7 @@ const RegisterPage: React.FC = () => {
 
         {/* Logo */}
         <div className="text-center mb-6">
-          <h1 className="text-4xl font-black text-gray-900 tracking-tight dark:text-white">
-            dazzle
-            <sup className="text-xs font-normal align-super ml-0.5 dark:text-white">™</sup>
-          </h1>
+          <GlobalLogo />
           <h2 className="text-2xl font-bold text-gray-900 mt-2 dark:text-white">
             Create Your Account
           </h2>

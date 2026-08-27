@@ -1,5 +1,6 @@
 import React from "react";
 import OtpForm from "@/components/Auth/OtpForm";
+import GlobalLogo from "@/components/share/GlobalLogo";
 
 const OtpPage: React.FC = () => {
   return (
@@ -8,10 +9,7 @@ const OtpPage: React.FC = () => {
 
         {/* Logo */}
         <div className="text-center mb-6">
-          <h1 className="text-4xl font-black text-gray-900 tracking-tight dark:text-white">
-            dazzle
-            <sup className="text-xs font-normal align-super ml-0.5">™</sup>
-          </h1>
+          <GlobalLogo />
           <h2 className="text-2xl font-bold text-gray-900 mt-3 dark:text-white">
             Account Verification
           </h2>
