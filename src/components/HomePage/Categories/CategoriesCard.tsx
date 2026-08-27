@@ -128,9 +128,12 @@ function CategoriesCard({
     <div className="md:px-12.5 px-4">
       {/* ── Header ── */}
       <div className="flex justify-between items-center">
-        <h1 className="md:text-[32px] text-[18px] font-bold text-transparent bg-clip-text bg-[linear-gradient(90deg,#101518_0%,#E9CCAE_46.15%,#B57908_100%)] dark:text-white">
+        {/* h2, not h1: this is a section heading inside the homepage, whose
+            single h1 describes the page as a whole. Two h1s (or an h1 that says
+            "Categories") breaks the heading hierarchy Lighthouse checks. */}
+        <h2 className="md:text-[32px] text-[18px] font-bold text-transparent bg-clip-text bg-[linear-gradient(90deg,#101518_0%,#E9CCAE_46.15%,#B57908_100%)] dark:text-white">
           Categories
-        </h1>
+        </h2>
         {seeAllBtn && (
           <Link
             href="/categories"
@@ -218,7 +221,7 @@ function CategoriesCard({
                     </div>
                   </div>
 
-                  <h2 className="w-full text-[14px] sm:text-[14px] font-medium text-primary pt-1 sm:pt-2 text-center transition-colors duration-300 group-hover:text-[#CB843B] line-clamp-2 leading-tight min-h-[22px] sm:min-h-[26px] lg:min-h-[36px] flex items-start justify-center">
+                  <h3 className="w-full text-[14px] sm:text-[14px] font-medium text-primary pt-1 sm:pt-2 text-center transition-colors duration-300 group-hover:text-[#CB843B] line-clamp-2 leading-tight min-h-[22px] sm:min-h-[26px] lg:min-h-[36px] flex items-start justify-center">
                     {hasName ? (
                       item.category_name
                     ) : (
@@ -226,7 +229,7 @@ function CategoriesCard({
                         No name
                       </span>
                     )}
-                  </h2>
+                  </h3>
                 </Link>
               </SwiperSlide>
             );

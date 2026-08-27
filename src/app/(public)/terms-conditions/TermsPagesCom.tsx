@@ -1,10 +1,10 @@
 "use client";
 import React from "react";
 import DOMPurify from "isomorphic-dompurify";
-import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { useSiteSettingsFull } from "@/hooks/useSiteSettings";
 
 function TermsPagesCom() {
-  const { data: siteSettings, isLoading } = useSiteSettings();
+  const { data: siteSettings, isLoading } = useSiteSettingsFull();
 
   if (isLoading) {
     return <div className="text-[#222] dark:text-white">Loading...</div>;

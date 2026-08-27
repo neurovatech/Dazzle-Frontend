@@ -117,6 +117,15 @@ export default async function Home() {
 
   return (
     <div className="bg-[#fffbf6] dark:bg-[#2e2b28]">
+      {/* The page's single <h1>. Visually hidden because the design leads with
+          the hero banner rather than a headline, but screen readers, search
+          engines and agentic browsers all need one top-level heading that says
+          what this page is — previously the homepage's only h1 was the
+          "Categories" section title, which mis-describes the page. */}
+      <h1 className="sr-only">
+        Dazzle — Buy Mobiles, Laptops &amp; Gadgets Online in Bangladesh
+      </h1>
+
       {/* HERO SLIDER  */}
       <div className="flex flex-col flex-1 items-center max-w-355 mx-auto px-0 sm:px-0">
         {heroSlides.length > 0 && (
@@ -150,11 +159,11 @@ export default async function Home() {
                 pagesLink="/offer/limited-time-offer"
               />
               <FlashSaleSectionCom />
-              {/* <GlobalTabs tabs={tabsData} /> */}
             </div>
           </div>
         </div>
       </Suspense>
+
 
       {/* Offer Banner */}
       <Suspense fallback={<OfferBannerSkeleton />}>
@@ -162,6 +171,7 @@ export default async function Home() {
           <OfferBanner apiEndpoint="flash-sale-below" />
         </div>
       </Suspense>
+
 
       {/* Trending Now */}
       <Suspense fallback={<TrendingNowSkeleton />}>
@@ -184,6 +194,7 @@ export default async function Home() {
         </div>
       </Suspense>
 
+
       {/* Clip To Cart */}
       <Suspense fallback={<ClipToCartSkeleton />}>
         <div className="bg-[#E9CCAE] dark:bg-[#6d3f0e]">
@@ -193,6 +204,7 @@ export default async function Home() {
         </div>
       </Suspense>
 
+
       {/* Offer Banner */}
       <Suspense fallback={<OfferBannerSkeleton />}>
         <div className="flex flex-col flex-1 max-w-355 mx-auto md:px-12.5 px-4">
@@ -200,12 +212,14 @@ export default async function Home() {
         </div>
       </Suspense>
 
+
       {/* Shop By Brand */}
       <Suspense fallback={<ShopBrandSkeleton />}>
         <div className="flex flex-col flex-1 max-w-355 mx-auto">
           <ShopBrandSectionCom />
         </div>
       </Suspense>
+
 
       {/* New Arrivals */}
       <Suspense fallback={<NewArrivalsSkeleton />}>
@@ -226,12 +240,12 @@ export default async function Home() {
                   </Link>
                 </div>
                 <NewArrivalsSectionCom />
-                {/* <GlobalTabs tabs={tabsData} /> */}
               </div>
             </div>
           </div>
         </div>
       </Suspense>
+
 
       {/* Offer Banner */}
       <Suspense fallback={<OfferBannerSkeleton />}>
@@ -240,12 +254,14 @@ export default async function Home() {
         </div>
       </Suspense>
 
+
       {/* Most Popular */}
       <Suspense fallback={<MostPopularSkeleton />}>
         <div className="flex flex-col flex-1 max-w-355 mx-auto md:px-12.5">
           <MostPopularSectionCom />
         </div>
       </Suspense>
+
 
       {/* Hot Deal of the Day */}
       <Suspense fallback={<HotDealSkeleton />}>
@@ -264,12 +280,12 @@ export default async function Home() {
                   See all
                 </Link>
               </div>
-              {/* <GlobalTabs tabs={tabsData} /> */}
               <HotDealSectionCom />
             </div>
           </div>
         </div>
       </Suspense>
+
 
       {/* Feature Products */}
       <Suspense fallback={<FeatureProductsSkeleton />}>
@@ -278,11 +294,13 @@ export default async function Home() {
         </div>
       </Suspense>
 
+
       <Suspense fallback={<LatestBlogSkeleton />}>
         <div className="">
           <LatestBlog />
         </div>
       </Suspense>
+
     </div>
   );
 }

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 import { api } from "@/lib/api";
@@ -24,7 +24,13 @@ interface UnsubscribeResponse {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default function NewsletterUnsubscribePage() {
+/**
+ * useSearchParams() forces client-side rendering for whatever subtree uses it,
+ * so Next.js requires that subtree to sit inside a Suspense boundary — otherwise
+ * the whole route opts out of server rendering (and the production build fails).
+ * The default export below provides that boundary.
+ */
+function NewsletterUnsubscribeContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
 
@@ -180,5 +186,19 @@ export default function NewsletterUnsubscribePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function NewsletterUnsubscribePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <Loader2 className="w-8 h-8 text-[#6D3F0E] animate-spin" />
+        </div>
+      }
+    >
+      <NewsletterUnsubscribeContent />
+    </Suspense>
   );
 }

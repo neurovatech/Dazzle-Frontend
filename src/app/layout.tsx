@@ -10,7 +10,7 @@ import NextTopLoader from "nextjs-toploader";
 import QueryProvider from "@/app/providers/QueryProvider";
 import ReduxProvider from "@/app/providers/ReduxProvider";
 import { Toaster } from "react-hot-toast";
-import { getSiteSettings, stripHtml } from "@/lib/getSiteSettings";
+import { getSiteSettings, stripHtml, stripHeavyFields } from "@/lib/getSiteSettings";
 import { getQueryClient } from "@/lib/query-client";
 import type { SiteSettingsData } from "@/store/slices/siteSettingsSlice";
 import JsonLd from "@/components/share/JsonLd";
@@ -99,10 +99,16 @@ export default async function RootLayout({
   // instantly on the client instead of firing a second, duplicate fetch.
   // getSiteSettings() is wrapped in React's cache(), so this reuses the same
   // in-flight/resolved request already made above for generateMetadata().
+  //
+  // IMPORTANT: only the stripped ("lite") settings are dehydrated. The raw
+  // object is ~783 KB — mostly a giant metaDescription plus the about/terms
+  // HTML — and dehydrating it shipped all of that into every page's RSC
+  // payload. See stripHeavyFields() for the full breakdown.
   const queryClient = getQueryClient();
   await queryClient.prefetchQuery({
     queryKey: ["siteSettings"],
-    queryFn: (): Promise<SiteSettingsData> => getSiteSettings(),
+    queryFn: async (): Promise<SiteSettingsData> =>
+      stripHeavyFields(await getSiteSettings()) as SiteSettingsData,
   });
   const dehydratedState = dehydrate(queryClient);
 
@@ -150,7 +156,11 @@ export default async function RootLayout({
                 speed={200}
               />
               <Header />
-              <div className="">{children}</div>
+              {/* Landmark for assistive tech and agentic/AI browsers: it marks
+                  where the page's primary content starts, so they can skip the
+                  header/nav. Lighthouse flagged "Document does not have a main
+                  landmark" without this. Pages must NOT nest their own <main>. */}
+              <main id="main-content">{children}</main>
               <Footer />
               <div className="lg:hidden block ">
                 <MobileFooter />

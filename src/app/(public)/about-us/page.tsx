@@ -135,8 +135,10 @@ export default async function AboutUs() {
     console.error("Error loading brands count in SSR about page:", error);
   }
 
+  // Plain <div>, not <main>: the root layout now provides the single <main>
+  // landmark for every page, and nesting a second one is invalid HTML.
   return (
-    <main className="bg-white dark:bg-[#2E2B28] min-h-screen flex flex-col flex-1 max-w-355 mx-auto">
+    <div className="bg-white dark:bg-[#2E2B28] min-h-screen flex flex-col flex-1 max-w-355 mx-auto">
       {/* Breadcrumb */}
       <div className=" px-4 sm:px-6 pt-5 pb-0">
         <nav className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1 mb-0">
@@ -313,8 +315,8 @@ export default async function AboutUs() {
           </div>
         </div>
 
-       
+
       </div>
-    </main>
+    </div>
   );
 }
