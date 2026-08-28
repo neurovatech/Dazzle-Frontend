@@ -35,6 +35,7 @@ import {
   type VariantRow,
   type VariantApiResponse,
   type ConsolidatedVariant,
+  type GalleryImage,
 } from "./utils";
 
 interface ProductDetailProps {
@@ -106,6 +107,8 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
     [variantApiData],
   );
 
+
+
   useEffect(() => {
     if (groups.length === 0) return;
     const initial: Record<string, string> = {};
@@ -161,61 +164,85 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
   const otherGroupNames = groups.filter((g) => g.toLowerCase() !== "color");
 
   // ── Base images from product API ──────────────────────────────
-  const baseImages: string[] =
-    product?.thumbnails && product.thumbnails.length > 0
-      ? product.thumbnails
-          .map((img: any) => img.mediaFileUrl || img.mediafileUrl || "")
-          .filter(Boolean)
-      : product?.thumbnailImg
-        ? [product.thumbnailImg]
-        : [];
+  const baseImages: string[] = useMemo(() => {
+    if (product?.thumbnails && product.thumbnails.length > 0) {
+      return product.thumbnails
+        .map((img: any) => img.mediaFileUrl || img.mediafileUrl || "")
+        .filter(Boolean);
+    }
+    return product?.thumbnailImg ? [product.thumbnailImg] : [];
+  }, [product]);
 
-  // ── Color options list (for index-based image lookup) ──────────
-  const colorOptions = colorGroupName ? (groupOptions[colorGroupName] ?? []) : [];
+  // ── Color options list (also the gallery's ordering) ───────────
+  const colorOptions = useMemo(
+    () => (colorGroupName ? (groupOptions[colorGroupName] ?? []) : []),
+    [colorGroupName, groupOptions],
+  );
 
-  const images: string[] = useMemo(() => {
-    if (!colorGroupName || !selectedAttrs[colorGroupName]) return baseImages;
-
-    const selectedColorVal = selectedAttrs[colorGroupName];
-
-    // ① Try variant thumbnailUrl (preferred)
-    const colorVariantImages = variants
-      .filter((v) => v.attributes[colorGroupName] === selectedColorVal && v.thumbnailUrl)
-      .map((v) => v.thumbnailUrl);
-    const uniqueColorImages = [...new Set(colorVariantImages)];
-    if (uniqueColorImages.length > 0) return uniqueColorImages;
-
-    // ② Fallback: use baseImages[colorIndex] as the primary image
-    // Each color maps to a baseImage by its position in the color options list
-    const colorIdx = colorOptions.indexOf(selectedColorVal);
-    if (colorIdx >= 0 && baseImages[colorIdx]) {
-      // Show the color-specific image first, then rest of baseImages
-      const primary = baseImages[colorIdx];
-      const rest = baseImages.filter((_, i) => i !== colorIdx);
-      return [primary, ...rest];
+  /**
+   * The gallery and the colour swatches are ONE list rendered twice.
+   *
+   * Entry i of the gallery is colour i of the swatch row, so the two views stay
+   * index-aligned no matter which colour is active: clicking a thumbnail can
+   * select its colour, and selecting a colour can jump the gallery to it.
+   *
+   * The previous version rebuilt this list per colour and moved the selected
+   * colour's image to the front, which meant a gallery index meant something
+   * different on every render — there was no stable image → colour mapping to
+   * sync against.
+   *
+   * A colour's image is its variant thumbnailUrl when the API provides one,
+   * otherwise the base image sitting at the same position (thumbnails come back
+   * in colour order). Base images no colour claimed are appended as plain
+   * product shots and are always selectable.
+   */
+  const galleryImages: GalleryImage[] = useMemo(() => {
+    if (!colorGroupName || colorOptions.length === 0) {
+      return baseImages.map((url) => ({ url }));
     }
 
-    return baseImages;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [colorGroupName, selectedAttrs, variants, baseImages, colorOptions]);
+    const isColorAvailable = (option: string) =>
+      variants.some(
+        (v) =>
+          v.attributes[colorGroupName] === option &&
+          Object.entries(selectedAttrs)
+            .filter(([g]) => g !== colorGroupName)
+            .every(([g, val]) => v.attributes[g] === val),
+      );
 
-  // ── Color variant groups for ProductColorVariants ──────────────
+    const colored: GalleryImage[] = [];
+    colorOptions.forEach((val, idx) => {
+      const match = variants.find(
+        (v) => v.attributes[colorGroupName] === val && v.thumbnailUrl,
+      );
+      const url = match?.thumbnailUrl || baseImages[idx] || "";
+      if (!url) return;
+      colored.push({ url, color: val, disabled: !isColorAvailable(val) });
+    });
+
+    const claimed = new Set(colored.map((c) => c.url));
+    const extras: GalleryImage[] = baseImages
+      .filter((url) => !claimed.has(url))
+      .map((url) => ({ url }));
+
+    return [...colored, ...extras];
+  }, [colorGroupName, colorOptions, variants, baseImages, selectedAttrs]);
+
+  // ── Color swatches — same source as the gallery, so they can never drift ──
   const colorVariantGroups = colorGroupName
     ? [
         {
           label: colorGroupName,
           type: "color" as const,
-          options: (groupOptions[colorGroupName] ?? []).map((val, idx) => {
-            const match = variants.find(
-              (v) => v.attributes[colorGroupName] === val && v.thumbnailUrl,
-            );
-            // If no variant thumbnail, use baseImages[idx] so each color shows its image
-            const fallbackImg = baseImages[idx] || baseImages[0] || undefined;
+          options: colorOptions.map((val) => {
+            const entry = galleryImages.find((img) => img.color === val);
             return {
               label: val,
               value: val,
-              image: match?.thumbnailUrl || fallbackImg,
-              disabled: !isOptionAvailable(colorGroupName, val),
+              image: entry?.url,
+              disabled: entry
+                ? entry.disabled === true
+                : !isOptionAvailable(colorGroupName, val),
             };
           }),
         },
@@ -417,14 +444,47 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
   const handleVariantChange = (group: string, value: string) => {
     if (!isOptionAvailable(group, value)) return;
     setSelectedAttrs((prev) => ({ ...prev, [group]: value }));
-    // Reset gallery to first image whenever color changes
-    if (group.toLowerCase() === "color") {
-      setSelectedColor(0);
+  };
+
+  // ── Colour → gallery ───────────────────────────────────────────
+  // Picking a swatch (here, in the sticky bar, anywhere) moves the gallery to
+  // that colour's image. Driven off selectedAttrs rather than the click handler
+  // so every path that changes colour keeps the gallery in step.
+  const selectedColorValue = colorGroupName
+    ? selectedAttrs[colorGroupName]
+    : undefined;
+
+  useEffect(() => {
+    if (!selectedColorValue) return;
+    const idx = galleryImages.findIndex(
+      (img) => img.color === selectedColorValue,
+    );
+    if (idx >= 0) setSelectedColor(idx);
+  }, [selectedColorValue, galleryImages]);
+
+  // Keep the index in range when the image list shrinks (e.g. product change).
+  useEffect(() => {
+    if (selectedColor >= galleryImages.length) setSelectedColor(0);
+  }, [galleryImages.length, selectedColor]);
+
+  // ── Gallery → colour ───────────────────────────────────────────
+  // Clicking a thumbnail selects the colour that image belongs to. Images not
+  // tied to a colour (extra product shots) just move the gallery.
+  const handleGallerySelect = (index: number) => {
+    const item = galleryImages[index];
+    if (!item || item.disabled) return;
+    setSelectedColor(index);
+    if (item.color && colorGroupName && item.color !== selectedColorValue) {
+      handleVariantChange(colorGroupName, item.color);
     }
   };
 
   // ── Active Image (Selected Gallery / Color Image) ────────────
-  const activeImage = images[selectedColor] || images[0] || product?.thumbnailImg || "";
+  const activeImage =
+    galleryImages[selectedColor]?.url ||
+    galleryImages[0]?.url ||
+    product?.thumbnailImg ||
+    "";
 
   return (
     <div className="min-h-screen font-sans bg-[#fffbf6] dark:bg-[#2e2b28]">
@@ -467,9 +527,9 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
           <div className="lg:col-span-5">
             <div className="rounded-2xl shadow-sm p-3 transition-colors duration-200  dark:bg-[#3e3329]">
               <ProductImageGallery
-                images={images}
+                images={galleryImages}
                 selected={selectedColor}
-                onSelect={setSelectedColor}
+                onSelect={handleGallerySelect}
                 badges={product?.disRate}
               />
               <div className="hidden lg:block">

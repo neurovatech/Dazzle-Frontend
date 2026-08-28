@@ -95,7 +95,7 @@ export default function ShopBrand({ brands }: Props) {
                   <button
                     type="button"
                     onClick={() => setActiveBrandSlug(brand.slug)}
-                    className="w-full flex flex-col items-center gap-2 group focus:outline-none cursor-pointer"
+                    className="w-full flex flex-col items-center gap-2 group focus:outline-none cursor-pointer mt-3"
                   >
                     <div
                       className={`

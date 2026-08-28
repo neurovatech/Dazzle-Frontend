@@ -147,3 +147,30 @@ export function consolidateVariants(rows: VariantRow[]): {
 
   return { groups, variants: finalVariants };
 }
+
+/**
+ * One entry in the product image gallery.
+ *
+ * The gallery and the colour swatches are two views of the same list, so an
+ * image carries the colour it belongs to. That lets the two stay in sync:
+ * picking a thumbnail selects its colour, and picking a colour jumps the
+ * gallery to its image. `disabled` mirrors the swatch's own disabled state so
+ * an unavailable colour looks — and behaves — the same in both places.
+ *
+ * `color` is undefined for images that aren't tied to any single colour
+ * (extra product shots); those are always selectable.
+ */
+export interface GalleryImage {
+  url: string;
+  color?: string;
+  disabled?: boolean;
+}
+
+/** Accept a plain URL list or a GalleryImage list and normalise to the latter. */
+export function toGalleryImages(
+  images: (string | GalleryImage)[],
+): GalleryImage[] {
+  return images
+    .map((img) => (typeof img === "string" ? { url: img } : img))
+    .filter((img) => !!img.url);
+}
