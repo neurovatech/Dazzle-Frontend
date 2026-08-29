@@ -414,6 +414,9 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
     staleTime: 10 * 60 * 1000,
   });
 
+  // console.log(specApiData, "specApiDataspecApiDataspecApiData")
+  // console.log(product!.productUuid, "specApiDataspecApiDataspecApiData")
+
   // Map API response → ProductSpecifications props shape
   const specGroups = useMemo(() => {
     const apiGroups = specApiData?.data;
