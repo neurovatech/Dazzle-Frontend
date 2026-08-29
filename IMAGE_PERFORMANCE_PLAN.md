@@ -189,8 +189,3 @@ Only proceed if Priority 1 measurements show a remaining gap.
 
 
 
-Please see my my code 
-
-Brands -> BrandProduct.tsx,
-
-CategoriesProductWithTopSale.tsx, CategoriesProduct.tsx

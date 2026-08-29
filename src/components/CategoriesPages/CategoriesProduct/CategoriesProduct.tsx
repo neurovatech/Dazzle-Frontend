@@ -269,8 +269,32 @@ function CategoriesProduct({
     return () => window.removeEventListener("popstate", handlePopState);
   }, [currentPage]);
 
+  /**
+   * Switching the top-level chip clears every filter under it.
+   *
+   * The attribute list, the price range and the stock counts are all computed
+   * FOR the current selection — "Black" or a 0–36,990 range come from one
+   * brand's catalogue and usually don't exist in the next one. Carrying them
+   * across meant the new selection was immediately filtered by criteria that
+   * no longer applied, which showed the wrong result count (often zero) with
+   * checkboxes still ticked in the sidebar.
+   *
+   * State and URL are cleared together so a reload or a shared link starts
+   * from the same clean slate.
+   */
   const handleBrandSelect = (brandSlug: string | null) => {
     setSelectedBrandSlug(brandSlug);
+    // Reset every dependent filter — see note above.
+    setSelectedAttributes([]);
+    setMinPrice(undefined);
+    setMaxPrice(undefined);
+    setStockStatus(null);
+    // Keep the mobile filter modal in step, so reopening it shows nothing ticked.
+    setPendingAttributes([]);
+    setPendingMinPrice(undefined);
+    setPendingMaxPrice(undefined);
+    setPendingStockStatus(null);
+    setFilterApplyKey((prev) => prev + 1);
     setActivePage(1);
 
     const params = new URLSearchParams(window.location.search);
@@ -279,6 +303,10 @@ function CategoriesProduct({
     } else {
       params.delete("brand");
     }
+    params.delete("attributes");
+    params.delete("minDiscountedPrice");
+    params.delete("maxDiscountedPrice");
+    params.delete("stockStatus");
     params.delete("page");
 
     const newQueryString = params.toString();
