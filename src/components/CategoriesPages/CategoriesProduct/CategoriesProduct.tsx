@@ -35,7 +35,6 @@ interface CategoriesProductProps {
   priceData?: PriceData;
   banners?: any;
   trendingNowSlot?: React.ReactNode;
- 
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -90,13 +89,24 @@ function CategoriesProduct({
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isSortOpen, setIsSortOpen] = useState(false);
-  const [pendingSort, setPendingSort] = useState<string>(currentSort ?? "recommend");
-  const [activeSort, setActiveSort] = useState<string>(currentSort ?? "recommend");
+  const [pendingSort, setPendingSort] = useState<string>(
+    currentSort ?? "recommend",
+  );
+  const [activeSort, setActiveSort] = useState<string>(
+    currentSort ?? "recommend",
+  );
 
-  const [pendingAttributes, setPendingAttributes] = useState<string[]>(initialAttributes);
-  const [pendingMinPrice, setPendingMinPrice] = useState<number | undefined>(initialMinPrice);
-  const [pendingMaxPrice, setPendingMaxPrice] = useState<number | undefined>(initialMaxPrice);
-  const [pendingStockStatus, setPendingStockStatus] = useState<string | null>(initialStockStatus);
+  const [pendingAttributes, setPendingAttributes] =
+    useState<string[]>(initialAttributes);
+  const [pendingMinPrice, setPendingMinPrice] = useState<number | undefined>(
+    initialMinPrice,
+  );
+  const [pendingMaxPrice, setPendingMaxPrice] = useState<number | undefined>(
+    initialMaxPrice,
+  );
+  const [pendingStockStatus, setPendingStockStatus] = useState<string | null>(
+    initialStockStatus,
+  );
   const [filterApplyKey, setFilterApplyKey] = useState(0);
 
   const productListRef = useRef<HTMLDivElement>(null);
@@ -104,7 +114,10 @@ function CategoriesProduct({
   const closeFilterAndScroll = () => {
     setIsFilterOpen(false);
     setTimeout(() => {
-      productListRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      productListRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
     }, 100);
   };
 
@@ -122,20 +135,25 @@ function CategoriesProduct({
     setMaxPrice(pendingMaxPrice);
     setStockStatus(pendingStockStatus);
     setActivePage(1);
-    setFilterApplyKey(prev => prev + 1); 
+    setFilterApplyKey((prev) => prev + 1);
 
     // URL update
     const params = new URLSearchParams(window.location.search);
-    if (pendingAttributes.length > 0) params.set("attributes", pendingAttributes.join(","));
+    if (pendingAttributes.length > 0)
+      params.set("attributes", pendingAttributes.join(","));
     else params.delete("attributes");
-    if (pendingMinPrice !== undefined) params.set("minDiscountedPrice", String(pendingMinPrice));
+    if (pendingMinPrice !== undefined)
+      params.set("minDiscountedPrice", String(pendingMinPrice));
     else params.delete("minDiscountedPrice");
-    if (pendingMaxPrice !== undefined) params.set("maxDiscountedPrice", String(pendingMaxPrice));
+    if (pendingMaxPrice !== undefined)
+      params.set("maxDiscountedPrice", String(pendingMaxPrice));
     else params.delete("maxDiscountedPrice");
     if (pendingStockStatus) params.set("stockStatus", pendingStockStatus);
     else params.delete("stockStatus");
     params.delete("page");
-    const newUrl = params.toString() ? `${window.location.pathname}?${params.toString()}` : window.location.pathname;
+    const newUrl = params.toString()
+      ? `${window.location.pathname}?${params.toString()}`
+      : window.location.pathname;
     window.history.pushState(null, "", newUrl);
 
     closeFilterAndScroll();
@@ -143,8 +161,8 @@ function CategoriesProduct({
 
   // Pending toggle handlers (শুধু modal এর জন্য)
   const handlePendingToggleAttribute = (value: string) => {
-    setPendingAttributes(prev =>
-      prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]
+    setPendingAttributes((prev) =>
+      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value],
     );
   };
 
@@ -360,7 +378,7 @@ function CategoriesProduct({
 
   const handleApplySort = (sort: string) => {
     setPendingSort(sort);
-    setActiveSort(sort); 
+    setActiveSort(sort);
     setActivePage(1);
     setIsSortOpen(false);
 
@@ -405,37 +423,39 @@ function CategoriesProduct({
             All
           </button>
 
-          {brands.map((brand) => {
-            const isActive = selectedBrandSlug === brand.brand_slug;
-            return (
-              <button
-                key={brand.uuid}
-                onClick={() =>
-                  handleBrandSelect(isActive ? null : brand.brand_slug)
-                }
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold border transition-colors whitespace-nowrap shrink-0 ${
-                  isActive
-                    ? "bg-[#6D3F0E] text-white border-[#6D3F0E]"
-                    : "bg-white dark:bg-[#2a2420] text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-[#6D3F0E] hover:text-[#6D3F0E]"
-                }`}
-              >
-                {brand.brand_name}
-              </button>
-            );
-          })}
+          {brands
+            .sort((a, b) => a.brand_name.localeCompare(b.brand_name))
+            .map((brand) => {
+              const isActive = selectedBrandSlug === brand.brand_slug;
+              return (
+                <button
+                  key={brand.uuid}
+                  onClick={() =>
+                    handleBrandSelect(isActive ? null : brand.brand_slug)
+                  }
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold border transition-colors whitespace-nowrap shrink-0 ${
+                    isActive
+                      ? "bg-[#6D3F0E] text-white border-[#6D3F0E]"
+                      : "bg-white dark:bg-[#2a2420] text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-[#6D3F0E] hover:text-[#6D3F0E]"
+                  }`}
+                >
+                  {brand.brand_name}
+                </button>
+              );
+            })}
         </div>
       )}
 
       <div className="md:hidden flex md:px-12.5 px-4 pt-2 md:mt-[15px] flex-wrap items-center justify-between gap-3 md:pb-3 relative">
-          <div className="md:hidden block">
-            <h3 className="md:text-[32px] text-[20px] font-bold text-transparent bg-clip-text bg-[linear-gradient(90deg,#101518_0%,#E9CCAE_46.15%,#B57908_100%)] dark:text-white">
-              Products of{" "}
-              <span className="capitalize">
-                {" "}
-                {subCategorySlug || categorySlug}{" "}
-              </span>
-            </h3>
-            {/* <p className="text-xs text-gray-400 mt-0.5">
+        <div className="md:hidden block">
+          <h3 className="md:text-[32px] text-[20px] font-bold text-transparent bg-clip-text bg-[linear-gradient(90deg,#101518_0%,#E9CCAE_46.15%,#B57908_100%)] dark:text-white">
+            Products of{" "}
+            <span className="capitalize">
+              {" "}
+              {subCategorySlug || categorySlug}{" "}
+            </span>
+          </h3>
+          {/* <p className="text-xs text-gray-400 mt-0.5">
             {displayTotal.toLocaleString()} products found
             {selectedBrandSlug && (
               <span className="ml-2 text-[#6D3F0E] dark:text-[#d4a97a] font-semibold">
@@ -443,9 +463,9 @@ function CategoriesProduct({
               </span>
             )}
           </p> */}
-          </div>
+        </div>
 
-           <div className="md:hidden flex items-center fixed gap-3 bg-[#6d3f0e] px-3 py-2 rounded-full mb-3 bottom-20 z-88 left-1/2 transform -translate-x-1/2 shadow-[0px_4px_19.9px_0px_#00000066]">
+        <div className="md:hidden flex items-center fixed gap-3 bg-[#6d3f0e] px-3 py-2 rounded-full mb-3 bottom-20 z-88 left-1/2 transform -translate-x-1/2 shadow-[0px_4px_19.9px_0px_#00000066]">
           <button
             onClick={openFilterModal}
             className="md:hidden flex items-center  gap-1.5 rounded-xl text-sm font-semibold  dark:border-white/10 text-white dark:text-gray-300 shrink-0 bg-[#6d3f0e]"
@@ -457,16 +477,28 @@ function CategoriesProduct({
           <span className="text-white"> | </span>
 
           <button
-            onClick={() => { setPendingSort(currentSort ?? "recommend"); setIsSortOpen(true); }}
+            onClick={() => {
+              setPendingSort(currentSort ?? "recommend");
+              setIsSortOpen(true);
+            }}
             className="md:hidden flex items-center gap-1.5 rounded-xl text-sm font-semibold dark:border-white/10 text-white dark:text-gray-300 shrink-0"
           >
-            <svg width="14" height="17" viewBox="0 0 14 17" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M3.33333 11.6667H0L5 16.6667V0H3.33333V11.6667ZM8.33333 2.5V16.6667H10V5H13.3333L8.33333 0V2.5Z" fill="white"/>
+            <svg
+              width="14"
+              height="17"
+              viewBox="0 0 14 17"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M3.33333 11.6667H0L5 16.6667V0H3.33333V11.6667ZM8.33333 2.5V16.6667H10V5H13.3333L8.33333 0V2.5Z"
+                fill="white"
+              />
             </svg>
             Sort
           </button>
         </div>
-        </div>
+      </div>
 
       <Banner banners={banners} />
 
@@ -488,31 +520,26 @@ function CategoriesProduct({
           </div>
         </div>
 
-        
-
-       
-
         <div className="lg:col-span-9 h-full">
-
           {/* productList area  */}
           <div ref={productListRef} className="scroll-mt-4">
             <AllProducts
-            categorySlug={categorySlug}
-            subCategorySlug={subCategorySlug}
-            currentPage={activePage}
-            products={products}
-            totalPages={totalPages}
-            totalCount={totalCount}
-            currentSort={activeSort}
-            currentSearch={currentSearch}
-            selectedBrandSlug={selectedBrandSlug}
-            selectedAttributes={selectedAttributes}
-            minPrice={minPrice}
-            maxPrice={maxPrice}
-            stockStatus={stockStatus}
-            filterApplyKey={filterApplyKey}
-            onClearFilter={handleClearFilters}
-          />
+              categorySlug={categorySlug}
+              subCategorySlug={subCategorySlug}
+              currentPage={activePage}
+              products={products}
+              totalPages={totalPages}
+              totalCount={totalCount}
+              currentSort={activeSort}
+              currentSearch={currentSearch}
+              selectedBrandSlug={selectedBrandSlug}
+              selectedAttributes={selectedAttributes}
+              minPrice={minPrice}
+              maxPrice={maxPrice}
+              stockStatus={stockStatus}
+              filterApplyKey={filterApplyKey}
+              onClearFilter={handleClearFilters}
+            />
           </div>
         </div>
 
@@ -527,11 +554,27 @@ function CategoriesProduct({
             {/* Center Modal */}
             <div className="relative w-full max-w-sm bg-white dark:bg-[#1c1a17] rounded-3xl shadow-2xl z-10 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-[65vh]">
               <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-200 dark:border-white/10">
-                <button onClick={closeFilterAndScroll} className="w-9 h-9 flex items-center justify-center rounded-full border border-[#d4a97a] text-[#d4a97a]">
-                  <svg width="8" height="14" viewBox="0 0 8 14" fill="none"><path d="M7 1L1 7L7 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <button
+                  onClick={closeFilterAndScroll}
+                  className="w-9 h-9 flex items-center justify-center rounded-full border border-[#d4a97a] text-[#d4a97a]"
+                >
+                  <svg width="8" height="14" viewBox="0 0 8 14" fill="none">
+                    <path
+                      d="M7 1L1 7L7 13"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
                 </button>
-                <h3 className="text-base font-semibold text-gray-900 dark:text-white">Choose</h3>
-                <button onClick={closeFilterAndScroll} className="w-9 h-9 flex items-center justify-center rounded-full border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-300">
+                <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+                  Choose
+                </h3>
+                <button
+                  onClick={closeFilterAndScroll}
+                  className="w-9 h-9 flex items-center justify-center rounded-full border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-300"
+                >
                   <X size={18} />
                 </button>
               </div>
@@ -544,21 +587,40 @@ function CategoriesProduct({
                   onToggleAttribute={handlePendingToggleAttribute}
                   minPrice={pendingMinPrice}
                   maxPrice={pendingMaxPrice}
-                  onPriceChange={(min, max) => { setPendingMinPrice(min); setPendingMaxPrice(max); }}
+                  onPriceChange={(min, max) => {
+                    setPendingMinPrice(min);
+                    setPendingMaxPrice(max);
+                  }}
                   stockStatus={pendingStockStatus}
-                  onStockStatusToggle={(s) => setPendingStockStatus(prev => prev === s ? null : s)}
+                  onStockStatusToggle={(s) =>
+                    setPendingStockStatus((prev) => (prev === s ? null : s))
+                  }
                 />
               </div>
 
               {/* Footer */}
               <div className="flex gap-3 px-5 py-4 border-t border-gray-100 dark:border-white/10">
-                <button onClick={handleClearPendingFilters}
-                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-full border border-gray-200 dark:border-white/10 text-sm font-semibold text-gray-700 dark:text-white">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                <button
+                  onClick={handleClearPendingFilters}
+                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-full border border-gray-200 dark:border-white/10 text-sm font-semibold text-gray-700 dark:text-white"
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                    <path d="M3 3v5h5" />
+                  </svg>
                   CLEAR ALL
                 </button>
-                <button onClick={handleApplyFilters}
-                  className="flex-1 py-3 rounded-full bg-[#6D3F0E] text-white text-sm font-semibold">
+                <button
+                  onClick={handleApplyFilters}
+                  className="flex-1 py-3 rounded-full bg-[#6D3F0E] text-white text-sm font-semibold"
+                >
                   APPLY
                 </button>
               </div>
@@ -570,15 +632,34 @@ function CategoriesProduct({
         {isSortOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center md:hidden">
             {/* Glass backdrop */}
-            <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsSortOpen(false)} />
+            <div
+              className="fixed inset-0 bg-black/40 backdrop-blur-sm"
+              onClick={() => setIsSortOpen(false)}
+            />
             <div className="relative w-[90%] max-w-sm bg-white dark:bg-[#1c1a17] rounded-3xl shadow-2xl z-10 pb-6 animate-in fade-in zoom-in-95 duration-200">
               {/* Header */}
               <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100 dark:border-white/10">
-                <button onClick={() => setIsSortOpen(false)} className="w-9 h-9 flex items-center justify-center rounded-full border border-[#d4a97a] text-[#d4a97a]">
-                  <svg width="8" height="14" viewBox="0 0 8 14" fill="none"><path d="M7 1L1 7L7 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <button
+                  onClick={() => setIsSortOpen(false)}
+                  className="w-9 h-9 flex items-center justify-center rounded-full border border-[#d4a97a] text-[#d4a97a]"
+                >
+                  <svg width="8" height="14" viewBox="0 0 8 14" fill="none">
+                    <path
+                      d="M7 1L1 7L7 13"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
                 </button>
-                <h3 className="text-base font-bold text-gray-900 dark:text-white">Sort By</h3>
-                <button onClick={() => setIsSortOpen(false)} className="w-9 h-9 flex items-center justify-center rounded-full border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-300">
+                <h3 className="text-base font-bold text-gray-900 dark:text-white">
+                  Sort By
+                </h3>
+                <button
+                  onClick={() => setIsSortOpen(false)}
+                  className="w-9 h-9 flex items-center justify-center rounded-full border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-300"
+                >
                   <X size={16} />
                 </button>
               </div>
@@ -597,12 +678,16 @@ function CategoriesProduct({
                     className="w-full flex items-center justify-between py-4 text-sm font-medium text-gray-800 dark:text-white"
                   >
                     <span>{opt.label}</span>
-                    <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
-                      pendingSort === opt.value
-                        ? "border-[#d4a97a] bg-[#d4a97a]"
-                        : "border-gray-300 dark:border-gray-600"
-                    }`}>
-                      {pendingSort === opt.value && <span className="w-2 h-2 rounded-full bg-white" />}
+                    <span
+                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+                        pendingSort === opt.value
+                          ? "border-[#d4a97a] bg-[#d4a97a]"
+                          : "border-gray-300 dark:border-gray-600"
+                      }`}
+                    >
+                      {pendingSort === opt.value && (
+                        <span className="w-2 h-2 rounded-full bg-white" />
+                      )}
                     </span>
                   </button>
                 ))}
@@ -614,7 +699,17 @@ function CategoriesProduct({
                   onClick={() => setPendingSort("recommend")}
                   className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-full border border-gray-200 dark:border-white/10 text-sm font-semibold text-gray-700 dark:text-white"
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                    <path d="M3 3v5h5" />
+                  </svg>
                   CLEAR ALL
                 </button>
                 <button

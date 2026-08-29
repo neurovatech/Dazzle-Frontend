@@ -185,3 +185,12 @@ Only proceed if Priority 1 measurements show a remaining gap.
 1. **Proceed with all of Priority 1?** (recommended — ~89% image-byte reduction, all low-risk, all revertible)
 2. **P1.5 header background:** if `header-bg.svg` turns out *not* to match the PNG visually, should I (a) re-encode to WebP, or (b) leave it and report back?
 3. **P2.2 AVIF:** benchmark now, or defer until after Priority 1 is measured in production?
+
+
+
+
+Please see my my code 
+
+Brands -> BrandProduct.tsx,
+
+CategoriesProductWithTopSale.tsx, CategoriesProduct.tsx

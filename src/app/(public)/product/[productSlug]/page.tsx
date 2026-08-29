@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React from 'react';
+import React, { cache } from 'react';
 import ProductDetails from '@/components/ProductDetails/ProductDetail';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
@@ -107,15 +107,36 @@ function truncate(input: string, max = 160): string {
 }
 
 
+/**
+ * Product fetch shared by generateMetadata() and the page body.
+ *
+ * Two things this fixes:
+ *
+ * 1. Staleness. This request used to set `revalidate: 3600`, so a catalogue
+ *    edit — a renamed product, a new price — took up to an HOUR to show up
+ *    while the API was already returning the new value. Every other page in
+ *    the app uses 60s; the product page was the lone outlier. The cache tags
+ *    additionally let an edit be published immediately (see /api/revalidate)
+ *    instead of waiting the window out.
+ *
+ * 2. A duplicate request. generateMetadata() and the page each fetched the
+ *    same product independently. React's cache() collapses them into one
+ *    backend call per render.
+ */
+const getProduct = cache((productSlug: string) =>
+  api.get<ProductApiResponse>(`/product/${productSlug}`, {
+    next: {
+      revalidate: 60,
+      tags: ['product', `product:${productSlug}`],
+    },
+  } as RequestInit),
+);
+
 // ── Metadata ─────────────────────────────────────────────────────────
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { productSlug } = await params;
  
-  const res = await api
-    .get<ProductApiResponse>(`/product/${productSlug}`, {
-      next: { revalidate: 3600 },
-    } as RequestInit)
-    .catch(() => null);
+  const res = await getProduct(productSlug).catch(() => null);
  
   if (!res?.found || !res?.data) {
     // No API data available at all — nothing to build metadata from.
@@ -194,9 +215,8 @@ export default async function ProductDetailsPage({ params }: PageProps) {
   let requestFailed = false;
 
   try {
-    const res = await api.get<ProductApiResponse>(`/product/${productSlug}`, {
-      next: { revalidate: 3600 },
-    } as RequestInit);
+    const res = await getProduct(productSlug);
+
     if (res?.found && res?.data) {
       product = res.data;
     }
