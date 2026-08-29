@@ -265,7 +265,7 @@ export default function CheckoutPageCom() {
     return dist?.area.find((a) => a.areaID === targetAreaId && a.isActive);
   }, [deliveryType, addressTab, selectedAddressUuid, savedAddresses, newAddr.districtId, newAddr.areaId, districts]);
 
-
+console.log(selectedAreaObj, "selectedAreaObjselectedAreaObj")
 
 
   // ── Service levels — from API data, sorted by priority ───────────────────

@@ -1,8 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import React, { useState } from "react";
-import { ChevronUp, ChevronDown } from "lucide-react";
-import DescriptionProductDetails from "./DescriptionProductDetails";
+import React from "react";
 
 interface SpecItem {
   label: string;
@@ -15,49 +12,38 @@ interface SpecGroup {
 }
 
 interface ProductSpecificationsProps {
+  /** Groups from /product-specification/{productUuid}, already mapped. */
   groups: SpecGroup[];
-  description?: any;
 }
 
-const ProductSpecifications: React.FC<ProductSpecificationsProps> = ({ groups: propGroups, description }) => {
-  const [open, setOpen] = useState(true);
-  const fallbackGroups: SpecGroup[] = [
-    {
-      title: "Body",
-      items: [
-        {
-          label: "Dimension",
-          value: "163.4 x 78 x 8.8 mm (6.43 x 3.07 x 0.35 in)",
-        },
-        { label: "Weight", value: "233 g (8.22 oz)" },
-        {
-          label: "Build",
-          value:
-            "Glass front (Ceramic Shield 2), aluminum alloy frame, aluminum alloy back/ glass back (Ceramic Shield)",
-        },
-        {
-          label: "SIM",
-          value:
-            "Nano-SIM + eSIM + eSIM (max 2 at a time; International); eSIM + eSIM (8 or more, max 2 at a time; USA); Nano-SIM + Nano-SIM (China)",
-        },
-        {
-          label: "Features",
-          value:
-            "IP68 dust tight and water resistant (immersible up to 6m for 30 min); Apple Pay (Visa, MasterCard, AMEX certified)",
-        },
-      ],
-    },
-    {
-      title: "Display",
-      items: [
-        { label: "Type", value: "Super Retina XDR OLED" },
-        { label: "Size", value: "6.9 inches" },
-        { label: "Resolution", value: "1320 x 2868 pixels" },
-      ],
-    },
-  ];
-
-  const groups = propGroups && propGroups.length > 0 ? propGroups : fallbackGroups;
+/**
+ * Renders whatever the specification API returned — and nothing else.
+ *
+ * This component used to carry a hardcoded `fallbackGroups` array of iPhone 17
+ * Pro Max specs (dimensions, weight, Ceramic Shield build, SIM details) that it
+ * rendered whenever `groups` was empty. Because /product-specification answers
+ * { found: false, data: [] } for every product right now, EVERY product page was
+ * showing those invented iPhone specs as if they were its own — a smartwatch
+ * listed at 233 g with a 6.9" Super Retina display.
+ *
+ * Inventing product data is worse than showing none, so the fallback is gone. An
+ * empty result now says so plainly; the real copy lives in the Description
+ * section rendered directly below this one.
+ */
+const ProductSpecifications: React.FC<ProductSpecificationsProps> = ({
+  groups,
+}) => {
+  if (!groups || groups.length === 0) {
+    // console.log(groups, "groupsgroupsgroupsgroups");
+    
+    return (
+      <div className="w-full rounded-2xl border border-gray-200 dark:border-[#3a2f28] bg-white dark:bg-[#1f1a16] px-5 py-6 text-center">
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Specifications for this product are not available yet.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full">

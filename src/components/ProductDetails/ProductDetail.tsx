@@ -766,11 +766,11 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
               </button>
             </div>
 
-            {/* Specification is ALWAYS open */}
-            <ProductSpecifications
-              groups={specGroups}
-              description={product?.description}
-            />
+            {/* Specification is ALWAYS open.
+                `description` used to be passed here but the component never read
+                it — and the Description block right below already renders it, so
+                wiring it in would have duplicated the copy on the page. */}
+            <ProductSpecifications groups={specGroups} />
 
             {/* Description content shown below Specification when Description button is clicked */}
             {/* {showDescription && ( */}
