@@ -1067,7 +1067,7 @@ console.log(selectedAreaObj, "selectedAreaObjselectedAreaObj")
           <div className="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-6 lg:self-start">
             <div className="bg-white dark:bg-[#1C1A17] rounded-3xl border border-gray-100 dark:border-zinc-800 p-6 sm:p-8 shadow-sm space-y-6">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full border-2 border-[#D4A97A] flex items-center justify-center text-[#D4A97A] font-bold text-sm shrink-0">4</div>
+                <div className="w-8 h-8 rounded-full border-2 border-[#D4A97A] flex items-center justify-center text-[#D4A97A] font-bold text-sm shrink-0">5</div>
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">Order ({cartItems.length})</h2>
               </div>
 
