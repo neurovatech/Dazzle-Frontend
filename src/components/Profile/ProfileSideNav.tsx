@@ -2,6 +2,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   ChevronRight,
   Edit2,
@@ -123,9 +124,23 @@ const EditProfileModal: React.FC<EditModalProps> = ({ onClose }) => {
     );
   };
 
-  return (
+  /*
+   * Rendered into document.body rather than where it sits in the tree.
+   *
+   * On desktop this modal's owner lives inside `sticky top-6 z-20` (see
+   * ProfilePage), and a positioned sticky element creates its own stacking
+   * context. That capped the dialog at z-index 20 relative to the rest of the
+   * page however large its own z-index was — z-[999999] only ever competed
+   * against its siblings INSIDE that box, so the site header painted over it.
+   *
+   * A portal lifts it out of every ancestor context, which is the only fix that
+   * does not break again the next time a transform or sticky is added above it.
+   */
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+      className="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -251,7 +266,8 @@ const EditProfileModal: React.FC<EditModalProps> = ({ onClose }) => {
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 };
 
