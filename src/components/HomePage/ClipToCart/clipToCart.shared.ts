@@ -70,3 +70,21 @@ export function mapClipProduct(item: ClipApiProduct): ClipProduct {
     discountedPrice: item.discountedPrice,
   };
 }
+
+// ─── Small shared formatters ──────────────────────────────────────────────────
+
+export const isEmpty = (v: string | null | undefined) => !v || v.trim() === "";
+
+export const formatPrice = (v?: number) =>
+  typeof v === "number" ? `৳${v.toLocaleString("en-BD")}` : undefined;
+
+/**
+ * Reel aspect ratio — the shape the modal reserves for a clip.
+ *
+ * 9:16 is the vertical-video standard every phone camera and editing app already
+ * exports, so clips fill the frame with no letterboxing. The modal derives its
+ * width from its height using this, which is what keeps the reel centred at any
+ * viewport size without ever needing to scroll.
+ */
+export const REEL_ASPECT_W = 9;
+export const REEL_ASPECT_H = 16;

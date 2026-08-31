@@ -186,7 +186,7 @@ export default function ProductCardBuy({
         <button
           disabled
           // Figma: h-40 py-[3px] px-1 gap-2.5(10px) rounded-[13px] border, Urbanist Medium 16px/100%
-          className="flex-1 flex items-center justify-center gap-2.5 h-11 py-[3px] px-1 rounded-[13px] text-[16px] leading-none font-medium border border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-70"
+          className="flex-1 flex items-center justify-center gap-2.5 h-11 py-0.75 px-1 rounded-[13px] text-[16px] leading-none font-medium border border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-70"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"

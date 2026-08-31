@@ -17,11 +17,19 @@
  */
 
 import { useEffect } from "react";
-import { scrollSession, scrollToProduct } from "./useScrollRestoration";
+import {
+  scrollSession,
+  scrollToProduct,
+  setManualScrollRestoration,
+} from "./useScrollRestoration";
 
 export function useHomeProductFocus(pageKey: string) {
   // ── Restore on mount ───────────────────────────────────────────────────────
   useEffect(() => {
+    // Same reason as the listing pages: the browser's own restoration jumps to
+    // a stale Y and cancels the smooth scroll to the card.
+    setManualScrollRestoration();
+
     const saved = scrollSession.read(pageKey);
     if (!saved) return;
 

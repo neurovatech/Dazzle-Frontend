@@ -7,7 +7,12 @@ import ProductCard from "@/components/share/GlobalProductCard";
 import NoImg from "@/images/no_images.png";
 import { api } from "@/lib/api";
 import { ProductItem, ProductListResponse } from "@/app/(public)/categories/[categorySlug]/page";
-import { scrollSession, restoreScrollY, scrollToProduct } from "@/hooks/useScrollRestoration";
+import {
+  scrollSession,
+  restoreScrollY,
+  scrollToProduct,
+  setManualScrollRestoration,
+} from "@/hooks/useScrollRestoration";
 import { sortInStockFirst } from "@/lib/sortProducts";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -134,6 +139,10 @@ function AllProducts({
   useEffect(() => {
     if (didRestoreRef.current) return;
     didRestoreRef.current = true;
+
+    // Take scroll restoration off the browser before it can jump to the stale
+    // raw Y and cancel the anchor-based restore below.
+    setManualScrollRestoration();
 
     // Don't restore when the user arrived with active filters — those are a
     // deliberate new session state, not a continuation of a previous scroll.

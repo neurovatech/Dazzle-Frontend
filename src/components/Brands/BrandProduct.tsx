@@ -25,6 +25,12 @@ interface Props {
   initialProducts: ProductItem[];
   initialTotalCount: number;
   initialTotalPages: number;
+  /**
+   * Top-level category the visitor arrived from, already resolved server-side
+   * (null when the brand stocks nothing in it). Distinct from the chip row:
+   * chips are sub-categories, this is their parent.
+   */
+  initialTopCategory?: string | null;
 }
 
 export interface ProductItem {
@@ -62,6 +68,7 @@ export default function BrandProducts({
   initialProducts,
   initialTotalCount,
   initialTotalPages,
+  initialTopCategory = null,
 }: Props) {
   const searchParams = useSearchParams();
   console.log(categories, "categories")
@@ -80,6 +87,17 @@ export default function BrandProducts({
   const initialStockStatus = searchParams.get("stockStatus") ?? null;
 
   const [activeCategory, setActiveCategory] = useState<string | null>(initialCategory);
+  // Dropped the moment the visitor picks a chip: a chip is a narrower choice
+  // than the category they arrived from, so keeping both would fight.
+  const [topCategory, setTopCategory] = useState<string | null>(initialTopCategory);
+
+  // Going from one mega-menu entry straight to another — Tablet → Apple, then
+  // Phones → Apple — keeps the same route, so React reuses this component and
+  // useState would hold the FIRST category forever: the URL read phones while
+  // the page still listed iPads. The server prop cannot fix that on its own,
+  // because the router replays the cached payload for this route instead of
+  // re-rendering it for the new query string. The URL is the one value that is
+  // always current, so the searchParams effect below keeps this in step.
   const [activePage, setActivePage] = useState<number>(initialPage);
   const [selectedAttributes, setSelectedAttributes] = useState<string[]>(initialAttributes);
   const [minPrice, setMinPrice] = useState<number | undefined>(initialMinPrice);
@@ -208,7 +226,9 @@ export default function BrandProducts({
       ? Number(searchParams.get("maxDiscountedPrice"))
       : undefined;
     const stock = searchParams.get("stockStatus") ?? null;
+    const fromCat = searchParams.get("fromCategory") ?? null;
 
+    setTopCategory(fromCat);
     setActiveCategory(category);
     setActivePage(page);
     setSelectedAttributes(attrs);
@@ -225,6 +245,7 @@ export default function BrandProducts({
     const handlePopState = () => {
       const params = new URLSearchParams(window.location.search);
       setActiveCategory(params.get("category") ?? null);
+      setTopCategory(params.get("fromCategory") ?? null);
       setActivePage(Number(params.get("page") ?? "1"));
       setSelectedAttributes(params.get("attributes")?.split(",").filter(Boolean) ?? []);
       setMinPrice(
@@ -260,6 +281,7 @@ export default function BrandProducts({
     // Normalize to avoid space/case mismatch
     const normalized = categorySlug ? categorySlug.trim() : null;
     setActiveCategory(normalized);
+    setTopCategory(null);
     // Reset every dependent filter — see note above.
     setSelectedAttributes([]);
     setMinPrice(undefined);
@@ -507,6 +529,22 @@ export default function BrandProducts({
             <BrandProductListClient
               brandSlug={brandSlug}
               categorySlug={activeCategory ?? undefined}
+              topCategorySlug={topCategory}
+              onTopCategoryEmpty={() => {
+                // Brand stocks nothing in the category the visitor arrived from
+                // — show everything instead of an empty page. The server does
+                // the same check on a hard load; this covers the soft-navigation
+                // path, where the server props are not re-rendered.
+                setTopCategory(null);
+                const params = new URLSearchParams(window.location.search);
+                params.delete("fromCategory");
+                const qs = params.toString();
+                window.history.replaceState(
+                  null,
+                  "",
+                  qs ? `${window.location.pathname}?${qs}` : window.location.pathname,
+                );
+              }}
               selectedAttributes={selectedAttributes}
               minPrice={minPrice}
               maxPrice={maxPrice}

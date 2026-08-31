@@ -66,6 +66,11 @@ export interface BrandAttributesResponse {
 
 interface PageProps {
   params: Promise<{ slug: string }>;
+  /**
+   * `?fromCategory=` is set by the mega menu — see brandHref() in ExplorePanel.
+   * Deliberately not `category`, which the chip row uses for sub-category slugs.
+   */
+  searchParams: Promise<{ fromCategory?: string }>;
 }
 
 // ─── Config ───────────────────────────────────────────────────────────────────
@@ -118,9 +123,24 @@ export async function generateMetadata({
 // No force-dynamic — categories are cached, initial products cached per brand.
 // Filter/page changes are handled fully client-side via React Query (no SSR re-render).
 
-export default async function BrandDetailsPage({ params }: PageProps) {
+export default async function BrandDetailsPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
+  const { fromCategory } = await searchParams;
   const brandName = toTitleCase(slug);
+
+  /*
+   * Arriving from the mega menu ("Phones" → Apple) should open on that
+   * category, not on everything the brand sells.
+   *
+   * `categorySlug` takes the TOP-LEVEL slug and expands to every sub-category
+   * under it, which is what makes this a single request rather than a lookup
+   * through the category tree: Apple + laptop returns 58, exactly the sum of its
+   * four laptop sub-categories.
+   *
+   * Resolved here rather than on the client so the first paint is already
+   * correct — a client-side correction would flash the unfiltered list first.
+   */
+  const requestedCategory = fromCategory?.trim() || null;
 
   // SSR fetch: categories (5 min cache) + page-1 all products (1 min cache) + brand attributes (5 min cache)
   // These give Google bots full content on first render → SEO intact
@@ -133,6 +153,7 @@ export default async function BrandDetailsPage({ params }: PageProps) {
         brandSlug: slug,
         page: "1",
         limit: String(LIMIT),
+        ...(requestedCategory ? { categorySlug: requestedCategory } : {}),
       }).toString()}`,
       { next: { revalidate: 60 } }, // 1 min
     ),
@@ -146,7 +167,7 @@ export default async function BrandDetailsPage({ params }: PageProps) {
       ? catResult.value.data
       : [];
 
-  const initialProductData: ProductListResponse =
+  let initialProductData: ProductListResponse =
     prodResult.status === "fulfilled" && prodResult.value?.data
       ? prodResult.value
       : {
@@ -160,6 +181,26 @@ export default async function BrandDetailsPage({ params }: PageProps) {
           totalPages: 1,
           data: [],
         };
+
+  // The brand may simply not stock that category (Apple + home-appliance is 0).
+  // Falling back to All means dropping the filter AND refetching, otherwise the
+  // page would say "All" while still showing the empty filtered result.
+  let activeTopCategory = requestedCategory;
+  if (requestedCategory && initialProductData.totalCount === 0) {
+    activeTopCategory = null;
+    try {
+      initialProductData = await api.get<ProductListResponse>(
+        `/products?${new URLSearchParams({
+          brandSlug: slug,
+          page: "1",
+          limit: String(LIMIT),
+        }).toString()}`,
+        { next: { revalidate: 60 } },
+      );
+    } catch {
+      // Keep the empty result — the list renders its own empty state.
+    }
+  }
 
   const attributes: AttributeGroup[] =
     attrResult.status === "fulfilled" && Array.isArray(attrResult.value?.data)
@@ -192,6 +233,7 @@ export default async function BrandDetailsPage({ params }: PageProps) {
             initialProducts={initialProductData.data}
             initialTotalCount={initialProductData.totalCount}
             initialTotalPages={initialProductData.totalPages}
+            initialTopCategory={activeTopCategory}
           />
         </Suspense>
       </div>

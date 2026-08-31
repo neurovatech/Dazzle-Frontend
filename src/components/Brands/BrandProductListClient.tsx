@@ -5,7 +5,12 @@ import ProductCard from "@/components/share/GlobalProductCard";
 import ProductGridSkeleton from "@/components/Skeleton/ProductCardSkeleton";
 import NoImg from "@/images/no_images.png";
 import { api } from "@/lib/api";
-import { scrollSession, restoreScrollY, scrollToProduct } from "@/hooks/useScrollRestoration";
+import {
+  scrollSession,
+  restoreScrollY,
+  scrollToProduct,
+  setManualScrollRestoration,
+} from "@/hooks/useScrollRestoration";
 
 const LIMIT = 12;
 
@@ -39,6 +44,16 @@ export interface ProductListResponse {
 interface Props {
   brandSlug: string;
   categorySlug?: string;
+  /**
+   * Top-level category the visitor arrived from (mega menu `?category=`).
+   *
+   * Sent as `categorySlug`, which the API expands to every sub-category under
+   * it — distinct from the chip row above, whose slugs are sub-categories and
+   * go out as `subCategorySlug`. Cleared as soon as a chip is picked.
+   */
+  topCategorySlug?: string | null;
+  /** Called when topCategorySlug yields nothing, so the parent can fall back to All. */
+  onTopCategoryEmpty?: () => void;
   selectedAttributes?: string[];
   minPrice?: number;
   maxPrice?: number;
@@ -58,6 +73,8 @@ interface Props {
 export default function BrandProductListClient({
   brandSlug,
   categorySlug,
+  topCategorySlug,
+  onTopCategoryEmpty,
   selectedAttributes = [],
   minPrice,
   maxPrice,
@@ -82,6 +99,8 @@ export default function BrandProductListClient({
   const [isRestoring, setIsRestoring]     = useState(false);
   const loaderRef      = useRef<HTMLDivElement>(null);
   const didRestoreRef  = useRef(false);
+  /** The arrival category the SSR props were rendered for — see the effect below. */
+  const initialTopCategoryRef = useRef(topCategorySlug ?? null);
 
   // ── Build query params ────────────────────────────────────────────────────
   const buildParams = useCallback((pageNum: number) => {
@@ -91,6 +110,8 @@ export default function BrandProductListClient({
       limit: String(LIMIT),
     });
     if (categorySlug)                  qp.set("subCategorySlug",    categorySlug);
+    // A chip selection is more specific, so it wins over the arrival category.
+    else if (topCategorySlug)          qp.set("categorySlug",       topCategorySlug);
     if (selectedAttributes.length > 0) qp.set("attributes",         selectedAttributes.join(","));
     if (minPrice !== undefined)        qp.set("minDiscountedPrice", String(minPrice));
     if (maxPrice !== undefined)        qp.set("maxDiscountedPrice", String(maxPrice));
@@ -99,7 +120,7 @@ export default function BrandProductListClient({
     else if (currentSort === "price_asc")   qp.set("discountedPrice",  "low-to-high");
     else if (currentSort === "price_desc")  qp.set("discountedPrice",  "high-to-low");
     return qp.toString();
-  }, [brandSlug, categorySlug, selectedAttributes, minPrice, maxPrice, stockStatus, currentSort]);
+  }, [brandSlug, categorySlug, topCategorySlug, selectedAttributes, minPrice, maxPrice, stockStatus, currentSort]);
 
   // ── Session restore on first mount ────────────────────────────────────────
   // Only runs once, only when NO filters are active (fresh landing / reload / back).
@@ -107,6 +128,10 @@ export default function BrandProductListClient({
   useEffect(() => {
     if (didRestoreRef.current) return;
     didRestoreRef.current = true;
+
+    // Take scroll restoration off the browser before it can jump to the stale
+    // raw Y and cancel the anchor-based restore below.
+    setManualScrollRestoration();
 
     const hasActiveFilters = Boolean(
       categorySlug ||
@@ -192,6 +217,9 @@ export default function BrandProductListClient({
   const filterKey = [
     brandSlug,
     categorySlug ?? "",
+    // Without this, arriving from one mega-menu category and then another left
+    // the effect below asleep and the previous category's products on screen.
+    topCategorySlug ?? "",
     selectedAttributes.join(","),
     minPrice ?? "",
     maxPrice ?? "",
@@ -209,6 +237,15 @@ export default function BrandProductListClient({
       try {
         const res = await api.get<ProductListResponse>(`/products?${buildParams(1)}`);
         const items = res?.data ?? [];
+
+        // The brand may stock nothing in the category the visitor arrived from
+        // (Apple has no home appliances). Drop the filter and let the parent
+        // fall back to All rather than showing an empty page.
+        if (items.length === 0 && topCategorySlug && !categorySlug) {
+          onTopCategoryEmpty?.();
+          return;
+        }
+
         setAllProducts(items);
         setTotalCount(res?.totalCount ?? items.length);
         setPage(1);
@@ -229,7 +266,23 @@ export default function BrandProductListClient({
       !stockStatus &&
       (!currentSort || currentSort === "recommend");
 
-    if (isDefaultState) {
+    /*
+     * The arrival category is the one input the SSR props cannot be trusted for
+     * after the first paint.
+     *
+     * Going Tablet → Apple and then Phones → Apple stays on /brands/apple, so
+     * the router replays its cached payload rather than re-rendering the server
+     * component: `initialProducts` still holds the tablets. The state above was
+     * "default" (no chip, no filters), so this effect kept re-seeding from those
+     * stale props and never issued a request — the URL read phones while 25
+     * iPads stayed on screen.
+     *
+     * So: trust SSR only while the category is still the one the page was
+     * rendered with; fetch as soon as it changes.
+     */
+    const topCategoryChanged = topCategorySlug !== initialTopCategoryRef.current;
+
+    if (isDefaultState && !topCategoryChanged) {
       // Only reset to SSR data if we are NOT in the middle of a restore
       if (!didRestoreRef.current || !scrollSession.read(scrollKey)) {
         setAllProducts(initialProducts);

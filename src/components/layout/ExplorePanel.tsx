@@ -63,6 +63,32 @@ type CategoryIconName =
   | "CoverIcon"
   | "ProtectorIcon";
 
+/**
+ * Link from a brand tile in the mega menu.
+ *
+ * Carries the category the user is browsing, so the brand page can open on that
+ * category instead of on everything the brand sells. Picking Apple under
+ * "Phones" should land on Apple's phones, not on 231 mixed products.
+ *
+ * The value is the TOP-LEVEL slug ("phones"), which the products API accepts as
+ * `categorySlug` and resolves to every sub-category beneath it — verified as an
+ * exact union: Apple + laptop returns 58, the sum of its 4 laptop sub-categories.
+ *
+ * Sent as `fromCategory`, NOT `category`: the brand page's chip row already
+ * owns `category` and writes sub-category slugs into it. Sharing one param made
+ * the page read "phones" as a chip and query subCategorySlug=phones, which
+ * matches nothing.
+ */
+function brandHref(
+  brand: { brand_slug?: string; label: string },
+  categorySlug?: string,
+): string {
+  const base = `/brands/${brand.brand_slug || brand.label.toLowerCase()}`;
+  return categorySlug
+    ? `${base}?fromCategory=${encodeURIComponent(categorySlug)}`
+    : base;
+}
+
 interface NormalizedCategory {
   uuid: string;
   label: string;
@@ -263,7 +289,7 @@ export default function ExplorePanel({
           {mobileActiveCat.children.map((brand) => (
             <Link
               key={brand.uuid || brand.label}
-              href={`/brands/${brand.brand_slug || brand.label.toLowerCase()}`}
+              href={brandHref(brand, mobileActiveCat.category_slug)}
               onClick={() => {
                 onSelectBrand(brand.label);
                 onClose();
@@ -394,7 +420,7 @@ export default function ExplorePanel({
           {activeCat?.children.map((brand) => (
             <Link
               key={brand.uuid || brand.label}
-              href={`/brands/${brand.brand_slug || brand.label.toLowerCase()}`}
+              href={brandHref(brand, activeCat?.category_slug)}
               onClick={() => {
                 onSelectBrand(brand.label);
                 onClose();
