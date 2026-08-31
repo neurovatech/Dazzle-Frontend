@@ -5,6 +5,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { CheckHome } from "@/icon";
 import GlobalModal from "@/components/share/GlobalModal";
+import StoreAvailabilityModal from "@/components/share/StoreAvailabilityModal";
 import { MapPin, Navigation, Info, Loader2, ChevronDown, ChevronRight, XCircle, CheckCircle2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { useAppSelector } from "@/store/hooks";
@@ -1169,115 +1170,19 @@ export default function CheckAvailability({
         </svg>
       </button>
 
-      {/* Geolocation stock check modal */}
-      <GlobalModal
+      {/* Branch stock — shared with checkout's Store Pickup, see
+          components/share/StoreAvailabilityModal. */}
+      <StoreAvailabilityModal
         isOpen={availabilityModalOpen}
         onClose={closeAvailabilityModal}
-        title="Branch-wise Stock Availability"
-      >
-        <div className="p-6 space-y-4 text-gray-800 dark:text-gray-100">
-          <p className="text-xs text-gray-500 dark:text-white">
-            Real-time branch inventory tracker. Trigger distance calculation to
-            find your nearest Dazzle branch location.
-          </p>
-
-          <button
-            type="button"
-            onClick={handleGeoLocation}
-            disabled={isLocating || isStockLoading}
-            className="w-full flex items-center justify-center gap-2 py-3 bg-[#7B4F1E] text-white hover:bg-[#6C4419] rounded-xl text-sm font-semibold transition cursor-pointer disabled:opacity-50"
-          >
-            <Navigation
-              size={16}
-              className={isLocating ? "animate-spin" : ""}
-            />
-            {isLocating
-              ? "Locating Your Device..."
-              : "Find Nearest Branch Store"}
-          </button>
-
-          {locError && (
-            <div className="flex items-start gap-2 bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400 p-2.5 rounded-lg text-xs border border-amber-100 dark:border-amber-900/40">
-              <Info size={14} className="flex-shrink-0 mt-0.5" />
-              <span>{locError}</span>
-            </div>
-          )}
-
-          {isStockLoading ? (
-            <div className="py-8 flex flex-col items-center justify-center gap-2">
-              <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
-              <p className="text-xs text-gray-400">Checking stock availability...</p>
-            </div>
-          ) : isStockError ? (
-            <div className="p-4 text-center text-xs text-red-500 bg-red-50 dark:bg-red-950/20 rounded-xl">
-              Failed to load stock availability. Please try again.
-            </div>
-          ) : branchesList.length === 0 ? (
-            <div className="p-4 text-center text-xs text-gray-500 bg-gray-50 dark:bg-gray-800 rounded-xl">
-              No branch availability data found for this item.
-            </div>
-          ) : (
-            <div className="space-y-3 pt-2 h-[300px] overflow-scroll">
-              {[...branchesList]
-                .sort((a, b) => {
-                  // Nearest store first, then sort by distance
-                  const da = distances[a.uuid] ?? Infinity;
-                  const db = distances[b.uuid] ?? Infinity;
-                  const aN = nearestBranchId === a.uuid ? -1 : 0;
-                  const bN = nearestBranchId === b.uuid ? -1 : 0;
-                  if (aN !== bN) return aN - bN;
-                  return da - db;
-                })
-                .map((branch) => {
-                const distance = distances[branch.uuid];
-                const isNearest = nearestBranchId === branch.uuid;
-                const statusLower = (branch.status || "").toLowerCase();
-                const isAvailable =
-                  statusLower.includes("available") || statusLower.includes("in stock");
-
-                return (
-                  <div
-                    key={branch.uuid}
-                    className={`p-3.5 rounded-xl border flex items-center justify-between transition ${
-                      isNearest
-                        ? "border-orange-500 bg-orange-500/5 dark:bg-orange-950/10"
-                        : "border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-[#1f1a16]"
-                    }`}
-                  >
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-sm text-gray-900 dark:text-white">
-                          {branch.branchName}
-                        </span>
-                        {isNearest && (
-                          <span className="text-[9px] bg-orange-600 text-white font-extrabold px-2 py-0.5 rounded-full flex items-center gap-0.5 animate-pulse">
-                            <MapPin size={8} /> Nearest Store
-                          </span>
-                        )}
-                      </div>
-                      <p
-                        className={`text-xs capitalize ${
-                          isAvailable
-                            ? "text-emerald-600 font-semibold"
-                            : "text-red-500 font-semibold"
-                        }`}
-                      >
-                        {branch.status}
-                      </p>
-                    </div>
-
-                    {distance !== undefined && (
-                      <span className="text-xs font-bold text-gray-500 bg-gray-100 dark:bg-gray-800 py-1 px-2.5 rounded-lg">
-                        {distance} km away
-                      </span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </GlobalModal>
+        items={[
+          {
+            productUuid: productUUID,
+            variantUuid: variantUUID,
+            name: product?.productName,
+          },
+        ]}
+      />
 
    {/* ---------------- EMI Options Modal ---------------- */}
 <GlobalModal isOpen={emiModalOpen} onClose={closeEmiModal} title="EMI Options">

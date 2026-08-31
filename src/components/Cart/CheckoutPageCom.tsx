@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/purity */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import Breadcrumb from "@/components/share/Breadcrumb";
 import Link from "next/link";
 import {
@@ -14,7 +14,7 @@ import SSl from "@/images/ssl-logo.svg";
 import Image from "next/image";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { increaseQty, decreaseQty, clearCart, patchMinBookingPrice } from "@/store/slices/cartSlice";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueries } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 
 // ─── API Types ────────────────────────────────────────────────────────────────
@@ -83,7 +83,46 @@ interface AreaItem {
 }
 interface DistrictItem { distID: number; districtName: string; area: AreaItem[]; }
 interface AreaListResponse { statusCode: number; status: string; message: string; count: number; data: DistrictItem[]; }
-interface StoreItem { uuid: string; branchName: string; slug: string; address: string; }
+interface StoreItem {
+  uuid: string;
+  branchName: string;
+  slug: string;
+  address: string;
+  /** /stores already returns coordinates, so no second lookup is needed to rank by distance. */
+  latitude?: string;
+  longitude?: string;
+}
+
+/** One branch's stock answer for a single product+variant pair. */
+interface BranchStock {
+  uuid: string;
+  branchName: string;
+  latitude: string;
+  longitude: string;
+  status: string;
+}
+interface StockAvailabilityResponse { data: BranchStock[] }
+
+/** Haversine distance in km. */
+function distanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+/** Centre of Dhaka — used when the browser will not give us a fix. */
+const DHAKA = { lat: 23.7771, lon: 90.4262 };
+
+const isInStock = (status: string) => {
+  const s = (status || "").toLowerCase();
+  return s.includes("available") || s.includes("in stock");
+};
 
 // ─── Constants (unused — kept for reference) ──────────────────────────────────
 
@@ -141,6 +180,16 @@ function Section({ step, title, children }: { step: number; title: string; child
 export default function CheckoutPageCom() {
   const dispatch = useAppDispatch();
   const cartItems = useAppSelector((s) => s.cart.items);
+  /*
+   * Store Pickup shows the branch list inline rather than in a modal: the list
+   * is already Step 2 of the form, so a dialog would just cover the thing the
+   * reader has to choose from. Selecting pickup quietly asks for a location and
+   * reorders that list nearest-first.
+   */
+  const [storeDistances, setStoreDistances] = useState<Record<string, number>>({});
+  const [isLocatingStores, setIsLocatingStores] = useState(false);
+  // Stops the nearest store from overriding a choice the reader made by hand.
+  const storePickedByUser = useRef(false);
   const { isAuthenticated, token, apiKey, user } = useAppSelector((s) => s.auth);
   const authHeader = token ? (token.startsWith("Bearer ") ? token : `Bearer ${token}`) : "";
 
@@ -208,7 +257,95 @@ export default function CheckoutPageCom() {
     queryKey: ["storeList"],
     queryFn: () => api.get<{ data: StoreItem[] }>("/stores"),
   });
-  const storeList = storeListRes?.data || [];
+  const storeList = useMemo(() => storeListRes?.data || [], [storeListRes]);
+
+  /*
+   * Stock per branch for everything in the cart.
+   *
+   * /check-stock-availability answers for one product+variant pair at a time, so
+   * each cart line is its own query and the answers are merged by branch below.
+   * Only runs once Store Pickup is chosen — nobody on Home Delivery needs it.
+   */
+  const stockQueries = useQueries({
+    queries: cartItems
+      .filter((i) => i.productUuid && i.variantUuid)
+      .map((item) => ({
+        queryKey: ["pickup-stock", item.productUuid, item.variantUuid],
+        queryFn: () =>
+          api.get<StockAvailabilityResponse>("/check-stock-availability", {
+            params: { productUUID: item.productUuid!, variantUUID: item.variantUuid! },
+          }),
+        enabled: deliveryType === "pickup",
+        staleTime: 2 * 60 * 1000,
+      })),
+  });
+
+  const checkableItems = useMemo(
+    () => cartItems.filter((i) => i.productUuid && i.variantUuid),
+    [cartItems],
+  );
+
+  /** branch uuid → how many of the ordered items that branch actually has. */
+  const stockByStore = useMemo(() => {
+    const map: Record<string, { available: number; total: number }> = {};
+    if (checkableItems.length === 0) return map;
+
+    stockQueries.forEach((res) => {
+      (res.data?.data ?? []).forEach((branch) => {
+        const cur = map[branch.uuid] ?? { available: 0, total: 0 };
+        cur.total += 1;
+        if (isInStock(branch.status)) cur.available += 1;
+        map[branch.uuid] = cur;
+      });
+    });
+    return map;
+  }, [stockQueries, checkableItems.length]);
+
+  /**
+   * Nearest branch first once a location is known; the API's own order until then.
+   * Branches without usable coordinates sink to the bottom rather than jumping
+   * to the top on a NaN comparison.
+   */
+  const sortedStoreList = useMemo(() => {
+    if (Object.keys(storeDistances).length === 0) return storeList;
+    return [...storeList].sort(
+      (a, b) =>
+        (storeDistances[a.uuid] ?? Infinity) - (storeDistances[b.uuid] ?? Infinity),
+    );
+  }, [storeList, storeDistances]);
+
+  const locateNearestStore = useCallback(() => {
+    setIsLocatingStores(true);
+
+    const computeAll = (lat: number, lon: number) => {
+      const next: Record<string, number> = {};
+      storeList.forEach((store) => {
+        const sLat = parseFloat(store.latitude ?? "");
+        const sLon = parseFloat(store.longitude ?? "");
+        if (!isNaN(sLat) && !isNaN(sLon)) {
+          next[store.uuid] = parseFloat(distanceKm(lat, lon, sLat, sLon).toFixed(2));
+        }
+      });
+      setStoreDistances(next);
+      setIsLocatingStores(false);
+
+      // Preselect the closest branch, unless the reader already chose one.
+      if (!storePickedByUser.current) {
+        const nearest = Object.entries(next).sort((a, b) => a[1] - b[1])[0];
+        if (nearest) setSelectedStoreUuid(nearest[0]);
+      }
+    };
+
+    if (!navigator.geolocation) {
+      computeAll(DHAKA.lat, DHAKA.lon);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => computeAll(pos.coords.latitude, pos.coords.longitude),
+      () => computeAll(DHAKA.lat, DHAKA.lon),
+    );
+  }, [storeList]);
+
   useEffect(() => {
     if (storeList.length > 0 && !selectedStoreUuid) setSelectedStoreUuid(storeList[0].uuid);
   }, [storeList, selectedStoreUuid]);
@@ -624,7 +761,15 @@ console.log(selectedAreaObj, "selectedAreaObjselectedAreaObj")
             <Section step={1} title="Delivery Method">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Radio checked={deliveryType === "home"} onChange={() => setDeliveryType("home")} label="🏠 Home Delivery" sub="Delivered to your doorstep" />
-                <Radio checked={deliveryType === "pickup"} onChange={() => setDeliveryType("pickup")} label="🏪 Store Pickup" sub="Pick up from any Dazzle store" />
+                <Radio
+                  checked={deliveryType === "pickup"}
+                  onChange={() => {
+                    setDeliveryType("pickup");
+                    locateNearestStore();
+                  }}
+                  label="🏪 Store Pickup"
+                  sub="Pick up from any Dazzle store"
+                />
               </div>
             </Section>
 
@@ -700,10 +845,48 @@ console.log(selectedAreaObj, "selectedAreaObjselectedAreaObj")
             {deliveryType === "pickup" && (
               <Section step={2} title="Select Pickup Store *">
                 <div className="space-y-3">
-                  {storeList.map((store) => (
-                    <Radio key={store.uuid} checked={selectedStoreUuid === store.uuid} onChange={() => setSelectedStoreUuid(store.uuid)}
-                      label={store.branchName} sub={store.address || "Dazzle Store"} />
-                  ))}
+                  {isLocatingStores && (
+                    <p className="text-xs text-gray-400 flex items-center gap-1.5">
+                      <Loader2 size={12} className="animate-spin" />
+                      Finding your nearest branch...
+                    </p>
+                  )}
+
+                  {sortedStoreList.map((store, i) => {
+                    const km = storeDistances[store.uuid];
+                    const stock = stockByStore[store.uuid];
+
+                    // Only the closest branch is badged, and only once a
+                    // location is actually known — otherwise the first row of
+                    // the API's own order would masquerade as "nearest".
+                    const isNearest = km !== undefined && i === 0;
+
+                    // Everything the reader needs on one line: where it is, how
+                    // far, and whether their order is actually there.
+                    const sub = [
+                      store.address || "Dazzle Store",
+                      km !== undefined ? `${km} km away` : null,
+                      stock
+                        ? `${stock.available} of ${stock.total} items in stock`
+                        : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ");
+
+                    return (
+                      <Radio
+                        key={store.uuid}
+                        checked={selectedStoreUuid === store.uuid}
+                        onChange={() => {
+                          storePickedByUser.current = true;
+                          setSelectedStoreUuid(store.uuid);
+                        }}
+                        label={store.branchName}
+                        sub={sub}
+                        badge={isNearest ? "Nearest Store" : undefined}
+                      />
+                    );
+                  })}
                   {storeList.length === 0 && <p className="text-xs text-gray-400">Loading stores...</p>}
                 </div>
               </Section>
@@ -917,6 +1100,7 @@ console.log(selectedAreaObj, "selectedAreaObjselectedAreaObj")
           </div>
         </div>
       )}
+
     </div>
   );
 }
