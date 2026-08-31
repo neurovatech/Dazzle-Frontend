@@ -19,7 +19,7 @@ export const menuItems: MenuItem[] = [
   { label: "Wishlist", icon: Heart },
   { label: "Orders", icon: ShoppingBag },
   { label: "Address", icon: MapPin },
-  { label: "Coupons", icon: Tag },
+  // { label: "Coupons", icon: Tag },
   { label: "Compare", icon: GitCompare },
   { label: "Change Password", icon: Lock },
 ];

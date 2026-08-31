@@ -169,7 +169,7 @@ function Section({ step, title, children }: { step: number; title: string; child
     <div className="bg-white dark:bg-[#1C1A17] rounded-3xl border border-gray-100 dark:border-zinc-800 p-6 sm:p-8 shadow-sm space-y-5">
       <div className="flex items-center gap-3">
         <div className="w-8 h-8 rounded-full border-2 border-[#D4A97A] flex items-center justify-center text-[#D4A97A] font-bold text-sm shrink-0">{step}</div>
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white">{title}</h2>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white">{title} <span className="text-[#f00]"> * </span></h2>
       </div>
       {children}
     </div>
@@ -843,7 +843,7 @@ console.log(selectedAreaObj, "selectedAreaObjselectedAreaObj")
 
             {/* ── Step 2 (Pickup): Store Selection ── */}
             {deliveryType === "pickup" && (
-              <Section step={2} title="Select Pickup Store *">
+              <Section step={2} title="Select Pickup Store">
                 <div className="space-y-3">
                   {isLocatingStores && (
                     <p className="text-xs text-gray-400 flex items-center gap-1.5">
@@ -1114,7 +1114,7 @@ console.log(selectedAreaObj, "selectedAreaObjselectedAreaObj")
                       {(selectedAreaObj?.codChargePercentage ?? 0) > 0 && ` (${selectedAreaObj?.codChargePercentage ?? 0}%)`}
                       {(selectedAreaObj?.codFixedCharge ?? 0) > 0 && ` + ৳${selectedAreaObj?.codFixedCharge} fixed`}
                     </span>
-                    <span>{fmt(codCharge)}</span>
+                    <span>{codCharge}</span>
                   </div>
                 )}
                 <div className="flex justify-between pt-3 border-t border-dashed border-gray-200 dark:border-zinc-800">
@@ -1138,7 +1138,7 @@ console.log(selectedAreaObj, "selectedAreaObjselectedAreaObj")
               </label>
 
               <button onClick={handleConfirmOrder} disabled={isSubmitting || cartItems.length === 0}
-                className={`w-full flex items-center justify-center gap-2 bg-amber-50 hover:bg-[#D4A97A]/10 text-[#a0743b] border-2 border-[#D4A97A] font-bold px-8 py-3.5 rounded-xl transition text-xs uppercase tracking-widest ${isSubmitting || cartItems.length === 0 ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}>
+                className={`w-full flex items-center justify-center gap-2 bg-amber-50 hover:bg-[#D4A97A]/10 text-[#a0743b] border-2 border-[#D4A97A] font-bold px-8 py-3.5 rounded-xl transition text-xs uppercase tracking-widest lg:text-[14px] text-[16px] ${isSubmitting || cartItems.length === 0 ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}>
                 {isSubmitting ? (<><Loader2 className="w-4 h-4 animate-spin" /><span>PROCESSING...</span></>) : `CONFIRM ORDER — ${fmt(amountDue || total)}`}
               </button>
 

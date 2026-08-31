@@ -76,8 +76,8 @@ const Profile: React.FC = () => {
         return <Orders onOrderClick={setSelectedOrder} />;
       case "Address":
         return <DeliveryAddress />;
-      case "Coupons":
-        return <Coupons />;
+      // case "Coupons":
+      //   return <Coupons />;
       case "Compare":
         return <Compare />;
       case "Change Password":
