@@ -938,6 +938,74 @@ console.log(selectedAreaObj, "selectedAreaObjselectedAreaObj")
                   ))}
                 </div>
 
+
+                {/* {paymentOption === "booking" && totalBookingMoney > 0 && (
+                  <div className="text-xs bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/40 rounded-xl px-3 py-2 text-blue-700 dark:text-blue-400">
+                    📌 Total Booking Money in your cart: <strong>৳{totalBookingMoney.toLocaleString("en-IN")}</strong>
+                    <br />Partial Payment can be made after Order Confirmation from the panel. Once order is shifted, Partial Payment is not available.
+                  </div>
+                )} */}
+
+                {paymentOption === "cod" && codCharge > 0 && (
+                  <div className="text-xs bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 rounded-xl px-3 py-2 text-amber-700 dark:text-amber-400">
+                    💰 COD Charge: <strong>৳{codCharge.toLocaleString("en-IN")}</strong>
+                    {selectedAreaObj && (
+                      <>
+                        {selectedAreaObj.codChargePercentage > 0 && ` (${selectedAreaObj.codChargePercentage}% on ৳${remainingAfterBooking.toLocaleString("en-IN")} remaining after booking)`}
+                        {selectedAreaObj.codFixedCharge > 0 && ` + ৳${selectedAreaObj.codFixedCharge} fixed charge`}
+                      </>
+                    )}
+                  </div>
+                )}
+
+
+                {/* {(paymentOption === "full_online" || paymentOption === "booking") && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                    {(deliveryType === "pickup" || !selectedAreaObj || selectedAreaObj.isBkashAllowed) && (
+                    <button type="button" onClick={() => setPaymentGateway("bkash")}
+                      className={`flex items-center justify-between p-4 rounded-2xl border-2 h-16 transition-all cursor-pointer ${paymentGateway === "bkash" ? "border-[#e2136e] bg-pink-50/20" : "border-gray-200 dark:border-zinc-800"}`}>
+                      <Image src={Bikask} alt="bKash" className="w-32" />
+                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${paymentGateway === "bkash" ? "border-[#e2136e]" : "border-gray-300"}`}>
+                        {paymentGateway === "bkash" && <div className="w-2 h-2 rounded-full bg-[#e2136e]" />}
+                      </div>
+                    </button>
+                    )}
+                    {(deliveryType === "pickup" || !selectedAreaObj || selectedAreaObj.isSSLCommerzAllowed) && (
+                    <button type="button" onClick={() => setPaymentGateway("ssl")}
+                      className={`flex items-center justify-between p-4 rounded-2xl border-2 h-16 transition-all cursor-pointer ${paymentGateway === "ssl" ? "border-[#D4A97A] bg-amber-50/20" : "border-gray-200 dark:border-zinc-800"}`}>
+                      <Image src={SSl} alt="SSLCommerz" className="w-32" />
+                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${paymentGateway === "ssl" ? "border-[#D4A97A]" : "border-gray-300"}`}>
+                        {paymentGateway === "ssl" && <div className="w-2 h-2 rounded-full bg-[#D4A97A]" />}
+                      </div>
+                    </button>
+                    )}
+                  </div>
+                )} */}
+
+
+                {/* {paymentOption === "full_at_store" && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-zinc-800 rounded-xl px-3 py-2">
+                    ✅ No delivery address required. Pay in full at the store.
+                  </p>
+                )} */}
+              </div>
+
+              <div className="pt-4 border-t border-gray-100 dark:border-zinc-800">
+                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Remarks / Delivery Instructions (Optional)</label>
+                <input type="text" value={remarks} onChange={(e) => setRemarks(e.target.value)} placeholder="e.g. Call before delivery"
+                  className="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#D4A97A] dark:text-white" />
+              </div>
+            </Section>
+
+
+
+
+            <Section step={4} title="Payment Gateway">
+
+              {/* Payment Option */}
+              <div className="space-y-3 pt-4 border-t border-gray-100 dark:border-zinc-800">
+                
+
                 {/* Booking Money info */}
                 {paymentOption === "booking" && totalBookingMoney > 0 && (
                   <div className="text-xs bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/40 rounded-xl px-3 py-2 text-blue-700 dark:text-blue-400">
@@ -991,13 +1059,6 @@ console.log(selectedAreaObj, "selectedAreaObjselectedAreaObj")
                     ✅ No delivery address required. Pay in full at the store.
                   </p>
                 )}
-              </div>
-
-              {/* Remarks */}
-              <div className="pt-4 border-t border-gray-100 dark:border-zinc-800">
-                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Remarks / Delivery Instructions (Optional)</label>
-                <input type="text" value={remarks} onChange={(e) => setRemarks(e.target.value)} placeholder="e.g. Call before delivery"
-                  className="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#D4A97A] dark:text-white" />
               </div>
             </Section>
           </div>
