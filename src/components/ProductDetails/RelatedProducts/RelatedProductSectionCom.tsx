@@ -59,6 +59,7 @@ interface RelatedProductSectionComProps {
 }
 
 export default function RelatedProductSectionCom({ categorySlug }: RelatedProductSectionComProps) {
+  console.log("RelatedProductSectionCom categorySlug:", categorySlug);
   const { data, isLoading } = useQuery<ProductListResponse>({
     queryKey: ["related-products", categorySlug],
     queryFn: () =>

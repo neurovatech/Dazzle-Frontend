@@ -373,9 +373,20 @@ export default function CheckoutPageCom() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cartItems.length]);
 
-  // ── Booking Money = sum of minBookingPrice per unique product (not × qty) ──
+  /**
+   * Booking money for the whole order — the deposit is PER UNIT, so it scales
+   * with quantity.
+   *
+   * This used to sum minBookingPrice once per cart line regardless of how many
+   * units it held, so ordering four phones at a ৳15,000 deposit each still asked
+   * for ৳15,000 instead of ৳60,000 — three units effectively booked for free.
+   */
   const totalBookingMoney = useMemo(
-    () => cartItems.reduce((s, item) => s + (item.minBookingPrice || 0), 0),
+    () =>
+      cartItems.reduce(
+        (s, item) => s + (item.minBookingPrice || 0) * (item.quantity || 1),
+        0,
+      ),
     [cartItems]
   );
 
@@ -1090,9 +1101,18 @@ console.log(selectedAreaObj, "selectedAreaObjselectedAreaObj")
                         </div>
                         <div className="text-right">
                           <span className="text-xs font-bold text-gray-900 dark:text-white">{fmt(item.price * item.quantity)}</span>
+                          {/* Line total, matching the price above it — the
+                              per-unit figure is spelled out when it differs, so
+                              the deposit can still be checked against the
+                              product's own booking price. */}
                           {(item.minBookingPrice ?? 0) > 0 && (
                             <p className="text-[10px] text-amber-600 font-semibold mt-0.5">
-                              Booking: {fmt(item.minBookingPrice!)}
+                              Booking: {fmt(item.minBookingPrice! * item.quantity)}
+                              {item.quantity > 1 && (
+                                <span className="font-medium text-amber-600/80">
+                                  {" "}({fmt(item.minBookingPrice!)} × {item.quantity})
+                                </span>
+                              )}
                             </p>
                           )}
                         </div>
