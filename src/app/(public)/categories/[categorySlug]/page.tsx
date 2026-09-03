@@ -156,7 +156,7 @@ export default async function CategoriesPage({
         `/products?${queryParams.toString()}`,
         { next: { revalidate: 5 } },
       );
-      console.log(res, "brandsRes")
+      console.log(`/products?${queryParams.toString()}`, "brandsRes")
       if (res && typeof res === "object" && "data" in res) {
         return res;
       }

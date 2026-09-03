@@ -18,7 +18,7 @@ import ProductImage from "@/images/product.png";
 import ProductCardImage from "./ProductCardImage";
 import ProductCardWishlist from "./ProductCardWishlist";
 import ProductCardBuy from "./ProductCardBuy";
-
+import { FlagTriangleRight } from "lucide-react";
 export type { DefaultVariantResponse } from "./ProductCardBuy";
 
 interface ProductCardProps {
@@ -34,6 +34,15 @@ interface ProductCardProps {
   slug?: string;
   uuid?: string;
   minBookingPrice?: number;
+  /**
+   * "To be announced" — listed in the catalogue but not yet purchasable.
+   *
+   * Defaults to the inverse of `inStock`, because that is exactly how every
+   * call site already derives it (`inStock: !item.isTba`). That default is what
+   * lets the flag appear correctly across all 33 usages without editing each
+   * one; a call site holding the raw API item can still pass isTba explicitly.
+   */
+  isTba?: boolean;
 }
 
 const formatPrice = (val: number) =>
@@ -52,8 +61,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
   slug,
   uuid,
   minBookingPrice = 0,
+  isTba,
 }) => {
   const itemId = productUuid || uuid || "";
+  // Explicit prop wins; otherwise fall back to the inverse of inStock.
+  const showTbaFlag = isTba ?? !inStock;
   const href = `/product/${slug || title?.toLowerCase().replace(/\s+/g, "-")}`;
 
   return (
@@ -94,10 +106,14 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
         {/* Action Row */}
         <div className="flex items-center justify-between relative z-50">
-
+          {showTbaFlag && (
+            <div className="w-8 h-8 mt-1 rounded-full border flex items-center justify-center active:scale-95 bg-white border-red-300 text-red-400 p-2">
+              <FlagTriangleRight />
+            </div>
+          )}
 
           {isBestDeal === true && (
-            <button className="bg-[#087400] text-white text-[8px] sm:text-xs font-bold px-1 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-md lg:w-[50%]! w-[80%] flex justify-center items-center gap-1">
+            <button className="ml-auto bg-[#087400] text-white text-[8px] sm:text-xs font-bold px-1 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-md lg:w-[50%]! w-[80%] flex justify-center items-center gap-1">
               <svg
                 width="13"
                 height="13"
@@ -156,11 +172,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
                       stopColor="#FFF38D"
                       stopOpacity="0.209"
                     />
-                    <stop
-                      offset="0.941"
-                      stopColor="#FFF176"
-                      stopOpacity="0"
-                    />
+                    <stop offset="0.941" stopColor="#FFF176" stopOpacity="0" />
                   </radialGradient>
                   <clipPath id="clip0_3253_13820">
                     <rect width="13" height="13" fill="white" />

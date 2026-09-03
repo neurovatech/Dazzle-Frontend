@@ -1,4 +1,16 @@
 /* eslint-disable react-hooks/purity */
+import type { Metadata } from "next";
+import { SITE_URL, absoluteUrl } from "@/lib/seo-config";
+
+/*
+ * The home page advertises itself differently from the rest of the site:
+ * og:site_name is the domain and og:locale is en_US here, whereas every other
+ * route uses SITE_NAME ("Dazzle") and OG_LOCALE ("en_BD"). Kept local so the
+ * shared constants — and therefore every other page — stay untouched.
+ */
+const HOME_OG_SITE_NAME = "dazzle.com.bd";
+const HOME_OG_LOCALE = "en_US";
+
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import BannerSlider, {
@@ -64,6 +76,89 @@ const LatestBlog = dynamic(() => import("@/components/layout/LatestBlog"));
 const ShopSelector = dynamic(
   () => import("@/components/HomePage/ShopSelector"),
 );
+
+// ─── Home page metadata ───────────────────────────────────────────────────────
+
+/**
+ * The home page's own SEO copy.
+ *
+ * Deliberately NOT taken from site-settings. That endpoint returns
+ * metaTitle: "Dazzle" — a brand name, not a page title — and it was overwriting
+ * the descriptive title this page is supposed to rank on. Product, category and
+ * brand pages still read their metadata from the API; only the home page, whose
+ * copy is fixed editorial content, is pinned here.
+ */
+const HOME_TITLE =
+  "Best Mobile, Laptop and Gadget Shop in Bangladesh - Dazzle";
+const HOME_DESCRIPTION =
+  "Dazzle is the leading and top rated smartphone, laptops, tablets, and accessories selling shop in Bangladesh. Buy the latest tech products at the lowest price";
+const HOME_KEYWORDS = "Best Smartphone shop in Bangladesh";
+
+const HOME_OG_IMAGE = {
+  url: absoluteUrl("/og.png"),
+  width: 800,
+  height: 600,
+  alt: HOME_TITLE,
+};
+
+/**
+ * Metadata for the home page only.
+ *
+ * Defined here rather than in the root layout because the layout's block is
+ * inherited by every route, and two things below must NOT be: the robots
+ * directives, and the site-name/locale values, which differ from the ones the
+ * rest of the site uses.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const title = HOME_TITLE;
+  const description = HOME_DESCRIPTION;
+  const keywords = HOME_KEYWORDS;
+
+  const ogImage = { ...HOME_OG_IMAGE, alt: title };
+
+  return {
+    // `absolute` bypasses the layout's "%s - Dazzle" template, which would
+    // otherwise render this title with the brand appended a second time.
+    title: { absolute: title },
+    description,
+    keywords,
+    alternates: { canonical: SITE_URL },
+
+    /**
+     * Home page is deliberately excluded from search engines.
+     *
+     * Requested explicitly. Worth being clear about the reach: `noindex` drops
+     * this page from results and `nofollow` stops crawlers following its links,
+     * which is how most of the catalogue is discovered — so this suppresses far
+     * more than the home page alone. It is scoped to this route only; product,
+     * category and brand pages keep their own indexable metadata.
+     */
+    robots: {
+      index: false,
+      follow: false,
+      noimageindex: true,
+      noarchive: true,
+      nocache: true,
+      nosnippet: true,
+    },
+
+    openGraph: {
+      title,
+      description,
+      url: SITE_URL,
+      siteName: HOME_OG_SITE_NAME,
+      locale: HOME_OG_LOCALE,
+      type: "website",
+      images: [ogImage],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [ogImage.url],
+    },
+  };
+}
 
 async function getHeroBanners(): Promise<SlideItem[]> {
   try {

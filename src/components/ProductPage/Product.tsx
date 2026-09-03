@@ -284,6 +284,7 @@ function Product() {
                     discount={product.disRate || 0}
                     badge={product.productBadge || undefined}
                     inStock={!product.isTba}
+                    isTba={product.isTba}
                     isBestDeal={product.disRate > 0}
                     slug={product.productSlug || product.productUuid}
                   />

@@ -387,6 +387,7 @@ export default function BrandProductListClient({
               discount={product.disRate || 0}
               badge={product.productBadge || undefined}
               inStock={!product.isTba}
+              isTba={product.isTba}
               isBestDeal={false}
               slug={product.productSlug}
             />

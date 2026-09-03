@@ -185,6 +185,7 @@ export default function ShopBrand({ brands }: Props) {
                       badge={product.productBadge}
                       isBestDeal={false}
                       inStock={!product.isTba}
+                      isTba={product.isTba}
                       image={product.thumbnails?.mediaFileUrl ?? ""}
                     />
                   </SwiperSlide>
