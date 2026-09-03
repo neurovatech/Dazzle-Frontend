@@ -6,9 +6,24 @@ import { api } from "@/lib/api";
 import type { AttributeGroup } from "@/components/share/FilterSidebar";
 import type { Metadata } from "next";
 import { lookupCategoryNames, toTitleCase } from "@/lib/category-lookup";
-import { SITE_NAME, OG_LOCALE, buildOgImage, absoluteUrl } from "@/lib/seo-config";
+import {
+  SITE_NAME,
+  OG_LOCALE,
+  buildOgImage,
+  absoluteUrl,
+} from "@/lib/seo-config";
 import JsonLd from "@/components/share/JsonLd";
-import { buildJsonLd, breadcrumbSchema, itemListSchema } from "@/lib/structured-data";
+import {
+  buildJsonLd,
+  breadcrumbSchema,
+  itemListSchema,
+} from "@/lib/structured-data";
+import {
+  getCategorySeoContent,
+  hasRichText,
+  seoText,
+  SEO_RICH_TEXT_CLASS,
+} from "@/lib/seo-content";
 
 export type { AttributeGroup };
 
@@ -87,21 +102,48 @@ export async function generateMetadata({
   const currentPage = Number(page ?? 1);
   const pageLabel = currentPage > 1 ? ` — Page ${currentPage}` : "";
 
-  const ogTitle = `${categoryName} Products${pageLabel} | Dazzle`;
-  const ogDescription = `Browse ${categoryName} products at Dazzle — Bangladesh's premium tech store.`;
+  const seo = await getCategorySeoContent(categorySlug);
+
+  /*
+   * CMS copy wins where it exists; the generated strings are the floor.
+   *
+   * Every category currently answers with empty strings, so in practice the
+   * fallbacks are what render today — seoText() returns undefined for those
+   * rather than letting "" win the || chain.
+   *
+   * Page 2+ keeps the generated title: a CMS title is written for the category
+   * as a whole and would make every paginated page claim the same one.
+   */
+  const cmsTitle = currentPage > 1 ? undefined : seoText(seo?.title);
+  const cmsDescription = seoText(seo?.description);
+
+  const ogTitle = cmsTitle || `${categoryName} Products${pageLabel} | Dazzle`;
+  const ogDescription =
+    cmsDescription ||
+    `Browse ${categoryName} products at Dazzle — Bangladesh's premium tech store.`;
   const ogImage = buildOgImage(categoryImage, categoryName);
 
+  // A CMS canonical is absolute and page-agnostic, so it is only right for
+  // page 1; paginated views must point at themselves.
+  const canonical =
+    currentPage > 1
+      ? `/categories/${categorySlug}?page=${currentPage}`
+      : seoText(seo?.canonical) || `/categories/${categorySlug}`;
+
   return {
-    title: `${categoryName}${pageLabel} - Buy Online at Best Price in Bangladesh`,
-    description: `Shop the complete ${categoryName} collection at Dazzle. Explore all ${categoryName} products with the best prices, official warranty, and fast delivery across Bangladesh.${currentPage > 1 ? ` Viewing page ${currentPage}.` : ""}`,
-    alternates: {
-      canonical: `/categories/${categorySlug}${currentPage > 1 ? `?page=${currentPage}` : ""}`,
-    },
+    title:
+      cmsTitle ||
+      `${categoryName}${pageLabel} - Buy Online at Best Price in Bangladesh`,
+    description:
+      cmsDescription ||
+      `Shop the complete ${categoryName} collection at Dazzle. Explore all ${categoryName} products with the best prices, official warranty, and fast delivery across Bangladesh.${currentPage > 1 ? ` Viewing page ${currentPage}.` : ""}`,
+    ...(seoText(seo?.keywords) ? { keywords: seoText(seo?.keywords) } : {}),
+    alternates: { canonical },
     openGraph: {
       title: ogTitle,
       description: ogDescription,
       // Absolute URL: relative og:url resolves inconsistently across scrapers.
-      url: absoluteUrl(`/categories/${categorySlug}`),
+      url: canonical.startsWith("http") ? canonical : absoluteUrl(canonical),
       // Restated because Next.js replaces (not merges) the parent openGraph.
       siteName: SITE_NAME,
       locale: OG_LOCALE,
@@ -156,7 +198,7 @@ export default async function CategoriesPage({
         `/products?${queryParams.toString()}`,
         { next: { revalidate: 5 } },
       );
-      console.log(`/products?${queryParams.toString()}`, "brandsRes")
+      console.log(`/products?${queryParams.toString()}`, "brandsRes");
       if (res && typeof res === "object" && "data" in res) {
         return res;
       }
@@ -186,12 +228,17 @@ export default async function CategoriesPage({
   }
 
   // ── Fetch attributes for this category ───────────────────────────────────────
-  async function fetchAttributes(): Promise<{ attributes: AttributeGroup[]; priceData: any }> {
+  async function fetchAttributes(): Promise<{
+    attributes: AttributeGroup[];
+    priceData: any;
+  }> {
     try {
-      const attrRes = await api.get<{ data: AttributeGroup[]; priceData?: any }>(
-        `/products/attributes?categorySlug=${categorySlug}`,
-        { next: { revalidate: 5 } },
-      );
+      const attrRes = await api.get<{
+        data: AttributeGroup[];
+        priceData?: any;
+      }>(`/products/attributes?categorySlug=${categorySlug}`, {
+        next: { revalidate: 5 },
+      });
       return {
         attributes: attrRes && Array.isArray(attrRes.data) ? attrRes.data : [],
         priceData: attrRes && attrRes.priceData ? attrRes.priceData : undefined,
@@ -224,6 +271,12 @@ export default async function CategoriesPage({
     itemListSchema(productData.data, `${categoryName} Products`),
   );
 
+  // Same cached call generateMetadata made, so this costs no extra request.
+  const seo = await getCategorySeoContent(categorySlug);
+  const seoBottomContent = hasRichText(seo?.bottomContent)
+    ? seo!.bottomContent!
+    : "";
+
   return (
     <div className=" bg-[#fffbf6] dark:bg-[#2e2b28]">
       <JsonLd id="ld-category" data={jsonLd} />
@@ -244,8 +297,31 @@ export default async function CategoriesPage({
           attributes={attributes}
           priceData={priceData}
           topSellingSlot={<ProductListSectionCom showcaseSlug="top-selling" />}
-          runningOfferSlot={<ProductListSectionCom showcaseSlug="running-offer" />}
+          runningOfferSlot={
+            <ProductListSectionCom showcaseSlug="running-offer" />
+          }
         />
+
+        {/* CMS copy, below the product list.
+            hasRichText rather than a truthiness check: the endpoint returns
+            "<p><br></p>" for every category right now, which is truthy but
+            paints an empty block. */}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start  relative">
+        <div className="lg:col-span-3 md:block hidden"></div>
+        <div className="lg:col-span-9">
+        {seoBottomContent && (
+          <section className="md:px-12.5 px-4 pb-14 pt-6">
+            <div className="max-w-4xl">
+              <article
+                className={SEO_RICH_TEXT_CLASS}
+                dangerouslySetInnerHTML={{ __html: seoBottomContent }}
+              />
+            </div>
+          </section>
+        )}
+        </div>
       </div>
     </div>
   );

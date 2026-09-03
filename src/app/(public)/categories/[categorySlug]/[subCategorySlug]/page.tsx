@@ -5,10 +5,24 @@ import Breadcrumb from "@/components/share/Breadcrumb";
 import { api } from "@/lib/api";
 import type { Metadata } from "next";
 import { lookupCategoryNames, toTitleCase } from "@/lib/category-lookup";
-import { SITE_NAME, OG_LOCALE, buildOgImage, absoluteUrl } from "@/lib/seo-config";
+import {
+  SITE_NAME,
+  OG_LOCALE,
+  buildOgImage,
+  absoluteUrl,
+} from "@/lib/seo-config";
 import JsonLd from "@/components/share/JsonLd";
-import { buildJsonLd, breadcrumbSchema, itemListSchema } from "@/lib/structured-data";
-// import { ProductItem, ProductListResponse, BrandItem } from "@/app/(public)/categories/[categorySlug]/page";
+import {
+  buildJsonLd,
+  breadcrumbSchema,
+  itemListSchema,
+} from "@/lib/structured-data";
+import {
+  getSubCategorySeoContent,
+  hasRichText,
+  seoText,
+  SEO_RICH_TEXT_CLASS,
+} from "@/lib/seo-content";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -54,21 +68,50 @@ export async function generateMetadata({
   const currentPage = Number(page ?? 1);
   const pageLabel = currentPage > 1 ? ` — Page ${currentPage}` : "";
 
-  const ogTitle = `${subCategoryName} - ${categoryName}${pageLabel} | Dazzle`;
-  const ogDescription = `Browse ${subCategoryName} products at Dazzle — Bangladesh's premium tech store.`;
+  const seo = await getSubCategorySeoContent(subCategorySlug);
+
+  /*
+   * CMS copy wins where it exists; the generated strings are the floor.
+   *
+   * Page 2+ keeps the generated title: a CMS title is written for the
+   * sub-category as a whole and would make every paginated page claim the
+   * same one.
+   */
+  const cmsTitle = currentPage > 1 ? undefined : seoText(seo?.title);
+  const cmsDescription = seoText(seo?.description);
+
+  const ogTitle =
+    cmsTitle || `${subCategoryName} - ${categoryName}${pageLabel} | Dazzle`;
+  const ogDescription =
+    cmsDescription ||
+    `Browse ${subCategoryName} products at Dazzle — Bangladesh's premium tech store.`;
   // Prefer the sub-category's own artwork, then the parent category's.
-  const ogImage = buildOgImage(subCategoryImage || categoryImage, subCategoryName);
+  const ogImage = buildOgImage(
+    subCategoryImage || categoryImage,
+    subCategoryName,
+  );
+
+  // A CMS canonical is absolute and page-agnostic, so it is only right for
+  // page 1; paginated views must point at themselves.
+  const canonical =
+    currentPage > 1
+      ? `/categories/${categorySlug}/${subCategorySlug}?page=${currentPage}`
+      : seoText(seo?.canonical) ||
+        `/categories/${categorySlug}/${subCategorySlug}`;
 
   return {
-    title: `${subCategoryName} - ${categoryName}${pageLabel} - Buy Online at Best Price in Bangladesh`,
-    description: `Shop the best selection of ${subCategoryName} in our ${categoryName} category at Dazzle. Best prices, official warranty, and fast delivery across Bangladesh.${currentPage > 1 ? ` Viewing page ${currentPage}.` : ""}`,
-    alternates: {
-      canonical: `/categories/${categorySlug}/${subCategorySlug}${currentPage > 1 ? `?page=${currentPage}` : ""}`,
-    },
+    title:
+      cmsTitle ||
+      `${subCategoryName} - ${categoryName}${pageLabel} - Buy Online at Best Price in Bangladesh`,
+    description:
+      cmsDescription ||
+      `Shop the best selection of ${subCategoryName} in our ${categoryName} category at Dazzle. Best prices, official warranty, and fast delivery across Bangladesh.${currentPage > 1 ? ` Viewing page ${currentPage}.` : ""}`,
+    ...(seoText(seo?.keywords) ? { keywords: seoText(seo?.keywords) } : {}),
+    alternates: { canonical },
     openGraph: {
       title: ogTitle,
       description: ogDescription,
-      url: absoluteUrl(`/categories/${categorySlug}/${subCategorySlug}`),
+      url: canonical.startsWith("http") ? canonical : absoluteUrl(canonical),
       siteName: SITE_NAME,
       locale: OG_LOCALE,
       type: "website",
@@ -198,7 +241,10 @@ export default async function SubCategoriesPage({
   }
 
   // ── Fetch attributes for this subcategory ────────────────────────────────────
-  async function fetchAttributes(): Promise<{ attributes: any; priceData: any }> {
+  async function fetchAttributes(): Promise<{
+    attributes: any;
+    priceData: any;
+  }> {
     try {
       const attrRes = await api.get<{ data: any; priceData?: any }>(
         `/products/attributes?categorySlug=${categorySlug}&subCategorySlug=${subCategorySlug}`,
@@ -238,10 +284,19 @@ export default async function SubCategoriesPage({
       { name: "Home", path: "/" },
       { name: "Categories", path: "/categories" },
       { name: categoryName, path: `/categories/${categorySlug}` },
-      { name: subCategoryName, path: `/categories/${categorySlug}/${subCategorySlug}` },
+      {
+        name: subCategoryName,
+        path: `/categories/${categorySlug}/${subCategorySlug}`,
+      },
     ]),
     itemListSchema(productData.data, `${subCategoryName} Products`),
   );
+
+  // Same cached call generateMetadata made — costs no extra request.
+  const seo = await getSubCategorySeoContent(subCategorySlug);
+  const seoBottomContent = hasRichText(seo?.bottomContent)
+    ? seo!.bottomContent!
+    : "";
 
   return (
     <div className=" bg-[#fffbf6] dark:bg-[#2e2b28]">
@@ -265,6 +320,22 @@ export default async function SubCategoriesPage({
           attributes={attributes}
           priceData={priceData}
         />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start  relative">
+        <div className="lg:col-span-3 md:block hidden"></div>
+        <div className="lg:col-span-9">
+          {seoBottomContent && (
+            <section className="md:px-12.5 px-4 pb-14 pt-6">
+              <div className="max-w-4xl">
+                <article
+                  className={SEO_RICH_TEXT_CLASS}
+                  dangerouslySetInnerHTML={{ __html: seoBottomContent }}
+                />
+              </div>
+            </section>
+          )}
+        </div>
       </div>
     </div>
   );

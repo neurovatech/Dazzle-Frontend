@@ -1,10 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Metadata } from "next";
-import { Suspense } from "react";
+import { Suspense, cache } from "react";
 import BrandProducts, { CategoryItem } from "@/components/Brands/BrandProduct";
 import Breadcrumb from "@/components/share/Breadcrumb";
 import { api } from "@/lib/api";
-import { SITE_NAME, OG_LOCALE, DEFAULT_OG_IMAGE, absoluteUrl } from "@/lib/seo-config";
+import {
+  SITE_NAME,
+  OG_LOCALE,
+  DEFAULT_OG_IMAGE,
+  absoluteUrl,
+} from "@/lib/seo-config";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -39,6 +44,21 @@ interface CategoryListResponse {
   found: boolean;
   count: number;
   data: CategoryItem[];
+}
+
+/** /seo/brand/{slug} — CMS-authored SEO copy for a brand landing page. */
+interface BrandSeoResponse {
+  statusCode: number;
+  status: string;
+  found: boolean;
+  data?: {
+    title?: string;
+    keywords?: string;
+    canonical?: string;
+    /** Long-form marketing copy, raw HTML from the CMS. */
+    bottomContent?: string;
+    description?: string;
+  };
 }
 
 export interface AttributeItem {
@@ -86,25 +106,60 @@ function toTitleCase(slug: string): string {
 
 // ─── SEO ──────────────────────────────────────────────────────────────────────
 
+/**
+ * Brand SEO copy from the CMS.
+ *
+ * cache() because generateMetadata and the page body both need it — without it
+ * each render would hit the endpoint twice for the same brand.
+ *
+ * Not every brand has copy: /seo/brand/daikin answers 200 with empty strings, so
+ * every consumer below treats a missing field as "render nothing" rather than
+ * assuming it is there.
+ */
+const getBrandSeo = cache(async (slug: string) => {
+  try {
+    const res = await api.get<BrandSeoResponse>(`/seo/brand/${slug}`, {
+      next: { revalidate: 300 },
+    } as RequestInit);
+    return res?.data ?? null;
+  } catch {
+    return null;
+  }
+});
+
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const brandName = toTitleCase(slug);
-  const ogTitle = `${brandName} Products | Dazzle`;
-  const ogDescription = `Browse ${brandName} products at Dazzle — Bangladesh's premium tech store.`;
+  const seo = await getBrandSeo(slug);
+
+  // CMS copy wins where it exists; the generated strings below are only the
+  // floor for brands the CMS has nothing for (e.g. Daikin returns all-empty).
+  const title =
+    seo?.title?.trim() ||
+    `${brandName} Products — Buy Online at Best Price in Bangladesh`;
+  const description =
+    seo?.description?.trim() ||
+    `Shop the complete ${brandName} collection at Dazzle. Best prices, official warranty, and fast delivery across Bangladesh.`;
+  const ogTitle = seo?.title?.trim() || `${brandName} Products | Dazzle`;
+  const ogDescription =
+    seo?.description?.trim() ||
+    `Browse ${brandName} products at Dazzle — Bangladesh's premium tech store.`;
+  const canonical = seo?.canonical?.trim() || `/brands/${slug}`;
   // No brand artwork is fetched in this metadata pass, so this resolves to the
   // site default rather than shipping a preview with no image at all.
   const ogImage = DEFAULT_OG_IMAGE;
 
   return {
-    title: `${brandName} Products — Buy Online at Best Price in Bangladesh`,
-    description: `Shop the complete ${brandName} collection at Dazzle. Best prices, official warranty, and fast delivery across Bangladesh.`,
-    alternates: { canonical: `/brands/${slug}` },
+    title,
+    description,
+    ...(seo?.keywords?.trim() ? { keywords: seo.keywords.trim() } : {}),
+    alternates: { canonical },
     openGraph: {
       title: ogTitle,
       description: ogDescription,
-      url: absoluteUrl(`/brands/${slug}`),
+      url: canonical.startsWith("http") ? canonical : absoluteUrl(canonical),
       siteName: SITE_NAME,
       locale: OG_LOCALE,
       type: "website",
@@ -123,7 +178,10 @@ export async function generateMetadata({
 // No force-dynamic — categories are cached, initial products cached per brand.
 // Filter/page changes are handled fully client-side via React Query (no SSR re-render).
 
-export default async function BrandDetailsPage({ params, searchParams }: PageProps) {
+export default async function BrandDetailsPage({
+  params,
+  searchParams,
+}: PageProps) {
   const { slug } = await params;
   const { fromCategory } = await searchParams;
   const brandName = toTitleCase(slug);
@@ -146,7 +204,7 @@ export default async function BrandDetailsPage({ params, searchParams }: PagePro
   // These give Google bots full content on first render → SEO intact
   const [catResult, prodResult, attrResult] = await Promise.allSettled([
     api.get<CategoryListResponse>(`/brands/${slug}/categories`, {
-      next: { revalidate: 5 }, 
+      next: { revalidate: 5 },
     }),
     api.get<ProductListResponse>(
       `/products?${new URLSearchParams({
@@ -210,6 +268,10 @@ export default async function BrandDetailsPage({ params, searchParams }: PagePro
   const priceData: any =
     attrResult.status === "fulfilled" ? attrResult.value?.priceData : undefined;
 
+  // Same cached call generateMetadata made, so this costs nothing extra.
+  const brandSeo = await getBrandSeo(slug);
+  const brandSeoContent = brandSeo?.bottomContent?.trim() || "";
+
   const breadcrumbItems = [
     { label: "Home", href: "/" },
     { label: "Brands", href: "/brands" },
@@ -236,6 +298,37 @@ export default async function BrandDetailsPage({ params, searchParams }: PagePro
             initialTopCategory={activeTopCategory}
           />
         </Suspense>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start  relative">
+          <div className="lg:col-span-3 md:block hidden"></div>
+          <div className="lg:col-span-9">
+            {brandSeoContent && (
+              <section className="px-4 ">
+                <div className="max-w-4xl">
+                  <article
+                    className="text-sm leading-relaxed text-[#222] dark:text-white
+                           [&_h1]:text-[#222] [&_h1]:dark:text-white [&_h1]:font-bold [&_h1]:text-2xl [&_h1]:mt-6 [&_h1]:mb-3
+                           [&_h2]:text-[#222] [&_h2]:dark:text-white [&_h2]:font-bold [&_h2]:text-xl [&_h2]:mt-6 [&_h2]:mb-3
+                           [&_h3]:text-[#222] [&_h3]:dark:text-white [&_h3]:font-semibold [&_h3]:text-lg [&_h3]:mt-5 [&_h3]:mb-2
+                           [&_h4]:text-[#222] [&_h4]:dark:text-white [&_h4]:font-semibold [&_h4]:mt-4 [&_h4]:mb-2
+                           [&_p]:text-[#222] [&_p]:dark:text-gray-300 [&_p]:mb-3
+                           [&_li]:text-[#222] [&_li]:dark:text-gray-300 [&_li]:mb-1
+                           [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-3
+                           [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:mb-3
+                           [&_span]:text-[#222] [&_span]:dark:text-gray-300!
+                           [&_strong]:text-[#222] [&_strong]:dark:text-white
+                           [&_a]:text-[#CB843B] [&_a]:underline
+                           [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg
+                           [&_table]:w-full [&_table]:border [&_table]:border-gray-200 [&_table]:dark:border-[#4a443f]
+                           [&_td]:border [&_td]:border-gray-200 [&_td]:dark:border-[#4a443f] [&_td]:p-2
+                           [&_td]:text-[#222] [&_td]:dark:text-gray-300"
+                    dangerouslySetInnerHTML={{ __html: brandSeoContent }}
+                  />
+                </div>
+              </section>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
