@@ -55,18 +55,18 @@ function getThumb(thumbnails: ProductItem["thumbnails"]): string {
 }
 
 interface RelatedProductSectionComProps {
-  categorySlug?: string;
+  subCategorySlug?: string;
 }
 
-export default function RelatedProductSectionCom({ categorySlug }: RelatedProductSectionComProps) {
-  console.log("RelatedProductSectionCom categorySlug:", categorySlug);
+export default function RelatedProductSectionCom({ subCategorySlug }: RelatedProductSectionComProps) {
+  console.log("RelatedProductSectionCom subCategorySlug:", subCategorySlug);
   const { data, isLoading } = useQuery<ProductListResponse>({
-    queryKey: ["related-products", categorySlug],
+    queryKey: ["related-products", subCategorySlug],
     queryFn: () =>
       api.get<ProductListResponse>(
-        `/products?brandSlug=${categorySlug ?? ""}`
+        `/products?subCategorySlug=${subCategorySlug ?? ""}`
       ),
-    enabled: !!categorySlug,
+    enabled: !!subCategorySlug,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -83,7 +83,7 @@ export default function RelatedProductSectionCom({ categorySlug }: RelatedProduc
     image:         getThumb(item.thumbnails),
   }));
 
-  if (!categorySlug) return null;
+  if (!subCategorySlug) return null;
 
   if (isLoading) {
     return (

@@ -121,6 +121,8 @@ export default async function SubCategoriesPage({
       if (sort) queryParams.set("sort", sort);
       if (search) queryParams.set("search", search);
 
+      console.log(`/products?${queryParams.toString()}`, "fetchProducts URL");
+
       const res = await api.get<any>(`/products?${queryParams.toString()}`, {
         next: { revalidate: 5 },
       });

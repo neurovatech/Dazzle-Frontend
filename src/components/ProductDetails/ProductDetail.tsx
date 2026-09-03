@@ -741,24 +741,21 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
           <div className="lg:col-span-12 space-y-6">
             {/* Specification & Description Tab Buttons */}
             <div className="flex items-center gap-3">
-
               {!specGroups || specGroups.length === 0 ? (
-              ""
-            ) : (
-              <button
-                type="button"
-                onClick={() => setShowDescription(false)}
-                className={`px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 ${
-                  !showDescription
-                    ? "bg-[#E9CCAE] text-black shadow-sm"
-                    : "bg-[#F7F7F7] dark:bg-[#3e3329] text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-[#4a3f36]"
-                }`}
-              >
-                Specification
-              </button>
-            )}
-
-              
+                ""
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowDescription(false)}
+                  className={`px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 ${
+                    !showDescription
+                      ? "bg-[#E9CCAE] text-black shadow-sm"
+                      : "bg-[#F7F7F7] dark:bg-[#3e3329] text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-[#4a3f36]"
+                  }`}
+                >
+                  Specification
+                </button>
+              )}
 
               <button
                 type="button"
@@ -807,12 +804,12 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
           </div>
 
           {/* ── Related Products ── */}
-          {product?.categorySlug && (
+          {product?.subCategorySlug && (
             <div className="lg:col-span-12">
               <h2 className="text-lg font-bold text-gray-800 dark:text-white px-4 mb-3">
                 Related Products
               </h2>
-              <RelatedProductSectionCom categorySlug={product.brandSlug} />
+              <RelatedProductSectionCom subCategorySlug={product.subCategorySlug} />
             </div>
           )}
         </div>
