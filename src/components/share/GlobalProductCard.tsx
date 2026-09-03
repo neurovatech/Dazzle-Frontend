@@ -18,7 +18,6 @@ import ProductImage from "@/images/product.png";
 import ProductCardImage from "./ProductCardImage";
 import ProductCardWishlist from "./ProductCardWishlist";
 import ProductCardBuy from "./ProductCardBuy";
-import { FlagTriangleRight } from "lucide-react";
 export type { DefaultVariantResponse } from "./ProductCardBuy";
 
 interface ProductCardProps {
@@ -107,8 +106,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
         {/* Action Row */}
         <div className="flex items-center justify-between relative z-50">
           {showTbaFlag && (
-            <div className="w-8 h-8 mt-1 rounded-full border flex items-center justify-center active:scale-95 bg-white border-red-300 text-red-400 p-2">
-              <FlagTriangleRight />
+            <div className="bg-[#6D3F0E] text-white text-[9px] sm:text-xs font-bold px-1.5 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-md">
+              TBS
             </div>
           )}
 
@@ -224,16 +223,37 @@ const ProductCard: React.FC<ProductCardProps> = ({
       <div className="p-2 sm:p-3 lg:p-4 flex flex-col flex-1 bg-[#F5F5F5] rounded-tl-2xl rounded-b-2xl">
         {/* Title & Stock */}
         <div className="text-left">
+          {/*
+            Single line, always. The title used to line-clamp-2 with a fixed
+            40-character cutoff, but on a longer name (e.g. "Apple iMac 24 inch
+            with Retina 4.5K Display") that cutoff still wrapped onto a second
+            line, and the "In Stock"/"Out Of Stock" text that followed it in
+            the same text flow got pushed onto that second line too — clipped
+            by line-clamp-2's 2-line box, or overlapping the price row below.
+
+            Fixed structurally rather than shortening the cutoff further: the
+            title and the stock label are now separate flex items instead of
+            one run of text. The label (shrink-0) can never be clipped or
+            wrapped; the title (min-w-0 + truncate) always eats exactly the
+            space that's left over, at any card width, with no per-card
+            character-count guess to get wrong on some other screen size.
+          */}
           <h3
-            // Figma: Urbanist SemiBold 15px, line-height 150%
-            className="font-semibold dark:text-[#222] text-[15px] leading-[1.5] line-clamp-2 h-11 text-[#575757]"
+            className="flex items-baseline gap-1 h-[23px]"
             title={title}
           >
-            {title.length > 40 ? title.slice(0, 40) + "..." : title}{" "}
+            {/* Figma: Urbanist SemiBold 15px, line-height 150% */}
+            <span className="min-w-0 flex-1 truncate font-semibold dark:text-[#222] text-[15px] leading-[1.5] text-[#575757]">
+              {title}
+            </span>
             {inStock ? (
-              <span className="text-[#03A000] font-bold"> In Stock </span>
+              <span className="shrink-0 text-[#03A000] font-bold text-[15px] leading-[1.5]">
+                In Stock
+              </span>
             ) : (
-              <span className="text-[#f00]"> Out Of Stock </span>
+              <span className="shrink-0 text-[#f00] text-[15px] leading-[1.5]">
+                Out Of Stock
+              </span>
             )}
           </h3>
           <div

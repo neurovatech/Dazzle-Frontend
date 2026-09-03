@@ -5,6 +5,7 @@ import QuantitySelector from "./QuantitySelector";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { addToCart } from "@/store/slices/cartSlice";
 import toast from "react-hot-toast";
+import { verifyOrderProduct } from "@/lib/verify-order-product";
 import type { CareOption } from "./DazzleCare";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -126,20 +127,68 @@ export default function StickyPurchaseBar({
     : "";
   const cartName = `${variantName}${carePlanSuffix}`;
 
-  const handleAddToCart = () => {
-    if ((!productId && !variantUuid) || isUnavailable) return false;
+  /**
+   * ADD TO CART.
+   *
+   * Verifies with the backend BEFORE the item enters the cart — a variant that
+   * has been retired since the page loaded must never be added at all, not
+   * added-then-corrected. get-default-variant's replacement (when there is
+   * one) is folded into the payload before the single dispatch below, so the
+   * cart only ever holds a variant the backend has actually accepted.
+   */
+  const handleAddToCart = async (): Promise<boolean> => {
+    if ((!productId && !variantUuid) || isUnavailable) {
+      // Previously silent — surfaced so this edge case never fails without
+      // telling the user why.
+      toast.error("This item is currently unavailable.");
+      return false;
+    }
+
+    let finalVariantUuid = variantUuid || productId || "";
+    let finalPrice = displayPrice;
+    let finalOriginalPrice = combinedRegularPrice;
+    let finalImage = productImage || "";
+
+    try {
+      const { patches, unresolved } = await verifyOrderProduct({
+        id: targetCartId,
+        productUuid: productId || "",
+        variantUuid: finalVariantUuid,
+        accessoriesUuid: planId,
+        name: productName || "Product",
+      });
+
+      if (unresolved.length > 0) {
+        toast.error(`Validation failed. ${unresolved[0].reason}`);
+        return false;
+      }
+
+      if (patches.length > 0) {
+        finalVariantUuid = patches[0].variantUuid;
+        if (typeof patches[0].price === "number") finalPrice = patches[0].price;
+        if (typeof patches[0].originalPrice === "number") {
+          finalOriginalPrice = patches[0].originalPrice;
+        }
+        if (patches[0].image) finalImage = patches[0].image;
+      }
+    } catch (err) {
+      console.error("[StickyPurchaseBar] order verification failed:", err);
+      // The check itself errored (e.g. network down) rather than rejecting
+      // this specific line — add with the originally selected variant instead
+      // of blocking the user entirely.
+    }
 
     dispatch(
       addToCart({
-        id: targetCartId,
-        variantUuid: variantUuid || productId || "",
+        id: finalVariantUuid,
+        variantUuid: finalVariantUuid,
         productUuid: productId || "",
         accessoriesUuid: planId,
         name: cartName,
         brand: "",
-        image: productImage || "",
-        price: displayPrice,
-        originalPrice: combinedRegularPrice,
+        image: finalImage,
+        price: finalPrice,
+        originalPrice: finalOriginalPrice,
         quantity: qty,
         inStock: true,
         slug: productSlug || "",
@@ -154,6 +203,12 @@ export default function StickyPurchaseBar({
     return true;
   };
 
+ /**
+  * Same pre-checkout validation the cart page runs, for the single line this
+  * bar is about to buy: verify-order-product decides whether the variant is
+  * still orderable, and get-default-variant supplies a replacement when it is
+  * not, so the line is corrected in the cart before we navigate.
+  */
  const handleBuyNow = async () => {
   if (!isAuthenticated) {
     router.push("/auth/login");
@@ -166,12 +221,13 @@ export default function StickyPurchaseBar({
 
   setLoadingBuyNow(true);
   try {
+    // handleAddToCart now verifies BEFORE adding, so a rejected variant never
+    // reaches the cart — success here means the item is already confirmed
+    // orderable, and any failure has already shown its own reason.
     const success = await handleAddToCart();
-    if (success) {
-      router.push("/checkout");
-    } else {
-      toast.error("Failed to add item to cart");
-    }
+    if (!success) return;
+
+    router.push("/checkout");
   } catch (err) {
     console.error("[StickyPurchaseBar] Buy now error:", err);
     toast.error("Something went wrong. Please try again.");

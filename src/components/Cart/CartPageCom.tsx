@@ -8,7 +8,10 @@ import AddCouponModal from "./AddCouponModal";
 import Breadcrumb from "@/components/share/Breadcrumb";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAppSelector } from "@/store/hooks";
+import { useAppSelector, useAppDispatch } from "@/store/hooks";
+import { patchResolvedVariant } from "@/store/slices/cartSlice";
+import { verifyOrderProducts } from "@/lib/verify-order-product";
+import toast from "react-hot-toast";
 import { DeliveryOption } from "./CartSidebar";
 import { LogIn, X } from "lucide-react";
 
@@ -29,19 +32,76 @@ type ModalType =
 
 export default function CartPageCom() {
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const cartItems = useAppSelector((state) => state.cart.items);
   const token = useAppSelector((state) => state.auth.token);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleCheckout = () => {
+  /**
+   * Validate the cart against the backend before handing it to checkout.
+   *
+   * A cart persists in localStorage indefinitely, so a variant can be retired
+   * by the catalogue while it is still sitting in someone's cart. Checkout would
+   * then fail at order creation with nothing useful to show. verify-order-product
+   * catches that here, and get-default-variant supplies the replacement variant,
+   * which is written back into the cart before we navigate.
+   *
+   * Verification never blocks the redirect — that is deliberate. If the check
+   * itself is unreachable we would rather let the user reach checkout than strand
+   * them on the cart page.
+   */
+  const handleCheckout = async () => {
+    if (isLoading) return;
     setIsLoading(true);
+
     if (!token) {
       setShowLoginModal(true);
       setIsLoading(false);
-    } else {
-      router.push("/checkout");
+      return;
     }
+
+    try {
+      const { patches, unresolved } = await verifyOrderProducts(
+        cartItems.map((item) => ({
+          id: item.id,
+          productUuid: item.productUuid,
+          variantUuid: item.variantUuid,
+          accessoriesUuid: item.accessoriesUuid,
+          name: item.name,
+        })),
+      );
+
+      patches.forEach((patch) =>
+        dispatch(
+          patchResolvedVariant({
+            id: patch.id,
+            variantUuid: patch.variantUuid,
+            price: patch.price,
+            originalPrice: patch.originalPrice,
+            image: patch.image,
+          }),
+        ),
+      );
+
+      if (unresolved.length > 0) {
+        // Block the redirect — a line the backend still rejects after the
+        // get-default-variant recovery attempt will only fail again at order
+        // creation, so checkout is not a valid next step for this cart.
+        const detail = unresolved
+          .map((u) => `${u.name || "An item"}: ${u.reason}`)
+          .join(" ");
+        toast.error(`Validation failed. ${detail}`);
+        setIsLoading(false);
+        return;
+      }
+    } catch (err) {
+      console.error("[CartPageCom] order verification failed:", err);
+      // The check itself errored (e.g. network down) rather than rejecting a
+      // specific line — let the user through instead of stranding them here.
+    }
+
+    router.push("/checkout");
   };
 
   const [savedAddress, setSavedAddress] = useState<AddressData | null>(null);

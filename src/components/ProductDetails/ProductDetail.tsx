@@ -59,7 +59,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
   const [showDescription, setShowDescription] = useState(false);
   const descriptionRef = useRef<HTMLDivElement>(null);
 
-  const { data: variantApiData } = useQuery<VariantApiResponse>({
+  const { data: variantApiData, isLoading: isVariantLoading } = useQuery<VariantApiResponse>({
     queryKey: ["product-variants", product?.productUuid],
     queryFn: () =>
       api.get<VariantApiResponse>(`/product-variants/${product!.productUuid}`),
@@ -517,7 +517,11 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
         price={price > 0 ? price : "0"}
         qty={qty}
         onQtyChange={setQty}
-        isUnavailable={price === 0}
+        isUnavailable={
+          price === 0 ||
+          // Variant API loaded + has variants but none selected yet → block add to cart
+          (!isVariantLoading && variants.length > 0 && selectedVariant === null)
+        }
         onExploreFinancing={() => setEmiOpen(true)}
         onStoreAvailability={() => setStoreAvailabilityOpen(true)}
         selectedPriceType={selectedPriceType}
@@ -589,6 +593,8 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
               selectedVariant={selectedVariant}
               selectedCareOptions={selectedCareOptions}
               selectedPriceType={selectedPriceType}
+              isVariantLoading={isVariantLoading}
+              hasVariants={variants.length > 0}
             />
 
             {/* Variant selector */}

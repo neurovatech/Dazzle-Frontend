@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
@@ -202,15 +201,47 @@ const navItems: NavItem[] = [
 ];
 
 export default function MobileFooter() {
-  const [active, setActive] = useState("home");
   const pathname = usePathname();
   const token = useAppSelector((state) => state.auth.token);
 
   const isProductDetail = /^\/product\/.+/.test(pathname);
   if (isProductDetail) return null;
 
+  /**
+   * Each item's real destination — must be an ABSOLUTE path.
+   *
+   * These used to be returned without a leading slash ("categories", "offer",
+   * "pre-order"), which Next.js/the browser resolves as RELATIVE to the
+   * current URL rather than the site root. Clicking "Category" while already
+   * on a nested route like /categories/phones or /cart landed on
+   * /categories/offer or /cart/offer — neither exists, so the click surfaced
+   * as a 404. That is the "error when going from one page to another".
+   */
+  const getHref = (id: string) => {
+    if (id === "home") return "/";
+    if (id === "profile") return token ? "/profile" : "/auth/login";
+    return `/${id}`;
+  };
+
+  /**
+   * Which item (if any) matches where the user actually is.
+   *
+   * Derived straight from the URL on every render — not tracked in local
+   * state — so it is correct on a hard refresh, after browser back/forward,
+   * and after navigating via any link that isn't inside this footer (a
+   * product card, the header, etc.), none of which a click-tracked useState
+   * would ever see. A route that matches none of the items (product pages,
+   * /cart, /checkout, /brands/...) highlights nothing, rather than leaving
+   * whatever was clicked last lit up.
+   */
+  const activeId = navItems.find((item) => {
+    const target = getHref(item.id);
+    if (target === "/") return pathname === "/";
+    return pathname === target || pathname.startsWith(`${target}/`);
+  })?.id ?? null;
+
   const renderIcon = (id: string) => {
-    const isActive = active === id;
+    const isActive = activeId === id;
     switch (id) {
       case "home":
         return <HomeIcon active={isActive} />;
@@ -225,12 +256,6 @@ export default function MobileFooter() {
     }
   };
 
-  const getHref = (id: string) => {
-    if (id === "home") return "/";
-    if (id === "profile") return token ? "/profile" : "/auth/login";
-    return id;
-  };
-
   return (
      <div className="fixed bottom-2 z-100 w-full flex justify-center px-3 pt-3">
       <nav
@@ -243,13 +268,12 @@ export default function MobileFooter() {
         }}
       >
         {navItems.map((item) => {
-          const isActive = active === item.id;
+          const isActive = activeId === item.id;
 
           return (
             <Link
               href={getHref(item.id)}
               key={item.id}
-              onClick={() => setActive(item.id)}
               className={`
                 w-full flex flex-col items-center justify-center gap-1
                 py-2 rounded-[18px]

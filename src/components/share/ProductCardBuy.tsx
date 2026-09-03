@@ -8,6 +8,7 @@ import { addToCart } from "@/store/slices/cartSlice";
 import ProductQuicView from "@/components/ProductDetails/ProductQuicView";
 import toast from "react-hot-toast";
 import { api } from "@/lib/api";
+import { verifyOrderProduct } from "@/lib/verify-order-product";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -68,6 +69,17 @@ export default function ProductCardBuy({
       item.id === itemId,
   );
 
+  /**
+   * Verify-then-commit, same as the product-page Add to Cart / Buy Now flow.
+   *
+   * This card has no variant selector, so get-default-variant is always
+   * called to resolve WHICH variant is being added (unlike verify-order-
+   * product's recovery use elsewhere, this call is unconditional here — it
+   * always ran, even before verification existed). Once resolved,
+   * verify-order-product decides whether the backend still accepts it; a
+   * rejected variant that get-default-variant's own recovery cannot fix must
+   * never reach the cart.
+   */
   const handleAddToCart = async () => {
     if (!itemId) {
       toast.error("Product ID missing");
@@ -76,10 +88,7 @@ export default function ProductCardBuy({
 
     setLoadingCart(true);
     try {
-      const res = await api.get<DefaultVariantResponse>(
-        `/get-default-variant/${itemId.trim()}?priceSort=1&userDefine=0`,
-      );
-
+      // ── Resolve which variant this card actually represents ──────────
       let variantUUID = itemId; // default fallback
       let finalPrice = price;
       let finalRegPrice = originalPrice;
@@ -87,26 +96,36 @@ export default function ProductCardBuy({
       let finalInStock = inStock;
       let finalAttributes = "";
 
-      if (res?.data) {
-        variantUUID = res.data.variantUUID || itemId;
+      try {
+        const res = await api.get<DefaultVariantResponse>(
+          `/get-default-variant/${itemId.trim()}?priceSort=1&userDefine=0`,
+        );
 
-        // API returns price as number OR {source, parsedValue}
-        const rawOffer = res.data.offerPrice as any;
-        const rawReg = res.data.regularPrice as any;
-        finalPrice =
-          typeof rawOffer === "object" ? (rawOffer?.parsedValue ?? price) : (rawOffer ?? price);
-        finalRegPrice =
-          typeof rawReg === "object" ? (rawReg?.parsedValue ?? originalPrice) : (rawReg ?? originalPrice);
+        if (res?.data) {
+          variantUUID = res.data.variantUUID || itemId;
 
-        if (res.data.thumbnailURL) finalImage = res.data.thumbnailURL;
-        if (res.data.isTba !== undefined) {
-          finalInStock = !res.data.isTba;
-          setIsTba(res.data.isTba);
+          // API returns price as number OR {source, parsedValue}
+          const rawOffer = res.data.offerPrice as any;
+          const rawReg = res.data.regularPrice as any;
+          finalPrice =
+            typeof rawOffer === "object" ? (rawOffer?.parsedValue ?? price) : (rawOffer ?? price);
+          finalRegPrice =
+            typeof rawReg === "object" ? (rawReg?.parsedValue ?? originalPrice) : (rawReg ?? originalPrice);
+
+          if (res.data.thumbnailURL) finalImage = res.data.thumbnailURL;
+          if (res.data.isTba !== undefined) {
+            finalInStock = !res.data.isTba;
+            setIsTba(res.data.isTba);
+          }
+          // e.g. "Cosmic Orange, CH (Dual Nano Sim), 256GB"
+          if ((res.data as any).attributes?.trim()) {
+            finalAttributes = (res.data as any).attributes.trim();
+          }
         }
-        // e.g. "Cosmic Orange, CH (Dual Nano Sim), 256GB"
-        if ((res.data as any).attributes?.trim()) {
-          finalAttributes = (res.data as any).attributes.trim();
-        }
+      } catch (err) {
+        console.error("[GlobalProductCard] get-default-variant error:", err);
+        // Resolution itself failed (e.g. network) — fall back to the raw
+        // productUuid as the variant, same as before verification existed.
       }
 
       if (!finalInStock) {
@@ -121,6 +140,35 @@ export default function ProductCardBuy({
       if (isAlreadyInCart) {
         toast.error("Product already added to cart!");
         return;
+      }
+
+      // ── Verify BEFORE the item ever reaches the cart ──────────────────
+      try {
+        const { patches, unresolved } = await verifyOrderProduct({
+          id: variantUUID,
+          productUuid: itemId,
+          variantUuid: variantUUID,
+          name: title || "Product",
+        });
+
+        if (unresolved.length > 0) {
+          toast.error(`Validation failed. ${unresolved[0].reason}`);
+          return;
+        }
+
+        if (patches.length > 0) {
+          variantUUID = patches[0].variantUuid;
+          if (typeof patches[0].price === "number") finalPrice = patches[0].price;
+          if (typeof patches[0].originalPrice === "number") {
+            finalRegPrice = patches[0].originalPrice;
+          }
+          if (patches[0].image) finalImage = patches[0].image;
+        }
+      } catch (err) {
+        console.error("[GlobalProductCard] order verification failed:", err);
+        // The check itself errored (e.g. network down) rather than rejecting
+        // this specific line — add with the resolved variant instead of
+        // blocking the user entirely.
       }
 
       // Build name: "iPhone 17 Pro Max  (Cosmic Orange, CH (Dual Nano Sim), 256GB)"
@@ -145,35 +193,6 @@ export default function ProductCardBuy({
         }),
       );
 
-      toast.success(`Added to cart! 🛒`);
-    } catch (error) {
-      console.error("[GlobalProductCard] get-default-variant error:", error);
-      // Fallback: API fail হলে productUuid দিয়ে cart-এ add করো
-      const isAlreadyInCart = cartItems.some(
-        (item) => item.id === itemId || item.variantUuid === itemId,
-      );
-
-      if (isAlreadyInCart) {
-        toast.error("Product already added to cart!");
-        return;
-      }
-
-      dispatch(
-        addToCart({
-          id: itemId,
-          productUuid: itemId,
-          variantUuid: itemId,
-          name: title || "Product",
-          brand: "",
-          image: image || "",
-          price: price,
-          originalPrice: originalPrice,
-          quantity: 1,
-          inStock: inStock,
-          slug: slug || "",
-          minBookingPrice: minBookingPrice ?? 0,
-        }),
-      );
       toast.success(`Added to cart! 🛒`);
     } finally {
       setLoadingCart(false);

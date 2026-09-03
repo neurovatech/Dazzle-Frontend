@@ -81,6 +81,51 @@ const cartSlice = createSlice({
       const item = state.items.find((i) => i.id === action.payload.id);
       if (item) item.minBookingPrice = action.payload.minBookingPrice;
     },
+
+    /**
+     * Replace a line's variant with the one the server says is current.
+     *
+     * A cart survives in localStorage indefinitely, so a variant can be retired
+     * by the catalogue while it still sits in someone's cart. verify-order-product
+     * rejects those, and get-default-variant hands back the replacement — this
+     * writes it in so checkout submits something the backend will accept.
+     *
+     * `id` is re-keyed too: everywhere else in the cart the line id IS the
+     * variant uuid, so leaving the old one behind would break the quantity
+     * controls and the duplicate check in addToCart.
+     */
+    patchResolvedVariant(
+      state,
+      action: PayloadAction<{
+        id: string;
+        variantUuid: string;
+        price?: number;
+        originalPrice?: number;
+        image?: string;
+      }>,
+    ) {
+      const item = state.items.find((i) => i.id === action.payload.id);
+      if (!item) return;
+
+      const { variantUuid, price, originalPrice, image } = action.payload;
+
+      // Merge rather than duplicate: two stale lines can resolve to the same
+      // replacement variant.
+      const clash = state.items.find(
+        (i) => i.id === variantUuid && i.id !== item.id,
+      );
+      if (clash) {
+        clash.quantity += item.quantity;
+        state.items = state.items.filter((i) => i.id !== item.id);
+        return;
+      }
+
+      item.id = variantUuid;
+      item.variantUuid = variantUuid;
+      if (typeof price === "number") item.price = price;
+      if (typeof originalPrice === "number") item.originalPrice = originalPrice;
+      if (image) item.image = image;
+    },
   },
 });
 
@@ -91,6 +136,7 @@ export const {
   removeFromCart,
   clearCart,
   patchMinBookingPrice,
+  patchResolvedVariant,
 } = cartSlice.actions;
 
 export default cartSlice.reducer;

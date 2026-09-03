@@ -73,19 +73,19 @@ export default function ShopBrand({ brands }: Props) {
   return (
     <div className="">
       {/* ── Outer Container ── */}
-      <div className="bg-[#FFFBF7] dark:bg-[#1a1816] rounded-3xl px-4 dark:border-zinc-800 py-6">
+      <div className="bg-[#FFFBF7] dark:bg-[#1a1816] rounded-3xl lg:px-4 dark:border-zinc-800 lg:py-6">
         
 
         {/* ── Brand Slider / Grid ── */}
         <div className="mb-6 shop_brand">
           <Swiper
             slidesPerView={4}
-            spaceBetween={10}
+            spaceBetween={6}
             breakpoints={{
-              480: { slidesPerView: 2, spaceBetween: 12 },
-              640: { slidesPerView: 2, spaceBetween: 14 },
-              768: { slidesPerView: 2, spaceBetween: 16 },
-              1024: { slidesPerView: 8, spaceBetween: 16 },
+              480: { slidesPerView: 2, spaceBetween: 2 },
+              640: { slidesPerView: 2, spaceBetween: 2 },
+              768: { slidesPerView: 2, spaceBetween: 2 },
+              1024: { slidesPerView: 8, spaceBetween: 10 },
             }}
           >
             {brands.map((brand) => {
@@ -164,13 +164,13 @@ export default function ShopBrand({ brands }: Props) {
               <Swiper
                 key={activeBrandSlug}
                 slidesPerView={2}
-                spaceBetween={10}
+                spaceBetween={6}
                 breakpoints={{
-                  480: { slidesPerView: 2, spaceBetween: 12 },
-                  640: { slidesPerView: 3, spaceBetween: 12 },
-                  768: { slidesPerView: 4, spaceBetween: 14 },
-                  1024: { slidesPerView: 5, spaceBetween: 14 },
-                  1280: { slidesPerView: 5, spaceBetween: 14 },
+                  480: { slidesPerView: 2, spaceBetween: 2 },
+                  640: { slidesPerView: 3, spaceBetween: 2 },
+                  768: { slidesPerView: 4, spaceBetween: 2 },
+                  1024: { slidesPerView: 5, spaceBetween: 10 },
+                  1280: { slidesPerView: 5, spaceBetween: 10 },
                 }}
               >
                 {products.map((product, idx) => (

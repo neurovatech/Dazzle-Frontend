@@ -64,6 +64,8 @@ export default function ProductInfo({
   selectedVariant,
   selectedCareOptions = [],
   selectedPriceType = "offer",
+  isVariantLoading = false,
+  hasVariants = false,
 }: any) {
 
   const { theme } = useTheme();
@@ -72,7 +74,13 @@ export default function ProductInfo({
   const variantPrice = selectedVariant?.price ?? 0;
   const productPrice = alldata?.discountedPrice ?? basePrice ?? 0;
   const effectivePrice = variantPrice > 0 ? variantPrice : productPrice;
-  const isVariantUnavailable = effectivePrice === 0;
+
+  // Block add-to-cart when:
+  // 1. Price is 0 (unavailable)
+  // 2. Variant API has loaded, product has variants, but no variant is selected yet
+  const isVariantUnavailable =
+    effectivePrice === 0 ||
+    (!isVariantLoading && hasVariants && selectedVariant === null);
   const [viewers, setViewers] = useState(
     () => Math.floor(Math.random() * 100) + 1,
   );

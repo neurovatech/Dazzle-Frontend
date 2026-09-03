@@ -15,6 +15,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { addToCart } from "@/store/slices/cartSlice";
 import { api } from "@/lib/api";
 import toast from "react-hot-toast";
+import { verifyOrderProduct } from "@/lib/verify-order-product";
 import type { ProductApiData } from "@/app/(public)/product/[productSlug]/page";
 import {
   consolidateVariants,
@@ -299,16 +300,32 @@ function ProductQuicView({
     };
   }
 
+  /**
+   * Verify-then-commit selection logic shared by ADD TO CART and BUY NOW.
+   *
+   * Resolves which variant is being purchased (the selected one, or the
+   * catalogue default when none is chosen), asks the backend whether it is
+   * still orderable, and only THEN writes it into the cart. A variant that
+   * verify-order-product rejects — and that get-default-variant cannot
+   * recover — must never reach the cart at all, so the check runs before the
+   * dispatch, not after.
+   */
   const handleAddToCart: any = async (options?: { showToast?: boolean }) => {
     const pUuid = product?.productUuid || productUuid || "";
 
+    // These are only the fallback if the call below fails — quick view is not
+    // the product details page, so its own attribute picker is not treated as
+    // the source of truth for what gets added. get-default-variant is always
+    // asked instead, exactly like the plain listing card's Add to Cart. The
+    // product details page is the one surface that keeps its own selected
+    // variant and does NOT call this endpoint.
     let variantUUID = selectedVariant?.id || displayId;
     let finalPrice = displayPrice;
     let finalRegPrice = displayOriginal;
     let finalImage = currentImage;
     let finalIsTba = !displayInStock;
 
-    if (pUuid && !selectedVariant) {
+    if (pUuid) {
       try {
         const res = await api.get<DefaultVariantResponse>(
           `/get-default-variant/${pUuid.trim()}?priceSort=0&userDefine=1`,
@@ -341,7 +358,37 @@ function ProductQuicView({
       if (options?.showToast !== false) {
         toast.error("Product already added to cart!");
       }
-      return true; // return true so BUY NOW can proceed to checkout even if already added
+      // An object rather than `true`: BUY NOW needs the variant that actually
+      // is in the cart. Still truthy for callers that only test success.
+      return { ok: true, productUuid: pUuid, variantUuid: variantUUID };
+    }
+
+    try {
+      const { patches, unresolved } = await verifyOrderProduct({
+        id: variantUUID,
+        productUuid: pUuid,
+        variantUuid: variantUUID,
+        name: displayTitle,
+      });
+
+      if (unresolved.length > 0) {
+        toast.error(`Validation failed. ${unresolved[0].reason}`);
+        return false;
+      }
+
+      if (patches.length > 0) {
+        variantUUID = patches[0].variantUuid;
+        if (typeof patches[0].price === "number") finalPrice = patches[0].price;
+        if (typeof patches[0].originalPrice === "number") {
+          finalRegPrice = patches[0].originalPrice;
+        }
+        if (patches[0].image) finalImage = patches[0].image;
+      }
+    } catch (err) {
+      console.error("[QuickView] order verification failed:", err);
+      // The check itself errored (e.g. network down) rather than rejecting
+      // this specific line — add with the resolved variant instead of
+      // blocking the user entirely.
     }
 
     dispatch(
@@ -355,7 +402,7 @@ function ProductQuicView({
         price: finalPrice,
         originalPrice: finalRegPrice,
         quantity: qty,
-        inStock: !finalIsTba,
+        inStock: true,
         slug: displaySlug,
       }),
     );
@@ -363,7 +410,7 @@ function ProductQuicView({
       toast.success(`${displayTitle} added to cart! 🛒`);
     }
     setOpen(false);
-    return true;
+    return { ok: true, productUuid: pUuid, variantUuid: variantUUID };
   };
 
   // const handleBuyNow = async () => {
@@ -399,14 +446,15 @@ function ProductQuicView({
 
     setLoadingBuyNow(true);
     try {
-      const success = await handleAddToCart();
-      if (success) {
-        router.push("/checkout");
-      } else {
-        toast.error("Failed to add item to cart");
-      }
+      // handleAddToCart now verifies BEFORE adding, so a rejected variant never
+      // reaches the cart — success here means the item is already confirmed
+      // orderable, and any failure has already shown its own reason.
+      const added = await handleAddToCart();
+      if (!added) return;
+
+      router.push("/checkout");
     } catch (err) {
-      console.error("[StickyPurchaseBar] Buy now error:", err);
+      console.error("[QuickView] Buy now error:", err);
       toast.error("Something went wrong. Please try again.");
     } finally {
       setLoadingBuyNow(false);

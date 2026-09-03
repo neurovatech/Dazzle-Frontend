@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
 import { ChevronRight, ChevronLeft, LayoutDashboard } from "lucide-react";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import {
   AirpodIcon,
   CoverIcon,
@@ -247,6 +248,12 @@ export default function ExplorePanel({
     null,
   );
 
+  // The panel itself scrolls internally (overflow-y-auto), but nothing was
+  // stopping the PAGE behind it from scrolling too — on touch devices in
+  // particular, a scroll gesture over the menu chained straight through to
+  // the page once the panel's own content ran out.
+  useBodyScrollLock(isOpen);
+
   if (!isOpen) return null;
 
   const normalizedCategories = normalizeCategories(categories);
@@ -261,7 +268,7 @@ export default function ExplorePanel({
   // ── Mobile: brand list ────────────────────────────────────────────────────
   if (isMobile && mobileSubCategory && mobileActiveCat) {
     return (
-      <div className="absolute top-full left-0 z-50 mt-2 w-full rounded-2xl bg-white shadow-xl border border-gray-100 max-h-[75vh] overflow-y-auto">
+      <div className="absolute top-full left-0 z-500 mt-2 w-full rounded-2xl bg-white shadow-xl border border-gray-100 max-h-[75vh] overflow-y-auto">
         <div className="flex items-center gap-3 px-4 py-3.5 border-b border-gray-100 sticky top-0 bg-white rounded-t-2xl">
           <button
             onClick={() => setMobileSubCategory(null)}
@@ -307,7 +314,7 @@ export default function ExplorePanel({
   // ── Mobile: category list ─────────────────────────────────────────────────
   if (isMobile) {
     return (
-      <div className="absolute top-full left-0 z-50 mt-2 w-full rounded-2xl bg-white shadow-xl border border-gray-100 max-h-[75vh] overflow-y-auto">
+      <div className="absolute top-full left-0 z-500 mt-2 w-full rounded-2xl bg-white shadow-xl border border-gray-100 max-h-[75vh] overflow-y-auto">
         <div className="flex flex-col py-2">
           <Link
             href={`/categories`}
