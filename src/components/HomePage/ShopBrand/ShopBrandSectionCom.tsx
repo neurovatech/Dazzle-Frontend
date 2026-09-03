@@ -7,7 +7,7 @@ export default async function ShopBrandSectionCom() {
   try {
     const res = await api.get<{ data: Record<string, unknown>[] }>(
       "/brands?order=0&page=1&limit=16",
-      { next: { revalidate: 60 } },
+      { next: { revalidate: 5 } },
     );
     const list = Array.isArray(res) ? res : (res?.data ?? []);
     brands = list

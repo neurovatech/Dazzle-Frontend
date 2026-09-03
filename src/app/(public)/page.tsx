@@ -68,7 +68,7 @@ const ShopSelector = dynamic(
 async function getHeroBanners(): Promise<SlideItem[]> {
   try {
     const res = await api.get<unknown>("/web-banner/home-banner", {
-      next: { revalidate: 60 },
+      next: { revalidate: 5 },
     });
 
     let list: unknown[] = [];

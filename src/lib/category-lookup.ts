@@ -29,7 +29,7 @@ export interface CategoryLookup {
 const getCategoryTree = cache(async (): Promise<any[]> => {
   try {
     const res = await api.get<any>("/categories/child", {
-      next: { revalidate: 300 },
+      next: { revalidate: 5 },
     });
     return Array.isArray(res?.data) ? res.data : [];
   } catch {

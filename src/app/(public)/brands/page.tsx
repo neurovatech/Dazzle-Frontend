@@ -27,7 +27,7 @@ async function BrandPage() {
   try {
     const res = await api.get<{ data: Record<string, unknown>[] }>(
       "/brands?order=0&page=1&limit=1000",
-      { next: { revalidate: 60 } },
+      { next: { revalidate: 5 } },
     );
 
     const list = Array.isArray(res) ? res : (res?.data ?? []);

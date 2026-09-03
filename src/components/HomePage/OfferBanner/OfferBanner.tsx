@@ -27,7 +27,7 @@ export default async function OfferBanner({ apiEndpoint }: OfferBannerProps) {
   try {
     const bannerRes = await api.get<WebBannerResponse>(
       `/web-banner/${apiEndpoint}`,
-      { next: { revalidate: 60 } },
+      { next: { revalidate: 5 } },
     );
 
     banners = Array.isArray(bannerRes?.data) ? bannerRes.data : [];

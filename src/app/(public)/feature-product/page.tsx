@@ -63,7 +63,7 @@ export default async function FeatureProductsPages() {
     try {
       const res = await api.get<ShowcaseItemsResponse>(
         "/showcase-items?showcaseSlug=feature-products",
-        { next: { revalidate: 60 } }
+        { next: { revalidate: 5 } }
       );
    
       const list = Array.isArray(res?.data) ? res.data : [];

@@ -127,7 +127,7 @@ const stats2 = [
 export default async function AboutUs() {
   let brandsCount = 0;
   try {
-    const brands = await api.get<unknown[]>("/brands", { next: { revalidate: 60 } });
+    const brands = await api.get<unknown[]>("/brands", { next: { revalidate: 5 } });
     if (Array.isArray(brands)) {
       brandsCount = brands.length;
     }

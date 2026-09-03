@@ -75,7 +75,7 @@ function cleanSlug(slug: string): string {
 async function getCampaignDetail(slug: string): Promise<CampaignDetailResponse | null> {
   try {
     const res = await api.get<CampaignDetailResponse>(`campaign/${slug}`, {
-      next: { revalidate: 60 },
+      next: { revalidate: 5 },
     });
     if (res && res.found && res.statusCode !== 404) {
       return res;
@@ -85,7 +85,7 @@ async function getCampaignDetail(slug: string): Promise<CampaignDetailResponse |
   }
   try {
     const campaignsList = await api.get<CampaignsResponse>("campaigns", {
-      next: { revalidate: 60 },
+      next: { revalidate: 5 },
     });
     const foundCampaign = campaignsList.data?.find(
       (c) => c.slug === slug || c.campaign_uuid === slug
@@ -94,7 +94,7 @@ async function getCampaignDetail(slug: string): Promise<CampaignDetailResponse |
     if (foundCampaign) {
       try {
         const res = await api.get<CampaignDetailResponse>(`campaign/${foundCampaign.campaign_uuid}`, {
-          next: { revalidate: 60 },
+          next: { revalidate: 5 },
         });
         if (res && res.found && res.statusCode !== 404) {
           return res;
@@ -104,7 +104,7 @@ async function getCampaignDetail(slug: string): Promise<CampaignDetailResponse |
       }
       try {
         const res = await api.get<CampaignDetailResponse>(`campaign/${foundCampaign.campaign_id}`, {
-          next: { revalidate: 60 },
+          next: { revalidate: 5 },
         });
         if (res && res.found && res.statusCode !== 404) {
           return res;

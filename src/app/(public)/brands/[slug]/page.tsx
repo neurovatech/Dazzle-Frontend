@@ -146,7 +146,7 @@ export default async function BrandDetailsPage({ params, searchParams }: PagePro
   // These give Google bots full content on first render → SEO intact
   const [catResult, prodResult, attrResult] = await Promise.allSettled([
     api.get<CategoryListResponse>(`/brands/${slug}/categories`, {
-      next: { revalidate: 300 }, // 5 min
+      next: { revalidate: 5 }, 
     }),
     api.get<ProductListResponse>(
       `/products?${new URLSearchParams({
@@ -155,10 +155,10 @@ export default async function BrandDetailsPage({ params, searchParams }: PagePro
         limit: String(LIMIT),
         ...(requestedCategory ? { categorySlug: requestedCategory } : {}),
       }).toString()}`,
-      { next: { revalidate: 60 } }, // 1 min
+      { next: { revalidate: 5 } },
     ),
     api.get<BrandAttributesResponse>(`/products/attributes?brandSlug=${slug}`, {
-      next: { revalidate: 300 }, // 5 min
+      next: { revalidate: 5 },
     }),
   ]);
 
@@ -195,7 +195,7 @@ export default async function BrandDetailsPage({ params, searchParams }: PagePro
           page: "1",
           limit: String(LIMIT),
         }).toString()}`,
-        { next: { revalidate: 60 } },
+        { next: { revalidate: 5 } },
       );
     } catch {
       // Keep the empty result — the list renders its own empty state.

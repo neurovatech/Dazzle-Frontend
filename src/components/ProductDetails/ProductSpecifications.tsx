@@ -34,8 +34,6 @@ const ProductSpecifications: React.FC<ProductSpecificationsProps> = ({
   groups,
 }) => {
   if (!groups || groups.length === 0) {
-    // console.log(groups, "groupsgroupsgroupsgroups");
-
     return (
       <div className="w-full rounded-2xl border border-gray-200 dark:border-[#3a2f28] bg-white dark:bg-[#1f1a16] px-5 py-6 text-center">
         <p className="text-sm text-gray-500 dark:text-gray-400">

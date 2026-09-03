@@ -25,7 +25,7 @@ export interface BlogDetail {
 
 async function getBlogBySlug(slug: string): Promise<BlogDetail | null> {
   try {
-    const res = await api.get<unknown>(`/blogs/${slug}?IsStory=1`, { next: { revalidate: 60 } });
+    const res = await api.get<unknown>(`/blogs/${slug}?IsStory=1`, { next: { revalidate: 5 } });
     const obj = res as Record<string, unknown>;
     if (obj?.data && typeof obj.data === "object") {
       return obj.data as BlogDetail;

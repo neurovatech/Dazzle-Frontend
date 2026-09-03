@@ -52,7 +52,7 @@ async function fetchCategories(): Promise<{
 }> {
   try {
     const response = await api.get<ApiResponse>("/categories/child", {
-      next: { revalidate: 300 },
+      next: { revalidate: 5 },
     });
 
     if (response?.data) {
@@ -88,7 +88,7 @@ async function fetchCategories(): Promise<{
 async function fetchBrands(): Promise<{ apiBrands: any; apiSubBrands: any }> {
   try {
     const response = await api.get<ApiResponse>("/categories/brands", {
-      next: { revalidate: 300 },
+      next: { revalidate: 5 },
     });
 
     if (response?.data) {

@@ -43,6 +43,7 @@ interface ProductDetailProps {
 }
 
 const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
+  console.log(product, "productproductproductproduct");
   const dispatch = useAppDispatch();
   const [qty, setQty] = useState(1);
   const [selectedAttrs, setSelectedAttrs] = useState<Record<string, string>>(
@@ -106,8 +107,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
     () => consolidateVariants(variantApiData?.data ?? []),
     [variantApiData],
   );
-
-
 
   useEffect(() => {
     if (groups.length === 0) return;
@@ -338,19 +337,23 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
           item.thumbnail?.[0]?.mediaFileURL ||
           item.thumbnail?.[0]?.mediaFileUrl ||
           "";
-        const offerPrice = item.discountedPrice > 0 ? item.discountedPrice : item.regularPrice ?? 0;
-        const regPrice   = item.regularPrice ?? 0;
+        const offerPrice =
+          item.discountedPrice > 0
+            ? item.discountedPrice
+            : (item.regularPrice ?? 0);
+        const regPrice = item.regularPrice ?? 0;
         return {
           // cart-ready raw data
-          id:            item.accessoriesUuid,
-          slug:          item.productSlug || "",
-          rawPrice:      offerPrice,
+          id: item.accessoriesUuid,
+          slug: item.productSlug || "",
+          rawPrice: offerPrice,
           rawOriginalPrice: regPrice,
           // display data
           image: img,
           name: item.productName,
           inStock: !item.isTba,
-          price: offerPrice > 0 ? `৳${offerPrice.toLocaleString("en-US")}` : "0",
+          price:
+            offerPrice > 0 ? `৳${offerPrice.toLocaleString("en-US")}` : "0",
           originalPrice:
             regPrice > offerPrice
               ? `৳${regPrice.toLocaleString("en-US")}`
@@ -501,7 +504,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
         variantUuid={selectedVariant?.variantUuid || selectedVariant?.id}
         productName={(() => {
           const prodName = product?.productName ?? "";
-          const varName  = selectedVariant?.name ?? "";
+          const varName = selectedVariant?.name ?? "";
           if (!varName) return prodName;
           return varName.startsWith(prodName)
             ? varName
@@ -537,10 +540,10 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
               />
               <div className="hidden lg:block">
                 {frequentlyBoughtProducts.length > 0 && (
-                <FrequentlyBoughtTogether
-                  products={frequentlyBoughtProducts}
-                />
-              )}
+                  <FrequentlyBoughtTogether
+                    products={frequentlyBoughtProducts}
+                  />
+                )}
               </div>
 
               <div className="hidden lg:block space-y-6 pt-2">
@@ -562,7 +565,11 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
               code={product?.productCode ?? "N/A"}
               inStock={!product?.isTba}
               stockNote={product?.stockNote ?? product?.stock_note}
-              warrantyNote={product?.warrantyNote ?? product?.warranty_note ?? product?.warranty}
+              warrantyNote={
+                product?.warrantyNote ??
+                product?.warranty_note ??
+                product?.warranty
+              }
               activeImage={activeImage}
               stats={{
                 soldLastHours: product?.metaTags?.soldCount ?? 12,
@@ -641,7 +648,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
             )}
 
             {/* {dazzleCareOptions.length > 0 && ( */}
-              
+
             {/* )} */}
             {dazzleCareOptions.length > 0 && (
               <div className="pt-5">
@@ -660,7 +667,9 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
                 externalEmiOpen={emiOpen}
                 onExternalEmiClose={() => setEmiOpen(false)}
                 externalAvailabilityOpen={storeAvailabilityOpen}
-                onExternalAvailabilityClose={() => setStoreAvailabilityOpen(false)}
+                onExternalAvailabilityClose={() =>
+                  setStoreAvailabilityOpen(false)
+                }
               />
             </div>
             <div>
@@ -688,21 +697,25 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
             </div>
 
             <div className="pb-5">
-                <BuyMore
-                  items={frequentlyBoughtProducts.map((p: any) => ({
-                    id: p.id,
-                    name: p.name,
-                    image: p.image,
-                    price: p.rawPrice ?? 0,
-                    originalPrice: p.rawOriginalPrice ?? 0,
-                    slug: p.slug,
-                    inStock: p.inStock,
-                  }))}
-                />
-              </div>
+              <BuyMore
+                items={frequentlyBoughtProducts.map((p: any) => ({
+                  id: p.id,
+                  name: p.name,
+                  image: p.image,
+                  price: p.rawPrice ?? 0,
+                  originalPrice: p.rawOriginalPrice ?? 0,
+                  slug: p.slug,
+                  inStock: p.inStock,
+                }))}
+              />
+            </div>
 
             <div>
-              <DeliveryInfo deliveryDays={""} purchasePoints={product?.purchasePoints ?? 0} minBookingAmount={product?.minBookingPrice ?? 0} />
+              <DeliveryInfo
+                deliveryDays={""}
+                purchasePoints={product?.purchasePoints ?? 0}
+                minBookingAmount={product?.minBookingPrice ?? 0}
+              />
             </div>
 
             {/* {frequentlyBoughtProducts.length > 0 && (
@@ -720,16 +733,18 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
           </div>
 
           <div className=" block lg:hidden">
-                {frequentlyBoughtProducts.length > 0 && (
-                <FrequentlyBoughtTogether
-                  products={frequentlyBoughtProducts}
-                />
-              )}
-              </div>
+            {frequentlyBoughtProducts.length > 0 && (
+              <FrequentlyBoughtTogether products={frequentlyBoughtProducts} />
+            )}
+          </div>
 
           <div className="lg:col-span-12 space-y-6">
             {/* Specification & Description Tab Buttons */}
             <div className="flex items-center gap-3">
+
+              {!specGroups || specGroups.length === 0 ? (
+              ""
+            ) : (
               <button
                 type="button"
                 onClick={() => setShowDescription(false)}
@@ -741,6 +756,10 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
               >
                 Specification
               </button>
+            )}
+
+              
+
               <button
                 type="button"
                 onClick={() => {
@@ -769,23 +788,21 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
               </button>
             </div>
 
-            {/* Specification is ALWAYS open.
-                `description` used to be passed here but the component never read
-                it — and the Description block right below already renders it, so
-                wiring it in would have duplicated the copy on the page. */}
-            <ProductSpecifications groups={specGroups} />
+            {!specGroups || specGroups.length === 0 ? (
+              ""
+            ) : (
+              <ProductSpecifications groups={specGroups} />
+            )}
 
-            {/* Description content shown below Specification when Description button is clicked */}
-            {/* {showDescription && ( */}
-              <div
-                ref={descriptionRef}
-                className="mt-6 border-t border-gray-200 dark:border-gray-700 pt-6 scroll-mt-24"
-              >
-                <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-3">
-                  Description
-                </h3>
-                <DescriptionProductDetails description={product?.description} />
-              </div>
+            <div
+              ref={descriptionRef}
+              className="mt-6 border-t border-gray-200 dark:border-gray-700 pt-6 scroll-mt-24"
+            >
+              <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-3">
+                Description
+              </h3>
+              <DescriptionProductDetails description={product?.description} />
+            </div>
             {/* )} */}
           </div>
 
@@ -798,8 +815,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
               <RelatedProductSectionCom categorySlug={product.brandSlug} />
             </div>
           )}
-
-          
         </div>
       </div>
     </div>

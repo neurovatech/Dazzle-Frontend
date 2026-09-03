@@ -26,7 +26,7 @@ async function getInitialClips(): Promise<{
 }> {
   try {
     const res = await api.get<ClipApiResponse>(clipEndpoint(1), {
-      next: { revalidate: 60 },
+      next: { revalidate: 5 },
     } as RequestInit);
 
     return {

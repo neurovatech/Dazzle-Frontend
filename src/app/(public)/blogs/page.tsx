@@ -54,7 +54,7 @@ async function getBlogs(page: number, categoryUuid?: string): Promise<BlogsRespo
     });
     if (categoryUuid) qp.set("blog_cat_uuid", categoryUuid);
 
-    const res = await api.get<unknown>(`/blogs?${qp.toString()}&isCareer=0`, { next: { revalidate: 60 } });
+    const res = await api.get<unknown>(`/blogs?${qp.toString()}&isCareer=0`, { next: { revalidate: 5 } });
     const obj = res as Record<string, unknown>;
 
     return {
@@ -71,7 +71,7 @@ async function getBlogs(page: number, categoryUuid?: string): Promise<BlogsRespo
 
 async function getBlogCategories(): Promise<BlogCategory[]> {
   try {
-    const res = await api.get<unknown>("/blog-categories", { next: { revalidate: 60 } });
+    const res = await api.get<unknown>("/blog-categories", { next: { revalidate: 5 } });
     const obj = res as Record<string, unknown>;
     return Array.isArray(obj?.data) ? (obj.data as BlogCategory[]) : [];
   } catch (error) {

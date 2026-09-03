@@ -45,7 +45,7 @@ async function Categories({ searchParams }: CategoriesPageProps) {
   try {
     const res = await api.get<CategoriesApiResponse>(
       `/categories?page=${currentPage}&limit=${limit}`,
-      { next: { revalidate: 60 } },
+      { next: { revalidate: 5 } },
     );
 
     const list = Array.isArray(res) ? res : (res?.data ?? []);

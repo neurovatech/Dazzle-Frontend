@@ -47,7 +47,7 @@ async function getBlogs(){
   try {
     const res = await api.get<unknown>(
       `/blogs?page=1&datalimit=3&isCareer=0`,
-      { next: { revalidate: 60 } },
+      { next: { revalidate: 5 } },
     );
     const obj = res as Record<string, unknown>;
     return {

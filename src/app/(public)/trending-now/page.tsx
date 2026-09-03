@@ -64,7 +64,7 @@ export default async function TrendingProductsPages() {
     try {
       const res = await api.get<ShowcaseItemsResponse>(
          "/showcase-items?showcaseSlug=trending-now",
-        { next: { revalidate: 60 } }
+        { next: { revalidate: 5 } }
       );
    
       const list = Array.isArray(res?.data) ? res.data : [];

@@ -103,7 +103,7 @@ export default async function SearchList({ params }: PageProps) {
   // These give Google bots full content on first render → SEO intact
   const [catResult, prodResult] = await Promise.allSettled([
     api.get<CategoryListResponse>(`/brands/${slug}/categories`, {
-      next: { revalidate: 300 }, // 5 min
+      next: { revalidate: 5 }, 
     }),
     api.get<ProductListResponse>(
       `/products?${new URLSearchParams({
@@ -111,7 +111,7 @@ export default async function SearchList({ params }: PageProps) {
         page:      "1",
         limit:     String(LIMIT),
       }).toString()}`,
-      { next: { revalidate: 60 } } // 1 min
+      { next: { revalidate: 5 } } 
     ),
   ]);
 

@@ -31,8 +31,8 @@ const breadcrumbItems = [
 export default async function ShopLocations() {
   // Fetch districts + all stores in parallel via SSR
   const [districtsRes, allStoresRes] = await Promise.allSettled([
-    api.get<{ data: District[] }>("/store-district", { next: { revalidate: 60 } }),
-    api.get<{ data: StoreItem[] }>("/stores", { next: { revalidate: 60 } }),
+    api.get<{ data: District[] }>("/store-district", { next: { revalidate: 5 } }),
+    api.get<{ data: StoreItem[] }>("/stores", { next: { revalidate: 5 } }),
   ]);
 
   const districts: District[] =

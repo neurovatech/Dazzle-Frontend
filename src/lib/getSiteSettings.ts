@@ -70,7 +70,7 @@ export function stripHeavyFields(settings: SiteSettings): ClientSiteSettings {
 export const getSiteSettings = cache(async (): Promise<SiteSettings> => {
   try {
     const res = await api.get<{ data: SiteSettings }>("/site-settings", {
-      next: { revalidate: 300 },
+      next: { revalidate: 5 },
     });
     return res.data ?? {};
   } catch (error) {

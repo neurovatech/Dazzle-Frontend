@@ -122,7 +122,7 @@ export default async function SubCategoriesPage({
       if (search) queryParams.set("search", search);
 
       const res = await api.get<any>(`/products?${queryParams.toString()}`, {
-        next: { revalidate: 60 },
+        next: { revalidate: 5 },
       });
       if (res && typeof res === "object" && "data" in res) {
         return res;
@@ -138,7 +138,7 @@ export default async function SubCategoriesPage({
     try {
       const res = await api.get<WebBannerResponse>(
         "/web-banner/product-categores-page",
-        { next: { revalidate: 60 } },
+        { next: { revalidate: 5 } },
       );
       if (res && typeof res === "object" && "data" in res) {
         return res.data;
@@ -155,7 +155,7 @@ export default async function SubCategoriesPage({
     try {
       const brandsRes = await api.get<any>(
         `/subcategory/${subCategorySlug}/brands`,
-        { next: { revalidate: 60 } },
+        { next: { revalidate: 5 } },
       );
       let rawChild: any[] = [];
       if (brandsRes?.data) {
@@ -200,7 +200,7 @@ export default async function SubCategoriesPage({
     try {
       const attrRes = await api.get<{ data: any; priceData?: any }>(
         `/products/attributes?categorySlug=${categorySlug}&subCategorySlug=${subCategorySlug}`,
-        { next: { revalidate: 60 } },
+        { next: { revalidate: 5 } },
       );
       return {
         attributes: attrRes && Array.isArray(attrRes.data) ? attrRes.data : [],

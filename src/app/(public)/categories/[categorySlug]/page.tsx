@@ -154,7 +154,7 @@ export default async function CategoriesPage({
 
       const res = await api.get<ProductListResponse>(
         `/products?${queryParams.toString()}`,
-        { next: { revalidate: 60 } },
+        { next: { revalidate: 5 } },
       );
       console.log(res, "brandsRes")
       if (res && typeof res === "object" && "data" in res) {
@@ -172,7 +172,7 @@ export default async function CategoriesPage({
     try {
       const brandsRes = await api.get<BrandsApiResponse>(
         `/categories/${categorySlug}/brands`,
-        { next: { revalidate: 60 } },
+        { next: { revalidate: 5 } },
       );
       const categoryData = brandsRes?.data?.category;
       if (Array.isArray(categoryData) && categoryData.length > 0) {
@@ -190,7 +190,7 @@ export default async function CategoriesPage({
     try {
       const attrRes = await api.get<{ data: AttributeGroup[]; priceData?: any }>(
         `/products/attributes?categorySlug=${categorySlug}`,
-        { next: { revalidate: 60 } },
+        { next: { revalidate: 5 } },
       );
       return {
         attributes: attrRes && Array.isArray(attrRes.data) ? attrRes.data : [],

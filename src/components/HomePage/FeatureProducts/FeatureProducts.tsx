@@ -72,7 +72,7 @@ export default async function FeatureProducts() {
   try {
     const res = await api.get<ShowcaseItemsResponse>(
       "/showcase-items?showcaseSlug=feature-products&limit=5",
-      { next: { revalidate: 60 } },
+      { next: { revalidate: 5 } },
     );
 
     const list = Array.isArray(res?.data) ? res.data : [];
@@ -96,7 +96,7 @@ export default async function FeatureProducts() {
   try {
     const bannerRes = await api.get<WebBannerResponse>(
       "/web-banner/feature-products-below",
-      { next: { revalidate: 60 } },
+      { next: { revalidate: 5 } },
     );
 
     banners = Array.isArray(bannerRes?.data) ? bannerRes.data : [];

@@ -38,7 +38,7 @@ interface PageProps {
 async function getStoreBySlug(slug: string): Promise<StoreDetail | null> {
   try {
     const res = await api.get<StoreDetailResponse>(`stores/${slug}`, {
-      next: { revalidate: 60 },
+      next: { revalidate: 5 },
     });
     if (!res.found || !res.data) return null;
     return res.data;
