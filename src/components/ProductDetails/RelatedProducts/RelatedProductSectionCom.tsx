@@ -56,10 +56,14 @@ function getThumb(thumbnails: ProductItem["thumbnails"]): string {
 
 interface RelatedProductSectionComProps {
   subCategorySlug?: string;
+  /** The product page this section is rendered on — excluded from its own "related" list. */
+  currentProductUuid?: string;
 }
 
-export default function RelatedProductSectionCom({ subCategorySlug }: RelatedProductSectionComProps) {
-  console.log("RelatedProductSectionCom subCategorySlug:", subCategorySlug);
+export default function RelatedProductSectionCom({
+  subCategorySlug,
+  currentProductUuid,
+}: RelatedProductSectionComProps) {
   const { data, isLoading } = useQuery<ProductListResponse>({
     queryKey: ["related-products", subCategorySlug],
     queryFn: () =>
@@ -70,7 +74,14 @@ export default function RelatedProductSectionCom({ subCategorySlug }: RelatedPro
     staleTime: 5 * 60 * 1000,
   });
 
-  const products: ProductCardItem[] = sortInStockFirst(data?.data ?? []).map((item) => ({
+  // The related-products query is scoped by subCategorySlug only, so the
+  // product being viewed is itself a member of that category and comes back
+  // in the list — without this it would show up as its own "related" item.
+  const relatedOnly = (data?.data ?? []).filter(
+    (item) => item.productUuid !== currentProductUuid,
+  );
+
+  const products: ProductCardItem[] = sortInStockFirst(relatedOnly).map((item) => ({
     uuid:          item.productUuid,
     title:         item.productName,
     slug:          item.productSlug,

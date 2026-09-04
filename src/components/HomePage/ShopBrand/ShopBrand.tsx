@@ -5,8 +5,17 @@ import Link from "next/link";
 import ProductCard from "@/components/share/GlobalProductCard";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import {
+  Navigation,
+  Pagination,
+  Scrollbar,
+  A11y,
+  Autoplay,
+} from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
 import NoImg from "@/images/no_images.png";
 
 export interface Brand {
@@ -161,17 +170,36 @@ export default function ShopBrand({ brands }: Props) {
                 </p>
               </div>
             ) : (
+              // Same Swiper configuration as the homepage's Flash Sale
+              // slider — this carousel previously had none of Flash Sale's
+              // modules wired in at all, so it never showed pagination dots,
+              // never auto-advanced, and had no draggable scrollbar, making
+              // it look and behave like a plain static row rather than the
+              // same kind of slider as the rest of the homepage.
               <Swiper
                 key={activeBrandSlug}
+                modules={[Navigation, Pagination, Scrollbar, A11y, Autoplay]}
+                loop={products.length >= 10}
+                pagination={{ clickable: true }}
+                autoplay={{ delay: 3000, disableOnInteraction: false }}
+                scrollbar={{ draggable: true }}
                 slidesPerView={2}
                 spaceBetween={6}
                 breakpoints={{
-                  480: { slidesPerView: 2, spaceBetween: 2 },
-                  640: { slidesPerView: 3, spaceBetween: 2 },
-                  768: { slidesPerView: 4, spaceBetween: 2 },
-                  1024: { slidesPerView: 5, spaceBetween: 10 },
-                  1280: { slidesPerView: 5, spaceBetween: 10 },
+                  640: {
+                    slidesPerView: 2,
+                    spaceBetween: 6,
+                  },
+                  768: {
+                    slidesPerView: 2,
+                    spaceBetween: 20,
+                  },
+                  1024: {
+                    slidesPerView: 5,
+                    spaceBetween: 10,
+                  },
                 }}
+                className="mySwiper w-full"
               >
                 {products.map((product, idx) => (
                   <SwiperSlide key={product.productUuid ?? idx}>

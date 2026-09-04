@@ -1,8 +1,6 @@
 "use client";
 import ProductCard from "@/components/share/GlobalProductCard";
 import type { ProductCardItem } from "./TrendingNowSectionCom";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useRef } from "react";
 import { useHomeProductFocus } from "@/hooks/useHomeProductFocus";
 
 import {
@@ -13,26 +11,28 @@ import {
   Autoplay,
 } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
-import type { Swiper as SwiperType } from "swiper";
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 
-interface HotDealComProps {
+interface TrendingNowProps {
   products: ProductCardItem[];
   autoplayDelay?: number;
-  navigation?: boolean;
   pagination?: boolean;
-  slidesPerView?: number;
 }
 
+/**
+ * Same Swiper configuration as the homepage's Flash Sale slider — this
+ * section used a slightly different loop threshold and spacing before, which
+ * made it feel like a different widget even though it is the same kind of
+ * product carousel. Kept in sync deliberately rather than each section
+ * carrying its own slightly-different numbers.
+ */
 function TrendingNow({
   products,
   autoplayDelay = 3000,
-  navigation = true,
   pagination = true,
-}: HotDealComProps) {
-  const swiperRef = useRef<SwiperType | null>(null);
+}: TrendingNowProps) {
   useHomeProductFocus("home_trending_now");
 
   if (products.length === 0) {
@@ -44,40 +44,35 @@ function TrendingNow({
   }
 
   return (
-    <div className=" w-full">
-      <div className="relative">
-        {/* {navigation && (
-          <button
-            onClick={() => swiperRef.current?.slidePrev()}
-            className="absolute left-0 top-[45%] -translate-y-1/2 -translate-x-2 z-10 flex items-center justify-center w-9 h-9 rounded-full bg-white dark:bg-gray-800 shadow-md border border-gray-200 dark:border-gray-700 hover:bg-[#D4A97A] hover:text-white transition-colors"
-            aria-label="Previous slide"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-        )} */}
-        <Swiper
-          modules={[Navigation, Pagination, Scrollbar, A11y, Autoplay]}
-          loop={products.length > 5}
-          pagination={pagination ? { clickable: true } : false}
-          // navigation={navigation}
-          autoplay={
-            autoplayDelay
-              ? { delay: autoplayDelay, disableOnInteraction: false }
-              : undefined
-          }
-          scrollbar={{ draggable: true }}
-          slidesPerView={2}
-          spaceBetween={8}
-          onSwiper={(swiper) => {
-          swiperRef.current = swiper;
+    <div className="relative flex flex-wrap gap-6">
+      <Swiper
+        modules={[Navigation, Pagination, Scrollbar, A11y, Autoplay]}
+        loop={products.length >= 10}
+        pagination={pagination ? { clickable: true } : false}
+        autoplay={
+          autoplayDelay
+            ? { delay: autoplayDelay, disableOnInteraction: false }
+            : undefined
+        }
+        scrollbar={{ draggable: true }}
+        slidesPerView={2}
+        spaceBetween={6}
+        breakpoints={{
+          640: {
+            slidesPerView: 2,
+            spaceBetween: 6,
+          },
+          768: {
+            slidesPerView: 2,
+            spaceBetween: 20,
+          },
+          1024: {
+            slidesPerView: 5,
+            spaceBetween: 10,
+          },
         }}
-          breakpoints={{
-            640: { slidesPerView: 2, spaceBetween: 16 },
-            768: { slidesPerView: 2, spaceBetween: 20 },
-            1024: { slidesPerView: 5, spaceBetween: 10 },
-          }}
-          className="mySwiper"
-        >
+        className="mySwiper w-full"
+      >
         {products.map((product, i) => (
           <SwiperSlide key={product.uuid || i}>
             <ProductCard
@@ -95,18 +90,6 @@ function TrendingNow({
           </SwiperSlide>
         ))}
       </Swiper>
-
-      {/* {navigation && (
-        <button
-          type="button"
-          onClick={() => swiperRef.current?.slideNext()}
-          className="absolute right-0 top-[45%] -translate-y-1/2 translate-x-3 z-20 flex items-center justify-center w-9 h-9 rounded-full bg-white dark:bg-gray-800 shadow-md border border-gray-200 dark:border-gray-700 hover:bg-[#D4A97A] hover:text-white transition-colors cursor-pointer"
-          aria-label="Next slide"
-        >
-          <ChevronRight className="w-5 h-5" />
-        </button>
-      )} */}
-    </div>
     </div>
   );
 }

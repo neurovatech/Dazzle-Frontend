@@ -815,7 +815,10 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
               <h2 className="text-lg font-bold text-gray-800 dark:text-white px-4 mb-3">
                 Related Products
               </h2>
-              <RelatedProductSectionCom subCategorySlug={product.subCategorySlug} />
+              <RelatedProductSectionCom
+                subCategorySlug={product.subCategorySlug}
+                currentProductUuid={product.productUuid}
+              />
             </div>
           )}
         </div>
