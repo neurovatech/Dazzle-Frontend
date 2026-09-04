@@ -1,0 +1,125 @@
+DAZZLE — GOOGLE / FACEBOOK LOGIN: WHAT THE BACKEND NEEDS TO BUILD
+==================================================================
+For: Backend developer
+From: Frontend
+Context: "Continue with Google" / "Continue with Facebook" buttons are now
+         live on both /auth/login and /auth/registration. They already do
+         the FULL provider-side popup flow and hand you a ready-to-verify
+         token — this document covers the ONE endpoint you need to add to
+         accept it.
+
+
+1. WHY THERE IS NO REDIRECT/CALLBACK URL TO BUILD
+----------------------------------------------------------------
+This is a token-based flow, not a redirect-based OAuth flow:
+  - Clicking the button opens Google's / Facebook's own popup directly in
+    the browser (via their JS SDKs) — our site never navigates away.
+  - The popup hands the frontend an access_token straight from
+    Google/Facebook.
+  - The frontend sends ONLY that token to our backend in one POST.
+  - The backend verifies the token directly against Google's/Facebook's
+    own servers (server-to-server, not through us) and responds.
+There is no /auth/google/callback or /auth/facebook/callback route to
+build on either side — that whole class of redirect-URI/whitelist
+configuration is not needed with this approach.
+
+
+2. THE ONE ENDPOINT TO BUILD
+----------------------------------------------------------------
+    POST /social-login
+
+Request body (sent by the frontend exactly as shown):
+
+    {
+      "provider": "google",          // or "facebook"
+      "accessToken": "ya29.a0Af..."  // opaque token from that provider's SDK
+    }
+
+What the backend must do with it:
+
+  a) provider === "google":
+     Call Google's userinfo endpoint with the token to get the verified
+     profile:
+
+        GET https://www.googleapis.com/oauth2/v3/userinfo
+        Authorization: Bearer {accessToken}
+
+     Response includes: sub (Google's stable user id), email,
+     email_verified, name, picture. Treat `sub` as the durable identifier
+     (an email can change providers; sub does not).
+
+  b) provider === "facebook":
+     Call the Graph API with the token to get the profile AND confirm the
+     token was actually issued to OUR Facebook app (important — otherwise
+     anyone could send an access_token from a different app):
+
+        GET https://graph.facebook.com/me?fields=id,name,email&access_token={accessToken}
+        GET https://graph.facebook.com/debug_token?input_token={accessToken}&access_token={APP_ID}|{APP_SECRET}
+
+     Confirm debug_token's response has `is_valid: true` and
+     `app_id` equal to our own Facebook App ID before trusting the profile
+     data. Treat Graph API's `id` as the durable identifier.
+
+  c) Find-or-create the user:
+     - If an account already exists with that provider id (or matching,
+       already-verified email), log them in.
+     - Otherwise create a new user account from the profile's name/email —
+       this is the "registration" half; there is no separate signup call,
+       since Google/Facebook already vouch for the person's identity.
+       Mark the email as verified immediately (no email-verification-link
+       step needed for a social account).
+
+  d) Respond with EXACTLY the same shape /user-login already returns —
+     the frontend reuses its existing login-success code path unchanged,
+     so matching this contract is what makes integration trivial:
+
+        {
+          "statusCode": 200,
+          "status": "success",
+          "message": "Login successful.",
+          "data": {
+            "usersCommuuid": "...",
+            "userFullName": "...",
+            "email": "...",
+            "emailVerifiedToken": "",
+            "createdAt": "...",
+            "x-api-key": "...",
+            "Authorization": "Bearer ..."
+          }
+        }
+
+     On failure, also match the existing shape:
+
+        { "statusCode": 400, "status": "error", "message": "...", "errors": ["..."] }
+
+
+3. CREDENTIALS YOU NEED TO ISSUE (NOT SOMETHING TO BUILD, JUST CONFIGURE)
+----------------------------------------------------------------
+  - A Google OAuth Client ID (Google Cloud Console → APIs & Services →
+    Credentials → OAuth client ID → "Web application"). Add our site's
+    domain(s) under "Authorized JavaScript origins" (no redirect URI
+    needed for this flow). Give the Client ID to the frontend team as
+    NEXT_PUBLIC_GOOGLE_CLIENT_ID.
+  - A Facebook App (developers.facebook.com) with Facebook Login product
+    added. You'll need the App ID (give to frontend as
+    NEXT_PUBLIC_FACEBOOK_APP_ID) and the App Secret (backend-only, used
+    for the debug_token call above — never send this to the frontend).
+
+
+4. SECURITY NOTES
+----------------------------------------------------------------
+  - Never trust the email/name the FRONTEND sends about the social
+    profile (it doesn't currently send any — only the raw token — but if
+    this ever changes, treat any such fields as untrusted and always
+    re-fetch the profile yourselves from the token).
+  - Always run the Facebook debug_token check — without it, a token
+    minted for a different Facebook app could be replayed against this
+    endpoint.
+  - Rate-limit /social-login the same way /user-login is rate-limited —
+    it's an unauthenticated, internet-facing endpoint like any other login
+    route.
+
+
+Frontend implementation for reference: src/lib/socialAuth.ts (token
+acquisition) and src/hooks/useSocialAuth.ts (the POST /social-login call
+and session setup) in the frontend repo.

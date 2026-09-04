@@ -14,10 +14,10 @@ import { loginSchema, LoginSchema } from "@/schemas/loginSchema";
 import TextInput from "@/components/ui/TextInput";
 import PasswordInput from "@/components/ui/PasswordInput";
 import OtpInput from "@/components/ui/OtpInput";
-import { FacebookIcon, GoogleIcon, InstragramIcon } from "@/icon";
 import { api } from "@/lib/api";
 import { useAppDispatch } from "@/store/hooks";
 import { setCredentials } from "@/store/slices/authSlice";
+import SocialLogin from "./SocialLogin";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface LoginPayload {
@@ -636,24 +636,7 @@ const LoginForm: React.FC = () => {
           </Link>
         </p>
 
-        <div className="flex flex-col items-center gap-4">
-          <p className="text-sm text-gray-500">Or</p>
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              className="w-12 h-12 rounded-xl bg-[#222222DB] hover:bg-[#222222DB]/70 flex items-center justify-center transition-colors duration-200 shadow-sm"
-            >
-              <GoogleIcon />
-            </button>
-            <button
-              type="button"
-              className="w-12 h-12 rounded-xl bg-[#222222DB] hover:bg-[#222222DB]/70 flex items-center justify-center transition-colors duration-200 shadow-sm"
-            >
-              <FacebookIcon />
-            </button>
-            {/* <button type="button" className="w-12 h-12 rounded-xl bg-[#222222DB] hover:bg-[#222222DB]/70 flex items-center justify-center transition-colors duration-200 shadow-sm"><InstragramIcon /></button> */}
-          </div>
-        </div>
+        <SocialLogin />
       </form>
     </>
   );

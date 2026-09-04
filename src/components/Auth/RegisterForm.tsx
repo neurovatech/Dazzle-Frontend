@@ -11,10 +11,10 @@ import { registerSchema, RegisterSchema } from "../../schemas/registerSchema";
 import TextInput from "@/components/ui/TextInput";
 import PasswordInput from "@/components/ui/PasswordInput";
 import CheckboxInput from "@/components/ui/CheckboxInput";
-import { GoogleIcon, FacebookIcon, InstragramIcon } from "@/icon";
 import { api } from "@/lib/api";
 import { useAppDispatch } from "@/store/hooks";
 import { setRegistrationData } from "@/store/slices/authSlice";
+import SocialLogin from "./SocialLogin";
 
 // ─── API Types ────────────────────────────────────────────────────────────────
 interface RegisterPayload {
@@ -397,29 +397,7 @@ const RegisterForm: React.FC = () => {
         </p>
 
         {/* Social Login */}
-        <div className="flex flex-col items-center gap-4">
-          <p className="text-sm text-gray-500 dark:text-white">Or</p>
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              className="w-12 h-12 rounded-xl bg-[#222222DB] hover:bg-[#222222DB]/70 flex items-center justify-center transition-colors duration-200 shadow-sm"
-            >
-              <GoogleIcon />
-            </button>
-            <button
-              type="button"
-              className="w-12 h-12 rounded-xl bg-[#222222DB] hover:bg-[#222222DB]/70 flex items-center justify-center transition-colors duration-200 shadow-sm"
-            >
-              <FacebookIcon />
-            </button>
-            {/* <button
-              type="button"
-              className="w-12 h-12 rounded-xl bg-[#222222DB] hover:bg-[#222222DB]/70 flex items-center justify-center transition-colors duration-200 shadow-sm"
-            >
-              <InstragramIcon />
-            </button> */}
-          </div>
-        </div>
+        <SocialLogin />
       </form>
     </>
   );

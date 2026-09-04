@@ -1,6 +1,6 @@
-"use client"
-import React, { useState } from "react";
-import { toast } from "react-hot-toast";
+"use client";
+import React from "react";
+import { useSocialAuth } from "@/hooks/useSocialAuth";
 
 const GoogleIcon: React.FC = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -30,70 +30,39 @@ const SocialButton: React.FC<SocialButtonProps> = ({ onClick, ariaLabel, childre
     onClick={onClick}
     disabled={disabled}
     aria-label={ariaLabel}
-    className="w-12 h-12 rounded-xl bg-gray-55 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 flex items-center justify-center transition-colors duration-200 shadow-xs border border-gray-200 dark:border-gray-700 cursor-pointer disabled:opacity-50"
+    className="w-12 h-12 rounded-xl bg-[#222222DB] hover:bg-[#222222DB]/70 flex items-center justify-center transition-colors duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
   >
     {children}
   </button>
 );
 
+const Spinner = () => (
+  <svg className="animate-spin w-4.5 h-4.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <circle cx="12" cy="12" r="10" strokeWidth="3" />
+  </svg>
+);
+
+/**
+ * "Continue with Google/Facebook" — shared by both LoginForm and
+ * RegisterForm since one social-login backend call covers login AND signup
+ * (the provider already vouches for the person's identity, so there's no
+ * separate "create account" step). See useSocialAuth for the token exchange
+ * and docs/social-login-backend-requirements.txt for what the backend needs
+ * to expose.
+ */
 const SocialLogin: React.FC = () => {
-  const [loadingGoogle, setLoadingGoogle] = useState(false);
-  const [loadingFacebook, setLoadingFacebook] = useState(false);
-
-  const handleGoogle = (): void => {
-    setLoadingGoogle(true);
-    toast.loading("Initiating Google OAuth connection...", { id: "google-auth" });
-    setTimeout(() => {
-      setLoadingGoogle(false);
-      localStorage.setItem("user", JSON.stringify({ name: "John Doe", email: "john.doe@gmail.com" }));
-      document.cookie = "token=mock-google-token-xyz; path=/";
-      toast.success("Successfully logged in with Google! Welcome back, John Doe.", { id: "google-auth" });
-      // Reload page to reflect login
-      setTimeout(() => window.location.reload(), 800);
-    }, 1500);
-  };
-
-  const handleFacebook = (): void => {
-    setLoadingFacebook(true);
-    toast.loading("Initiating Facebook OAuth connection...", { id: "fb-auth" });
-    setTimeout(() => {
-      setLoadingFacebook(false);
-      localStorage.setItem("user", JSON.stringify({ name: "Jane Doe", email: "jane.doe@facebook.com" }));
-      document.cookie = "token=mock-fb-token-abc; path=/";
-      toast.success("Successfully logged in with Facebook! Welcome back, Jane Doe.", { id: "fb-auth" });
-      setTimeout(() => window.location.reload(), 800);
-    }, 1500);
-  };
+  const { loginWithGoogle, loginWithFacebook, isGoogleLoading, isFacebookLoading } = useSocialAuth();
+  const anyLoading = isGoogleLoading || isFacebookLoading;
 
   return (
-    <div className="flex flex-col items-center gap-4 mt-2">
-      <p className="text-sm text-gray-500">Or Continue With</p>
-      <div className="flex items-center gap-4">
-        <SocialButton
-          onClick={handleGoogle}
-          disabled={loadingGoogle || loadingFacebook}
-          ariaLabel="Continue with Google"
-        >
-          {loadingGoogle ? (
-            <svg className="animate-spin w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <circle cx="12" cy="12" r="10" strokeWidth="3" />
-            </svg>
-          ) : (
-            <GoogleIcon />
-          )}
+    <div className="flex flex-col items-center gap-4">
+      <p className="text-sm text-gray-500 dark:text-white">Or</p>
+      <div className="flex items-center gap-3">
+        <SocialButton onClick={loginWithGoogle} disabled={anyLoading} ariaLabel="Continue with Google">
+          {isGoogleLoading ? <Spinner /> : <GoogleIcon />}
         </SocialButton>
-        <SocialButton
-          onClick={handleFacebook}
-          disabled={loadingGoogle || loadingFacebook}
-          ariaLabel="Continue with Facebook"
-        >
-          {loadingFacebook ? (
-            <svg className="animate-spin w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <circle cx="12" cy="12" r="10" strokeWidth="3" />
-            </svg>
-          ) : (
-            <FacebookIcon />
-          )}
+        <SocialButton onClick={loginWithFacebook} disabled={anyLoading} ariaLabel="Continue with Facebook">
+          {isFacebookLoading ? <Spinner /> : <FacebookIcon />}
         </SocialButton>
       </div>
     </div>
