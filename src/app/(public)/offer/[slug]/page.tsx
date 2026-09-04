@@ -77,7 +77,13 @@ async function getCampaignDetail(slug: string): Promise<CampaignDetailResponse |
     const res = await api.get<CampaignDetailResponse>(`campaign/${slug}`, {
       next: { revalidate: 5 },
     });
-    if (res && res.found && res.statusCode !== 404) {
+    // `found` reflects whether any products matched (it's 0/false for a real,
+    // currently-empty campaign) — not whether the campaign itself exists. A
+    // response reaching here already means the backend resolved the slug: a
+    // truly unknown slug responds 404 instead, which throws below and falls
+    // through to the list-based fallback. So any successful response here is
+    // a valid campaign page, even with zero products.
+    if (res) {
       return res;
     }
   } catch (err) {
@@ -158,7 +164,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function OfferDetailPage({ params }: PageProps) {
   const { slug } = await params;
   const initialData = await getCampaignDetail(slug);
-
   if (!initialData) notFound();
 
   const campaignName        = initialData.campaign_name ?? initialData.campaignName ?? cleanSlug(slug);

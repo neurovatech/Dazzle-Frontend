@@ -284,7 +284,7 @@ export default function CampaignDetailClient({
       {/* ── Empty ── */}
       {allProducts.length === 0 && !isFetchingMore && (
         <div className="text-center py-20">
-          <p className="text-gray-400 text-sm">No products found for this campaign.</p>
+          <p className="text-gray-400 text-sm">No products found for this offer.</p>
           {hasActiveFilter && (
             <button onClick={handleClear} className="mt-2 text-xs text-[#6D3F0E] dark:text-[#d4a97a] hover:underline">
               Clear filters
