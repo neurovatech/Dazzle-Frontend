@@ -6,6 +6,7 @@ import { CartIcon } from "@/icon";
 import toast from "react-hot-toast";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { addToCart } from "@/store/slices/cartSlice";
+import { trackAddToCart } from "@/lib/analytics/pixelEvents";
 import { isEmpty, formatPrice, type ClipProduct } from "./clipToCart.shared";
 
 interface ClipToCartCardProps {
@@ -55,6 +56,7 @@ export default function ClipToCartCard({
         slug: product.productSlug || "",
       }),
     );
+    trackAddToCart({ id: product.id, name: product.title, price: product.discountedPrice ?? product.regularPrice ?? 0, brand: product.brandName });
     toast.success(`${product.title} added to cart! 🛒`);
   };
 

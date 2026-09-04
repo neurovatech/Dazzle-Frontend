@@ -1,0 +1,169 @@
+DAZZLE — SERVER-SIDE TRACKING: WHAT THE BACKEND NEEDS TO BUILD
+================================================================
+For: Backend developer
+From: Frontend
+Context: Facebook Pixel + Google Tag Manager are now live on the frontend
+         (client-side only). This document covers the SERVER-SIDE half —
+         Facebook Conversions API (CAPI) — which the frontend cannot do by
+         itself, and which is required for accurate tracking because:
+           - iOS/Safari + most ad blockers block or throttle the browser
+             pixel a large percentage of the time.
+           - Orders paid via bKash/SSLCommerz redirect the customer AWAY
+             from our site to the gateway, so the browser is not present
+             to fire a "Purchase" pixel when payment actually succeeds.
+         Server-side tracking fixes both: it fires directly from our
+         backend to Meta, using the same event_id as the (best-effort)
+         browser pixel so Meta can deduplicate the two into one event
+         instead of double-counting.
+
+
+1. WHAT THE FRONTEND ALREADY SENDS YOU
+----------------------------------------------------------------
+Every call to POST /api/tokenized/v1/create-order-invoice now includes a
+new object in the request body:
+
+    {
+      ...(existing fields, unchanged)...
+      "trackingMeta": {
+        "eventId":      "9b1e1c0a-2f3e-4c9a-8b2a-3a2f6b9d7e10",   // uuid, ALWAYS present
+        "fbp":           "fb.1.1690000000000.123456789",          // Facebook browser id cookie — present once the pixel has loaded, otherwise omitted
+        "fbc":           "fb.1.1690000000000.AbCdEfGh",           // Facebook click-id cookie — only present if the visitor arrived via a Facebook/Instagram ad click
+        "fbclid":        "AbCdEfGh...",                           // raw click id from the ad URL, if present on any page this session visited
+        "gclid":         "Cj0KCQjw...",                           // Google Ads click id, same as above
+        "ttclid":        "...",                                   // TikTok click id, same as above
+        "utm_source":    "facebook",
+        "utm_medium":    "cpc",
+        "utm_campaign":  "...",
+        "utm_term":      "...",
+        "utm_content":   "...",
+        "landing_page":  "/product/iphone-17-pro-max",             // first page of this attribution session
+        "first_seen":    "2026-09-01T10:15:00.000Z"
+      }
+    }
+
+Notes:
+  - Every field except "eventId" is OPTIONAL — omit handling gracefully
+    (a direct/organic visitor has none of the click-id/utm fields).
+  - "eventId" is the ONLY field that matters for deduplication. Store it
+    against the order record (orderToken / orderNo) so it is available
+    again when the payment gateway webhook fires later.
+  - fbp/fbc are read straight from cookies Facebook's own pixel script
+    sets in the browser — we do not generate or modify them.
+
+
+2. WHAT TO BUILD: FACEBOOK CONVERSIONS API (CAPI)
+----------------------------------------------------------------
+Endpoint to call (server → Meta, never from the browser):
+
+    POST https://graph.facebook.com/v21.0/{PIXEL_ID}/events?access_token={ACCESS_TOKEN}
+
+Where to get PIXEL_ID and ACCESS_TOKEN:
+  - Meta Events Manager → your pixel → Settings → Conversions API →
+    "Generate access token". Marketing/ad-account owner needs to do this;
+    ask them for the token and pixel ID.
+  - Store ACCESS_TOKEN as a backend secret/env var (e.g. FB_CAPI_ACCESS_TOKEN).
+    NEVER expose it to the frontend or commit it to source control.
+
+When to fire a "Purchase" event:
+  a) Cash-on-delivery / pay-at-store orders — fire immediately when
+     /api/tokenized/v1/execute-order succeeds (order is confirmed instantly,
+     no external redirect).
+  b) bKash / SSLCommerz orders — fire from the PAYMENT GATEWAY'S OWN
+     success webhook/callback (whatever endpoint bKash/SSLCommerz calls
+     to notify you payment succeeded) — NOT at invoice-creation time,
+     because the customer may abandon the gateway page or the payment may
+     fail. This is the case the frontend genuinely cannot cover at all,
+     which is exactly why this needs to live on the backend.
+
+Request body shape:
+
+    {
+      "data": [
+        {
+          "event_name": "Purchase",
+          "event_time": 1735900000,                 // unix seconds, when payment was actually confirmed
+          "event_id": "9b1e1c0a-2f3e-4c9a-8b2a-3a2f6b9d7e10",  // MUST equal trackingMeta.eventId from step 1 — this is the dedup key
+          "event_source_url": "https://dazzle.com.bd/checkout",
+          "action_source": "website",
+          "user_data": {
+            "client_ip_address": "203.0.113.5",       // from the incoming HTTP request (order-confirmation call or gateway webhook), NOT from the frontend
+            "client_user_agent": "Mozilla/5.0 ...",    // same — read from the request headers you already receive
+            "fbp": "fb.1.1690000000000.123456789",     // from trackingMeta.fbp, if present
+            "fbc": "fb.1.1690000000000.AbCdEfGh",      // from trackingMeta.fbc, if present
+            "em": ["<sha256 of lowercased, trimmed email>"],   // optional but improves match quality — see "Hashing" below
+            "ph": ["<sha256 of phone in E.164 digits only>"]   // optional, same reason
+          },
+          "custom_data": {
+            "currency": "BDT",
+            "value": 244990,
+            "content_type": "product",
+            "content_ids": ["0197871c-d2f4-7242-9c7f-bd892f017166"],
+            "contents": [
+              { "id": "0197871c-d2f4-7242-9c7f-bd892f017166", "quantity": 1 }
+            ]
+          }
+        }
+      ]
+    }
+
+Hashing user_data (em/ph):
+  - Lowercase + trim the value, then SHA-256 hash it (hex string). Example
+    for email: sha256("john@example.com") after trimming/lowercasing.
+    Never send raw/unhashed email or phone to Meta.
+
+Testing before going live:
+  - Meta Events Manager → Conversions API → "Test Events" tab gives you a
+    test_event_code. Add "test_event_code": "TEST12345" (top-level, next to
+    "data") to your request while testing, remove it once verified live.
+  - Confirm in Events Manager that server-sent Purchase events show
+    "Event deduplication: Yes" against the matching browser-pixel event —
+    that confirms the event_id wiring is correct end to end.
+
+Other events worth sending server-side (optional, same mechanics as
+above — only Purchase is required to start with):
+  - "InitiateCheckout" — could be sent when create-order-invoice is called,
+    using the same trackingMeta.eventId the frontend already generates and
+    sends on the same request (it fires its own client-side
+    InitiateCheckout with this id, so send the server copy with the SAME
+    id for dedup, not a new one).
+
+
+3. GOOGLE ADS / GA4 (OPTIONAL, SAME IDEA)
+----------------------------------------------------------------
+If/when the marketing team wants Google-side server tracking too:
+  - Enhanced Conversions for Leads/offline conversion import, using the
+    "gclid" field from trackingMeta — uploaded via the Google Ads API on
+    whatever cadence you choose (does not need to be real-time).
+  - Or GA4 Measurement Protocol (https://www.google-analytics.com/mp/collect)
+    if a GA4 property is set up — needs a GA4 "client_id", which the
+    frontend does not currently forward. Tell the frontend team if this is
+    needed and a small addition can add it to trackingMeta the same way
+    fbp/fbc are handled now.
+  This section is NOT required to ship the Facebook CAPI work above — flag
+  it separately with marketing if they want it.
+
+
+4. WHAT THIS DOES ***NOT*** REQUIRE FROM YOU
+----------------------------------------------------------------
+  - Google Tag Manager (GTM) and the Facebook Pixel base script are
+    entirely client-side and already wired into the frontend — no backend
+    change needed for those to work. Marketing only needs to give the
+    frontend team the real GTM container id and Pixel id (see below).
+  - You do NOT need to read cookies yourself or talk to the browser in any
+    way — everything you need (fbp, fbc, click ids, event_id) arrives
+    already-parsed in the trackingMeta object described in section 1.
+
+
+5. ONE THING MARKETING/FRONTEND STILL OWES YOU
+----------------------------------------------------------------
+The actual Pixel ID and GTM Container ID are configured as frontend
+environment variables (NEXT_PUBLIC_FB_PIXEL_ID, NEXT_PUBLIC_GTM_ID) — until
+those are set, the frontend does not load the scripts at all, and fbp/fbc
+cookies will never appear, so trackingMeta will look "empty" in testing.
+Confirm with the frontend/marketing owner that those are set before you
+start testing CAPI end-to-end.
+
+
+Questions → ask the frontend developer who wired up trackingMeta
+(see src/lib/analytics/ in the frontend repo for the exact client-side
+logic this document describes).

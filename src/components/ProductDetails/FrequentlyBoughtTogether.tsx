@@ -5,6 +5,7 @@ import { useState } from "react";
 import ProductCard from "./ProductCrad";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { addToCart } from "@/store/slices/cartSlice";
+import { trackAddToCart } from "@/lib/analytics/pixelEvents";
 import { api } from "@/lib/api";
 import toast from "react-hot-toast";
 
@@ -133,6 +134,7 @@ export default function FrequentlyBoughtTogether({
             slug: p.slug || "",
           })
         );
+        trackAddToCart({ id: pUuid || variantUUID, name: p.name || "Product", price: finalPrice });
         addedCount++;
       }
 

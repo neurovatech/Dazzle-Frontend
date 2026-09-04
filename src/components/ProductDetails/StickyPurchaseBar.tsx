@@ -4,6 +4,7 @@ import { useState } from "react";
 import QuantitySelector from "./QuantitySelector";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { addToCart } from "@/store/slices/cartSlice";
+import { trackAddToCart } from "@/lib/analytics/pixelEvents";
 import toast from "react-hot-toast";
 import { verifyOrderProduct } from "@/lib/verify-order-product";
 import type { CareOption } from "./DazzleCare";
@@ -195,6 +196,7 @@ export default function StickyPurchaseBar({
         minBookingPrice: minBookingPrice ?? 0,
       })
     );
+    trackAddToCart({ id: productId || finalVariantUuid, name: cartName, price: finalPrice, quantity: qty });
 
     if (!addedToCart) {
       // Only toast on first add — not on qty update

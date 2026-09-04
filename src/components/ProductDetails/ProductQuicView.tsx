@@ -13,6 +13,7 @@ import ProductVariants from "./ProductVariants";
 import NoImg from "@/images/no_images.png";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { addToCart } from "@/store/slices/cartSlice";
+import { trackAddToCart } from "@/lib/analytics/pixelEvents";
 import { api } from "@/lib/api";
 import toast from "react-hot-toast";
 import { verifyOrderProduct } from "@/lib/verify-order-product";
@@ -406,6 +407,7 @@ function ProductQuicView({
         slug: displaySlug,
       }),
     );
+    trackAddToCart({ id: pUuid || variantUUID, name: displayTitle, price: finalPrice, quantity: qty, brand: displayBrand });
     if (options?.showToast !== false) {
       toast.success(`${displayTitle} added to cart! 🛒`);
     }

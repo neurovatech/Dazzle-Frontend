@@ -23,6 +23,7 @@ import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { addToCart } from "@/store/slices/cartSlice";
 import toast from "react-hot-toast";
 import { toggleWishlist } from "@/store/slices/wishlistSlice";
+import { trackAddToCart, trackAddToWishlist } from "@/lib/analytics/pixelEvents";
 import type { CareOption } from "./DazzleCare";
 type StockStatus = "in_stock" | "overselling" | "pre_order" | "eol";
 
@@ -165,6 +166,7 @@ export default function ProductInfo({
         minBookingPrice: alldata?.minBookingPrice ?? 0,
       }),
     );
+    trackAddToCart({ id: targetProductUuid || targetCartId, name: cartName, price: cartPrice, quantity: qty ?? 1, brand });
 
     if (!isAlreadyInCart) {
       toast.success(`${cartName} added to cart! 🛒`);
@@ -197,6 +199,9 @@ export default function ProductInfo({
   };
 
   const handleWishlist = () => {
+    if (!isWishlisted) {
+      trackAddToWishlist({ id: productId, name: title || "", price: alldata?.discountedPrice || 0 });
+    }
     dispatch(
       toggleWishlist({
         productUuid: productId,

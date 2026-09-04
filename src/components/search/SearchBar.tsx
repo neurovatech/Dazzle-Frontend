@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { SearchIcon } from "@/icon";
 import RecentSearches, { addRecentSearch } from "./RecentSearches";
 import ProductSearches from "./ProductSearches";
+import { trackSearch } from "@/lib/analytics/pixelEvents";
 
 export default function SearchBar() {
   const [isFocused, setIsFocused] = useState(false);
@@ -42,6 +43,7 @@ export default function SearchBar() {
     if (e.key === "Enter" && query.trim()) {
       const term = query.trim();
       addRecentSearch(term);
+      trackSearch(term);
       setQuery("");
       setIsFocused(false);
       inputRef.current?.blur();
@@ -52,6 +54,7 @@ export default function SearchBar() {
   // When user picks a recent/trending term → navigate to search page
   const handleSelectTerm = (term: string) => {
     addRecentSearch(term);
+    trackSearch(term);
     setQuery("");
     setIsFocused(false);
     inputRef.current?.blur();

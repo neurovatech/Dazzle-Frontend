@@ -5,6 +5,7 @@ import Image from "next/image";
 import NoImg from "@/images/no_images.png";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { addToCart, removeFromCart } from "@/store/slices/cartSlice";
+import { trackAddToCart } from "@/lib/analytics/pixelEvents";
 import toast from "react-hot-toast";
 
 interface BuyMoreItem {
@@ -53,6 +54,7 @@ const BuyMore: React.FC<BuyMoreProps> = ({ items }: any) => {
           slug: item.slug || "",
         })
       );
+      trackAddToCart({ id: item.id, name: item.name, price: item.price ?? 0 });
       toast.success(`${item.name} added to cart! 🛒`);
     }
   };

@@ -2,6 +2,7 @@
 
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { toggleWishlist } from "@/store/slices/wishlistSlice";
+import { trackAddToWishlist } from "@/lib/analytics/pixelEvents";
 
 /**
  * Client island for the wishlist toggle only.
@@ -39,6 +40,9 @@ export default function ProductCardWishlist({
   const isWishlisted = wishlistItems.some((i) => i.productUuid === productUuid);
 
   const handleWishlist = () => {
+    if (!isWishlisted) {
+      trackAddToWishlist({ id: productUuid, name: title, price });
+    }
     dispatch(
       toggleWishlist({
         productUuid,

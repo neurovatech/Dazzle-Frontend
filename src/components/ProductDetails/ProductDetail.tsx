@@ -25,6 +25,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAppDispatch } from "@/store/hooks";
 import { addToCart } from "@/store/slices/cartSlice";
 import toast from "react-hot-toast";
+import { trackViewContent } from "@/lib/analytics/pixelEvents";
 // import type { ProductApiData } from "@/app/(public)/product/[productSlug]/page";
 import RelatedProductSectionCom from "./RelatedProducts/RelatedProductSectionCom";
 import DescriptionProductDetails from "./DescriptionProductDetails";
@@ -268,6 +269,19 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
     selectedVariant?.mrp && selectedVariant.mrp > 0
       ? selectedVariant.mrp
       : (product?.regularPrice ?? 0);
+
+  // Fires once per product viewed — deliberately keyed on productUuid only,
+  // not on price/variant, so switching a colour/variant doesn't re-fire
+  // ViewContent as if the visitor loaded a new page.
+  useEffect(() => {
+    if (!product?.productUuid) return;
+    trackViewContent({
+      id: product.productUuid,
+      name: product.productName || "",
+      price: product.discountedPrice ?? product.regularPrice ?? 0,
+      brand: product.brandName,
+    });
+  }, [product?.productUuid]);
 
   // ── Plan Accessories data processing ─────────────────────────
   const { dazzleCareOptions, frequentlyBoughtProducts } = useMemo(() => {

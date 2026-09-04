@@ -16,6 +16,8 @@ import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { increaseQty, decreaseQty, clearCart, patchMinBookingPrice } from "@/store/slices/cartSlice";
 import { useQuery, useQueries } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { trackInitiateCheckout, trackPurchase, generateEventId } from "@/lib/analytics/pixelEvents";
+import { getClickIds, readTrackingCookie } from "@/lib/analytics/clickIds";
 
 // ─── API Types ────────────────────────────────────────────────────────────────
 interface CreateInvoiceResponse { statusCode: number; status: string; message: string; data?: { orderToken: string; orderNo: string }; errors?: string[]; }
@@ -207,6 +209,17 @@ export default function CheckoutPageCom() {
   useEffect(() => {
     if (user) setNewAddr((p) => ({ ...p, fullName: p.fullName || "", email: p.email || "" }));
   }, [user]);
+
+  // Reaching this page IS the "began checkout" signal — fired once per visit,
+  // not re-fired as the reader edits delivery/payment options below.
+  useEffect(() => {
+    if (cartItems.length === 0) return;
+    trackInitiateCheckout(
+      cartItems.map((i) => ({ id: i.productUuid || i.id, name: i.name, price: i.price, quantity: i.quantity })),
+      cartItems.reduce((s, i) => s + i.price * i.quantity, 0),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
 
   const [serviceLevel, setServiceLevel] = useState<ServiceLevel>("regular");
@@ -645,11 +658,25 @@ console.log(selectedAreaObj, "selectedAreaObjselectedAreaObj")
     try {
       const browserToken = `web-session-${apiKey}-${Date.now()}`;
 
+      // Shared with the Purchase pixel call below (COD/pay-at-store path) so
+      // Meta can dedupe against the server-side Conversions API event the
+      // backend fires from this same trackingMeta — see
+      // docs/tracking-backend-requirements.txt.
+      const purchaseEventId = generateEventId();
+      const clickIds = getClickIds();
+      const trackingMeta = {
+        eventId: purchaseEventId,
+        fbp: readTrackingCookie("_fbp") || undefined,
+        fbc: readTrackingCookie("_fbc") || undefined,
+        ...clickIds,
+      };
+
       // ── New API: all boolean flags ────────────────────────────────────────
       const invoicePayload: any = {
         usersCommUuid: apiKey,
         browserToken,
         remarks: remarks.trim() || undefined,
+        trackingMeta,
 
         // Delivery type flags
         isShopPickup:    isPickup,
@@ -734,8 +761,16 @@ console.log(selectedAreaObj, "selectedAreaObjselectedAreaObj")
         }
       } else {
         await saveNewAddressToBook(isPickup);
+        const purchaseTotal = resEx.data?.total || total;
+        const purchaseOrderNo = resInvoice.data.orderNo || `DZL-${Date.now()}`;
+        trackPurchase(
+          purchaseOrderNo,
+          cartItems.map((i) => ({ id: i.productUuid || i.id, name: i.name, price: i.price, quantity: i.quantity })),
+          purchaseTotal,
+          purchaseEventId,
+        );
         dispatch(clearCart());
-        setConfirmedOrder({ orderNo: resInvoice.data.orderNo || `DZL-${Date.now()}`, total: resEx.data?.total || total });
+        setConfirmedOrder({ orderNo: purchaseOrderNo, total: purchaseTotal });
         setOrderConfirmed(true);
         toast.success("Order placed successfully!");
       }

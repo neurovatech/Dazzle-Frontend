@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Urbanist } from "next/font/google";
 import "./globals.css";
 import { dehydrate } from "@tanstack/react-query";
@@ -10,6 +11,9 @@ import NextTopLoader from "nextjs-toploader";
 import QueryProvider from "@/app/providers/QueryProvider";
 import ReduxProvider from "@/app/providers/ReduxProvider";
 import { Toaster } from "react-hot-toast";
+import GoogleTagManager, { GoogleTagManagerNoScript } from "@/components/analytics/GoogleTagManager";
+import FacebookPixel from "@/components/analytics/FacebookPixel";
+import RouteChangeTracker from "@/components/analytics/RouteChangeTracker";
 import { getSiteSettings, stripHtml, stripHeavyFields } from "@/lib/getSiteSettings";
 import { getQueryClient } from "@/lib/query-client";
 import type { SiteSettingsData } from "@/store/slices/siteSettingsSlice";
@@ -134,8 +138,14 @@ export default async function RootLayout({
         <link rel="dns-prefetch" href="https://dzl.sgp1.cdn.digitaloceanspaces.com" />
         <link rel="preconnect" href="https://apix.bigpoint.com.bd" />
         <link rel="dns-prefetch" href="https://apix.bigpoint.com.bd" />
+        <GoogleTagManager />
+        <FacebookPixel />
       </head>
       <body>
+        <GoogleTagManagerNoScript />
+        <Suspense fallback={null}>
+          <RouteChangeTracker />
+        </Suspense>
         <JsonLd id="ld-site" data={siteJsonLd} />
         <ThemeProvider>
           <ReduxProvider>

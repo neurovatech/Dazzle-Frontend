@@ -5,6 +5,7 @@ import React, { useState } from "react";
 import { CartIcon } from "@/icon";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { addToCart } from "@/store/slices/cartSlice";
+import { trackAddToCart } from "@/lib/analytics/pixelEvents";
 import ProductQuicView from "@/components/ProductDetails/ProductQuicView";
 import toast from "react-hot-toast";
 import { api } from "@/lib/api";
@@ -192,6 +193,7 @@ export default function ProductCardBuy({
           minBookingPrice: minBookingPrice ?? 0,
         }),
       );
+      trackAddToCart({ id: itemId || variantUUID, name: cartName, price: finalPrice, quantity: 1 });
 
       toast.success(`Added to cart! 🛒`);
     } finally {
