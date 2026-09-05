@@ -239,23 +239,28 @@ const ProductCard: React.FC<ProductCardProps> = ({
             character-count guess to get wrong on some other screen size.
           */}
           <h3
-            className="flex items-baseline gap-1 h-[23px]"
-            title={title}
-          >
-            {/* Figma: Urbanist SemiBold 15px, line-height 150% */}
-            <span className="min-w-0 flex-1 truncate font-semibold dark:text-[#222] text-[15px] leading-[1.5] text-[#575757]">
-              {title}
-            </span>
-            {inStock ? (
-              <span className="shrink-0 text-[#03A000] font-bold text-[15px] leading-[1.5]">
-                In Stock
-              </span>
-            ) : (
-              <span className="shrink-0 text-[#f00] text-[15px] leading-[1.5]">
-                Out Of Stock
-              </span>
-            )}
-          </h3>
+  // Figma: Urbanist SemiBold 15px, line-height 150%
+  className="font-semibold dark:text-[#222] text-[15px] leading-[1.5] line-clamp-2 h-11 text-[#575757] max-[640px]:text-[13px]"
+  title={title}
+>
+
+
+
+<span className="hidden sm:inline">
+  {title.length > 40 ? title.slice(0, 40) + "..." : title}
+</span>
+
+<span className="inline sm:hidden">
+  {title.length > 30 ? title.slice(0, 30) + "..." : title}
+</span>
+
+  {inStock ? (
+    <span className="text-[#03A000] font-bold"> In Stock </span>
+  ) : (
+    <span className="text-[#f00]"> Out Of Stock </span>
+  )}
+</h3>
+
           <div
             role="tooltip"
             className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-[60] w-max max-w-[220px] whitespace-normal rounded-lg bg-gray-900 text-white text-[10px] sm:text-xs px-2.5 py-1.5 shadow-lg opacity-0 scale-95 origin-bottom transition-all duration-300 group-hover:opacity-100 group-hover:scale-100 "
