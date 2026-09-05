@@ -103,6 +103,8 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
     staleTime: 10 * 60 * 1000,
   });
 
+  console.log("planAccessoriesData", planAccessoriesData);
+
   // ── Consolidate ────────────────────────────────────────────────
   const { groups, variants } = useMemo(
     () => consolidateVariants(variantApiData?.data ?? []),
@@ -260,7 +262,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
     })),
   }));
 
-  // ── Pricing — variant price > 0 হলে সেটা নাও, নাহলে product API এর price ──
   const price =
     selectedVariant?.price && selectedVariant.price > 0
       ? selectedVariant.price
@@ -297,7 +298,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
 
     // Map Dazzle Care options
     const dcOptions = (dazzleCareGroup?.items ?? []).map((item) => {
-      // productName을 ':' 또는 '(' 기준으로 title / description 분리
       const parenIdx = item.productName.indexOf("(");
       const colonIdx = item.productName.indexOf(":");
       let title = item.productName;
@@ -381,6 +381,8 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
       frequentlyBoughtProducts: fbtProducts,
     };
   }, [planAccessoriesData, price]);
+
+
 
   // ── Derived care plan totals (offer + regular) ─────────────────
   const selectedCareOptions = useMemo(
@@ -536,6 +538,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
           // Variant API loaded + has variants but none selected yet → block add to cart
           (!isVariantLoading && variants.length > 0 && selectedVariant === null)
         }
+        isTba={product?.isTba ?? false}
         onExploreFinancing={() => setEmiOpen(true)}
         onStoreAvailability={() => setStoreAvailabilityOpen(true)}
         selectedPriceType={selectedPriceType}

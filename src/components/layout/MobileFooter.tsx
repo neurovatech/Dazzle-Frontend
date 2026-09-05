@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAppSelector } from "@/store/hooks";
+import { useEffect, useRef, useState } from "react";
 
 type NavItem = {
   id: string;
@@ -204,6 +205,36 @@ export default function MobileFooter() {
   const pathname = usePathname();
   const token = useAppSelector((state) => state.auth.token);
 
+  // ── Scroll detection: big → small on scroll down, small → big on scroll up ──
+  const [isCompact, setIsCompact] = useState(false);
+  const lastScrollY = useRef(0);
+  const ticking = useRef(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (ticking.current) return;
+      ticking.current = true;
+      requestAnimationFrame(() => {
+        const currentY = window.scrollY;
+        const diff = currentY - lastScrollY.current;
+
+        if (diff > 6 && currentY > 60) {
+          // scrolling down → compact
+          setIsCompact(true);
+        } else if (diff < -6) {
+          // scrolling up → expanded
+          setIsCompact(false);
+        }
+
+        lastScrollY.current = currentY;
+        ticking.current = false;
+      });
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   const isProductDetail = /^\/product\/.+/.test(pathname);
   if (isProductDetail) return null;
 
@@ -257,9 +288,11 @@ export default function MobileFooter() {
   };
 
   return (
-     <div className="fixed bottom-2 z-100 w-full flex justify-center px-3 pt-3">
+    <div className="fixed bottom-2 z-100 w-full flex justify-center px-3 pt-3">
       <nav
-        className="grid grid-cols-5 gap-1 px-2 py-2 w-full rounded-[28px]"
+        className={`grid grid-cols-5 gap-1 px-2 rounded-[28px] transition-all duration-500 ease-in-out ${
+          isCompact ? "py-1.5 w-[90%]" : "py-2 w-full"
+        }`}
         style={{
           background:
             "linear-gradient(90deg, rgba(0, 0, 0, 0.84) 0%, #43372A 100%)",
@@ -275,11 +308,12 @@ export default function MobileFooter() {
               href={getHref(item.id)}
               key={item.id}
               className={`
-                w-full flex flex-col items-center justify-center gap-1
-                py-2 rounded-[18px]
-                transition-all duration-300 ease-out
+                w-full flex flex-col items-center justify-center
+                rounded-[18px]
+                transition-all duration-500 ease-in-out
+                ${isCompact ? "gap-0 py-1.5" : "gap-1 py-2"}
                 ${isActive ? "bg-[#2a2520]" : "hover:bg-[#232018]"}
-            `}
+              `}
               style={
                 isActive
                   ? {
@@ -289,22 +323,26 @@ export default function MobileFooter() {
                   : {}
               }
             >
-              {/* Icon */}
+              {/* Icon — larger when expanded, smaller when compact */}
               <div
-                className="transition-transform duration-300"
+                className="transition-all duration-500 ease-in-out flex items-center justify-center"
                 style={{
-                  transform: isActive ? "scale(1.1)" : "scale(1)",
+                  transform: isActive
+                    ? isCompact ? "scale(1.0)" : "scale(1.15)"
+                    : "scale(1)",
                 }}
               >
                 {renderIcon(item.id)}
               </div>
 
-              {/* Label */}
+              {/* Label — visible when expanded, hidden when compact */}
               <span
-                className="text-[10px] font-medium tracking-wide whitespace-nowrap"
+                className="text-[10px] font-medium tracking-wide whitespace-nowrap overflow-hidden transition-all duration-500 ease-in-out"
                 style={{
                   color: isActive ? "#c9a96e" : "#6b7280",
                   fontFamily: "'DM Sans', sans-serif",
+                  maxHeight: isCompact ? "0px" : "20px",
+                  opacity: isCompact ? 0 : 1,
                 }}
               >
                 {item.label}

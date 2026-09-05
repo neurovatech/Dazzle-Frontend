@@ -267,6 +267,7 @@ function ProductQuicView({
   const displayBrand = product?.brandName ?? "";
   const displayCode = product?.productCode ?? "";
   const displayInStock = product != null ? product.isActive : true;
+  const displayIsTba = product != null ? (product.isTba ?? false) : false;
   const displaySlug = product?.productSlug ?? slug ?? "";
   const displayId =
     selectedVariant?.id ?? product?.productUuid ?? productUuid ?? slug ?? "";
@@ -532,11 +533,17 @@ function ProductQuicView({
           <div className="pt-5 space-y-3">
             {/* Availability + Code */}
             <div className="flex items-center justify-between text-sm">
-              <span
-                className={`font-semibold ${displayInStock ? "text-emerald-600" : "text-red-500"}`}
-              >
-                {displayInStock ? "In Stock" : "Out of Stock"}
-              </span>
+              {displayIsTba ? (
+                <span className="bg-[#6D3F0E] text-white text-xs font-bold px-3 py-1 rounded-full shadow-md">
+                  TBA
+                </span>
+              ) : (
+                <span
+                  className={`font-semibold ${displayInStock ? "text-emerald-600" : "text-red-500"}`}
+                >
+                  {displayInStock ? "In Stock" : "Out of Stock"}
+                </span>
+              )}
               {displayCode && (
                 <span className="text-gray-500 dark:text-gray-400">
                   Code:{" "}
@@ -572,17 +579,26 @@ function ProductQuicView({
             {/* Price + Qty */}
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-extrabold text-[#B57908] dark:text-[#D4A97A]">
-                  {loading ? (
-                    <span className="block h-7 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-                  ) : (
-                    formatPrice(displayPrice)
-                  )}
-                </span>
-                {displayOriginal > 0 && displayOriginal !== displayPrice && (
-                  <span className="text-base text-gray-400 line-through">
-                    {formatPrice(displayOriginal)}
+                {displayIsTba ? (
+                  /* TBA — price hide, শুধু TBA badge */
+                  <span className="bg-[#6D3F0E] text-white text-sm font-bold px-4 py-1.5 rounded-full shadow-md">
+                    TBA
                   </span>
+                ) : (
+                  <>
+                    <span className="text-2xl font-extrabold text-[#B57908] dark:text-[#D4A97A]">
+                      {loading ? (
+                        <span className="block h-7 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                      ) : (
+                        formatPrice(displayPrice)
+                      )}
+                    </span>
+                    {displayOriginal > 0 && displayOriginal !== displayPrice && (
+                      <span className="text-base text-gray-400 line-through">
+                        {formatPrice(displayOriginal)}
+                      </span>
+                    )}
+                  </>
                 )}
               </div>
 
@@ -760,7 +776,7 @@ function ProductQuicView({
 
         {/* ── Footer Buttons ── */}
         <div className="rounded-b-2xl gap-4 bg-white p-4 shadow-[0px_-4px_26.6px_6px_#0000002B] flex items-center justify-between dark:bg-[#3d3228]">
-          {!displayInStock ? (
+          {!displayInStock || displayIsTba ? (
             <button
               disabled
               className="border border-gray-200 bg-gray-100 text-gray-400 px-4 py-2 rounded-md w-full justify-center flex items-center gap-2 cursor-not-allowed font-semibold opacity-70"
@@ -779,7 +795,7 @@ function ProductQuicView({
                   d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
                 />
               </svg>
-              NOT IN STOCK
+              {displayIsTba ? "TBA" : "NOT IN STOCK"}
             </button>
           ) : (
             <button
@@ -793,9 +809,9 @@ function ProductQuicView({
           <button
             type="button"
             onClick={handleBuyNow}
-            disabled={loading || loadingBuyNow || !displayInStock}
+            disabled={loading || loadingBuyNow || !displayInStock || displayIsTba}
             className={`border border-[#E7E7E7] bg-[#222222] text-white px-4 py-2 rounded-md hover:bg-[#F7F7F7] hover:text-[#222222] transition-colors duration-500 w-full justify-center flex items-center font-semibold disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${
-              !displayInStock ? "pointer-events-none opacity-50" : ""
+              !displayInStock || displayIsTba ? "pointer-events-none opacity-50" : ""
             }`}
           >
             {loadingBuyNow ? (

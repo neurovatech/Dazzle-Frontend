@@ -603,18 +603,23 @@ console.log(selectedAreaObj, "selectedAreaObjselectedAreaObj")
     if (isPickupArg || addressTab !== "new") return;
     if (!newAddr.fullName.trim() || !newAddr.mobile.trim() || !newAddr.districtId || !newAddr.areaId) return;
     try {
+      const payload: Record<string, unknown> = {
+        fullName:        newAddr.fullName.trim(),
+        mobileNo:        newAddr.mobile.trim(),
+        addressLabel:    newAddr.addressLabel || "Home",
+        addressLine1:    newAddr.addressLine1.trim(),
+        districtID:      Number(newAddr.districtId),
+        policeStationID: Number(newAddr.areaId),
+        isDefault:       false,
+        isActive:        true,
+      };
+      // email is optional — only include if provided
+      if (newAddr.email.trim()) {
+        payload.email = newAddr.email.trim();
+      }
       await api.post(
         "new-address-book",
-        {
-          fullName:        newAddr.fullName.trim(),
-          mobileNo:        newAddr.mobile.trim(),
-          addressLabel:    newAddr.addressLabel || "Home",
-          addressLine1:    newAddr.addressLine1.trim(),
-          districtID:      Number(newAddr.districtId),
-          policeStationID: Number(newAddr.areaId),
-          isDefault:       false,
-          isActive:        true,
-        },
+        payload,
         { headers: { Authorization: authHeader, "X-API-Key": apiKey || "" } }
       );
     } catch {
@@ -851,7 +856,8 @@ console.log(selectedAreaObj, "selectedAreaObjselectedAreaObj")
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {[["Full Name", "fullName", "text", "Full Name"], ["Mobile", "mobile", "tel", "01700000000"], ["Email", "email", "email", "email@example.com"]].map(([label, key, type, placeholder]) => (
+                    {/* Full Name & Mobile — required */}
+                    {[["Full Name", "fullName", "text", "Full Name"], ["Mobile", "mobile", "tel", "01700000000"]].map(([label, key, type, placeholder]) => (
                       <div key={key}>
                         <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">{label} <span className="text-red-500"> * </span></label>
                         <input type={type} value={(newAddr as any)[key]} placeholder={placeholder}
@@ -859,6 +865,19 @@ console.log(selectedAreaObj, "selectedAreaObjselectedAreaObj")
                           className="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#D4A97A]" />
                       </div>
                     ))}
+                    {/* Email — optional */}
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">
+                        Email <span className="text-gray-400 font-normal">(optional)</span>
+                      </label>
+                      <input
+                        type="email"
+                        value={newAddr.email}
+                        placeholder="email@example.com"
+                        onChange={(e) => setNewAddr((p) => ({ ...p, email: e.target.value }))}
+                        className="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#D4A97A]"
+                      />
+                    </div>
                     <div>
                       <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">Full Address <span className="text-red-500"> * </span></label>
                       <textarea rows={2} value={newAddr.addressLine1} placeholder="House, Road, Area" onChange={(e) => setNewAddr((p) => ({ ...p, addressLine1: e.target.value }))}

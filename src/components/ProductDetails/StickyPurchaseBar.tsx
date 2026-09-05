@@ -54,6 +54,7 @@ interface StickyPurchaseBarProps {
   onQtyChange?: (val: number) => void;
   price?: any;
   isUnavailable?: boolean;
+  isTba?: boolean;
   monthlyDuration?: string;
   storeAvailabilityHref?: string;
   onStoreAvailability?: () => void;
@@ -81,6 +82,7 @@ export default function StickyPurchaseBar({
   onQtyChange,
   price = 0,
   isUnavailable = false,
+  isTba = false,
   monthlyDuration = "12 months",
   storeAvailabilityHref = "#",
   onStoreAvailability,
@@ -279,6 +281,11 @@ export default function StickyPurchaseBar({
                 <p className="text-xl sm:text-2xl font-bold leading-tight text-gray-400 dark:text-gray-500">
                   Not in stock
                 </p>
+              ) : isTba ? (
+                /* TBA — price ও availability hide, শুধু TBA badge */
+                <span className="bg-[#6D3F0E] text-white text-sm font-bold px-4 py-1.5 rounded-full shadow-md">
+                  TBA
+                </span>
               ) : (
                 <>
                   {/* Main price — offer or regular depending on selection */}
@@ -315,16 +322,16 @@ export default function StickyPurchaseBar({
             <div className="flex items-center md:gap-3 gap-1 shrink-0 mr-[10px] md:mr-0">
               <button
                 onClick={handleAddToCart}
-                disabled={isUnavailable}
+                disabled={isUnavailable || isTba}
                 className={`shrink-0 md:px-6 px-3 sm:px-8 md:py-3 py-3 text-sm sm:text-base font-semibold rounded-full transition-all duration-200 whitespace-nowrap shadow-sm
-                  ${isUnavailable
+                  ${isUnavailable || isTba
                     ? "bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-60"
                     : addedToCart
                     ? "bg-green-500 text-white cursor-pointer"
                     : "bg-[#E9CCAE] hover:bg-[#D4B89A] active:bg-[#C0A486] text-black cursor-pointer"
                   }`}
               >
-                {isUnavailable ? "Not Available" : addedToCart ? (
+                {isTba ? "TBA" : isUnavailable ? "Not Available" : addedToCart ? (
                   <span className="flex items-center md:gap-2 gap-1">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
@@ -336,9 +343,9 @@ export default function StickyPurchaseBar({
 
               <button
                 onClick={handleBuyNow}
-                disabled={isUnavailable || loadingBuyNow}
+                disabled={isUnavailable || loadingBuyNow || isTba}
                 className={`shrink-0 md:px-6 px-3 sm:px-8 md:py-3 py-3 text-sm sm:text-base font-semibold rounded-full transition-all duration-200 whitespace-nowrap shadow-sm cursor-pointer
-                  ${isUnavailable || loadingBuyNow
+                  ${isUnavailable || loadingBuyNow || isTba
                     ? "bg-gray-300 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-60"
                     : "bg-[#222222] hover:bg-[#444444] active:bg-[#000000] text-white"
                   }`}

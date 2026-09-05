@@ -105,11 +105,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
         {/* Action Row */}
         <div className="flex items-center justify-between relative z-50">
-          {showTbaFlag && (
-            <div className="bg-[#6D3F0E] text-white text-[9px] sm:text-xs font-bold px-1.5 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-md">
-              TBS
-            </div>
-          )}
+          
 
           {isBestDeal === true && (
             <button className="ml-auto bg-[#087400] text-white text-[8px] sm:text-xs font-bold px-1 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-md lg:w-[50%]! w-[80%] flex justify-center items-center gap-1">
@@ -223,44 +219,29 @@ const ProductCard: React.FC<ProductCardProps> = ({
       <div className="p-2 sm:p-3 lg:p-4 flex flex-col flex-1 bg-[#F5F5F5] rounded-tl-2xl rounded-b-2xl">
         {/* Title & Stock */}
         <div className="text-left">
-          {/*
-            Single line, always. The title used to line-clamp-2 with a fixed
-            40-character cutoff, but on a longer name (e.g. "Apple iMac 24 inch
-            with Retina 4.5K Display") that cutoff still wrapped onto a second
-            line, and the "In Stock"/"Out Of Stock" text that followed it in
-            the same text flow got pushed onto that second line too — clipped
-            by line-clamp-2's 2-line box, or overlapping the price row below.
+          <Link href={href}>
+            <h3
+              className="font-semibold dark:text-[#222] text-[15px] leading-[1.5] line-clamp-2 h-11 text-[#575757] max-[640px]:text-[13px]"
+              title={title}
+            >
+              <span className="hidden sm:inline">
+                {title.length > 40 ? title.slice(0, 40) + "..." : title}
+              </span>
 
-            Fixed structurally rather than shortening the cutoff further: the
-            title and the stock label are now separate flex items instead of
-            one run of text. The label (shrink-0) can never be clipped or
-            wrapped; the title (min-w-0 + truncate) always eats exactly the
-            space that's left over, at any card width, with no per-card
-            character-count guess to get wrong on some other screen size.
-          */}
-          <h3
-  // Figma: Urbanist SemiBold 15px, line-height 150%
-  className="font-semibold dark:text-[#222] text-[15px] leading-[1.5] line-clamp-2 h-11 text-[#575757] max-[640px]:text-[13px]"
-  title={title}
->
+              <span className="inline sm:hidden">
+                {title.length > 30 ? title.slice(0, 30) + "..." : title}
+              </span>
 
-
-
-<span className="hidden sm:inline">
-  {title.length > 40 ? title.slice(0, 40) + "..." : title}
-</span>
-
-<span className="inline sm:hidden">
-  {title.length > 30 ? title.slice(0, 30) + "..." : title}
-</span>
-
-  {inStock ? (
-    <span className="text-[#03A000] font-bold"> In Stock </span>
-  ) : (
-    <span className="text-[#f00]"> Out Of Stock </span>
-  )}
-</h3>
-
+              {/* showTbaFlag=true হলে stock status দেখাবে না */}
+              {!showTbaFlag && (
+                inStock ? (
+                  <span className="text-[#03A000] font-bold"> In Stock </span>
+                ) : (
+                  <span className="text-[#f00]"> Out Of Stock </span>
+                )
+              )}
+            </h3>
+          </Link>
           <div
             role="tooltip"
             className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-[60] w-max max-w-[220px] whitespace-normal rounded-lg bg-gray-900 text-white text-[10px] sm:text-xs px-2.5 py-1.5 shadow-lg opacity-0 scale-95 origin-bottom transition-all duration-300 group-hover:opacity-100 group-hover:scale-100 "
@@ -272,43 +253,51 @@ const ProductCard: React.FC<ProductCardProps> = ({
         </div>
 
         {/* Price */}
-        <div className="flex items-baseline gap-2 sm:gap-2 mb-2 sm:mb-4">
-          {/* Figma: Urbanist Bold 20px, line-height 160% */}
-          <span className="items-center flex gap-1 font-bold text-[20px] leading-[1.6] tracking-[0%] text-gray-900">
-            <svg
-              width="12"
-              height="14"
-              viewBox="0 0 12 14"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M1.05292 0.00767491C0.539583 -0.0591029 0.0729167 0.317281 0.0116667 0.848469C-0.0495833 1.37966 0.309167 1.86835 0.819583 1.93513L1.05 1.96548C1.51667 2.02619 1.86667 2.439 1.86667 2.93072V3.88686H0.7C0.312083 3.88686 0 4.21164 0 4.61535C0 5.01905 0.312083 5.34383 0.7 5.34383H1.86667V10.6861C1.86667 12.2948 3.12083 13.6 4.66667 13.6H5.6C8.69167 13.6 11.2 10.9896 11.2 7.77212V6.8008C11.2 5.19206 9.94583 3.88686 8.4 3.88686H7.93333C7.41708 3.88686 7 4.32092 7 4.85817C7 5.39543 7.41708 5.82949 7.93333 5.82949H8.4C8.91625 5.82949 9.33333 6.26354 9.33333 6.8008V7.77212C9.33333 9.91811 7.66208 11.6574 5.6 11.6574H4.66667C4.15042 11.6574 3.73333 11.2233 3.73333 10.6861V5.34383H4.9C5.28792 5.34383 5.6 5.01905 5.6 4.61535C5.6 4.21164 5.28792 3.88686 4.9 3.88686H3.73333V2.93072C3.73625 1.45858 2.68625 0.217114 1.28333 0.0349929L1.05292 0.00463937V0.00767491Z"
-                fill="#101518"
-              />
-            </svg>
-            {formatPrice(price)}
-          </span>
-          {originalPrice > 0 && originalPrice !== price && (
-            // Figma: Urbanist Regular 14px, line-height 160%, strikethrough
-            <span className="text-gray-400 text-[14px] font-normal leading-[1.6] line-through flex items-center gap-1 pl-1">
-              <svg
-                width="9"
-                height="10"
-                viewBox="0 0 9 10"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M0.789687 0.0055311C0.404687 -0.0425939 0.0546875 0.228656 0.00875003 0.611468C-0.0371875 0.994281 0.231875 1.34647 0.614687 1.39459L0.7875 1.41647C1.1375 1.46022 1.4 1.75772 1.4 2.11209V2.80116H0.525C0.234062 2.80116 0 3.03522 0 3.32616C0 3.61709 0.234062 3.85116 0.525 3.85116H1.4V7.70116C1.4 8.86053 2.34063 9.80116 3.5 9.80116H4.2C6.51875 9.80116 8.4 7.91991 8.4 5.60116V4.90116C8.4 3.74178 7.45937 2.80116 6.3 2.80116H5.95C5.56281 2.80116 5.25 3.11397 5.25 3.50116C5.25 3.88834 5.56281 4.20116 5.95 4.20116H6.3C6.68719 4.20116 7 4.51397 7 4.90116V5.60116C7 7.14772 5.74656 8.40116 4.2 8.40116H3.5C3.11281 8.40116 2.8 8.08834 2.8 7.70116V3.85116H3.675C3.96594 3.85116 4.2 3.61709 4.2 3.32616C4.2 3.03522 3.96594 2.80116 3.675 2.80116H2.8V2.11209C2.80219 1.05116 2.01469 0.156468 0.9625 0.0252185L0.789687 0.00334347V0.0055311Z"
-                  fill="#747474"
-                />
-              </svg>
-
-              {formatPrice(originalPrice)}
-            </span>
+        <Link href={href} className="flex items-baseline gap-2 sm:gap-2 mb-2 sm:mb-4">
+          {showTbaFlag ? (
+            /* TBA mode — price ও stock সব লুকাও, শুধু TBA badge */
+            <div className="bg-[#6D3F0E] text-white text-[9px] sm:text-xs font-bold px-1.5 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-md">
+              TBA
+            </div>
+          ) : (
+            <>
+              {/* Figma: Urbanist Bold 20px, line-height 160% */}
+              <span className="items-center flex gap-1 font-bold text-[20px] leading-[1.6] tracking-[0%] text-gray-900">
+                <svg
+                  width="12"
+                  height="14"
+                  viewBox="0 0 12 14"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M1.05292 0.00767491C0.539583 -0.0591029 0.0729167 0.317281 0.0116667 0.848469C-0.0495833 1.37966 0.309167 1.86835 0.819583 1.93513L1.05 1.96548C1.51667 2.02619 1.86667 2.439 1.86667 2.93072V3.88686H0.7C0.312083 3.88686 0 4.21164 0 4.61535C0 5.01905 0.312083 5.34383 0.7 5.34383H1.86667V10.6861C1.86667 12.2948 3.12083 13.6 4.66667 13.6H5.6C8.69167 13.6 11.2 10.9896 11.2 7.77212V6.8008C11.2 5.19206 9.94583 3.88686 8.4 3.88686H7.93333C7.41708 3.88686 7 4.32092 7 4.85817C7 5.39543 7.41708 5.82949 7.93333 5.82949H8.4C8.91625 5.82949 9.33333 6.26354 9.33333 6.8008V7.77212C9.33333 9.91811 7.66208 11.6574 5.6 11.6574H4.66667C4.15042 11.6574 3.73333 11.2233 3.73333 10.6861V5.34383H4.9C5.28792 5.34383 5.6 5.01905 5.6 4.61535C5.6 4.21164 5.28792 3.88686 4.9 3.88686H3.73333V2.93072C3.73625 1.45858 2.68625 0.217114 1.28333 0.0349929L1.05292 0.00463937V0.00767491Z"
+                    fill="#101518"
+                  />
+                </svg>
+                {formatPrice(price)}
+              </span>
+              {originalPrice > 0 && originalPrice !== price && (
+                // Figma: Urbanist Regular 14px, line-height 160%, strikethrough
+                <span className="text-gray-400 text-[14px] font-normal leading-[1.6] line-through flex items-center gap-1 pl-1">
+                  <svg
+                    width="9"
+                    height="10"
+                    viewBox="0 0 9 10"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M0.789687 0.0055311C0.404687 -0.0425939 0.0546875 0.228656 0.00875003 0.611468C-0.0371875 0.994281 0.231875 1.34647 0.614687 1.39459L0.7875 1.41647C1.1375 1.46022 1.4 1.75772 1.4 2.11209V2.80116H0.525C0.234062 2.80116 0 3.03522 0 3.32616C0 3.61709 0.234062 3.85116 0.525 3.85116H1.4V7.70116C1.4 8.86053 2.34063 9.80116 3.5 9.80116H4.2C6.51875 9.80116 8.4 7.91991 8.4 5.60116V4.90116C8.4 3.74178 7.45937 2.80116 6.3 2.80116H5.95C5.56281 2.80116 5.25 3.11397 5.25 3.50116C5.25 3.88834 5.56281 4.20116 5.95 4.20116H6.3C6.68719 4.20116 7 4.51397 7 4.90116V5.60116C7 7.14772 5.74656 8.40116 4.2 8.40116H3.5C3.11281 8.40116 2.8 8.08834 2.8 7.70116V3.85116H3.675C3.96594 3.85116 4.2 3.61709 4.2 3.32616C4.2 3.03522 3.96594 2.80116 3.675 2.80116H2.8V2.11209C2.80219 1.05116 2.01469 0.156468 0.9625 0.0252185L0.789687 0.00334347V0.0055311Z"
+                      fill="#747474"
+                    />
+                  </svg>
+                  {formatPrice(originalPrice)}
+                </span>
+              )}
+            </>
           )}
-        </div>
+        </Link>
 
         {/* Bottom Actions */}
         <ProductCardBuy

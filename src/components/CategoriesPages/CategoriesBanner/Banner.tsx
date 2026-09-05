@@ -25,7 +25,7 @@ function Banner({ banners }: BannerProps) {
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 -md:mt-3 items-stretch cursor-pointer md:px-12.5 px-4 mt-4 pb-6">
   {banner1 && (
     <div className="lg:col-span-3 h-[150px] md:h-[200px]">
-      <Link
+      {/* <Link
         href={banner1.mediaInfo || "#"}
         target={banner1.openNewTab ? "_blank" : undefined}
         rel={banner1.openNewTab ? "noopener noreferrer" : undefined}
@@ -37,7 +37,7 @@ function Banner({ banners }: BannerProps) {
           alt="Banner"
           className="w-full h-[150px] md:h-[200px] object-cover rounded-xl transition-all duration-500 hover:shadow-lg"
         />
-      </Link>
+      </Link> */}
     </div>
   )}
 

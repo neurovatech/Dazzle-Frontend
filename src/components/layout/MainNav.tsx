@@ -24,9 +24,16 @@ export default function MainNav() {
 
   const siteLogo = siteSettings?.siteLogo || Logo;
 
-
   const cartItems = useAppSelector((state) => state.cart.items);
   const cartCount = cartItems.length;
+
+  // ── Hydration fix ─────────────────────────────────────────────────────────
+  // token এবং cart count Redux থেকে আসে — SSR-এ এগুলো জানা থাকে না।
+  // Server সবসময় logged-out / empty-cart render করে।
+  // Client mount হওয়ার পরেই actual state দেখাবে।
+  // এতে server↔client HTML match করে, hydration error হয় না।
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
   const [bounce, setBounce] = useState(false);
   const prevCount = useRef(cartCount);
@@ -39,6 +46,10 @@ export default function MainNav() {
     }
     prevCount.current = cartCount;
   }, [cartCount]);
+
+  // mount হওয়ার আগে server HTML-এর মতো করে render করো
+  const isLoggedIn   = mounted && !!token;
+  const displayCart  = mounted ? cartCount : 0;
 
   return (
     <div className="border-b border-white/5">
@@ -86,11 +97,10 @@ export default function MainNav() {
           <div className="flex items-center gap-2 shrink-0">
             <div className="flex gap-3 mr-12.5">
               <Link
-                href={token ? "/profile" : "/auth/login"}
+                href={isLoggedIn ? "/profile" : "/auth/login"}
                 className="w-13.5 h-13.5 rounded-xl bg-background flex items-center justify-center overflow-hidden hover:bg-background/95 transition-all duration-200"
               >
-                {/* DEB475 */}
-                {token ? (
+                {isLoggedIn ? (
                   profileData?.userAvatar ? (
                     <Image
                       src={profileData.userAvatar}
@@ -114,7 +124,7 @@ export default function MainNav() {
                 <span className={bounce ? "animate-bounce" : ""}>
                   <CartIcon />
                 </span>
-                {cartCount > 0 && (
+                {displayCart > 0 && (
                   <span
                     className={`
                       absolute -top-1.5 -right-1.5
@@ -127,7 +137,7 @@ export default function MainNav() {
                       ${bounce ? "animate-bounce" : ""}
                     `}
                   >
-                    {cartCount > 99 ? "99+" : cartCount}
+                    {displayCart > 99 ? "99+" : displayCart}
                   </span>
                 )}
               </Link>

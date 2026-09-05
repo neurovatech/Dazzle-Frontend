@@ -23,7 +23,10 @@ import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { addToCart } from "@/store/slices/cartSlice";
 import toast from "react-hot-toast";
 import { toggleWishlist } from "@/store/slices/wishlistSlice";
-import { trackAddToCart, trackAddToWishlist } from "@/lib/analytics/pixelEvents";
+import {
+  trackAddToCart,
+  trackAddToWishlist,
+} from "@/lib/analytics/pixelEvents";
 import type { CareOption } from "./DazzleCare";
 type StockStatus = "in_stock" | "overselling" | "pre_order" | "eol";
 
@@ -68,9 +71,8 @@ export default function ProductInfo({
   isVariantLoading = false,
   hasVariants = false,
 }: any) {
-
   const { theme } = useTheme();
-  
+
   const stockStatus: StockStatus = inStock ? "in_stock" : "eol";
   const variantPrice = selectedVariant?.price ?? 0;
   const productPrice = alldata?.discountedPrice ?? basePrice ?? 0;
@@ -166,7 +168,13 @@ export default function ProductInfo({
         minBookingPrice: alldata?.minBookingPrice ?? 0,
       }),
     );
-    trackAddToCart({ id: targetProductUuid || targetCartId, name: cartName, price: cartPrice, quantity: qty ?? 1, brand });
+    trackAddToCart({
+      id: targetProductUuid || targetCartId,
+      name: cartName,
+      price: cartPrice,
+      quantity: qty ?? 1,
+      brand,
+    });
 
     if (!isAlreadyInCart) {
       toast.success(`${cartName} added to cart! 🛒`);
@@ -200,7 +208,11 @@ export default function ProductInfo({
 
   const handleWishlist = () => {
     if (!isWishlisted) {
-      trackAddToWishlist({ id: productId, name: title || "", price: alldata?.discountedPrice || 0 });
+      trackAddToWishlist({
+        id: productId,
+        name: title || "",
+        price: alldata?.discountedPrice || 0,
+      });
     }
     dispatch(
       toggleWishlist({
@@ -346,15 +358,20 @@ export default function ProductInfo({
 
           <div className="flex flex-wrap items-center gap-3 py-4">
             {/* Sold in last 12 hours */}
-            <div className="flex items-center gap-2 rounded-full bg-red-50 px-4 py-2 text-sm font-medium text-gray-700">
-              🔥
-              <span>
-                {alldata?.metaTags?.soldCount} sold in last{" "}
-                {alldata?.metaTags?.soldTime} hours
-              </span>
-            </div>
+            {alldata?.metaTags?.soldCount > 0 &&
+              alldata?.metaTags?.soldTime > 0 && (
+                <div className="flex items-center gap-2 rounded-full bg-red-50 px-4 py-2 text-sm font-medium text-gray-700">
+                  🔥
+                  <span>
+                    {alldata?.metaTags?.soldCount} sold in last{" "}
+                    {alldata?.metaTags?.soldTime} hours
+                  </span>
+                </div>
+              )}
 
             {/* Customer review */}
+
+            {alldata?.metaTags?.reviewPoints > 0 && (
             <div className="flex items-center gap-2 rounded-full bg-violet-50 px-4 py-2 text-sm font-medium text-gray-700">
               <svg
                 width="16"
@@ -375,6 +392,7 @@ export default function ProductInfo({
 
               <span>{alldata?.metaTags?.reviewPoints} customer review</span>
             </div>
+            )}
 
             {/* Viewing now */}
             <div className="flex items-center gap-2 rounded-full bg-amber-50 px-4 py-2 text-sm font-medium text-gray-700">
@@ -451,7 +469,12 @@ export default function ProductInfo({
           </button>
 
           <button className="w-10 h-10 border border-[#EEEEEE] dark:border-gray-700 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-[#1A1A1A] transition-colors">
-            <SwapIcon key="2" color={theme === 'dark' ? '#FFFFFF' : '#F0B342'} width={16} height={16} />
+            <SwapIcon
+              key="2"
+              color={theme === "dark" ? "#FFFFFF" : "#F0B342"}
+              width={16}
+              height={16}
+            />
           </button>
           {/* <button
               className="w-10 h-10 border border-[#EEEEEE] dark:border-gray-700 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-[#1A1A1A] transition-colors"

@@ -33,15 +33,19 @@ export default function OfferCard({ campaign }: { campaign: Campaign }) {
           <CountdownBadges size="sm" endDate={endDate} />
         )}
 
-        <Link href={`/offer/${campaign.slug}`} className="text-[#000000] dark:text-white font-semibold line-clamp-2">
+        <Link
+          href={`/offer/${campaign.slug}`}
+          className="text-[#000000] dark:text-white font-semibold line-clamp-2"
+        >
           {campaign.campaign_name}
         </Link>
-
-        {campaign.description && (
-          <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed">
-            {campaign.description}
-          </p>
-        )}
+        <Link href={`/offer/${campaign.slug}`}>
+          {campaign.description && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed">
+              {campaign.description}
+            </p>
+          )}
+        </Link>
 
         <Link
           href={`/offer/${campaign.slug}`}
