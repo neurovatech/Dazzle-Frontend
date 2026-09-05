@@ -1,0 +1,73 @@
+================================================================
+  BannerSlider — Recommended Image Dimensions
+  Component: src/components/HomePage/banner/Bannerslider.tsx
+================================================================
+
+SUMMARY (use this for your CMS / upload tool)
+----------------------------------------------
+  Recommended size : 1400 x 500 px
+  Aspect ratio     : ~2.8 : 1  (wide landscape)
+  Format           : WebP  (fallback: JPG)
+  Max file size    : ~150 KB per image
+  Quality          : 70–80%
+
+
+BREAKPOINT DETAILS
+------------------
+
+  Mobile  (< 640px)
+  -----------------
+  Width  : ~100vw minus padding (px-4 = 16px each side)
+           ≈ 375px - 32px = ~343px  (iPhone SE)
+           ≈ 390px - 32px = ~358px  (iPhone 14)
+  Height : h-60  = 240px
+  Notes  : slidesPerView = 1  →  full width
+
+
+  Small tablet  (640px – 767px)
+  -----------------------------
+  Width  : ~100vw minus padding (sm:px-6 = 24px each side)
+           ≈ 640px - 48px = ~592px
+  Height : sm:h-75  = 300px
+  Notes  : slidesPerView = 1  →  full width
+
+
+  Tablet / small desktop  (768px – 1023px)
+  -----------------------------------------
+  Width  : ~66vw of viewport (slidesPerView = 1.5, spaceBetween = 20px)
+           At 768px  →  ~490px
+           At 1024px →  ~650px
+  Height : md:h-110  = 440px
+  Notes  : slidesPerView = 1.5, so each slide is ~66% of container
+
+
+  Desktop  (≥ 1024px)
+  --------------------
+  Width  : ~66vw of container (max container ≈ 1420px)
+           sizes hint: "(max-width: 1420px) 66vw, 936px"
+           → maximum rendered width = 936px
+  Height : md:h-110  = 440px  (same class applies)
+  Notes  : slidesPerView = 1.5, spaceBetween = 24px
+
+
+SIZES ATTRIBUTE (used by Next.js Image for srcset)
+--------------------------------------------------
+  "(max-width: 767px) 100vw,
+   (max-width: 1420px) 66vw,
+   936px"
+
+  → Next.js will request image variants at approx:
+      375w, 640w, 750w, 828w, 936w, 1080w, 1200w, 1920w
+  → At desktop the largest useful src is ~936px wide
+
+
+FINAL RECOMMENDATION
+--------------------
+  Upload ONE image at:   1400 × 500 px
+  This covers all breakpoints with 1.5× retina headroom.
+
+  If you want separate assets per breakpoint:
+    Mobile  (< 640px)  :   750 × 500 px  (portrait-safe crop)
+    Desktop (≥ 768px)  :  1400 × 500 px  (wide crop)
+
+================================================================
