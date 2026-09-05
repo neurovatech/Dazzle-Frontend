@@ -62,6 +62,7 @@ export interface ProductApiData {
   isFreeShipping: boolean;
   isActive: boolean;
   isFba?: boolean;
+  isTba?: boolean;
   disRate?: number;
   discountedPrice?: number;
   regularPrice?: number;
