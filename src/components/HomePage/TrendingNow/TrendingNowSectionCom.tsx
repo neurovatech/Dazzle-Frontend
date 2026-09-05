@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import TrendingNow from "./TrendingNow";
+import TrendingNowHomePage from "./TrendingNowHomePage";
 import { sortInStockFirst } from "@/lib/sortProducts";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -127,7 +127,7 @@ export default function TrendingNowSectionCom() {
             ))}
           </div>
         ) : (
-          <TrendingNow products={products} />
+          <TrendingNowHomePage products={products} />
         )}
       </div>
     </div>

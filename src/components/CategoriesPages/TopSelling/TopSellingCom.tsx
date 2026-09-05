@@ -56,7 +56,7 @@ export default function TopSellingCom() {
   if (!isLoading && products.length === 0) return null;
 
   return (
-    <div className="bg-[#EEEEEE] dark:bg-[#2a2420] rounded-lg py-6 px-3 mb-6">
+    <div className="bg-[#EEEEEE] dark:bg-[#2a2420] rounded-lg py-3 px-3 mb-6">
       <div className="flex pb-4 md:px-4">
         <h1 className="md:text-[32px] text-[18px] font-bold text-transparent bg-clip-text bg-[linear-gradient(90deg,#101518_0%,#E9CCAE_46.15%,#B57908_100%)] dark:text-white">
           Top Selling

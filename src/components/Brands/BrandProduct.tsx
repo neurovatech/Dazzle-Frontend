@@ -5,6 +5,8 @@ import { useState, useEffect, Suspense, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import FilterSidebar, { AttributeGroup, PriceData } from "@/components/share/FilterSidebar";
 import BrandProductListClient from "@/components/Brands/BrandProductListClient";
+import BrandShowcaseSections from "@/components/Brands/BrandShowcaseSections";
+import BannerEscalate from "@/components/CategoriesPages/CategoriesBanner/BannerEscalate";
 import { SlidersHorizontal, X } from "lucide-react";
 import { api } from "@/lib/api";
 
@@ -522,6 +524,16 @@ export default function BrandProducts({
         </div>
 
         <div className="lg:col-span-9">
+          {/* Dynamic banner from banner-escalate */}
+          <BannerEscalate
+            categorySlug={activeCategory || brandSlug}
+            queryParam="category"
+            activeBrandSlug={activeCategory || brandSlug}
+          />
+
+          {/* ── Top Selling + Trending — brand-specific from showcase-escalate ── */}
+          <BrandShowcaseSections brandSlug={brandSlug} activeCategory={activeCategory} />
+
           {/* productList area */}
           <div ref={productListRef} className="scroll-mt-4">
           {/* React Query client list — filter/page changes never trigger SSR */}

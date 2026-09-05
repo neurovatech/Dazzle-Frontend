@@ -15,6 +15,9 @@ import {
   HelpCircle,
   XOctagon,
   Wallet,
+  Package,
+  ShoppingBag,
+  Tag,
 } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
@@ -329,6 +332,9 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
     enabled: !!orderNo,
   });
 
+
+  console.log(trackingRes, "trackingRestrackingRestrackingRestrackingRes")
+
   const trackingData: OrderTrackingData | undefined = trackingRes?.data;
 
   const formatDate = (isoString?: string) => {
@@ -612,15 +618,126 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
         </div>
       </div>
 
+      {/* ── Product Information Section ── */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
+            <Package size={20} className="text-[#7A4500] dark:text-[#d48c34]" />
+            Product Information
+          </h3>
+          <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-950/40 text-[#7A4500] dark:text-[#d48c34]">
+            {rawOrder?.comerzOrderItems?.length || rawOrder?.productCount || 1} Item(s)
+          </span>
+        </div>
+
+        <div className="bg-white dark:bg-[#2e2a27] rounded-2xl border border-gray-100 dark:border-zinc-800/80 divide-y divide-gray-100 dark:divide-zinc-800 overflow-hidden shadow-sm">
+          {rawOrder?.comerzOrderItems && rawOrder.comerzOrderItems.length > 0 ? (
+            rawOrder.comerzOrderItems.map((item, idx) => {
+              const offerPrice = item.offerPrice ?? 0;
+              const discount = item.discount ?? 0;
+              const finalPrice = item.finalPrice ?? (offerPrice - discount);
+              const minBooking = item.minBookingPrice ?? 0;
+
+              return (
+                <div key={item.comerzOrderItemUUID || idx} className="p-4 space-y-3">
+                  <div className="flex items-start gap-3.5">
+                    {/* Item Badge & Icon */}
+                    <div className="w-11 h-11 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/50 flex items-center justify-center shrink-0">
+                      <ShoppingBag size={20} className="text-[#7A4500] dark:text-[#d48c34]" />
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2 flex-wrap">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-300">
+                              #{idx + 1}
+                            </span>
+                            <h4 className="text-sm font-bold text-gray-900 dark:text-white">
+                              {item.productName}
+                            </h4>
+                          </div>
+                          {item.variantName && item.variantName !== item.productName && (
+                            <p className="text-xs text-amber-700 dark:text-amber-400 font-medium mt-1">
+                              Variant / Spec: <span className="text-gray-700 dark:text-gray-300">{item.variantName}</span>
+                            </p>
+                          )}
+                        </div>
+                        <span className="text-sm font-extrabold text-[#7A4500] dark:text-[#d48c34] bg-amber-50 dark:bg-amber-950/40 px-3 py-1 rounded-xl border border-amber-200/60 dark:border-amber-800/50">
+                          ৳{finalPrice.toLocaleString("en-IN")}
+                        </span>
+                      </div>
+
+                      {/* Full Pricing & Item Reference breakdown */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3 p-3 rounded-xl bg-gray-50 dark:bg-[#25211e] text-xs">
+                        <div>
+                          <span className="text-gray-400 block text-[11px]">Item Reference Code</span>
+                          <span className="font-mono text-gray-700 dark:text-gray-300 font-semibold truncate block">
+                            {item.comerzOrderItemUUID ? `#${item.comerzOrderItemUUID.slice(0, 18)}...` : `#ITEM-${idx + 1}`}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-gray-400 block text-[11px]">Pricing Details</span>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-semibold text-gray-800 dark:text-gray-200">
+                              ৳{offerPrice.toLocaleString("en-IN")}
+                            </span>
+                            {discount > 0 && (
+                              <span className="text-emerald-600 dark:text-emerald-400 font-bold">
+                                (-৳{discount.toLocaleString("en-IN")} discount)
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {minBooking > 0 && (
+                          <div className="sm:col-span-2 pt-2 border-t border-gray-200/60 dark:border-zinc-700/60 flex items-center justify-between text-amber-800 dark:text-amber-300">
+                            <span>Minimum Booking Price (Advance):</span>
+                            <span className="font-bold">৳{minBooking.toLocaleString("en-IN")}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            /* Fallback single product display when comerzOrderItems is empty */
+            <div className="p-4 flex items-start gap-3.5">
+              <div className="w-11 h-11 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/50 flex items-center justify-center shrink-0">
+                <ShoppingBag size={20} className="text-[#7A4500] dark:text-[#d48c34]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="text-sm font-bold text-gray-900 dark:text-white">
+                  {rawOrder?.productName || `Product (${rawOrder?.productCount || 1} Item)`}
+                </h4>
+                <p className="text-xs text-gray-400 mt-1">
+                  Total Product Price: <span className="font-bold text-[#7A4500] dark:text-[#d48c34]">৳{(rawOrder?.productPrice ?? 0).toLocaleString("en-IN")}</span>
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* ── Order Summary Section ── */}
       <div>
         <h3 className="text-lg font-bold mb-3 text-gray-800 dark:text-white">Order Summary</h3>
         <div className="bg-white dark:bg-[#2e2a27] p-4 rounded-2xl border border-gray-100 dark:border-zinc-800/80 space-y-3 text-sm">
           {trackingData ? (
             <>
+              {/* Delivery method */}
+              <div className="flex justify-between items-center text-xs font-medium text-gray-600 dark:text-gray-300 pb-2 border-b border-gray-100 dark:border-zinc-800">
+                <span>Delivery Type</span>
+                <span className="font-semibold text-gray-800 dark:text-white">
+                  {rawOrder?.isHomeDelivery ? "🏠 Home Delivery" : rawOrder?.isStorePickup || rawOrder?.isShopPickup ? "🏪 Store Pickup" : "—"}
+                </span>
+              </div>
+
               <div className="flex justify-between items-center text-xs font-medium text-gray-600 dark:text-gray-300">
-                <span>Subtotal</span>
-                <span>৳{(trackingData.subTotal ?? 0).toLocaleString("en-IN")}</span>
+                <span>Product Price</span>
+                <span>৳{(rawOrder?.productPrice ?? 0).toLocaleString("en-IN")}</span>
               </div>
               {(rawOrder?.deliveryFee ?? 0) > 0 && (
                 <div className="flex justify-between items-center text-xs font-medium text-gray-600 dark:text-gray-300">
@@ -628,9 +745,33 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
                   <span>৳{(rawOrder?.deliveryFee ?? 0).toLocaleString("en-IN")}</span>
                 </div>
               )}
+              {(rawOrder?.discount ?? 0) > 0 && (
+                <div className="flex justify-between items-center text-xs font-medium text-green-600 dark:text-green-400">
+                  <span>Discount</span>
+                  <span>-৳{(rawOrder?.discount ?? 0).toLocaleString("en-IN")}</span>
+                </div>
+              )}
+              <div className="flex justify-between items-center text-xs font-medium text-gray-600 dark:text-gray-300">
+                <span>Subtotal</span>
+                <span>৳{(rawOrder?.subTotal ?? trackingData?.subTotal ?? 0).toLocaleString("en-IN")}</span>
+              </div>
+              {(rawOrder?.codCharge ?? 0) > 0 && (
+                <div className="flex justify-between items-center text-xs font-medium text-orange-600 dark:text-orange-400">
+                  <span>COD Charge</span>
+                  <span>৳{(rawOrder?.codCharge ?? 0).toLocaleString("en-IN")}</span>
+                </div>
+              )}
+              {(rawOrder?.roundOff ?? 0) !== 0 && (
+                <div className="flex justify-between items-center text-xs font-medium text-gray-400 dark:text-gray-500">
+                  <span>Round Off</span>
+                  <span>{(rawOrder?.roundOff ?? 0) >= 0 ? "+" : ""}৳{(rawOrder?.roundOff ?? 0).toFixed(2)}</span>
+                </div>
+              )}
               <div className="flex justify-between items-center text-xs font-medium text-gray-600 dark:text-gray-300">
                 <span>Paid Amount</span>
-                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">৳{paidAmount.toLocaleString("en-IN")}</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                  ৳{(rawOrder?.paidAmount ?? paidAmount).toLocaleString("en-IN")}
+                </span>
               </div>
               {dueAmount > 0 && (
                 <div className="flex justify-between items-center text-xs font-bold text-red-500">
@@ -639,27 +780,116 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
                 </div>
               )}
               <div className="border-t border-gray-100 dark:border-zinc-800 pt-3 flex justify-between items-center font-bold text-gray-900 dark:text-white">
-                <span>Total Bill</span>
-                <span className="text-[#7A4500] dark:text-[#d48c34] text-base">৳{grandAmount.toLocaleString("en-IN")}</span>
+                <span>Grand Total</span>
+                <span className="text-[#7A4500] dark:text-[#d48c34] text-base">
+                  ৳{(rawOrder?.grandTotal ?? grandAmount).toLocaleString("en-IN")}
+                </span>
+              </div>
+              <div className="pt-1 flex items-center justify-between text-[11px]">
+                <span className="text-gray-400">Order Status:</span>
+                <span className={`font-semibold px-2 py-0.5 rounded-full ${
+                  rawOrder?.orderStatus === "Pending"
+                    ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-950/40 dark:text-yellow-400"
+                    : rawOrder?.orderStatus === "Delivered"
+                    ? "bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400"
+                    : rawOrder?.orderStatus === "Cancelled"
+                    ? "bg-red-100 text-red-600 dark:bg-red-950/40 dark:text-red-400"
+                    : "bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400"
+                }`}>
+                  {rawOrder?.orderStatus || statusText}
+                </span>
               </div>
               <div className="pt-1 flex items-center justify-between text-[11px]">
                 <span className="text-gray-400">Payment Status:</span>
-                <span
-                  className={`font-semibold px-2 py-0.5 rounded-full ${
-                    trackingData.orderFullPaid
-                      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
-                      : "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400"
-                  }`}
-                >
-                  {trackingData.orderFullPaid ? "Fully Paid" : "Payment Pending / Partial"}
+                <span className={`font-semibold px-2 py-0.5 rounded-full ${
+                  rawOrder?.isFullPaid
+                    ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
+                    : "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400"
+                }`}>
+                  {rawOrder?.isFullPaid ? "Fully Paid" : "Payment Pending / Partial"}
                 </span>
               </div>
             </>
           ) : (
-            <div className="flex justify-between items-center font-bold">
-              <span>Total</span>
-              <span className="text-[#7A4500]">{order?.total}</span>
-            </div>
+            /* Fallback when tracking API hasn't resolved — use rawApiData directly */
+            <>
+              <div className="flex justify-between items-center text-xs font-medium text-gray-600 dark:text-gray-300 pb-2 border-b border-gray-100 dark:border-zinc-800">
+                <span>Delivery Type</span>
+                <span className="font-semibold text-gray-800 dark:text-white">
+                  {rawOrder?.isHomeDelivery ? "🏠 Home Delivery" : rawOrder?.isStorePickup || rawOrder?.isShopPickup ? "🏪 Store Pickup" : "—"}
+                </span>
+              </div>
+              {(rawOrder?.productPrice ?? 0) > 0 && (
+                <div className="flex justify-between items-center text-xs font-medium text-gray-600 dark:text-gray-300">
+                  <span>Product Price</span>
+                  <span>৳{(rawOrder?.productPrice ?? 0).toLocaleString("en-IN")}</span>
+                </div>
+              )}
+              {(rawOrder?.deliveryFee ?? 0) > 0 && (
+                <div className="flex justify-between items-center text-xs font-medium text-gray-600 dark:text-gray-300">
+                  <span>Delivery Fee</span>
+                  <span>৳{(rawOrder?.deliveryFee ?? 0).toLocaleString("en-IN")}</span>
+                </div>
+              )}
+              {(rawOrder?.discount ?? 0) > 0 && (
+                <div className="flex justify-between items-center text-xs font-medium text-green-600 dark:text-green-400">
+                  <span>Discount</span>
+                  <span>-৳{(rawOrder?.discount ?? 0).toLocaleString("en-IN")}</span>
+                </div>
+              )}
+              {(rawOrder?.subTotal ?? 0) > 0 && (
+                <div className="flex justify-between items-center text-xs font-medium text-gray-600 dark:text-gray-300">
+                  <span>Subtotal</span>
+                  <span>৳{(rawOrder?.subTotal ?? 0).toLocaleString("en-IN")}</span>
+                </div>
+              )}
+              {(rawOrder?.codCharge ?? 0) > 0 && (
+                <div className="flex justify-between items-center text-xs font-medium text-orange-600 dark:text-orange-400">
+                  <span>COD Charge</span>
+                  <span>৳{(rawOrder?.codCharge ?? 0).toLocaleString("en-IN")}</span>
+                </div>
+              )}
+              {(rawOrder?.roundOff ?? 0) !== 0 && (
+                <div className="flex justify-between items-center text-xs text-gray-400">
+                  <span>Round Off</span>
+                  <span>{(rawOrder?.roundOff ?? 0) >= 0 ? "+" : ""}৳{(rawOrder?.roundOff ?? 0).toFixed(2)}</span>
+                </div>
+              )}
+              {(rawOrder?.paidAmount ?? 0) > 0 && (
+                <div className="flex justify-between items-center text-xs font-medium text-gray-600 dark:text-gray-300">
+                  <span>Paid Amount</span>
+                  <span className="text-emerald-600 font-semibold">৳{(rawOrder?.paidAmount ?? 0).toLocaleString("en-IN")}</span>
+                </div>
+              )}
+              <div className="border-t border-gray-100 dark:border-zinc-800 pt-3 flex justify-between items-center font-bold text-gray-900 dark:text-white">
+                <span>Grand Total</span>
+                <span className="text-[#7A4500] dark:text-[#d48c34] text-base">
+                  {order?.total ?? `৳${(rawOrder?.grandTotal ?? rawOrder?.total ?? 0).toLocaleString("en-IN")}`}
+                </span>
+              </div>
+              <div className="pt-1 flex items-center justify-between text-[11px]">
+                <span className="text-gray-400">Order Status:</span>
+                <span className={`font-semibold px-2 py-0.5 rounded-full ${
+                  rawOrder?.orderStatus === "Pending"
+                    ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-950/40 dark:text-yellow-400"
+                    : rawOrder?.orderStatus === "Delivered"
+                    ? "bg-green-100 text-green-700"
+                    : "bg-blue-100 text-blue-700"
+                }`}>
+                  {rawOrder?.orderStatus || order?.status || "—"}
+                </span>
+              </div>
+              <div className="pt-1 flex items-center justify-between text-[11px]">
+                <span className="text-gray-400">Payment:</span>
+                <span className={`font-semibold px-2 py-0.5 rounded-full ${
+                  rawOrder?.isFullPaid
+                    ? "bg-emerald-100 text-emerald-700"
+                    : "bg-amber-100 text-amber-700"
+                }`}>
+                  {rawOrder?.isFullPaid ? "Fully Paid" : "Pending / Partial"}
+                </span>
+              </div>
+            </>
           )}
         </div>
       </div>

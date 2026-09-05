@@ -51,7 +51,7 @@ export default function CategoryNav({ categories, subCategories, explorAllData }
   };
 
   return (
-    <div ref={navRef} className="relative w-full">
+    <div ref={navRef} className="relative w-full hidden lg:flex">
       <div className="max-w-350 mx-auto px-6 hidden lg:flex">
         <div className="flex items-center gap-3 py-2.5 w-full">
           <div className="relative shrink-0">

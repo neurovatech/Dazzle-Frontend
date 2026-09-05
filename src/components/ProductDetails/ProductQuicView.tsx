@@ -776,7 +776,7 @@ function ProductQuicView({
 
         {/* ── Footer Buttons ── */}
         <div className="rounded-b-2xl gap-4 bg-white p-4 shadow-[0px_-4px_26.6px_6px_#0000002B] flex items-center justify-between dark:bg-[#3d3228]">
-          {!displayInStock || displayIsTba ? (
+          {!displayInStock ? (
             <button
               disabled
               className="border border-gray-200 bg-gray-100 text-gray-400 px-4 py-2 rounded-md w-full justify-center flex items-center gap-2 cursor-not-allowed font-semibold opacity-70"
@@ -795,7 +795,7 @@ function ProductQuicView({
                   d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
                 />
               </svg>
-              {displayIsTba ? "TBA" : "NOT IN STOCK"}
+              NOT IN STOCK
             </button>
           ) : (
             <button
@@ -809,9 +809,9 @@ function ProductQuicView({
           <button
             type="button"
             onClick={handleBuyNow}
-            disabled={loading || loadingBuyNow || !displayInStock || displayIsTba}
+            disabled={loading || loadingBuyNow || !displayInStock}
             className={`border border-[#E7E7E7] bg-[#222222] text-white px-4 py-2 rounded-md hover:bg-[#F7F7F7] hover:text-[#222222] transition-colors duration-500 w-full justify-center flex items-center font-semibold disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${
-              !displayInStock || displayIsTba ? "pointer-events-none opacity-50" : ""
+              !displayInStock ? "pointer-events-none opacity-50" : ""
             }`}
           >
             {loadingBuyNow ? (

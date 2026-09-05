@@ -134,7 +134,7 @@ export default async function Header() {
 
   return (
     <header
-      className="w-full font-sans relative transition-colors duration-300  rounded-b-[20px] lg:px-4 lg:pt-0! py-1 dark:bg-[#1a1a1a] dark:text-white"
+      className="w-full font-sans relative transition-colors duration-300  rounded-b-[20px] lg:px-4 lg:pt-0! dark:bg-[#1a1a1a] dark:text-white"
       style={{
         backgroundImage: `url(${BgImages.src})`,
         backgroundRepeat: "no-repeat",

@@ -28,7 +28,7 @@ interface TrendingNowProps {
  * product carousel. Kept in sync deliberately rather than each section
  * carrying its own slightly-different numbers.
  */
-function TrendingNow({
+function TrendingNowHomePage({
   products,
   autoplayDelay = 3000,
   pagination = true,
@@ -67,7 +67,7 @@ function TrendingNow({
             spaceBetween: 20,
           },
           1024: {
-            slidesPerView: 4,
+            slidesPerView: 5,
             spaceBetween: 4,
           },
         }}
@@ -94,4 +94,4 @@ function TrendingNow({
   );
 }
 
-export default TrendingNow;
+export default TrendingNowHomePage;

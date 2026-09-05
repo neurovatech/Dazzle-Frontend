@@ -17,6 +17,8 @@ import { SlidersHorizontal, X } from "lucide-react";
 import dynamic from "next/dynamic";
 import TopSellingCom from "@/components/CategoriesPages/TopSelling/TopSellingCom";
 import RunningOfferCom from "@/components/CategoriesPages/RunningOffer/RunningOfferCom";
+import CategoryShowcaseSections from "@/components/CategoriesPages/CategoryShowcaseSections";
+import BannerEscalate from "@/components/CategoriesPages/CategoriesBanner/BannerEscalate";
 
 // TrendingNowSectionCom will be passed as a prop from the Server Component
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -159,7 +161,6 @@ function CategoriesProduct({
     closeFilterAndScroll();
   };
 
-  // Pending toggle handlers (শুধু modal এর জন্য)
   const handlePendingToggleAttribute = (value: string) => {
     setPendingAttributes((prev) =>
       prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value],
@@ -528,11 +529,11 @@ function CategoriesProduct({
         </div>
       </div>
 
-      <Banner banners={banners} />
+      {/* <Banner banners={banners} /> */}
 
       {/* ── Products grid ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:mt-0 mt-2 items-stretch md:px-12.5 px-4 relative">
-        <div className="lg:col-span-3 md:block hidden h-full -mt-56.25">
+        <div className="lg:col-span-3 md:block hidden h-full">
           <div className="sticky top-6 transition-colors duration-200 overflow-y-auto scrollbar-hide w-full pb-4">
             <FilterSidebar
               attributes={currentAttributes}
@@ -549,6 +550,22 @@ function CategoriesProduct({
         </div>
 
         <div className="lg:col-span-9 h-full">
+          {/* SubCategory-specific Top Selling + Trending from showcase-escalate */}
+          {subCategorySlug && (
+            <>
+              <BannerEscalate
+                categorySlug={subCategorySlug}
+                queryParam="subCategory"
+                activeBrandSlug={selectedBrandSlug}
+              />
+              <CategoryShowcaseSections
+                categorySlug={subCategorySlug}
+                queryParam="subCategory"
+                activeBrandSlug={selectedBrandSlug}
+              />
+            </>
+          )}
+
           {/* productList area  */}
           <div ref={productListRef} className="scroll-mt-4">
             <AllProducts

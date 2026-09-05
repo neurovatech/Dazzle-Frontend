@@ -17,6 +17,8 @@ import { SlidersHorizontal, X } from "lucide-react";
 import dynamic from "next/dynamic";
 import TopSellingCom from "@/components/CategoriesPages/TopSelling/TopSellingCom";
 import RunningOfferCom from "@/components/CategoriesPages/RunningOffer/RunningOfferCom";
+import CategoryShowcaseSections from "@/components/CategoriesPages/CategoryShowcaseSections";
+import BannerEscalate from "@/components/CategoriesPages/CategoriesBanner/BannerEscalate";
 
 // TrendingNowSectionCom will be passed as a prop from the Server Component
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -438,7 +440,6 @@ function CategoriesProductWithTopSale({
     window.history.pushState(null, "", newUrl);
   };
 
-  console.log(brands, "brandsbrandsbrandsbrandsbrands");
 
   return (
     <div>
@@ -534,7 +535,7 @@ function CategoriesProductWithTopSale({
         </div>
       </div>
 
-      <Banner banners={banners} />
+      {/* <Banner banners={banners} /> */}
 
       {/* ── Products grid ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:mt-0 mt-2 items-stretch md:px-12.5 px-4 relative">
@@ -555,6 +556,19 @@ function CategoriesProductWithTopSale({
         </div>
 
         <div className="lg:col-span-9 h-full">
+          {/* Dynamic banner from banner-escalate */}
+          <BannerEscalate
+            categorySlug={categorySlug}
+            queryParam="category"
+            activeBrandSlug={selectedBrandSlug}
+          />
+
+          {/* Category-specific Top Selling + Trending from showcase-escalate */}
+          <CategoryShowcaseSections
+            categorySlug={categorySlug}
+            activeBrandSlug={selectedBrandSlug}
+          />
+
           {/* Top Selling */}
           {topSellingSlot ?? <TopSellingCom />}
 

@@ -56,7 +56,7 @@ export default function RunningOfferCom() {
   if (!isLoading && products.length === 0) return null;
 
   return (
-    <div className="bg-[#6D3F0E] dark:bg-[#2a2420] rounded-lg py-6 px-3 mb-6">
+    <div className="bg-[#6D3F0E] dark:bg-[#2a2420] rounded-lg py-3 px-2 mb-6">
       <div className="flex pb-4 md:px-4">
         <h1 className="text-[20px] sm:text-[24px] md:text-[32px] font-bold transition-colors bg-linear-to-r from-white to-[#CB843B] text-transparent bg-clip-text hover:brightness-110 dark:text-white">
           Running Offer

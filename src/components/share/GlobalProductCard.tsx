@@ -309,6 +309,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
           originalPrice={originalPrice}
           inStock={inStock}
           minBookingPrice={minBookingPrice}
+          showTbaFlag={showTbaFlag}
         />
       </div>
     </div>

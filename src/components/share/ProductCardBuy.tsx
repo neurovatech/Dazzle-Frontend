@@ -5,6 +5,7 @@ import React, { useState } from "react";
 import { CartIcon } from "@/icon";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { addToCart } from "@/store/slices/cartSlice";
+import { toggleWishlist as toggleWishlistAction } from "@/store/slices/wishlistSlice";
 import { trackAddToCart } from "@/lib/analytics/pixelEvents";
 import ProductQuicView from "@/components/ProductDetails/ProductQuicView";
 import toast from "react-hot-toast";
@@ -38,6 +39,7 @@ interface Props {
   originalPrice: number;
   inStock: boolean;
   minBookingPrice: number;
+  showTbaFlag?: boolean;
 }
 
 /**
@@ -55,12 +57,34 @@ export default function ProductCardBuy({
   originalPrice,
   inStock,
   minBookingPrice,
+  showTbaFlag = false,
 }: Props) {
   const dispatch = useAppDispatch();
   const cartItems = useAppSelector((state) => state.cart.items);
+  const wishlistItems = useAppSelector((state) => state.wishlist.items);
+  const isWishlisted = wishlistItems.some((i) => i.productUuid === itemId);
 
   const [loadingCart, setLoadingCart] = useState(false);
   const [isTba, setIsTba] = useState(!inStock);
+
+  // Wishlist toggle — used when showTbaFlag=true
+  const handleWishlistToggle = () => {
+    dispatch(
+      toggleWishlistAction({
+        productUuid: itemId,
+        productName: title,
+        productSlug: slug,
+        image,
+        price,
+        originalPrice,
+        discount: 0,
+        badge: "",
+        inStock,
+        isBestDeal: false,
+        addedAt: new Date().toISOString(),
+      }),
+    );
+  };
 
   // Cart-এ product আছে কিনা check — persistent "Added" দেখাবে
   const addedToCart = cartItems.some(
@@ -203,7 +227,34 @@ export default function ProductCardBuy({
 
   return (
     <div className="flex gap-1 sm:gap-2 mt-auto">
-      {isTba ? (
+      {showTbaFlag ? (
+        /* TBA — "Not in Stock" সরিয়ে "Add to Wishlist" দেখাও */
+        <button
+          onClick={handleWishlistToggle}
+          className={`flex-1 flex items-center justify-center gap-2 h-11 px-1 rounded-[13px] text-[13px] sm:text-[14px] leading-none font-semibold border transition-all duration-300 active:scale-95 ${
+            isWishlisted
+              ? "bg-red-50 border-red-300 text-red-500"
+              : "bg-white border-orange-200 text-[#6D3F0E] hover:bg-orange-50 hover:border-orange-400 hover:shadow-md"
+          }`}
+          aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill={isWishlisted ? "currentColor" : "none"}
+            stroke="currentColor"
+            strokeWidth={2}
+            className="w-4 h-4 shrink-0"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
+            />
+          </svg>
+          <span>{isWishlisted ? "Wishlisted" : "Add to Wishlist"}</span>
+        </button>
+      ) : isTba ? (
         <button
           disabled
           // Figma: h-40 py-[3px] px-1 gap-2.5(10px) rounded-[13px] border, Urbanist Medium 16px/100%
