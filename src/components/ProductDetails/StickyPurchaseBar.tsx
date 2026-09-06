@@ -11,7 +11,7 @@ import type { CareOption } from "./DazzleCare";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { X, LogIn } from "lucide-react";
-
+import { verifyOrderProduct } from "@/lib/verify-order-product";
 
 const StoreIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -422,3 +422,4 @@ export default function StickyPurchaseBar({
     </div>
   );
 }
+
