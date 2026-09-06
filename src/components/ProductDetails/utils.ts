@@ -34,11 +34,17 @@ export function consolidateVariants(rows: VariantRow[]): {
 } {
   if (!rows || rows.length === 0) return { groups: [], variants: [] };
 
+  // ── Normalize group name ───────────────────────────────────────────────────
   const normalizeGroup = (raw: string): string => {
     const lower = raw.trim().toLowerCase();
     if (lower === "color") return "Color";
-    if (lower === "storage") return "Storage";
+    // "Storage" and "RAM & Storage" are treated as the same display group.
+    // Many products have rows labelled "storage" (plain, no RAM) while others
+    // use "ram & storage". Merging them avoids the situation where a variant
+    // map entry has BOTH "Storage" and "RAM & Storage" slots missing because
+    // its rows only ever used one of the two labels.
     if (
+      lower === "storage" ||
       lower === "ram & storage" ||
       lower === "ram&storage" ||
       lower === "ram and storage"
@@ -50,18 +56,19 @@ export function consolidateVariants(rows: VariantRow[]): {
 
   const normalizeAttr = (group: string, value: string): string => {
     const v = value.trim();
-    if (group === "Storage") {
+    if (group === "RAM & Storage" || group === "Storage") {
+      // bare number → append GB (e.g. "256" → "256GB")
       if (/^\d+$/.test(v)) return v + "GB";
-      return v.toUpperCase().replace(/\s+/g, "");
+      return v;
     }
     return v;
   };
 
+  // ── Build active rows ───────────────────────────────────────────────────────
   const activeRows = rows
     .filter(
       (row) =>
         row.isActive &&
-        !row.isTba &&
         row.attributeGroup?.trim() &&
         row.attribute?.trim(),
     )
@@ -74,12 +81,16 @@ export function consolidateVariants(rows: VariantRow[]): {
       ),
     }));
 
-  const groupOrder = ["Color", "Storage", "RAM & Storage", "Region/Variant"];
+  // ── Determine which groups exist across ALL rows ───────────────────────────
+  const groupOrder = ["Color", "RAM & Storage", "Region/Variant"];
   const foundGroups = new Set(activeRows.map((r) => r._normGroup));
   const groups = groupOrder.filter((g) => foundGroups.has(g));
+  // Append any extra groups not in the standard order
   activeRows.forEach((r) => {
     if (!groups.includes(r._normGroup)) groups.push(r._normGroup);
   });
+
+  // ── Build variant map: uuid → ConsolidatedVariant ─────────────────────────
   const variantMap = new Map<string, ConsolidatedVariant>();
 
   activeRows.forEach((row) => {
@@ -97,6 +108,8 @@ export function consolidateVariants(rows: VariantRow[]): {
     }
 
     const existing = variantMap.get(uuid)!;
+
+    // Only set the first value for each group
     if (!existing.attributes[row._normGroup]) {
       existing.attributes[row._normGroup] = row._normAttr;
     }
@@ -104,6 +117,11 @@ export function consolidateVariants(rows: VariantRow[]): {
     if (row.retailUnitSale > 0 && existing.price === 0) {
       existing.price = row.retailUnitSale;
       existing.mrp = row.mrpUnitSale;
+    }
+
+    // Track isTba per variant
+    if (row.isTba && !existing.attributes["_isTba"]) {
+      existing.attributes["_isTba"] = "true";
     }
 
     if (row.thumbnailUrl?.trim() && !existing.thumbnailUrl) {
@@ -114,16 +132,30 @@ export function consolidateVariants(rows: VariantRow[]): {
     }
   });
 
-  const completeVariants = [...variantMap.values()].filter((v) =>
+  // ── Filter: keep variants that have AT LEAST ONE group attribute ───────────
+  // "complete" = has all groups; "partial" = has at least one group.
+  // We prefer complete variants first. If none are complete (which happens
+  // when the backend uses inconsistent group sets across rows), we fall back
+  // to partial variants so the UI never shows empty option chips.
+  const allVariants = [...variantMap.values()];
+
+  const completeVariants = allVariants.filter((v) =>
     groups.every((g) => v.attributes[g]?.trim()),
   );
-  const nonStorageGroups = groups.filter(
-    (g) => g !== "Storage" && g !== "RAM & Storage",
+
+  const partialVariants = allVariants.filter((v) =>
+    groups.some((g) => v.attributes[g]?.trim()),
   );
 
-  completeVariants.forEach((v) => {
+  const finalVariants = completeVariants.length > 0
+    ? completeVariants
+    : partialVariants;
+
+  // ── Price fallback: copy price from sibling with same non-storage attrs ────
+  const nonStorageGroups = groups.filter((g) => g !== "RAM & Storage");
+  finalVariants.forEach((v) => {
     if (v.price > 0) return;
-    const donor = completeVariants.find(
+    const donor = finalVariants.find(
       (other) =>
         other.id !== v.id &&
         other.price > 0 &&
@@ -135,7 +167,7 @@ export function consolidateVariants(rows: VariantRow[]): {
     }
   });
 
-  const finalVariants = completeVariants;
+  // ── Build display name for variants missing one ───────────────────────────
   finalVariants.forEach((v) => {
     if (!v.name) {
       v.name = groups

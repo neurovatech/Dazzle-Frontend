@@ -140,6 +140,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
     variants.some(
       (v) =>
         v.attributes[group] === option &&
+        v.attributes["_isTba"] !== "true" &&
         Object.entries(selectedAttrs)
           .filter(([g]) => g !== group)
           .every(([g, val]) => v.attributes[g] === val),
