@@ -24,6 +24,11 @@ export interface SiteSettingsData {
   aboutUs?: string;
   termsAndCondition?: string;
   faq?: { question: string; answer: string }[];
+  // ── Analytics codes from CMS ──────────────────────────────────
+  facebookBaseCode?: string;
+  googleGTMCode?: string;
+  googleAnalyticsCode?: string;
+  tikTokBaseCode?: string;
 }
 
 export interface SiteSettingsState {

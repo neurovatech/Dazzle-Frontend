@@ -42,7 +42,7 @@ export default async function ShopLocations() {
 
   const allStores: StoreItem[] =
     allStoresRes.status === "fulfilled" && Array.isArray(allStoresRes.value?.data)
-      ? allStoresRes.value.data
+      ? allStoresRes.value.data.filter((s) => !s.abroadBranch)
       : [];
 
   // Tabs — district tabs carry no stores (fetched client-side on demand)

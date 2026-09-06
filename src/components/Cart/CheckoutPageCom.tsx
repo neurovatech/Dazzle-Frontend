@@ -93,6 +93,7 @@ interface StoreItem {
   /** /stores already returns coordinates, so no second lookup is needed to rank by distance. */
   latitude?: string;
   longitude?: string;
+  abroadBranch?: boolean;
 }
 
 /** One branch's stock answer for a single product+variant pair. */
@@ -270,7 +271,10 @@ export default function CheckoutPageCom() {
     queryKey: ["storeList"],
     queryFn: () => api.get<{ data: StoreItem[] }>("/stores"),
   });
-  const storeList = useMemo(() => storeListRes?.data || [], [storeListRes]);
+  const storeList = useMemo(
+    () => (storeListRes?.data || []).filter((s) => !s.abroadBranch),
+    [storeListRes],
+  );
 
   /*
    * Stock per branch for everything in the cart.

@@ -485,8 +485,9 @@ export default function BrandProducts({
       </div>
 
       {/* ── Sidebar + product list ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mt-4 items-start md:px-6.5 px-4 relative">
-        <div className="lg:col-span-3 h-full md:block hidden">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mt-4 items-stretch md:px-6.5 px-4 relative">
+        <div className="lg:col-span-3 md:flex hidden flex-col self-stretch">
+          <div className="sticky top-6 h-[calc(100vh-6rem)] overflow-y-auto scrollbar-hide w-full">
           <FilterSidebar
             attributes={currentAttributes}
             priceData={currentPriceData}
@@ -498,6 +499,7 @@ export default function BrandProducts({
             stockStatus={stockStatus}
             onStockStatusToggle={handleStockStatusToggle}
           />
+          </div>
         </div>
 
         {/* Filter + Sort buttons — mobile only */}

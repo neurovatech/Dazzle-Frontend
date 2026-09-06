@@ -111,15 +111,18 @@ export default function ShopLocationClient({ tabs, initialAllStores }: Props) {
       const res = await api.get<{ data: StoreItem[] }>(
         `/stores?district_id=${districtId}`
       );
-      return Array.isArray(res?.data) ? res.data : [];
+      // abroadBranch=true হলে hide করতে হবে
+      return Array.isArray(res?.data)
+        ? res.data.filter((s) => !s.abroadBranch)
+        : [];
     },
   });
 
-  // "All" tab uses SSR data, district tabs use API data
+  // "All" tab uses SSR data (already filtered), district tabs use API data
   const activeStores: StoreItem[] =
     districtId === null
       ? initialAllStores
-      : (districtStores ?? []);
+      : (districtStores ?? []).filter((s) => !s.abroadBranch);
 
   // Client-side search filter
   const filteredStores = useMemo(() => {

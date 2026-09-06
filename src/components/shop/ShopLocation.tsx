@@ -17,6 +17,7 @@ export interface StoreItem {
   description: string;
   thumbnailImg: string;
   distance?: string;
+  abroadBranch?: boolean;
   [key: string]: unknown; // allows StoreTabItem compatibility
 }
 

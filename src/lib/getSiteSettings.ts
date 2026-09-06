@@ -23,6 +23,11 @@ export interface SiteSettings {
   aboutUs?: string;
   termsAndCondition?: string;
   faq?: { question: string; answer: string }[];
+  // ── Analytics codes from CMS ──────────────────────────────────
+  facebookBaseCode?: string;
+  googleGTMCode?: string;
+  googleAnalyticsCode?: string;
+  tikTokBaseCode?: string;
 }
 
 // strip inline-styled HTML down to plain, meta-tag-safe text

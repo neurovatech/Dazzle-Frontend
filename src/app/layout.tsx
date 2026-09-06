@@ -13,6 +13,8 @@ import ReduxProvider from "@/app/providers/ReduxProvider";
 import { Toaster } from "react-hot-toast";
 import GoogleTagManager, { GoogleTagManagerNoScript } from "@/components/analytics/GoogleTagManager";
 import FacebookPixel from "@/components/analytics/FacebookPixel";
+import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
+import TikTokPixel from "@/components/analytics/TikTokPixel";
 import RouteChangeTracker from "@/components/analytics/RouteChangeTracker";
 import { getSiteSettings, stripHtml, stripHeavyFields } from "@/lib/getSiteSettings";
 import { getQueryClient } from "@/lib/query-client";
@@ -140,6 +142,8 @@ export default async function RootLayout({
         <link rel="dns-prefetch" href="https://apix.bigpoint.com.bd" />
         <GoogleTagManager />
         <FacebookPixel />
+        <GoogleAnalytics />
+        <TikTokPixel />
       </head>
       <body>
         <GoogleTagManagerNoScript />
