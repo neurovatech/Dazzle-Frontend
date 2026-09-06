@@ -4,9 +4,9 @@ import { useState } from "react";
 import QuantitySelector from "./QuantitySelector";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { addToCart } from "@/store/slices/cartSlice";
+import { toggleWishlist } from "@/store/slices/wishlistSlice";
 import { trackAddToCart } from "@/lib/analytics/pixelEvents";
 import toast from "react-hot-toast";
-import { verifyOrderProduct } from "@/lib/verify-order-product";
 import type { CareOption } from "./DazzleCare";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -55,6 +55,7 @@ interface StickyPurchaseBarProps {
   price?: any;
   isUnavailable?: boolean;
   isTba?: boolean;
+  showTbaFlag?: boolean;
   monthlyDuration?: string;
   storeAvailabilityHref?: string;
   onStoreAvailability?: () => void;
@@ -83,6 +84,7 @@ export default function StickyPurchaseBar({
   price = 0,
   isUnavailable = false,
   isTba = false,
+  showTbaFlag: showTbaFlagProp,
   monthlyDuration = "12 months",
   storeAvailabilityHref = "#",
   onStoreAvailability,
@@ -96,11 +98,33 @@ export default function StickyPurchaseBar({
   careTotalRegular = 0,
   minBookingPrice = 0,
 }: StickyPurchaseBarProps) {
+  const showTbaFlag = showTbaFlagProp ?? isTba;
   const dispatch = useAppDispatch();
   const cartItems = useAppSelector((state) => state.cart.items);
+  const wishlistItems = useAppSelector((state) => state.wishlist.items);
+  const isWishlisted = wishlistItems.some((i) => i.productUuid === productId);
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
   const router = useRouter();
   const [loadingBuyNow, setLoadingBuyNow] = useState(false);
+
+  // ── Wishlist toggle — used when isTba=true ────────────────────
+  const handleWishlistToggle = () => {
+    dispatch(
+      toggleWishlist({
+        productUuid:   productId || "",
+        productName:   productName || "",
+        productSlug:   productSlug || "",
+        image:         productImage || "",
+        price:         productPrice ?? 0,
+        originalPrice: productOriginalPrice ?? 0,
+        discount:      0,
+        badge:         "",
+        inStock:       false,
+        isBestDeal:    false,
+        addedAt:       new Date().toISOString(),
+      }),
+    );
+  };
   const [showLoginModal, setShowLoginModal] = useState(false);
 
   // ── Unique cart id = variantUuid + care plan id (if any) ──────
@@ -277,15 +301,15 @@ export default function StickyPurchaseBar({
 
             {/* Price block */}
             <div className="flex flex-col justify-center shrink-0">
-              {isUnavailable ? (
-                <p className="text-xl sm:text-2xl font-bold leading-tight text-gray-400 dark:text-gray-500">
-                  Not in stock
-                </p>
-              ) : isTba ? (
-                /* TBA — price ও availability hide, শুধু TBA badge */
+              {showTbaFlag ? (
+                /* TBA — price & availability hide, show TBA badge */
                 <span className="bg-[#6D3F0E] text-white text-sm font-bold px-4 py-1.5 rounded-full shadow-md">
                   TBA
                 </span>
+              ) : isUnavailable ? (
+                <p className="text-xl sm:text-2xl font-bold leading-tight text-gray-400 dark:text-gray-500">
+                  Not in stock
+                </p>
               ) : (
                 <>
                   {/* Main price — offer or regular depending on selection */}
@@ -320,36 +344,56 @@ export default function StickyPurchaseBar({
 
             {/* Add to Cart + Buy Now */}
             <div className="flex items-center md:gap-3 gap-1 shrink-0 mr-[10px] md:mr-0">
-              <button
-                onClick={handleAddToCart}
-                disabled={isUnavailable || isTba}
-                className={`shrink-0 md:px-6 px-3 sm:px-8 md:py-3 py-3 text-sm sm:text-base font-semibold rounded-full transition-all duration-200 whitespace-nowrap shadow-sm
-                  ${isUnavailable || isTba
-                    ? "bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-60"
-                    : addedToCart
-                    ? "bg-green-500 text-white cursor-pointer"
-                    : "bg-[#E9CCAE] hover:bg-[#D4B89A] active:bg-[#C0A486] text-black cursor-pointer"
+              {showTbaFlag ? (
+                /* TBA — Add to Wishlist */
+                <button
+                  onClick={handleWishlistToggle}
+                  className={`shrink-0 md:px-6 px-4 sm:px-8 md:py-3 py-3 text-sm sm:text-base font-semibold rounded-full transition-all duration-200 whitespace-nowrap shadow-sm flex items-center gap-2 ${
+                    isWishlisted
+                      ? "bg-red-500 text-white"
+                      : "bg-[#E9CCAE] hover:bg-[#D4B89A] text-black"
                   }`}
-              >
-                {isTba ? "TBA" : isUnavailable ? "Not Available" : addedToCart ? (
-                  <span className="flex items-center md:gap-2 gap-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                    </svg>
-                    Added!
-                  </span>
-                ) : "Add to cart"}
-              </button>
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                    fill={isWishlisted ? "currentColor" : "none"}
+                    stroke="currentColor" strokeWidth={2} className="w-4 h-4 shrink-0">
+                    <path strokeLinecap="round" strokeLinejoin="round"
+                      d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                  </svg>
+                  {isWishlisted ? "Wishlisted" : "Add to Wishlist"}
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={handleAddToCart}
+                    disabled={isUnavailable}
+                    className={`shrink-0 md:px-6 px-3 sm:px-8 md:py-3 py-3 text-sm sm:text-base font-semibold rounded-full transition-all duration-200 whitespace-nowrap shadow-sm
+                      ${isUnavailable
+                        ? "bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-60"
+                        : addedToCart
+                        ? "bg-green-500 text-white cursor-pointer"
+                        : "bg-[#E9CCAE] hover:bg-[#D4B89A] active:bg-[#C0A486] text-black cursor-pointer"
+                      }`}
+                  >
+                    {isUnavailable ? "Not Available" : addedToCart ? (
+                      <span className="flex items-center md:gap-2 gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
+                        Added!
+                      </span>
+                    ) : "Add to cart"}
+                  </button>
 
-              <button
-                onClick={handleBuyNow}
-                disabled={isUnavailable || loadingBuyNow || isTba}
-                className={`shrink-0 md:px-6 px-3 sm:px-8 md:py-3 py-3 text-sm sm:text-base font-semibold rounded-full transition-all duration-200 whitespace-nowrap shadow-sm cursor-pointer
-                  ${isUnavailable || loadingBuyNow || isTba
-                    ? "bg-gray-300 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-60"
-                    : "bg-[#222222] hover:bg-[#444444] active:bg-[#000000] text-white"
-                  }`}
-              >
+                  <button
+                    onClick={handleBuyNow}
+                    disabled={isUnavailable || loadingBuyNow}
+                    className={`shrink-0 md:px-6 px-3 sm:px-8 md:py-3 py-3 text-sm sm:text-base font-semibold rounded-full transition-all duration-200 whitespace-nowrap shadow-sm cursor-pointer
+                      ${isUnavailable || loadingBuyNow
+                        ? "bg-gray-300 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-60"
+                        : "bg-[#222222] hover:bg-[#444444] active:bg-[#000000] text-white"
+                      }`}
+                  >
                 {loadingBuyNow ? (
                   <span className="flex items-center md:gap-2 gap-1">
                     <svg className="w-4 h-4 animate-spin shrink-0" fill="none" viewBox="0 0 24 24">
@@ -360,7 +404,8 @@ export default function StickyPurchaseBar({
                   </span>
                 ) : "Buy Now"}
               </button>
-              
+                </>
+              )}
             </div>
           </div>
         </div>

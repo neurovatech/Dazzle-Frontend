@@ -33,8 +33,8 @@ const LocationCard: React.FC<LocationCardProps> = ({ store }) => {
   const googleMapEmbedUrl = hasCoords
     ? `https://www.google.com/maps?q=${store.latitude},${store.longitude}&z=15&output=embed`
     : !isEmpty(store.address)
-    ? `https://www.google.com/maps?q=${encodeURIComponent(store.address!)}&z=15&output=embed`
-    : null;
+      ? `https://www.google.com/maps?q=${encodeURIComponent(store.address!)}&z=15&output=embed`
+      : null;
 
   return (
     <>
@@ -77,72 +77,92 @@ const LocationCard: React.FC<LocationCardProps> = ({ store }) => {
 
         {/* Content */}
         <div className="pt-8">
-          <div>
-            <h3 className="font-semibold text-[#222222] dark:text-white text-lg leading-tight h-12">
-              {isEmpty(store.branchName) ? NA : store.branchName}{" "}
-            </h3>
+          <Link
+            href={
+              isEmpty(store.slug)
+                ? `/shop-location/${store.branchName}`
+                : `/shop-location/${store.slug}`
+            }
+          >
+            <div>
+              <h3 className="font-semibold text-[#222222] dark:text-white text-lg leading-tight h-12">
+                {isEmpty(store.branchName) ? NA : store.branchName}{" "}
+              </h3>
 
-            <p className="text-sm text-[#747474] dark:text-gray-400 mt-2 h-15">
-              {isEmpty(store.address) ? NA : store.address}
-            </p>
-          </div>
-
+              <p className="text-sm text-[#747474] dark:text-gray-400 mt-2 h-15">
+                {isEmpty(store.address) ? NA : store.address}
+              </p>
+            </div>
+          </Link>
           <hr className="border-[#EEEEEE] dark:border-[#333333] my-2" />
 
           {/* Schedule & contact */}
-          <div className="mb-4 flex justify-between gap-4">
-            <div>
+          <Link
+            href={
+              isEmpty(store.slug)
+                ? `/shop-location/${store.branchName}`
+                : `/shop-location/${store.slug}`
+            }
+          >
+            <div className="mb-4 flex justify-between gap-4">
               <div>
-                <p className="text-[#747474] dark:text-gray-400 uppercase text-sm">
-                  Day Off
-                </p>
-                <p className="font-semibold text-[#6D3F0E] dark:text-[#D89B5C] mt-0.5">
-                  {isEmpty(store.dayOff) ? NA : store.dayOff}
-                </p>
+                <div>
+                  <p className="text-[#747474] dark:text-gray-400 uppercase text-sm">
+                    Day Off
+                  </p>
+                  <p className="font-semibold text-[#6D3F0E] dark:text-[#D89B5C] mt-0.5">
+                    {isEmpty(store.dayOff) ? NA : store.dayOff}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-[#747474] dark:text-gray-400 uppercase text-sm mt-2">
+                    Contact
+                  </p>
+                  <span className="font-semibold text-[#6D3F0E] dark:text-[#D89B5C]">
+                    {isEmpty(store.contactNo) ? NA : store.contactNo}
+                  </span>
+                </div>
               </div>
 
               <div>
-                <p className="text-[#747474] dark:text-gray-400 uppercase text-sm mt-2">
-                  Contact
-                </p>
-                <span className="font-semibold text-[#6D3F0E] dark:text-[#D89B5C]">
-                  {isEmpty(store.contactNo) ? NA : store.contactNo}
-                </span>
+                <div>
+                  <p className="text-[#747474] dark:text-gray-400 uppercase text-sm">
+                    Open Day
+                  </p>
+                  <p className="font-semibold text-[#6D3F0E] dark:text-[#D89B5C] mt-0.5">
+                    {isEmpty(store.openDay) && isEmpty(store.hours) ? (
+                      NA
+                    ) : (
+                      <>
+                        {isEmpty(store.openDay) ? "N/A" : store.openDay}
+                        {" : "}
+                        <span>
+                          {isEmpty(store.hours) ? "N/A" : store.hours}
+                        </span>
+                      </>
+                    )}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-[#747474] dark:text-gray-400 uppercase text-sm mt-2">
+                    Email
+                  </p>
+                  <span className="font-semibold text-[#6D3F0E] dark:text-[#D89B5C]">
+                    {isEmpty(store.email) ? NA : store.email}
+                  </span>
+                </div>
               </div>
             </div>
-
-            <div>
-              <div>
-                <p className="text-[#747474] dark:text-gray-400 uppercase text-sm">
-                  Open Day
-                </p>
-                <p className="font-semibold text-[#6D3F0E] dark:text-[#D89B5C] mt-0.5">
-                  {isEmpty(store.openDay) && isEmpty(store.hours) ? (
-                    NA
-                  ) : (
-                    <>
-                      {isEmpty(store.openDay) ? "N/A" : store.openDay}
-                      {" : "}
-                      <span>{isEmpty(store.hours) ? "N/A" : store.hours}</span>
-                    </>
-                  )}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-[#747474] dark:text-gray-400 uppercase text-sm mt-2">
-                  Email
-                </p>
-                <span className="font-semibold text-[#6D3F0E] dark:text-[#D89B5C]">
-                  {isEmpty(store.email) ? NA : store.email}
-                </span>
-              </div>
-            </div>
-          </div>
-
+          </Link>
           {/* Footer */}
           <Link
-            href={isEmpty(store.slug) ? `/shop-location/${store.branchName}` : `/shop-location/${store.slug}`}
+            href={
+              isEmpty(store.slug)
+                ? `/shop-location/${store.branchName}`
+                : `/shop-location/${store.slug}`
+            }
             className="w-full flex items-center justify-between bg-[#222222] dark:bg-[#2E2E2E] hover:bg-[#333333] dark:hover:bg-[#3A3A3A] text-white text-sm px-4 py-2.5 rounded-[14px] transition-colors"
           >
             See Details
@@ -154,7 +174,11 @@ const LocationCard: React.FC<LocationCardProps> = ({ store }) => {
       </div>
 
       {/* Map Modal */}
-      <GlobalModal title={store.branchName} isOpen={mapOpen} onClose={() => setMapOpen(false)}>
+      <GlobalModal
+        title={store.branchName}
+        isOpen={mapOpen}
+        onClose={() => setMapOpen(false)}
+      >
         <div className="flex flex-col w-full">
           {/* Modal Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-[#EEEEEE] dark:border-[#2E2E2E]">
@@ -162,7 +186,9 @@ const LocationCard: React.FC<LocationCardProps> = ({ store }) => {
               <MapPin size={18} className="text-[#6D3F0E]" />
               <div>
                 <h2 className="font-semibold text-[#222222] dark:text-white text-base leading-tight">
-                  {isEmpty(store.branchName) ? "Store Location" : store.branchName}
+                  {isEmpty(store.branchName)
+                    ? "Store Location"
+                    : store.branchName}
                 </h2>
                 {!isEmpty(store.address) && (
                   <p className="text-xs text-[#747474] dark:text-gray-400 mt-0.5">
@@ -196,12 +222,16 @@ const LocationCard: React.FC<LocationCardProps> = ({ store }) => {
               />
             ) : (
               <div className="w-full h-full flex flex-col items-center justify-center gap-3 text-center px-6">
-                <MapPin size={40} className="text-gray-300 dark:text-gray-600" />
+                <MapPin
+                  size={40}
+                  className="text-gray-300 dark:text-gray-600"
+                />
                 <p className="text-[#747474] dark:text-gray-400 font-medium">
                   No location data available
                 </p>
                 <p className="text-xs text-gray-400 dark:text-gray-500">
-                  Latitude, longitude and address are not provided for this store.
+                  Latitude, longitude and address are not provided for this
+                  store.
                 </p>
               </div>
             )}
@@ -211,11 +241,15 @@ const LocationCard: React.FC<LocationCardProps> = ({ store }) => {
           {hasCoords && (
             <div className="flex items-center gap-4 px-4 py-2.5 bg-gray-50 dark:bg-[#1B1B1B] border-t border-[#EEEEEE] dark:border-[#2E2E2E] text-xs text-[#747474] dark:text-gray-400">
               <span>
-                <span className="font-medium text-[#222222] dark:text-white">Lat:</span>{" "}
+                <span className="font-medium text-[#222222] dark:text-white">
+                  Lat:
+                </span>{" "}
                 {store.latitude}
               </span>
               <span>
-                <span className="font-medium text-[#222222] dark:text-white">Lng:</span>{" "}
+                <span className="font-medium text-[#222222] dark:text-white">
+                  Lng:
+                </span>{" "}
                 {store.longitude}
               </span>
             </div>

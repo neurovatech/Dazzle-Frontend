@@ -13,6 +13,7 @@ import ProductVariants from "./ProductVariants";
 import NoImg from "@/images/no_images.png";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { addToCart } from "@/store/slices/cartSlice";
+import { toggleWishlist } from "@/store/slices/wishlistSlice";
 import { trackAddToCart } from "@/lib/analytics/pixelEvents";
 import { api } from "@/lib/api";
 import toast from "react-hot-toast";
@@ -33,6 +34,8 @@ interface ProductQuicViewProps {
   price?: number;
   /** Fallback image shown before the API resolves */
   image?: string;
+  isTba?: boolean;
+  showTbaFlag?: boolean;
 }
 
 interface ProductApiResponse {
@@ -50,6 +53,8 @@ function ProductQuicView({
   title: fallbackTitle,
   price: fallbackPrice,
   image: fallbackImage,
+  isTba: isTbaProp,
+  showTbaFlag: showTbaFlagProp,
 }: ProductQuicViewProps) {
   const dispatch = useAppDispatch();
   const cartItems = useAppSelector((state) => state.cart.items);
@@ -273,6 +278,32 @@ function ProductQuicView({
     selectedVariant?.id ?? product?.productUuid ?? productUuid ?? slug ?? "";
 
   const currentImage = images[selectedImage] || fallbackImage || NoImg.src;
+
+  const showTbaFlag =
+    showTbaFlagProp ?? (isTbaProp !== undefined ? isTbaProp : (displayIsTba || !displayInStock));
+
+  const wishlistItems = useAppSelector((state) => state.wishlist.items);
+  const isWishlisted = wishlistItems.some(
+    (i) => i.productUuid === (displayId || productUuid || ""),
+  );
+
+  const handleWishlistToggle = () => {
+    dispatch(
+      toggleWishlist({
+        productUuid: displayId || productUuid || "",
+        productName: displayTitle,
+        productSlug: displaySlug,
+        image: currentImage,
+        price: displayPrice,
+        originalPrice: displayOriginal,
+        discount: discount,
+        badge: "",
+        inStock: displayInStock,
+        isBestDeal: false,
+        addedAt: new Date().toISOString(),
+      }),
+    );
+  };
 
   const discount =
     displayOriginal > 0 && displayPrice > 0
@@ -533,7 +564,7 @@ function ProductQuicView({
           <div className="pt-5 space-y-3">
             {/* Availability + Code */}
             <div className="flex items-center justify-between text-sm">
-              {displayIsTba ? (
+              {showTbaFlag ? (
                 <span className="bg-[#6D3F0E] text-white text-xs font-bold px-3 py-1 rounded-full shadow-md">
                   TBA
                 </span>
@@ -579,7 +610,7 @@ function ProductQuicView({
             {/* Price + Qty */}
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-baseline gap-2">
-                {displayIsTba ? (
+                {showTbaFlag ? (
                   /* TBA — price hide, শুধু TBA badge */
                   <span className="bg-[#6D3F0E] text-white text-sm font-bold px-4 py-1.5 rounded-full shadow-md">
                     TBA
@@ -776,71 +807,102 @@ function ProductQuicView({
 
         {/* ── Footer Buttons ── */}
         <div className="rounded-b-2xl gap-4 bg-white p-4 shadow-[0px_-4px_26.6px_6px_#0000002B] flex items-center justify-between dark:bg-[#3d3228]">
-          {!displayInStock ? (
+          {showTbaFlag ? (
             <button
-              disabled
-              className="border border-gray-200 bg-gray-100 text-gray-400 px-4 py-2 rounded-md w-full justify-center flex items-center gap-2 cursor-not-allowed font-semibold opacity-70"
+              type="button"
+              onClick={handleWishlistToggle}
+              className={`w-full flex items-center justify-center gap-2 h-11 px-4 rounded-xl text-sm font-semibold border transition-all duration-300 active:scale-95 ${
+                isWishlisted
+                  ? "bg-red-50 border-red-300 text-red-500"
+                  : "bg-white border-orange-200 text-[#6D3F0E] hover:bg-orange-50 hover:border-orange-400 hover:shadow-md"
+              }`}
+              aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                fill="none"
                 viewBox="0 0 24 24"
-                strokeWidth={2}
+                fill={isWishlisted ? "currentColor" : "none"}
                 stroke="currentColor"
+                strokeWidth={2}
                 className="w-4 h-4 shrink-0"
               >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
+                  d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
                 />
               </svg>
-              NOT IN STOCK
+              <span>{isWishlisted ? "Wishlisted" : "Add to Wishlist"}</span>
             </button>
           ) : (
-            <button
-              onClick={handleAddToCart}
-              disabled={loading}
-              className="border border-[#E7E7E7] bg-[#F7F7F7] text-[#222222] px-4 py-2 rounded-md hover:bg-[#222222] hover:text-white transition-colors duration-500 w-full justify-center flex items-center disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
-            >
-              ADD TO CART
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={handleBuyNow}
-            disabled={loading || loadingBuyNow || !displayInStock}
-            className={`border border-[#E7E7E7] bg-[#222222] text-white px-4 py-2 rounded-md hover:bg-[#F7F7F7] hover:text-[#222222] transition-colors duration-500 w-full justify-center flex items-center font-semibold disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${
-              !displayInStock ? "pointer-events-none opacity-50" : ""
-            }`}
-          >
-            {loadingBuyNow ? (
-              <span className="flex items-center gap-2">
-                <svg
-                  className="w-4 h-4 animate-spin shrink-0"
-                  fill="none"
-                  viewBox="0 0 24 24"
+            <>
+              {!displayInStock ? (
+                <button
+                  disabled
+                  className="border border-gray-200 bg-gray-100 text-gray-400 px-4 py-2 rounded-md w-full justify-center flex items-center gap-2 cursor-not-allowed font-semibold opacity-70"
                 >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2}
                     stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8v8H4z"
-                  />
-                </svg>
-                Processing...
-              </span>
-            ) : (
-              "BUY NOW"
-            )}
-          </button>
+                    className="w-4 h-4 shrink-0"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
+                    />
+                  </svg>
+                  NOT IN STOCK
+                </button>
+              ) : (
+                <button
+                  onClick={handleAddToCart}
+                  disabled={loading}
+                  className="border border-[#E7E7E7] bg-[#F7F7F7] text-[#222222] px-4 py-2 rounded-md hover:bg-[#222222] hover:text-white transition-colors duration-500 w-full justify-center flex items-center disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+                >
+                  ADD TO CART
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={handleBuyNow}
+                disabled={loading || loadingBuyNow || !displayInStock}
+                className={`border border-[#E7E7E7] bg-[#222222] text-white px-4 py-2 rounded-md hover:bg-[#F7F7F7] hover:text-[#222222] transition-colors duration-500 w-full justify-center flex items-center font-semibold disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${
+                  !displayInStock ? "pointer-events-none opacity-50" : ""
+                }`}
+              >
+                {loadingBuyNow ? (
+                  <span className="flex items-center gap-2">
+                    <svg
+                      className="w-4 h-4 animate-spin shrink-0"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8v8H4z"
+                      />
+                    </svg>
+                    Processing...
+                  </span>
+                ) : (
+                  "BUY NOW"
+                )}
+              </button>
+            </>
+          )}
         </div>
       </GlobalModal>
 

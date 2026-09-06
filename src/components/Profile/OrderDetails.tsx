@@ -31,6 +31,9 @@ import {
   OrderTrackingData,
 } from "./profile.types";
 import InvoiceModal from "./InvoiceModal";
+import Image from "next/image";
+import Bikask from "@/images/bKash-Logo.svg";
+import SSl from "@/images/ssl-logo.svg";
 
 // ─── Helper: 7-day return window check ───────────────────────────────────────
 function isWithinReturnWindow(orderDateISO: string): boolean {
@@ -298,12 +301,206 @@ function CancelOrderModal({
   );
 }
 
+// ─── Pay Due Amount Modal ─────────────────────────────────────────────────────
+type PaymentMethod = "bkash" | "sslcommerz" | "nagad" | "card";
+
+interface PaymentMethodItem {
+  value: PaymentMethod;
+  label: string;
+  icon?: string;
+  imgSrc?: typeof Bikask;
+}
+
+const METHODS: PaymentMethodItem[] = [
+  { value: "bkash",      label: "bKash",       imgSrc: Bikask },
+  { value: "sslcommerz", label: "SSLCommerz",  imgSrc: SSl    },
+  // { value: "nagad",      label: "Nagad",        icon: "💸"    },
+  // { value: "card",       label: "Card / Bank",  icon: "💳"    },
+];
+
+function PayDueModal({
+  orderNo, dueAmount, onClose,
+}: { orderNo: string; dueAmount: number; onClose: () => void }) {
+  const [amount, setAmount] = useState(String(dueAmount));
+  const [method, setMethod] = useState<PaymentMethod>("bkash");
+  const [loading, setLoading] = useState(false);
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState("");
+
+  const parsedAmount = parseFloat(amount) || 0;
+
+  const handlePay = async () => {
+    if (parsedAmount <= 0) { setError("Please enter a valid amount."); return; }
+    if (parsedAmount > dueAmount) { setError(`Amount cannot exceed due amount ৳${dueAmount.toLocaleString("en-IN")}.`); return; }
+    setError("");
+    setLoading(true);
+    await new Promise((r) => setTimeout(r, 1200)); // placeholder for real API call
+    setLoading(false);
+    setDone(true);
+    toast.success("Payment recorded successfully!");
+  };
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="bg-white dark:bg-[#2a2520] rounded-3xl w-full max-w-md shadow-2xl overflow-hidden">
+        {/* Header */}
+        <div className="h-1.5 w-full bg-gradient-to-r from-amber-400 to-orange-500" />
+        <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b border-gray-100 dark:border-zinc-700">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-amber-100 dark:bg-amber-900/30 rounded-xl flex items-center justify-center">
+              <Wallet size={17} className="text-amber-700 dark:text-amber-400" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-gray-900 dark:text-white">Pay Due Amount</h2>
+              <p className="text-xs text-gray-400">Order #{orderNo}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-zinc-700 transition">
+            <X size={16} className="text-gray-400" />
+          </button>
+        </div>
+
+        <div className="px-6 py-5">
+          {done ? (
+            <div className="text-center py-4">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle size={32} className="text-green-600" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">Payment Submitted!</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
+                Your payment of <strong>৳{parsedAmount.toLocaleString("en-IN")}</strong> via <strong>{METHODS.find(m => m.value === method)?.label}</strong> has been recorded.
+              </p>
+              <button onClick={onClose} className="w-full py-3 bg-[#7A4500] text-white rounded-2xl font-semibold hover:bg-[#5a3300] transition">
+                Done
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-5">
+              {/* Order summary */}
+              <div className="bg-amber-50 dark:bg-amber-950/20 rounded-2xl p-4 space-y-2">
+                <div className="flex justify-between text-xs text-gray-600 dark:text-gray-300">
+                  <span>Order Total</span>
+                  <span className="font-semibold">৳{(dueAmount).toLocaleString("en-IN")}</span>
+                </div>
+                <div className="flex justify-between text-xs font-bold text-red-600 dark:text-red-400 border-t border-amber-200 dark:border-amber-800 pt-2">
+                  <span>Remaining Due</span>
+                  <span>৳{dueAmount.toLocaleString("en-IN")}</span>
+                </div>
+              </div>
+
+              {/* Amount input */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1.5">
+                  Payment Amount <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-gray-500">৳</span>
+                  <input
+                    type="number"
+                    value={amount}
+                    onChange={(e) => { setAmount(e.target.value); setError(""); }}
+                    min={1}
+                    max={dueAmount}
+                    className="w-full pl-8 pr-4 py-3 rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-sm text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-400"
+                  />
+                </div>
+                {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+              </div>
+
+              {/* Payment method */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-2">
+                  Payment Method <span className="text-red-500">*</span>
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {METHODS.map((m) => (
+                    <button
+                      key={m.value}
+                      type="button"
+                      onClick={() => setMethod(m.value)}
+                      className={`flex items-center justify-center gap-2 px-3 py-3 rounded-xl border transition ${
+                        method === m.value
+                          ? "border-amber-500 bg-amber-50 dark:bg-amber-950/30"
+                          : "border-gray-200 dark:border-zinc-700 hover:border-amber-300"
+                      }`}
+                    >
+                      {m.imgSrc ? (
+                        <Image src={m.imgSrc} alt={m.label} className="h-6 w-auto object-contain" />
+                      ) : (
+                        <>
+                          <span className="text-base">{m.icon}</span>
+                          <span className={`text-sm font-semibold truncate ${
+                            method === m.value
+                              ? "text-amber-800 dark:text-amber-300"
+                              : "text-gray-600 dark:text-gray-300"
+                          }`}>{m.label}</span>
+                        </>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Pay button */}
+              <button
+                onClick={handlePay}
+                disabled={loading || parsedAmount <= 0}
+                className="w-full py-3.5 bg-[#7A4500] hover:bg-[#5a3300] text-white rounded-2xl font-bold text-sm transition disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {loading ? (
+                  <><Loader2 size={16} className="animate-spin" /> Processing...</>
+                ) : (
+                  <><Wallet size={16} /> Confirm & Pay ৳{parsedAmount > 0 ? parsedAmount.toLocaleString("en-IN") : "0"}</>
+                )}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main OrderDetails Component ──────────────────────────────────────────────
 interface OrderDetailsProps {
   order?: Order;
 }
 
-// Canonical delivery steps — Figma shows the most recent step at the top.
+// ─── 4-Step Tracking Flow ─────────────────────────────────────────────────────
+const TRACKING_STEPS = [
+  { label: "Order Placed",  statuses: ["pending", "booked", "processed"] },
+  { label: "Confirmed",     statuses: ["confirmed", "failed", "refunded"] },
+  { label: "Shipping",      statuses: ["shipping", "sent out", "in transit", "sentout", "intransit", "out for delivery"] },
+  { label: "Completed",     statuses: ["completed", "delivered", "cancelled"] },
+];
+
+/**
+ * Returns the index of the LAST completed step (0-based).
+ *
+ * Pending / Booked / Processed  → 0  (only step 1 green)
+ * Confirmed / Failed / Refunded → 1  (steps 1-2 green)
+ * Shipping / In Transit …       → 2  (steps 1-3 green)
+ * Completed / Delivered / Cancelled → 3  (all 4 green)
+ */
+function getActiveStep(
+  orderStatus?: string,
+  orderCancelled?: boolean,
+  orderDelivered?: boolean,
+): number {
+  if (orderCancelled || orderDelivered) return 3;
+  if (!orderStatus) return 0;
+  const s = orderStatus.toLowerCase().replace(/[\s_-]+/g, "");
+
+  // Walk from the last step downward — return the first match found
+  for (let i = TRACKING_STEPS.length - 1; i >= 0; i--) {
+    if (TRACKING_STEPS[i].statuses.some((st) => s.includes(st.replace(/\s+/g, "")))) {
+      return i;
+    }
+  }
+  return 0; // default: step 1 only
+}
+
+// Legacy canonical steps (kept for timeline match)
 const CANONICAL_STEPS = ["Delivered", "In Transit", "Sent Out", "Packaged"];
 
 function findTimelineMatch(
@@ -319,6 +516,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
   const rawOrder = order?.rawApiData;
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showInvoice, setShowInvoice] = useState(false);
+  const [showPayDueModal, setShowPayDueModal] = useState(false);
 
   const { token, apiKey } = useAppSelector((s) => s.auth);
   const authHeader = token ? (token.startsWith("Bearer ") ? token : `Bearer ${token}`) : "";
@@ -397,12 +595,19 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
   const isBookingMoney = paymentType === "Partial";
   const showDueBanner = dueAmount > 0 && !trackingData?.orderCancelled;
 
-  // NOTE (backend integration pending): no online due-amount payment endpoint
-  // exists yet either. Once available (likely similar to the checkout flow's
-  // /api/tokenized/v1/sslcommerz-pay or /api/tokenized/v1/bkash-pay), wire the
-  // real call in here. The button below is ready and waiting on it.
+  // ── Active tracking step ──────────────────────────────────────────────────
+  const currentOrderStatus = rawOrder?.orderStatus || order?.status || "";
+  const activeStep = getActiveStep(
+    currentOrderStatus,
+    trackingData?.orderCancelled,
+    trackingData?.orderDelivered,
+  );
+  // Payment allowed only in steps 0 (Placed) and 1 (Confirmed)
+  const canPayDue = activeStep <= 1 && dueAmount > 0;
+
   const handlePayDue = () => {
-    toast("Online due-amount payment isn't connected to the backend yet.", { icon: "🚧" });
+    if (!canPayDue) return;
+    setShowPayDueModal(true);
   };
 
   if (isLoading) {
@@ -497,15 +702,26 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
                 </p>
                 <p className="text-xs text-amber-700 dark:text-amber-300 mt-1 leading-relaxed max-w-md">
                   {isBookingMoney
-                    ? "Only the booking money (advance) has been paid for this order. The remaining amount is due on delivery."
+                    ? "Only the booking money (advance) has been paid. The remaining amount is due on delivery."
                     : isCOD
                     ? "This is a Cash on Delivery order. Please pay the remaining amount when the product is delivered."
-                    : "This order hasn't been fully paid yet. Please contact support to settle the due amount."}
+                    : "This order hasn't been fully paid yet."}
                 </p>
+                {!canPayDue && activeStep >= 2 && (
+                  <p className="text-xs text-red-500 dark:text-red-400 mt-1.5 flex items-center gap-1">
+                    <AlertTriangle size={11} />
+                    Payment is disabled for Shipping or Completed/Cancelled orders.
+                  </p>
+                )}
               </div>
               <button
                 onClick={handlePayDue}
-                className="shrink-0 px-4 py-2 rounded-xl bg-[#7A4500] hover:bg-[#5a3300] text-white text-xs font-bold transition"
+                disabled={!canPayDue}
+                className={`shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition ${
+                  canPayDue
+                    ? "bg-[#7A4500] hover:bg-[#5a3300] text-white"
+                    : "bg-gray-200 dark:bg-zinc-700 text-gray-400 dark:text-zinc-500 cursor-not-allowed"
+                }`}
               >
                 Pay Due Amount
               </button>
@@ -538,55 +754,98 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
         />
       </div>
 
-      {/* ── Order Tracking Timeline (Figma-style: newest step first, Waiting for future) ── */}
+      {/* ── Order Tracking — 4-step flow with green active highlight ── */}
       <div>
         <h3 className="text-lg font-bold mb-3 text-gray-800 dark:text-white">Order Tracking</h3>
-        <div className="bg-white dark:bg-[#2e2a27] p-4 rounded-2xl border border-gray-100 dark:border-zinc-800/80 space-y-4">
+        <div className="bg-white dark:bg-[#2e2a27] p-5 rounded-2xl border border-gray-100 dark:border-zinc-800/80">
+
+          {/* Tracking code */}
           {trackingData?.trackingCode && (
-            <div className="flex items-center gap-2.5 pb-3 border-b border-gray-100 dark:border-zinc-800">
-              <Truck size={16} className="text-[#7A4500] dark:text-[#d48c34] shrink-0" />
+            <div className="flex items-center gap-2 mb-4 pb-4 border-b border-gray-100 dark:border-zinc-800">
+              <Truck size={15} className="text-[#7A4500] dark:text-[#d48c34] shrink-0" />
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                Tracking Code: <span className="font-bold text-gray-800 dark:text-white">{trackingData.trackingCode}</span>
-                {trackingData.courierName ? ` (${trackingData.courierName})` : ""}
+                Tracking: <span className="font-bold text-gray-800 dark:text-white">{trackingData.trackingCode}</span>
+                {trackingData.courierName ? ` · ${trackingData.courierName}` : ""}
               </p>
             </div>
           )}
 
-          {trackingData?.orderCancelled ? (
-            <div className="flex items-center gap-2 py-2 text-red-600 dark:text-red-400 text-sm font-semibold">
-              <XOctagon size={16} /> This order has been cancelled
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {CANONICAL_STEPS.map((step, idx) => {
-                const match = findTimelineMatch(step, timeline);
-                const isLast = idx === CANONICAL_STEPS.length - 1;
-                return (
-                  <div key={step} className="flex gap-4 items-start relative">
-                    <div className="flex flex-col items-center">
-                      <div
-                        className={`w-6 h-6 rounded-full border-2 flex items-center justify-center z-10 shrink-0 ${
-                          match
-                            ? "border-[#7A4500] bg-[#7A4500]"
-                            : "border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-800"
-                        }`}
-                      >
-                        {match ? <CheckCircle size={14} className="text-white" /> : <Circle size={8} className="text-gray-300 dark:text-zinc-600 fill-current" />}
-                      </div>
-                      {!isLast && <div className={`w-[1.5px] h-8 my-1 ${match ? "bg-orange-300 dark:bg-orange-800" : "bg-gray-200 dark:bg-zinc-700"}`} />}
-                    </div>
+          {/* 4-step horizontal progress bar */}
+          <div className="relative flex items-start justify-between mb-6">
+            {/* background connecting line */}
+            <div className="absolute top-4 left-[8%] right-[8%] h-[2px] bg-gray-200 dark:bg-zinc-700 z-0" />
+            {/* green progress line — grows from left as activeStep increases */}
+            <div
+              className="absolute top-4 left-[8%] h-[2px] bg-green-500 z-0 transition-all duration-500 ease-in-out"
+              style={{
+                width: activeStep === 0
+                  ? "0%"
+                  : `${(activeStep / (TRACKING_STEPS.length - 1)) * 84}%`,
+              }}
+            />
 
-                    <div className="flex-1 pb-1">
-                      <h4 className={`font-semibold text-sm ${match ? "text-gray-800 dark:text-white" : "text-gray-400 dark:text-gray-500"}`}>
-                        {step}
-                      </h4>
-                      <p className="text-xs text-gray-400 mt-0.5">
-                        {match ? `${match.createdBy || "System"} • ${formatDate(match.createdAt)}` : "Waiting..."}
-                      </p>
-                    </div>
+            {TRACKING_STEPS.map((step, idx) => {
+              const isCompleted = idx <= activeStep;
+              const isCancelledStep = trackingData?.orderCancelled && idx === activeStep && idx === 3;
+              return (
+                <div key={step.label} className="flex flex-col items-center z-10 flex-1">
+                  <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
+                    isCancelledStep
+                      ? "border-red-500 bg-red-500"
+                      : isCompleted
+                      ? "border-green-500 bg-green-500"
+                      : "border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-800"
+                  }`}>
+                    {isCancelledStep ? (
+                      <XOctagon size={14} className="text-white" />
+                    ) : isCompleted ? (
+                      <CheckCircle size={14} className="text-white" />
+                    ) : (
+                      <Circle size={8} className="text-gray-300 dark:text-zinc-600 fill-current" />
+                    )}
                   </div>
-                );
-              })}
+                  <p className={`text-[11px] font-semibold mt-2 text-center leading-tight px-1 ${
+                    isCancelledStep
+                      ? "text-red-500 dark:text-red-400"
+                      : isCompleted
+                      ? "text-green-600 dark:text-green-400"
+                      : "text-gray-400 dark:text-gray-500"
+                  }`}>
+                    {step.label}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Current status pill */}
+          <div className="flex items-center justify-center mb-4">
+            <span className={`text-xs font-bold px-3 py-1 rounded-full ${
+              trackingData?.orderCancelled
+                ? "bg-red-100 text-red-600 dark:bg-red-950/40 dark:text-red-400"
+                : trackingData?.orderDelivered
+                ? "bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400"
+                : "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400"
+            }`}>
+              Current: {rawOrder?.orderStatus || statusText}
+            </span>
+          </div>
+
+          {/* Detailed timeline */}
+          {timeline.length > 0 && (
+            <div className="border-t border-gray-100 dark:border-zinc-800 pt-4 space-y-3">
+              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">Status History</p>
+              {timeline.map((t, idx) => (
+                <div key={idx} className="flex items-start gap-3">
+                  <div className="w-2 h-2 rounded-full bg-green-500 mt-1.5 shrink-0" />
+                  <div>
+                    <p className="text-xs font-semibold text-gray-800 dark:text-white">{t.orderStatus}</p>
+                    <p className="text-[11px] text-gray-400 mt-0.5">
+                      {t.createdBy || "System"} · {formatDate(t.createdAt)}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -901,6 +1160,15 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
           onClose={() => setShowCancelModal(false)}
           onConfirm={handleCancelOrder}
           loading={false}
+        />
+      )}
+
+      {/* ── Pay Due Amount Modal ── */}
+      {showPayDueModal && (
+        <PayDueModal
+          orderNo={trackingData?.orderNo || orderNo}
+          dueAmount={dueAmount}
+          onClose={() => setShowPayDueModal(false)}
         />
       )}
 

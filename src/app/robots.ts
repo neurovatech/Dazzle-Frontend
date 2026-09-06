@@ -7,18 +7,13 @@ import { SITE_URL, NOINDEX_PATHS } from "@/lib/seo-config";
  * Goals:
  *  - Let crawlers reach the whole catalog (products, categories, brands, blogs).
  *  - Keep them out of private/transactional routes and token-bearing URLs.
- *  - Stop crawl budget being burned on faceted filter permutations, which can
- *    generate effectively unlimited near-duplicate URLs.
- *  - Advertise the sitemap.
+ *  - Stop crawl budget being burned on faceted filter permutations.
+ *  - Advertise the sitemap index AND all child sitemaps.
  */
 export default function robots(): MetadataRoute.Robots {
-  // Block private routes and everything beneath them.
   const disallow = [
     ...NOINDEX_PATHS.flatMap((p) => [p, `${p}/`]),
-    // Internal API + the backend proxy — no crawl value.
     "/api/",
-    // Faceted-navigation parameters. `?page=` is intentionally NOT blocked:
-    // paginated category pages are legitimate, indexable URLs.
     "/*?*sort=",
     "/*?*search=",
     "/*?*minPrice=",
@@ -34,7 +29,15 @@ export default function robots(): MetadataRoute.Robots {
         disallow,
       },
     ],
-    sitemap: `${SITE_URL}/sitemap.xml`,
+    // Sitemap index first, then all dedicated child sitemaps
+    sitemap: [
+      `${SITE_URL}/sitemap.xml`,
+      `${SITE_URL}/static/sitemap.xml`,
+      `${SITE_URL}/category/sitemap.xml`,
+      `${SITE_URL}/product/sitemap.xml`,
+      `${SITE_URL}/brand/sitemap.xml`,
+      `${SITE_URL}/blog/sitemap.xml`,
+    ],
     host: SITE_URL,
   };
 }

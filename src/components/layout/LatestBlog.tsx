@@ -43,23 +43,20 @@ const infoBoxes: InfoBoxProps[] = [
   { bg: "bg-yellow-50 shadow-sm" },
 ];
 
-async function getBlogs(){
+async function getBlogs() {
   try {
-    const res = await api.get<unknown>(
-      `/blogs?page=1&datalimit=3&isCareer=0`,
-      { next: { revalidate: 5 } },
-    );
+    const res = await api.get<unknown>(`/blogs?page=1&datalimit=3&isCareer=0`, {
+      next: { revalidate: 5 },
+    });
     const obj = res as Record<string, unknown>;
     return {
       data: Array.isArray(obj?.data) ? (obj.data as BlogPost[]) : [],
     };
   } catch (error) {
     console.error("Error fetching blogs:", error);
-    return { data: []};
+    return { data: [] };
   }
 }
-
-
 
 const InfoBox: React.FC<InfoBoxProps> = ({ bg }) => (
   <div className={`${bg} rounded-2xl p-6`}>
@@ -77,10 +74,7 @@ const InfoBox: React.FC<InfoBoxProps> = ({ bg }) => (
 
 // const LatestBlog: React.FC = () => {
 async function LatestBlog() {
-
-  const [{ data: blogPosts }] = await Promise.all([
-    getBlogs(),
-  ]);
+  const [{ data: blogPosts }] = await Promise.all([getBlogs()]);
 
   return (
     <section className="flex flex-col flex-1 max-w-355 mx-auto md:px-12.5 px-4 mt-10!">
@@ -96,16 +90,24 @@ async function LatestBlog() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8 cursor-pointer">
-        {blogPosts.map((post: BlogPost) => (
-          <BlogCard key={post.uuid} post={post} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+        {blogPosts.map((post: BlogPost, index: number) => (
+          <div
+            key={post.uuid}
+            className={
+              index === 0
+                ? "block cursor-pointer"
+                : "hidden sm:block cursor-pointer"
+            }
+          >
+            <BlogCard post={post} />
+          </div>
         ))}
       </div>
 
-<div className="">
-  <BlogInformationSection />
-</div>
-
+      <div className="">
+        <BlogInformationSection />
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 cursor-pointer">
         {infoBoxes.map((box: InfoBoxProps, i: number) => (
@@ -114,6 +116,6 @@ async function LatestBlog() {
       </div>
     </section>
   );
-};
+}
 
 export default LatestBlog;

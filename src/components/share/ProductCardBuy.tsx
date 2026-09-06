@@ -337,6 +337,7 @@ export default function ProductCardBuy({
         title={title}
         price={price}
         image={image}
+        showTbaFlag={showTbaFlag}
       />
     </div>
   );

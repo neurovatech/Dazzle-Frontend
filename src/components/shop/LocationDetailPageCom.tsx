@@ -110,9 +110,10 @@ const LocationDetailPageCom: React.FC<Props> = ({ store }) => {
 
             {/* Description */}
             {descMain?.trim() && (
-              <p className="mt-6 text-gray-600 dark:text-gray-400 leading-relaxed text-sm">
-                {descMain.trim()}
-              </p>
+              <div
+                className="mt-6 text-gray-600 dark:text-gray-400 leading-relaxed text-sm prose dark:prose-invert max-w-none [&_p]:mb-3 [&_p:last-child]:mb-0"
+                dangerouslySetInnerHTML={{ __html: descMain.trim() }}
+              />
             )}
             {descLink?.trim() && (
               <a

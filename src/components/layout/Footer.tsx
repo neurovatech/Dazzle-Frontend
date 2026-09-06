@@ -73,7 +73,7 @@ const sections: FooterLinkSection[] = [
       { label: "Announcement", href: "/announcement" },
       { label: "Corporate", href: "/corporate" },
       { label: "Feedback", href: "/feedback" },
-      { label: "Sitemap", href: "/sitemap" },
+      { label: "Sitemap", href: "/sitemap.xml" },
       { label: "Affiliate Policy", href: "/affiliate-policy" },
       { label: "Cookies Policy", href: "/cookies-policy" },
       { label: "Data Protection Policy", href: "/data-protection-policy" },
