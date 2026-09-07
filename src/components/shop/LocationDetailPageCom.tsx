@@ -188,6 +188,74 @@ const LocationDetailPageCom: React.FC<Props> = ({ store }) => {
         </div>
       </section>
 
+
+       <section className="py-12 px-4 sm:px-6 lg:px-8 bg-[#5c3a1e]">
+        <div className="">
+          <h2 className="text-white text-xl font-bold mb-6">Customer Review</h2>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {visibleReviews.map((review) => (
+              <ReviewCard key={review.id} review={review} />
+            ))}
+          </div>
+
+          {/* {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-8">
+              <button
+                onClick={() => setReviewPage((p) => Math.max(0, p - 1))}
+                disabled={reviewPage === 0}
+                className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center disabled:opacity-30 transition"
+                aria-label="Previous reviews"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              {Array.from({ length: totalPages }).map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setReviewPage(i)}
+                  className={`w-2.5 h-2.5 rounded-full transition-all duration-200 ${
+                    i === reviewPage
+                      ? "bg-amber-300 scale-125"
+                      : "bg-white/40 hover:bg-white/60"
+                  }`}
+                  aria-label={`Reviews page ${i + 1}`}
+                />
+              ))}
+              <button
+                onClick={() =>
+                  setReviewPage((p) => Math.min(totalPages - 1, p + 1))
+                }
+                disabled={reviewPage === totalPages - 1}
+                className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center disabled:opacity-30 transition"
+                aria-label="Next reviews"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          )} */}
+        </div>
+      </section>
+
+      <section className="py-12 px-4 sm:px-6 lg:px-8 bg-white">
+        <div className="">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            {BLOG_POSTS.map((post) => (
+              <article
+                key={post.id}
+                className={`${post.color} rounded-2xl p-6 border border-gray-100 hover:shadow-sm transition-shadow duration-200 cursor-pointer group`}
+              >
+                <h3 className="font-bold text-gray-900 text-base leading-snug mb-3 group-hover:text-amber-800 transition-colors">
+                  {post.title}
+                </h3>
+                <p className="text-sm text-gray-500 leading-relaxed">
+                  {post.excerpt}
+                </p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── Map Modal — same pattern as LocationCard ── */}
       <GlobalModal
         title={store.branch_name}
