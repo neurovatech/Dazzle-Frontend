@@ -23,11 +23,15 @@ export interface SiteSettings {
   aboutUs?: string;
   termsAndCondition?: string;
   faq?: { question: string; answer: string }[];
-  // ── Analytics codes from CMS ──────────────────────────────────
   facebookBaseCode?: string;
   googleGTMCode?: string;
   googleAnalyticsCode?: string;
   tikTokBaseCode?: string;
+  /** SEO content blocks shown as clickable cards on product detail pages */
+  hseogl1?: string;
+  hseogl2?: string;
+  hseogl3?: string;
+  hseogl4?: string;
 }
 
 // strip inline-styled HTML down to plain, meta-tag-safe text

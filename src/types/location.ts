@@ -14,11 +14,11 @@ export interface Location {
 }
 
 export interface Review {
-  id: number;
-  text: string;
-  author: string;
-  role: string;
-  avatar: string;
+  uuid: string;
+  authorName: string;
+  designation: string;
+  quote: string;
+  imageUrl?: string;
 }
 
 export interface BlogPost {

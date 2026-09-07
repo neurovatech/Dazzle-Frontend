@@ -1,15 +1,25 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Map, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
 import ImageGallery from "@/components/shop/ImageGallery";
 import ReviewCard from "@/components/shop/ReviewCard";
-import { REVIEWS, BLOG_POSTS } from "@/components/shop/data";
 import Breadcrumb from "@/components/share/Breadcrumb";
 import GlobalModal from "@/components/share/GlobalModal";
+import { api } from "@/lib/api";
 import type { StoreDetail } from "@/app/(public)/shop-location/[slug]/page";
+import type { Review } from "@/types/location";
 
 const REVIEWS_PER_PAGE = 6;
+
+interface TestimonialsResponse {
+  statusCode: number;
+  status:     string;
+  found:      boolean;
+  count:      number;
+  totalPages: number;
+  data:       Review[];
+}
 
 interface Props {
   store: StoreDetail;
@@ -19,8 +29,34 @@ const LocationDetailPageCom: React.FC<Props> = ({ store }) => {
   const [reviewPage, setReviewPage] = useState(0);
   const [mapOpen, setMapOpen]       = useState(false);
 
-  const totalReviewPages = Math.ceil(REVIEWS.length / REVIEWS_PER_PAGE);
-  const visibleReviews   = REVIEWS.slice(
+  // ── Testimonials from API ──────────────────────────────────────────────────
+  const [reviews, setReviews]       = useState<Review[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!store.slug) return;
+    const fetchReviews = async () => {
+      setReviewsLoading(true);
+      try {
+        const res = await api.get<TestimonialsResponse>(
+          `/testimonials/${store.slug}?order=old&page=1&limit=50`,
+          { cache: "no-store" },
+        );
+
+        console.log(res?.data, "res?.data")
+        setReviews(Array.isArray(res?.data) ? res.data : []);
+      } catch (err) {
+        console.error("[LocationDetailPageCom] testimonials fetch failed:", err);
+        setReviews([]);
+      } finally {
+        setReviewsLoading(false);
+      }
+    };
+    fetchReviews();
+  }, [store.slug]);
+
+  const totalReviewPages = Math.ceil(reviews.length / REVIEWS_PER_PAGE);
+  const visibleReviews   = reviews.slice(
     reviewPage * REVIEWS_PER_PAGE,
     reviewPage * REVIEWS_PER_PAGE + REVIEWS_PER_PAGE,
   );
@@ -130,113 +166,67 @@ const LocationDetailPageCom: React.FC<Props> = ({ store }) => {
       </section>
 
       {/* ── Reviews ── */}
-      <section className="py-12 px-4 sm:px-6 lg:px-8 bg-[#5c3a1e] dark:bg-[#1A1A1A] hidden">
+      <section className="py-12 px-4 sm:px-6 lg:px-8 bg-[#5c3a1e] dark:bg-[#1A1A1A]">
         <div>
-          <h2 className="text-white text-xl font-bold mb-6">Customer Review </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {visibleReviews.map((review) => (
-              <ReviewCard key={review.id} review={review} />
-            ))}
-          </div>
+          <h2 className="text-white text-xl font-bold mb-6">Customer Reviews</h2>
 
-          {totalReviewPages > 1 && (
-            <div className="flex items-center justify-center gap-2 mt-8">
-              <button
-                onClick={() => setReviewPage((p) => Math.max(0, p - 1))}
-                disabled={reviewPage === 0}
-                className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center disabled:opacity-30 transition"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              {Array.from({ length: totalReviewPages }).map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setReviewPage(i)}
-                  className={`w-2.5 h-2.5 rounded-full transition-all duration-200 ${
-                    i === reviewPage ? "bg-amber-300 scale-125" : "bg-white/40 hover:bg-white/60"
-                  }`}
-                />
+          {/* Loading skeleton */}
+          {reviewsLoading && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="rounded-[14px] h-44 bg-white/10 animate-pulse" />
               ))}
-              <button
-                onClick={() => setReviewPage((p) => Math.min(totalReviewPages - 1, p + 1))}
-                disabled={reviewPage === totalReviewPages - 1}
-                className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center disabled:opacity-30 transition"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
             </div>
+          )}
+
+          {/* Empty state */}
+          {!reviewsLoading && reviews.length === 0 && (
+            <p className="text-white/60 text-sm text-center py-6">No reviews yet.</p>
+          )}
+
+          {/* Review cards */}
+          {!reviewsLoading && reviews.length > 0 && (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {visibleReviews.map((review) => (
+                  <ReviewCard key={review.uuid} review={review} />
+                ))}
+              </div>
+
+              {totalReviewPages > 1 && (
+                <div className="flex items-center justify-center gap-2 mt-8">
+                  <button
+                    onClick={() => setReviewPage((p) => Math.max(0, p - 1))}
+                    disabled={reviewPage === 0}
+                    className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center disabled:opacity-30 transition"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  {Array.from({ length: totalReviewPages }).map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setReviewPage(i)}
+                      className={`w-2.5 h-2.5 rounded-full transition-all duration-200 ${
+                        i === reviewPage ? "bg-amber-300 scale-125" : "bg-white/40 hover:bg-white/60"
+                      }`}
+                    />
+                  ))}
+                  <button
+                    onClick={() => setReviewPage((p) => Math.min(totalReviewPages - 1, p + 1))}
+                    disabled={reviewPage === totalReviewPages - 1}
+                    className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center disabled:opacity-30 transition"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </section>
 
-      {/* ── Blog Posts ── */}
-      <section className="py-12 px-4 sm:px-6 lg:px-8 bg-white dark:bg-[#121212] hidden">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          {BLOG_POSTS.map((post) => (
-            <article
-              key={post.id}
-              className={`${post.color} dark:bg-[#1F1F1F] rounded-2xl p-6 border border-gray-100 dark:border-[#2E2E2E] hover:shadow-sm transition-shadow duration-200 cursor-pointer group`}
-            >
-              <h3 className="font-bold text-gray-900 dark:text-white text-base leading-snug mb-3 group-hover:text-amber-800 dark:group-hover:text-[#D89B5C] transition-colors">
-                {post.title}
-              </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
-                {post.excerpt}
-              </p>
-            </article>
-          ))}
-        </div>
-      </section>
 
-
-       <section className="py-12 px-4 sm:px-6 lg:px-8 bg-[#5c3a1e]">
-        <div className="">
-          <h2 className="text-white text-xl font-bold mb-6">Customer Review   ({`${'Static Data'}`})</h2>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {visibleReviews.map((review) => (
-              <ReviewCard key={review.id} review={review} />
-            ))}
-          </div>
-
-          {/* {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 mt-8">
-              <button
-                onClick={() => setReviewPage((p) => Math.max(0, p - 1))}
-                disabled={reviewPage === 0}
-                className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center disabled:opacity-30 transition"
-                aria-label="Previous reviews"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              {Array.from({ length: totalPages }).map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setReviewPage(i)}
-                  className={`w-2.5 h-2.5 rounded-full transition-all duration-200 ${
-                    i === reviewPage
-                      ? "bg-amber-300 scale-125"
-                      : "bg-white/40 hover:bg-white/60"
-                  }`}
-                  aria-label={`Reviews page ${i + 1}`}
-                />
-              ))}
-              <button
-                onClick={() =>
-                  setReviewPage((p) => Math.min(totalPages - 1, p + 1))
-                }
-                disabled={reviewPage === totalPages - 1}
-                className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center disabled:opacity-30 transition"
-                aria-label="Next reviews"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          )} */}
-        </div>
-      </section>
-
-      <section className="py-12 px-4 sm:px-6 lg:px-8 bg-white">
+      {/* <section className="py-12 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             {BLOG_POSTS.map((post) => (
@@ -254,7 +244,7 @@ const LocationDetailPageCom: React.FC<Props> = ({ store }) => {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* ── Map Modal — same pattern as LocationCard ── */}
       <GlobalModal

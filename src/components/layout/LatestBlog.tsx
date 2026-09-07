@@ -1,10 +1,11 @@
 import React from "react";
 import Link from "next/link";
-import ArrowAngleRightIcon from "@/icon/ArrowAngleRightIcon";
-import Image from "next/image";
 import { api } from "@/lib/api";
 import BlogCard from "@/components/Blogs/BlogCard";
 import BlogInformationSection from "@/components/Blogs/BlogInformationSection";
+import { getSiteSettings } from "@/lib/getSiteSettings";
+import { hasRichText } from "@/lib/seo-content";
+import SeoCardModal from "@/components/ProductDetails/SeoCardModal";
 interface BlogPost {
   id: number;
   image: string;
@@ -36,12 +37,12 @@ interface InfoBoxProps {
   bg: string;
 }
 
-const infoBoxes: InfoBoxProps[] = [
-  { bg: "bg-blue-50 shadow-sm" },
-  { bg: "bg-purple-50 shadow-sm" },
-  { bg: "bg-white border border-gray-100 shadow-sm" },
-  { bg: "bg-yellow-50 shadow-sm" },
-];
+const WRAPPERS = [
+  "bg-blue-50 shadow-sm",
+  "bg-purple-50 shadow-sm",
+  "bg-white border border-gray-100 shadow-sm",
+  "bg-yellow-50 shadow-sm",
+] as const;
 
 async function getBlogs() {
   try {
@@ -58,23 +59,26 @@ async function getBlogs() {
   }
 }
 
-const InfoBox: React.FC<InfoBoxProps> = ({ bg }) => (
-  <div className={`${bg} rounded-2xl p-6`}>
-    <h4 className="font-bold text-gray-900 text-base mb-2 leading-snug">
-      Welcome to Dazzle Mobile & Gadget Shop – Your Premier Destination for
-      Cutting-Edge Devices in Bangladesh
-    </h4>
-    <p className="text-gray-500 text-sm leading-relaxed">
-      Looking for the best Apple products, the top smartphones, and the latest
-      and greatest in the world of gadgets? Look no further than Dazzle Mobile &
-      Gadget Shop – your ultimate tech haven in Bangladesh.
-    </p>
-  </div>
-);
-
 // const LatestBlog: React.FC = () => {
 async function LatestBlog() {
-  const [{ data: blogPosts }] = await Promise.all([getBlogs()]);
+  const [{ data: blogPosts }, settings] = await Promise.all([
+    getBlogs(),
+    getSiteSettings(),
+  ]);
+
+  // Build SEO cards from hseogl1–4 — only include blocks with real content
+  const seoCards = [
+    settings.hseogl1,
+    settings.hseogl2,
+    settings.hseogl3,
+    settings.hseogl4,
+  ]
+    .map((html, i) => ({
+      label:   `Info ${i + 1}`,
+      html:    html ?? "",
+      wrapper: WRAPPERS[i],
+    }))
+    .filter((c) => hasRichText(c.html));
 
   return (
     <section className="flex flex-col flex-1 max-w-355 mx-auto md:px-12.5 px-4 mt-10!">
@@ -109,11 +113,10 @@ async function LatestBlog() {
         <BlogInformationSection />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 cursor-pointer">
-        {infoBoxes.map((box: InfoBoxProps, i: number) => (
-          <InfoBox key={i} bg={box.bg} />
-        ))}
-      </div>
+      {/* SEO content cards — hseogl1–4 from site-settings, click to open modal */}
+      {seoCards.length > 0 && (
+        <SeoCardModal cards={seoCards} />
+      )}
     </section>
   );
 }

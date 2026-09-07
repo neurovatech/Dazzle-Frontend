@@ -99,19 +99,19 @@ export const LOCATIONS: Location[] = [
   },
 ];
 
-export const REVIEWS: Review[] = Array.from({ length: 6 }, (_, i) => ({
-  id: i + 1,
-  text: "Lorem ipsum dolor sit amet consectetur. Amet ara at lectus ac socia. Diam in aliquet odio gravida pharetra nibh nis ultrices lorem. Massa tortor tortor pharetra in diam convallis consectetur sapien.",
-  author: "Sadman Bin Ahsan",
-  role: "Businessman",
-  avatar: `https://i.pravatar.cc/40?img=${i + 10}`,
-}));
+// export const REVIEWS: Review[] = Array.from({ length: 6 }, (_, i) => ({
+//   id: i + 1,
+//   text: "Lorem ipsum dolor sit amet consectetur. Amet ara at lectus ac socia. Diam in aliquet odio gravida pharetra nibh nis ultrices lorem. Massa tortor tortor pharetra in diam convallis consectetur sapien.",
+//   author: "Sadman Bin Ahsan",
+//   role: "Businessman",
+//   avatar: `https://i.pravatar.cc/40?img=${i + 10}`,
+// }));
 
 export const BLOG_POSTS: BlogPost[] = [
   {
     id: 1,
     title:
-      "Welcome to Dazzle Mobile & Gadget Shop – Your Premier Destination for Cutting-Edge Devices in Bangladesh",
+      "Welcome to Dazzle Mobile & Gadget Shop – Your Premier Destination for Cutting-Edge Devices in Bangladesh 000000",
     excerpt:
       "Looking for the best Apple products, the top smartphones, and the latest and greatest in the world of gadgets? Look no further than Dazzle Mobile & Gadget Shop—your ultimate tech haven in Bangladesh.",
     color: "bg-purple-50",

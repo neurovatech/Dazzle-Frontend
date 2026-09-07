@@ -8,10 +8,20 @@ interface ReviewCardProps {
   review: Review;
 }
 
+function getInitials(name: string): string {
+  return name
+    .split(" ")
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? "")
+    .join("");
+}
+
 const ReviewCard: React.FC<ReviewCardProps> = ({ review }) => {
+  const initials = getInitials(review.authorName);
+
   return (
     <div
-      className={`rounded-[14px] py-4.5 px-5.5 pb-8`}
+      className="rounded-[14px] py-4.5 px-5.5 pb-8"
       style={{
         backgroundImage: `url(${reviewBg.src})`,
         backgroundSize: "contain",
@@ -21,29 +31,34 @@ const ReviewCard: React.FC<ReviewCardProps> = ({ review }) => {
       }}
     >
       <p className="text-[#747474] leading-relaxed">
-        <span className="">
-          {review.text}{" "}
-          <Image
-            src={quote}
-            alt="Quote"
-            className="w-4.5 text-[#6D3F0E] inline-block"
-          />
-        </span>
+        {review.quote}{" "}
+        <Image
+          src={quote}
+          alt="Quote"
+          className="w-4.5 text-[#6D3F0E] inline-block"
+        />
       </p>
       <hr className="border-[#EEEEEE] my-[15px] w-4/5" />
       <div className="flex items-center gap-2.5">
-        <div className="relative w-12 h-12 rounded-full overflow-hidden">
-          <Image
-            src={review.avatar}
-            alt={review.author}
-            fill
-            className="object-cover"
-            sizes="48px"
-          />
-        </div>
+        {/* Avatar — image থাকলে show করব, না থাকলে initials */}
+        {review.imageUrl ? (
+          <div className="relative w-12 h-12 rounded-full overflow-hidden shrink-0">
+            <Image
+              src={review.imageUrl}
+              alt={review.authorName}
+              fill
+              className="object-cover"
+              sizes="48px"
+            />
+          </div>
+        ) : (
+          <div className="w-12 h-12 rounded-full bg-[#6D3F0E] flex items-center justify-center shrink-0">
+            <span className="text-white text-sm font-bold">{initials}</span>
+          </div>
+        )}
         <div>
-          <p className="font-semibold text-[#6D3F0E]">{review.author}</p>
-          <p className="text-sm text-[#747474]">{review.role}</p>
+          <p className="font-semibold text-[#6D3F0E]">{review.authorName}</p>
+          <p className="text-sm text-[#747474]">{review.designation}</p>
         </div>
       </div>
     </div>

@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import Image from "next/image";
 
-import ProductBanner from "@/images/Rectangle.png";
+import ProductBanner from "@/images/product.png";
 
 interface SpecItem {
   label: string;
