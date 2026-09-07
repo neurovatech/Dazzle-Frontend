@@ -16,6 +16,9 @@ interface ShowcaseItem {
   productSlug: string;
   productBadge: string;
   isTba: boolean;
+  endOfLife?: boolean;
+  allowPreOrder?: boolean;
+  recognitionBadge?: string;
   regularPrice: number;
   discountedPrice: number;
   disRate: number;
@@ -59,6 +62,10 @@ function mapToProductCard(list: ShowcaseItem[]): ProductCardItem[] {
     isBestDeal: false,
     inStock: !item.isTba,
     image: item.thumbnails?.mediaFileUrl ?? NoImg,
+    isTba:            item.isTba,
+    endOfLife:        item.endOfLife        ?? false,
+    allowPreOrder:    item.allowPreOrder    ?? false,
+    recognitionBadge: item.recognitionBadge ?? "",
   }));
 }
 

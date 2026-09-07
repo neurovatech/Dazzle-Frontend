@@ -73,7 +73,6 @@ export default function BrandProducts({
   initialTopCategory = null,
 }: Props) {
   const searchParams = useSearchParams();
-  console.log(categories, "categories")
 
   const initialCategory = searchParams.get("category") ?? null;
   const initialPage = Number(searchParams.get("page") ?? "1");

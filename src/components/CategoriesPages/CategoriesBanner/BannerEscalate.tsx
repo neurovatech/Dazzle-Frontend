@@ -74,8 +74,6 @@ export default function BannerEscalate({
     refetchOnReconnect:   false,
   });
 
-  console.log(`/banner-escalate/${showcaseSlug}?${showcaseParam}=1`, "99999", data)
-
   const banners = data?.data ?? [];
 
   // Loading skeleton

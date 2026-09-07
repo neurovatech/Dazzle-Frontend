@@ -16,6 +16,9 @@ export interface CampaignProduct {
   productSlug: string;
   productBadge: string;
   isTba: boolean;
+  endOfLife?: boolean;
+  allowPreOrder?: boolean;
+  recognitionBadge?: string;
   regularPrice: number;
   discountedPrice: number;
   disRate: number;
@@ -165,6 +168,8 @@ export default async function OfferDetailPage({ params }: PageProps) {
   const { slug } = await params;
   const initialData = await getCampaignDetail(slug);
   if (!initialData) notFound();
+
+  console.log("OfferDetailPage initialData:", initialData);
 
   const campaignName        = initialData.campaign_name ?? initialData.campaignName ?? cleanSlug(slug);
   const campaignDescription = initialData.campaign_description ?? initialData.campaignDescription;

@@ -23,6 +23,7 @@ export default function ProductCardWishlist({
   badge,
   inStock,
   isBestDeal,
+  disabled,
 }: {
   productUuid: string;
   title: string;
@@ -34,6 +35,7 @@ export default function ProductCardWishlist({
   badge: string;
   inStock: boolean;
   isBestDeal: boolean;
+  disabled: boolean;
 }) {
   const dispatch = useAppDispatch();
   const wishlistItems = useAppSelector((state) => state.wishlist.items);
@@ -63,10 +65,15 @@ export default function ProductCardWishlist({
   return (
     <button
       onClick={handleWishlist}
-      className={`w-8 h-8 mt-1 rounded-full ml-[25px] border flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 ${
-        isWishlisted
-          ? "bg-red-50 border-red-300 text-red-500"
-          : "bg-white border-gray-200 text-gray-500 hover:border-red-300 hover:text-red-400"
+      disabled={disabled}
+      className={`w-8 h-8 mt-1 rounded-full ml-[25px] border flex items-center justify-center transition-all duration-300 ${
+        disabled
+          ? "bg-gray-100 border-gray-200 text-gray-300 cursor-not-allowed opacity-60"
+          : `hover:scale-110 active:scale-95 ${
+              isWishlisted
+                ? "bg-red-50 border-red-300 text-red-500"
+                : "bg-white border-gray-200 text-gray-500 hover:border-red-300 hover:text-red-400"
+            }`
       }`}
       aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
     >

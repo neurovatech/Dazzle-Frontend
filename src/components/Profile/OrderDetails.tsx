@@ -531,8 +531,6 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
   });
 
 
-  console.log(trackingRes, "trackingRestrackingRestrackingRestrackingRes")
-
   const trackingData: OrderTrackingData | undefined = trackingRes?.data;
 
   const formatDate = (isoString?: string) => {

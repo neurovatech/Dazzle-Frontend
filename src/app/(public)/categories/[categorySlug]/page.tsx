@@ -41,6 +41,9 @@ export interface ProductItem {
   productSlug: string;
   productBadge: string;
   isTba: boolean;
+  endOfLife?: boolean;
+  allowPreOrder?: boolean;
+  recognitionBadge?: string;
   regularPrice: number;
   discountedPrice: number;
   disRate: number;
@@ -198,7 +201,6 @@ export default async function CategoriesPage({
         `/products?${queryParams.toString()}`,
         { next: { revalidate: 5 } },
       );
-      console.log(`/products?${queryParams.toString()}`, "brandsRes");
       if (res && typeof res === "object" && "data" in res) {
         return res;
       }

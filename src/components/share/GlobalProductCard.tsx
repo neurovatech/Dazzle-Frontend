@@ -1,16 +1,3 @@
-// Server Component — no "use client".
-//
-// This card renders ~40 times on the homepage and on every listing page. It used
-// to be a single 455-line Client Component, so all of that markup (badges,
-// image wrapper, title, tooltip, price block with two inline SVGs) hydrated on
-// every instance even though none of it changes after render.
-//
-// Now only the genuinely interactive parts are client islands:
-//   • ProductCardImage    — onError fallback to the placeholder
-//   • ProductCardWishlist — Redux wishlist toggle
-//   • ProductCardBuy      — cart state, variant lookup, quick view
-//
-// The public props API is unchanged, so no call site needs updating.
 import React from "react";
 import Link from "next/link";
 import { CompareIcon } from "@/icon";
@@ -20,7 +7,7 @@ import ProductCardWishlist from "./ProductCardWishlist";
 import ProductCardBuy from "./ProductCardBuy";
 export type { DefaultVariantResponse } from "./ProductCardBuy";
 
-interface ProductCardProps {
+export interface ProductCardProps {
   productUuid?: string;
   image?: string;
   discount?: number;
@@ -33,15 +20,12 @@ interface ProductCardProps {
   slug?: string;
   uuid?: string;
   minBookingPrice?: number;
-  /**
-   * "To be announced" — listed in the catalogue but not yet purchasable.
-   *
-   * Defaults to the inverse of `inStock`, because that is exactly how every
-   * call site already derives it (`inStock: !item.isTba`). That default is what
-   * lets the flag appear correctly across all 33 usages without editing each
-   * one; a call site holding the raw API item can still pass isTba explicitly.
-   */
   isTba?: boolean;
+  endOfLife?: boolean;
+  allowPreOrder?: boolean;
+  recognitionBadge?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  allProduct?: any; // Add this line to accept the allProduct prop
 }
 
 const formatPrice = (val: number) =>
@@ -61,27 +45,41 @@ const ProductCard: React.FC<ProductCardProps> = ({
   uuid,
   minBookingPrice = 0,
   isTba,
+  endOfLife = false,
+  allowPreOrder = false,
+  recognitionBadge,
+  allProduct,
 }) => {
   const itemId = productUuid || uuid || "";
-  // Explicit prop wins; otherwise fall back to the inverse of inStock.
   const showTbaFlag = isTba ?? !inStock;
   const href = `/product/${slug || title?.toLowerCase().replace(/\s+/g, "-")}`;
 
+  console.log(allProduct, "allProductallProductallProduct");
+  const isendOfLifeDisabled = allProduct ? allProduct.endOfLife === true : endOfLife === true;
   return (
     <div
       data-product-uuid={itemId}
-      className="group relative bg-white rounded-2xl sm:rounded-3xl cursor-pointer w-full h-full flex flex-col shadow-lg transition-all duration-500 hover:shadow-sm select-none"
+      className={`group relative bg-white rounded-2xl sm:rounded-3xl cursor-pointer w-full h-full flex flex-col shadow-lg transition-all duration-500 hover:shadow-sm select-none ${
+        endOfLife ? "opacity-75" : ""
+      }`}
     >
       <div className="bg-white p-2 sm:p-3 lg:p-4 pb-0! rounded-2xl sm:rounded-3xl relative">
         {/* Top Badges */}
         <div className="flex justify-between items-start mb-2 sm:mb-3 h-5 sm:h-6 absolute top-2 sm:top-3 left-2 sm:left-3 right-2 sm:right-3 z-50">
-          {discount > 0 ? (
+          {/* Discount % — left */}
+          {!endOfLife && discount > 0 ? (
             <span className="bg-[#ff7575] text-white text-[9px] sm:text-xs font-bold px-1.5 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-md">
               {discount}%
+            </span>
+          ) : endOfLife ? (
+            <span className="bg-gray-500 text-white text-[9px] sm:text-xs font-bold px-1.5 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-md">
+              End of Life
             </span>
           ) : (
             <span />
           )}
+
+          {/* Right badges: productBadge */}
           {badge ? (
             <span className="bg-[linear-gradient(93.36deg,#222222_-28.88%,#6D3F0E_93.21%)] text-white text-[9px] sm:text-xs font-bold px-1.5 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-md max-w-[80%]">
               {badge}
@@ -91,7 +89,16 @@ const ProductCard: React.FC<ProductCardProps> = ({
           )}
         </div>
 
-        {/* Product Image — fixed-height, never crops, contains full image */}
+        {/* Recognition badge — below top badge row */}
+        {recognitionBadge && (
+          <div className="absolute top-8 sm:top-10 right-2 sm:right-3 z-40">
+            <span className="bg-[linear-gradient(90deg,#B57908_0%,#E9CCAE_100%)] text-white text-[8px] sm:text-[10px] font-bold px-1.5 sm:px-2.5 py-0.5 rounded-full shadow-md">
+              {recognitionBadge}
+            </span>
+          </div>
+        )}
+
+        {/* Product Image */}
         <Link href={href} className="block px-2 pt-2">
           <div className="relative flex justify-center items-center h-42 transition-all duration-500">
             <div className="relative z-10 w-full h-full transition-transform duration-500 group-hover:scale-105">
@@ -105,9 +112,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
         {/* Action Row */}
         <div className="flex items-center justify-between relative z-50">
-          
-
-          {isBestDeal === true && (
+          {isBestDeal === true && !endOfLife && (
             <button className="ml-auto bg-[#087400] text-white text-[8px] sm:text-xs font-bold px-1 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-md lg:w-[50%]! w-[80%] flex justify-center items-center gap-1">
               <svg
                 width="13"
@@ -181,15 +186,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
           <div
             className="flex gap-1 sm:gap-2 ml-auto p-1 -mr-2 sm:-mr-2 lg:-mr-4 bg-[#F5F5F5] pl-2 [--r:20px] sm:[--r:26px] w-[110px]"
             style={{
-              clipPath: `shape(
-      from 0 100%,
-      curve by var(--r) calc(-1 * var(--r)) with var(--r) 0,
-      vline to var(--r),
-      curve by var(--r) calc(-1 * var(--r)) with 0 calc(-1 * var(--r)),
-      hline to 100%,
-      vline to 100%,
-      hline to 0
-    )`,
+              clipPath: `shape(from 0 100%,curve by var(--r) calc(-1 * var(--r)) with var(--r) 0,vline to var(--r),curve by var(--r) calc(-1 * var(--r)) with 0 calc(-1 * var(--r)),hline to 100%,vline to 100%,hline to 0)`,
             }}
           >
             <ProductCardWishlist
@@ -203,11 +200,20 @@ const ProductCard: React.FC<ProductCardProps> = ({
               badge={badge || ""}
               inStock={inStock}
               isBestDeal={isBestDeal}
+              disabled={isendOfLifeDisabled}
             />
-            {/* Compare */}
             <Link
-              href="/product-compare"
-              className="w-8 h-8 mt-1 rounded-full border border-gray-200 bg-white flex items-center justify-center text-gray-500 hover:border-purple-300 hover:text-purple-500 transition-all duration-300 hover:scale-110 active:scale-95"
+              href={isendOfLifeDisabled ? "#" : "/product-compare"}
+              onClick={(e) => {
+                if (isendOfLifeDisabled) e.preventDefault();
+              }}
+              aria-disabled={isendOfLifeDisabled}
+              tabIndex={isendOfLifeDisabled ? -1 : undefined}
+              className={`w-8 h-8 mt-1 rounded-full border flex items-center justify-center transition-all duration-300 ${
+                isendOfLifeDisabled
+                  ? "bg-gray-100 border-gray-200 text-gray-300 cursor-not-allowed opacity-60 pointer-events-none"
+                  : "border-gray-200 bg-white text-gray-500 hover:border-purple-300 hover:text-purple-500 hover:scale-110 active:scale-95"
+              }`}
               aria-label="Compare"
             >
               <CompareIcon />
@@ -227,41 +233,40 @@ const ProductCard: React.FC<ProductCardProps> = ({
               <span className="hidden sm:inline">
                 {title.length > 40 ? title.slice(0, 40) + "..." : title}
               </span>
-
               <span className="inline sm:hidden">
                 {title.length > 30 ? title.slice(0, 30) + "..." : title}
               </span>
 
-              {/* showTbaFlag=true হলে stock status দেখাবে না */}
-              {!showTbaFlag && (
-                inStock ? (
+              {/* endOfLife → no stock label */}
+              {!showTbaFlag &&
+                !endOfLife &&
+                (inStock ? (
                   <span className="text-[#03A000] font-bold"> In Stock </span>
                 ) : (
                   <span className="text-[#f00]"> Out Of Stock </span>
-                )
-              )}
+                ))}
             </h3>
           </Link>
           <div
             role="tooltip"
-            className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-[60] w-max max-w-[220px] whitespace-normal rounded-lg bg-gray-900 text-white text-[10px] sm:text-xs px-2.5 py-1.5 shadow-lg opacity-0 scale-95 origin-bottom transition-all duration-300 group-hover:opacity-100 group-hover:scale-100 "
+            className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-[60] w-max max-w-[220px] whitespace-normal rounded-lg bg-gray-900 text-white text-[10px] sm:text-xs px-2.5 py-1.5 shadow-lg opacity-0 scale-95 origin-bottom transition-all duration-300 group-hover:opacity-100 group-hover:scale-100"
           >
             {title}
-            {/* little arrow */}
             <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
           </div>
         </div>
 
         {/* Price */}
-        <Link href={href} className="flex items-baseline gap-2 sm:gap-2 mb-2 sm:mb-4">
-          {showTbaFlag ? (
-            /* TBA mode — price ও stock সব লুকাও, শুধু TBA badge */
+        <Link
+          href={href}
+          className="flex items-baseline gap-2 sm:gap-2 mb-2 sm:mb-4"
+        >
+          {showTbaFlag && !endOfLife ? (
             <div className="bg-[#6D3F0E] text-white text-[9px] sm:text-xs font-bold px-1.5 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-md">
               TBA
             </div>
           ) : (
             <>
-              {/* Figma: Urbanist Bold 20px, line-height 160% */}
               <span className="items-center flex gap-1 font-bold text-[20px] leading-[1.6] tracking-[0%] text-gray-900">
                 <svg
                   width="12"
@@ -278,7 +283,6 @@ const ProductCard: React.FC<ProductCardProps> = ({
                 {formatPrice(price)}
               </span>
               {originalPrice > 0 && originalPrice !== price && (
-                // Figma: Urbanist Regular 14px, line-height 160%, strikethrough
                 <span className="text-gray-400 text-[14px] font-normal leading-[1.6] line-through flex items-center gap-1 pl-1">
                   <svg
                     width="9"
@@ -299,7 +303,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
           )}
         </Link>
 
-        {/* Bottom Actions */}
+        {/* Bottom Actions — all disabled when endOfLife=true */}
         <ProductCardBuy
           itemId={itemId}
           title={title || "Product"}
@@ -310,6 +314,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
           inStock={inStock}
           minBookingPrice={minBookingPrice}
           showTbaFlag={showTbaFlag}
+          endOfLife={isendOfLifeDisabled}
+          allowPreOrder={allProduct ? allProduct?.allowPreOrder : allowPreOrder}
         />
       </div>
     </div>

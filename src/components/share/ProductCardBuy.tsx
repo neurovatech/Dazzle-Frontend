@@ -40,6 +40,10 @@ interface Props {
   inStock: boolean;
   minBookingPrice: number;
   showTbaFlag?: boolean;
+  /** endOfLife=true → all buttons disabled, no cart/wishlist actions */
+  endOfLife?: boolean;
+  /** allowPreOrder=true → TBA products show "Pre-Order" instead of "Add to Wishlist" */
+  allowPreOrder?: boolean;
 }
 
 /**
@@ -58,6 +62,8 @@ export default function ProductCardBuy({
   inStock,
   minBookingPrice,
   showTbaFlag = false,
+  endOfLife = false,
+  allowPreOrder = false,
 }: Props) {
   const dispatch = useAppDispatch();
   const cartItems = useAppSelector((state) => state.cart.items);
@@ -66,6 +72,8 @@ export default function ProductCardBuy({
 
   const [loadingCart, setLoadingCart] = useState(false);
   const [isTba, setIsTba] = useState(!inStock);
+
+  console.log(endOfLife, "endOfLifeendOfLifeendOfLife")
 
   // Wishlist toggle — used when showTbaFlag=true
   const handleWishlistToggle = () => {
@@ -227,118 +235,117 @@ export default function ProductCardBuy({
 
   return (
     <div className="flex gap-1 sm:gap-2 mt-auto">
-      {showTbaFlag ? (
-        /* TBA — "Not in Stock" সরিয়ে "Add to Wishlist" দেখাও */
-        <button
-          onClick={handleWishlistToggle}
-          className={`flex-1 flex items-center justify-center gap-2 h-11 px-1 rounded-[13px] text-[13px] sm:text-[14px] leading-none font-semibold border transition-all duration-300 active:scale-95 ${
-            isWishlisted
-              ? "bg-red-50 border-red-300 text-red-500"
-              : "bg-white border-orange-200 text-[#6D3F0E] hover:bg-orange-50 hover:border-orange-400 hover:shadow-md"
-          }`}
-          aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill={isWishlisted ? "currentColor" : "none"}
-            stroke="currentColor"
-            strokeWidth={2}
-            className="w-4 h-4 shrink-0"
+      {endOfLife ? (
+        /* ── End of Life — ALL buttons disabled ─────────────────────────── */
+        <>
+          <button
+            disabled
+            className="flex-1 flex items-center justify-center gap-2 h-11 px-1 rounded-[13px] text-[13px] font-semibold border border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-60"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
-            />
-          </svg>
-          <span>{isWishlisted ? "Wishlisted" : "Add to Wishlist"}</span>
-        </button>
-      ) : isTba ? (
-        <button
-          disabled
-          // Figma: h-40 py-[3px] px-1 gap-2.5(10px) rounded-[13px] border, Urbanist Medium 16px/100%
-          className="flex-1 flex items-center justify-center gap-2.5 h-11 py-0.75 px-1 rounded-[13px] text-[16px] leading-none font-medium border border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-70"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={2}
-            stroke="currentColor"
-            className="w-3 h-3 sm:w-4 sm:h-4 shrink-0"
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 shrink-0">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+            </svg>
+            <span>Discontinued</span>
+          </button>
+          {/* Quick view disabled too */}
+          <button
+            disabled
+            className="w-10 h-11 flex items-center justify-center rounded-[13px] border border-gray-200 bg-gray-100 text-gray-300 cursor-not-allowed opacity-60 shrink-0"
+            aria-label="Quick view unavailable"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
-            />
-          </svg>
-          <span>Not in Stock</span>
-        </button>
-      ) : (
-        <button
-          onClick={handleAddToCart}
-          disabled={loadingCart}
-          // Figma: h-40 py-[3px] px-1 gap-2.5(10px) rounded-[13px] border, Urbanist Medium 16px/100%
-          className={`flex-1 flex items-center justify-center gap-2.5 h-11 py-[5px] px-1 rounded-[13px] text-[16px] leading-none font-semibold border transition-all duration-300 active:scale-95 shadow-[0px_0px_8px_4px_#E9CCAE52] ${
-            loadingCart
-              ? "bg-gray-100 border-gray-200 text-gray-400 cursor-wait"
-              : addedToCart
-                ? "bg-green-500 border-green-500 text-white"
-                : "bg-white border-orange-200 text-[#6D3F0E] hover:bg-orange-50 hover:border-orange-400 hover:shadow-md"
-          }`}
-        >
-          {loadingCart ? (
-            <>
-              <svg
-                className="w-3 h-3 sm:w-4 sm:h-4 animate-spin shrink-0"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.964-7.178z"/>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+          </button>
+        </>
+      ) : showTbaFlag ? (
+        /* ── TBA ─────────────────────────────────────────────────────────── */
+        <>
+          {allowPreOrder ? (
+            <button
+              onClick={handleWishlistToggle}
+              className="flex-1 flex items-center justify-center gap-2 h-11 px-1 rounded-[13px] text-[13px] sm:text-[14px] font-semibold border transition-all duration-300 active:scale-95 bg-[#6D3F0E] border-[#6D3F0E] text-white hover:bg-[#5a3300] hover:shadow-md"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4 shrink-0">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
               </svg>
-              <span className="hidden sm:inline">Adding...</span>
-            </>
-          ) : addedToCart ? (
-            <>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2.5}
-                stroke="currentColor"
-                className="w-3 h-3 sm:w-4 sm:h-4"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-              </svg>
-              <span className="hidden sm:inline">Added!</span>
-              <span className="sm:hidden">Added!</span>
-            </>
+              <span>Pre-Order</span>
+            </button>
           ) : (
-            <>
-              <CartIcon className="w-5 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 shrink-0 hidden md:block" />
-              <span className="">Add to Cart</span>
-            </>
+            <button
+              onClick={handleWishlistToggle}
+              className={`flex-1 flex items-center justify-center gap-2 h-11 px-1 rounded-[13px] text-[13px] sm:text-[14px] leading-none font-semibold border transition-all duration-300 active:scale-95 ${
+                isWishlisted
+                  ? "bg-red-50 border-red-300 text-red-500"
+                  : "bg-white border-orange-200 text-[#6D3F0E] hover:bg-orange-50 hover:border-orange-400 hover:shadow-md"
+              }`}
+              aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                fill={isWishlisted ? "currentColor" : "none"}
+                stroke="currentColor" strokeWidth={2} className="w-4 h-4 shrink-0">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/>
+              </svg>
+              <span>{isWishlisted ? "Wishlisted" : "Add to Wishlist"}</span>
+            </button>
           )}
-        </button>
+          <ProductQuicView slug={slug} productUuid={itemId} title={title} price={price} image={image} showTbaFlag={showTbaFlag} />
+        </>
+      ) : isTba ? (
+        /* ── isTba (not in stock) ──────────────────────────────────────── */
+        <>
+          <button
+            disabled
+            className="flex-1 flex items-center justify-center gap-2.5 h-11 py-0.75 px-1 rounded-[13px] text-[16px] leading-none font-medium border border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-70"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3 h-3 sm:w-4 sm:h-4 shrink-0">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+            </svg>
+            <span>Not in Stock</span>
+          </button>
+          <ProductQuicView slug={slug} productUuid={itemId} title={title} price={price} image={image} showTbaFlag={showTbaFlag} />
+        </>
+      ) : (
+        /* ── Normal — Add to Cart + Quick View ─────────────────────────── */
+        <>
+          <button
+            onClick={handleAddToCart}
+            disabled={loadingCart}
+            className={`flex-1 flex items-center justify-center gap-2.5 h-11 py-[5px] px-1 rounded-[13px] text-[16px] leading-none font-semibold border transition-all duration-300 active:scale-95 shadow-[0px_0px_8px_4px_#E9CCAE52] ${
+              loadingCart
+                ? "bg-gray-100 border-gray-200 text-gray-400 cursor-wait"
+                : addedToCart
+                  ? "bg-green-500 border-green-500 text-white"
+                  : "bg-white border-orange-200 text-[#6D3F0E] hover:bg-orange-50 hover:border-orange-400 hover:shadow-md"
+            }`}
+          >
+            {loadingCart ? (
+              <>
+                <svg className="w-3 h-3 sm:w-4 sm:h-4 animate-spin shrink-0" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                </svg>
+                <span className="hidden sm:inline">Adding...</span>
+              </>
+            ) : addedToCart ? (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3 h-3 sm:w-4 sm:h-4">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
+                </svg>
+                <span className="hidden sm:inline">Added!</span>
+                <span className="sm:hidden">Added!</span>
+              </>
+            ) : (
+              <>
+                <CartIcon className="w-5 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5 shrink-0 hidden md:block"/>
+                <span>Add to Cart</span>
+              </>
+            )}
+          </button>
+          <ProductQuicView slug={slug} productUuid={itemId} title={title} price={price} image={image} showTbaFlag={showTbaFlag}/>
+        </>
       )}
-      <ProductQuicView
-        slug={slug}
-        productUuid={itemId}
-        title={title}
-        price={price}
-        image={image}
-        showTbaFlag={showTbaFlag}
-      />
     </div>
   );
 }

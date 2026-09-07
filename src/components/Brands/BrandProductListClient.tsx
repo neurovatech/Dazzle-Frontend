@@ -23,6 +23,9 @@ export interface ProductItem {
   productSlug: string;
   productBadge: string;
   isTba: boolean;
+  endOfLife?: boolean;
+  allowPreOrder?: boolean;
+  recognitionBadge?: string;
   regularPrice: number;
   discountedPrice: number;
   disRate: number;
@@ -390,6 +393,9 @@ export default function BrandProductListClient({
               isTba={product.isTba}
               isBestDeal={false}
               slug={product.productSlug}
+              endOfLife={product.endOfLife ?? false}
+              allowPreOrder={product.allowPreOrder ?? false}
+              recognitionBadge={product.recognitionBadge ?? ""}
             />
           ))}
         </div>

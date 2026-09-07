@@ -18,6 +18,9 @@ interface ProductItem {
   productSlug: string;
   productBadge: string;
   isTba: boolean;
+  endOfLife?: boolean;
+  allowPreOrder?: boolean;
+  recognitionBadge?: string;
   regularPrice: number;
   discountedPrice: number;
   disRate: number;
@@ -287,6 +290,9 @@ function Product() {
                     isTba={product.isTba}
                     isBestDeal={product.disRate > 0}
                     slug={product.productSlug || product.productUuid}
+                    endOfLife={product.endOfLife ?? false}
+                    allowPreOrder={product.allowPreOrder ?? false}
+                    recognitionBadge={product.recognitionBadge ?? ""}
                   />
                 );
               })}

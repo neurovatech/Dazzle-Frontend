@@ -604,12 +604,12 @@ export default function ProductInfo({
           {/* ── Variant unavailable message ── */}
           {isVariantUnavailable ? (
             <div className="flex flex-col gap-3">
-              <div className="flex items-center gap-2 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/40 rounded-xl px-4 py-3">
+              {/* <div className="flex items-center gap-2 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/40 rounded-xl px-4 py-3">
                 <span className="text-red-500 text-lg">😔</span>
                 <p className="text-sm font-semibold text-red-600 dark:text-red-400">
                   Sorry! This variant is not in stock
                 </p>
-              </div>
+              </div> */}
               <div className="flex items-center gap-3">
                 <span className="font-bold text-gray-700 dark:text-gray-300">
                   Quantity:

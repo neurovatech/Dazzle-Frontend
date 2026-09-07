@@ -1,114 +1,31 @@
 import Breadcrumb from "@/components/share/Breadcrumb";
-import SortDropdown from "@/components/share/SortDropdown";
-import ProductCard from "@/components/share/GlobalProductCard";
-import { api } from "@/lib/api";
+import ShowcaseProductGrid from "@/components/share/ShowcaseProductGrid";
+import { fetchShowcaseProducts } from "@/lib/fetchShowcaseProducts";
 
-interface ShowcaseThumbnail {
-  fileUuid: string;
-  mediaFileUrl: string;
-}
-
-export interface SlideItem {
-  id: string | number;
-  imageUrl?: string;
-  title?: string;
-  content?: React.ReactNode;
-}
-
-interface ShowcaseItem {
-  productUuid: string;
-  productCode: string;
-  productName: string;
-  productSlug: string;
-  productBadge: string;
-  isTba: boolean;
-  regularPrice: number;
-  discountedPrice: number;
-  disRate: number;
-  thumbnails: ShowcaseThumbnail;
-}
- 
-interface ShowcaseItemsResponse {
-  statusCode: number;
-  status: string;
-  found: boolean;
-  count: number;
-  totalCount: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-  data: ShowcaseItem[];
-}
-
-export interface ProductCardItem {
-  productUuid: string;
-  title: string;
-  slug: string;
-  price: number;
-  originalPrice: number;
-  discount: number;
-  badge: string;
-  isBestDeal: boolean;
-  inStock: boolean;
-  image: string;
-}
-
-export default async function FeatureProductsPages() {
+export default async function FeatureProductsPage() {
   const breadcrumbItems = [
     { label: "Home", href: "/" },
-    { label: "Feature Products", href: "#" },
+    { label: "Feature Products", href: "/feature-product" },
   ];
-  let products: ProductCardItem[] = [];
-   
-    try {
-      const res = await api.get<ShowcaseItemsResponse>(
-        "/showcase-items?showcaseSlug=feature-products",
-        { next: { revalidate: 5 } }
-      );
-   
-      const list = Array.isArray(res?.data) ? res.data : [];
-   
-      products = list.map((item) => ({
-        productUuid: item.productUuid,
-        title: item.productName,
-        slug: item.productSlug,
-        price: item.discountedPrice,
-        originalPrice: item.regularPrice,
-        discount: Math.round(item.disRate),
-        badge: item.productBadge,
-        isBestDeal: false,
-        inStock: !item.isTba,
-        image: item.thumbnails?.mediaFileUrl ?? "/images/product.png",
-      }));
-    } catch (error) {
-      console.error("Error fetching feature products SSR:", error);
-    }
+
+  const { products, totalPages } = await fetchShowcaseProducts("feature-products", 1, 50);
+
   return (
     <div className="flex flex-col flex-1 max-w-355 mx-auto">
       <div className="md:px-12.5 px-4">
         <Breadcrumb items={breadcrumbItems} />
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-12 lg:gap-4 gap-2 mt-6 items-stretch cursor-pointer md:px-12.5 px-4">
-      <div className="lg:col-span-8">
-        {" "}
-        <h3>
+      <div className="mt-6 md:px-12.5 px-4">
+        <h3 className="md:text-[32px] text-[20px] font-bold text-transparent bg-clip-text bg-[linear-gradient(90deg,#101518_0%,#E9CCAE_46.15%,#B57908_100%)] dark:text-white mb-6">
           Feature Products
-        </h3>{" "}
+        </h3>
+        <ShowcaseProductGrid
+          showcaseSlug="feature-products"
+          initialProducts={products}
+          initialTotalPages={totalPages}
+          cols={5}
+        />
       </div>
-      {/* <div className="lg:col-span-4 ">
-        {" "}
-        <SortDropdown />{" "}
-      </div> */}
-      <div className="lg:col-span-12 h-full">
-        <div className="grid md:grid-cols-5 grid-cols-2 lg:gap-4 gap-2">
-          {products.map((product) => (
-            <div key={product.productUuid}>
-              <ProductCard {...product} />
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
     </div>
   );
 }

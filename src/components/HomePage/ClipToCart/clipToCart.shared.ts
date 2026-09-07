@@ -50,7 +50,7 @@ export interface ClipProduct {
 }
 
 /** Items loaded per scroll step. */
-export const CLIP_PAGE_SIZE = 10;
+export const CLIP_PAGE_SIZE = 100;
 
 export function clipEndpoint(page: number): string {
   return `/showcase-items?showcaseSlug=clip-to-cart&page=${page}&limit=${CLIP_PAGE_SIZE}`;

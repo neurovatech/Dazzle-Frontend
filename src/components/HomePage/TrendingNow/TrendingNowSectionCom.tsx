@@ -18,7 +18,12 @@ export interface ProductCardItem {
   badge: string;
   isBestDeal: boolean;
   inStock: boolean;
+  isTba?: boolean;
   image: string;
+  minBookingPrice?: number;
+  endOfLife?: boolean;
+  allowPreOrder?: boolean;
+  recognitionBadge?: string;
 }
 
 interface ShowcaseItem {
@@ -32,6 +37,9 @@ interface ShowcaseItem {
   discountedPrice: number;
   disRate: number;
   thumbnails: { fileUuid: string; mediaFileUrl: string };
+  endOfLife?: boolean;
+  allowPreOrder?: boolean;
+  recognitionBadge?: string;
 }
 
 interface ShowcaseItemsResponse {
@@ -61,16 +69,20 @@ const TABS: { label: string; slug: TabSlug }[] = [
 
 function mapItems(data: ShowcaseItem[]): ProductCardItem[] {
   return data.map((item) => ({
-    uuid:          item.productUuid,
-    title:         item.productName,
-    slug:          item.productSlug,
-    price:         item.discountedPrice,
-    originalPrice: item.regularPrice,
-    discount:      Math.round(item.disRate),
-    badge:         item.productBadge,
-    isBestDeal:    false,
-    inStock:       !item.isTba,
-    image:         item.thumbnails?.mediaFileUrl ?? "/images/product.png",
+    uuid:             item.productUuid,
+    title:            item.productName,
+    slug:             item.productSlug,
+    price:            item.discountedPrice,
+    originalPrice:    item.regularPrice,
+    discount:         Math.round(item.disRate),
+    badge:            item.productBadge,
+    isBestDeal:       false,
+    inStock:          !item.isTba,
+    isTba:            item.isTba,
+    image:            item.thumbnails?.mediaFileUrl ?? "/images/product.png",
+    endOfLife:        item.endOfLife        ?? false,
+    allowPreOrder:    item.allowPreOrder    ?? false,
+    recognitionBadge: item.recognitionBadge ?? "",
   }));
 }
 

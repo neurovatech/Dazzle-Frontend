@@ -1,9 +1,10 @@
 import Breadcrumb from "@/components/share/Breadcrumb";
 import SortDropdown from "@/components/share/SortDropdown";
-import ProductCard from "@/components/share/GlobalProductCard";
-import { api } from "@/lib/api";
 
-import Newest from "@/components/HomePage/FlashSale/Newest";
+
+import ShowcaseProductGrid from "@/components/share/ShowcaseProductGrid";
+import { fetchShowcaseProducts } from "@/lib/fetchShowcaseProducts";
+
 interface ShowcaseThumbnail {
   fileUuid: string;
   mediaFileUrl: string;
@@ -28,7 +29,7 @@ interface ShowcaseItem {
   disRate: number;
   thumbnails: ShowcaseThumbnail;
 }
- 
+
 interface ShowcaseItemsResponse {
   statusCode: number;
   status: string;
@@ -59,59 +60,37 @@ export default async function TrendingProductsPages() {
     { label: "Home", href: "/" },
     { label: "Trending Now", href: "#" },
   ];
-  let products: ProductCardItem[] = [];
-   
-    try {
-      const res = await api.get<ShowcaseItemsResponse>(
-         "/showcase-items?showcaseSlug=trending-now",
-        { next: { revalidate: 5 } }
-      );
-   
-      const list = Array.isArray(res?.data) ? res.data : [];
-   
-      products = list.map((item) => ({
-        uuid: item.productUuid,
-        title: item.productName,
-        slug: item.productSlug,
-        price: item.discountedPrice,
-        originalPrice: item.regularPrice,
-        discount: Math.round(item.disRate),
-        badge: item.productBadge,
-        isBestDeal: false,
-        inStock: !item.isTba,
-        image: item.thumbnails?.mediaFileUrl ?? "/images/product.png",
-      }));
-    } catch (error) {
-      console.error("Error fetching feature products SSR:", error);
-    }
-  
+  const { products, totalPages } = await fetchShowcaseProducts(
+    "trending-now",
+    1,
+    300,
+  );
+
   return (
     <div className="flex flex-col flex-1 max-w-355 mx-auto">
       <div className="md:px-12.5 px-4">
         <Breadcrumb items={breadcrumbItems} />
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-12 lg:gap-4 gap-2 mt-6 items-stretch cursor-pointer md:px-12.5 px-4">
-      <div className="lg:col-span-8">
-        {" "}
-        <h3>
-          Trending Now
-        </h3>{" "}
-      </div>
-      {/* <div className="lg:col-span-4 ">
+        <div className="lg:col-span-8">
+          {" "}
+          <h3>Trending Now</h3>{" "}
+        </div>
+        {/* <div className="lg:col-span-4 ">
         {" "}
         <SortDropdown />{" "}
       </div> */}
-      <div className="lg:col-span-12 h-full">
-
-        <div className="grid md:grid-cols-5 grid-cols-2 lg:gap-4 gap-2">
-          {products.map((product) => (
-            <div key={product.uuid}>
-              <ProductCard {...product} />
-            </div>
-          ))}
+        <div className="lg:col-span-12 h-full">
+          <div className="grid md:grid-cols-5 grid-cols-2 lg:gap-4 gap-2">
+            <ShowcaseProductGrid
+              showcaseSlug="trending-now"
+              initialProducts={products}
+              initialTotalPages={totalPages}
+              cols={5}
+            />
+          </div>
         </div>
       </div>
-    </div>
     </div>
   );
 }

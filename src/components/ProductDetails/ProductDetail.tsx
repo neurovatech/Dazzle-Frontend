@@ -44,7 +44,6 @@ interface ProductDetailProps {
 }
 
 const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
-  console.log(product, "productproductproductproduct");
   const dispatch = useAppDispatch();
   const [qty, setQty] = useState(1);
   const [selectedAttrs, setSelectedAttrs] = useState<Record<string, string>>(
@@ -103,7 +102,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
     staleTime: 10 * 60 * 1000,
   });
 
-  console.log("planAccessoriesData", planAccessoriesData);
 
   // ── Consolidate ────────────────────────────────────────────────
   const { groups, variants } = useMemo(
@@ -434,8 +432,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
     staleTime: 10 * 60 * 1000,
   });
 
-  // console.log(specApiData, "specApiDataspecApiDataspecApiData")
-  // console.log(product!.productUuid, "specApiDataspecApiDataspecApiData")
 
   // Map API response → ProductSpecifications props shape
   const specGroups = useMemo(() => {
@@ -551,9 +547,10 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
 
       <div className="max-w-350 mx-auto lg:px-4 px-2 pb-16">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* lg:top-6 z-999999  */}
           {/* ── Left: Image Gallery ── */}
-          <div className="lg:col-span-5">
-            <div className="rounded-2xl shadow-sm p-3 transition-colors duration-200  dark:bg-[#3e3329]">
+          <div className="lg:col-span-5 lg:sticky ">
+            <div className="rounded-2xl shadow-sm p-3 transition-colors duration-200  dark:bg-[#3e3329] ">
               <ProductImageGallery
                 images={galleryImages}
                 selected={selectedColor}

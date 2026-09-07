@@ -313,6 +313,9 @@ export default function CampaignDetailClient({
                 isTba={product.isTba}
                 isBestDeal={false}
                 slug={product.productSlug || product.productUuid}
+                endOfLife={product.endOfLife ?? false}
+                allowPreOrder={product.allowPreOrder ?? false}
+                recognitionBadge={product.recognitionBadge ?? ""}
               />
             );
           })}

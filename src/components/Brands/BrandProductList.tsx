@@ -149,6 +149,7 @@ function BrandProductList({
                 isTba={product.isTba}
                 isBestDeal={false}
                 slug={product.productSlug || product.productUuid}
+                allProduct={product}
               />
             );
           })}

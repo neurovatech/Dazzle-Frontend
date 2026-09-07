@@ -41,8 +41,6 @@ function FlashSale({
       </p>
     );
   }
-
-  console.log(products, "productsproductsproductsproductsproducts")
  
 
   return (
@@ -98,6 +96,7 @@ function FlashSale({
               isBestDeal={false}
               inStock={product.inStock}
               image={product.image}
+              allProduct={product}
             />
           </SwiperSlide>
         ))}

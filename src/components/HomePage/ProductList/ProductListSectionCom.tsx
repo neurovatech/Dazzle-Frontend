@@ -14,6 +14,9 @@ interface ShowcaseItem {
   productSlug: string;
   productBadge: string;
   isTba: boolean;
+  endOfLife?: boolean;
+  allowPreOrder?: boolean;
+  recognitionBadge?: string;
   regularPrice: number;
   discountedPrice: number;
   disRate: number;
@@ -71,6 +74,10 @@ export default async function ProductListSectionCom({
       isBestDeal: false,
       inStock: !item.isTba,
       image: item.thumbnails?.mediaFileUrl ?? "/images/product.png",
+      isTba:            item.isTba,
+      endOfLife:        item.endOfLife        ?? false,
+      allowPreOrder:    item.allowPreOrder    ?? false,
+      recognitionBadge: item.recognitionBadge ?? "",
     }));
   } catch (error) {
     console.error("Error fetching hot deal products SSR:", error);

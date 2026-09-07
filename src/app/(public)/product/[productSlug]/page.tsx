@@ -249,8 +249,6 @@ export default async function ProductDetailsPage({ params }: PageProps) {
     : undefined;
 
 
-    console.log(product, "productproductproductproductproductproductproductproductproduct")
-
   return (
     <div>
       {jsonLd && (

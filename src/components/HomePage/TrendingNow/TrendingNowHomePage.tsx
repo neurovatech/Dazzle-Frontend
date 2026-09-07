@@ -86,6 +86,7 @@ function TrendingNowHomePage({
               isBestDeal={false}
               inStock={product.inStock}
               image={product.image}
+              allProduct={product}
             />
           </SwiperSlide>
         ))}

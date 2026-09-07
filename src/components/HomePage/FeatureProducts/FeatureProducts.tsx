@@ -1,7 +1,5 @@
 import Link from "next/link";
-import ProductCard from "@/components/share/GlobalProductCard";
-import Banner from "@/images/o_banner.png";
-import Deals from "@/images/deals.png";
+
 import Image from "next/image";
 import { api } from "@/lib/api";
 import { sortInStockFirst } from "@/lib/sortProducts";
@@ -19,6 +17,9 @@ interface ShowcaseItem {
   productSlug: string;
   productBadge: string;
   isTba: boolean;
+  endOfLife?: boolean;
+  allowPreOrder?: boolean;
+  recognitionBadge?: string;
   regularPrice: number;
   discountedPrice: number;
   disRate: number;
@@ -88,6 +89,10 @@ export default async function FeatureProducts() {
       isBestDeal: false,
       inStock: !item.isTba,
       image: item.thumbnails?.mediaFileUrl ?? "/images/product.png",
+      isTba:            item.isTba,
+      endOfLife:        item.endOfLife        ?? false,
+      allowPreOrder:    item.allowPreOrder    ?? false,
+      recognitionBadge: item.recognitionBadge ?? "",
     }));
   } catch (error) {
     console.error("Error fetching feature products SSR:", error);
@@ -106,121 +111,7 @@ export default async function FeatureProducts() {
 
   const [primaryBanner, secondaryBanner] = banners;
 
-  const features = [
-    {
-      label: "100% Genuine\nProducts",
-      icon: (
-        <svg
-          width="26"
-          height="26"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="#7a6251"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-        </svg>
-      ),
-    },
-    {
-      label: "Super fast\nDelivery",
-      icon: (
-        <svg
-          width="26"
-          height="26"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="#7a6251"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M9.5 2a2.5 2.5 0 0 1 5 0c4 1.5 6 5 6 9a10 10 0 1 1-20 0c0-4 2-7.5 6-9a2.5 2.5 0 0 1 3 0z" />
-          <line x1="12" y1="7" x2="10" y2="13" />
-          <line x1="10" y1="13" x2="14" y2="13" />
-          <line x1="14" y1="13" x2="12" y2="19" />
-        </svg>
-      ),
-    },
-    {
-      label: "36 Months\nInstallments",
-      icon: (
-        <svg
-          width="26"
-          height="26"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="#7a6251"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <rect x="2" y="5" width="20" height="14" rx="2" />
-          <line x1="2" y1="10" x2="22" y2="10" />
-          <line x1="6" y1="15" x2="10" y2="15" />
-        </svg>
-      ),
-    },
-    {
-      label: "2 Years\nReplacement",
-      icon: (
-        <svg
-          width="26"
-          height="26"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="#7a6251"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <rect x="2" y="3" width="8" height="8" rx="1" />
-          <rect x="14" y="13" width="8" height="8" rx="1" />
-          <path d="M10 7h4l-4 4" />
-          <path d="M14 17H10l4-4" />
-        </svg>
-      ),
-    },
-    {
-      label: "2 Years\nWarranty",
-      icon: (
-        <svg
-          width="26"
-          height="26"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="#7a6251"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M6 2h12a1 1 0 0 1 1 1v18l-7-3-7 3V3a1 1 0 0 1 1-1z" />
-        </svg>
-      ),
-    },
-    {
-      label: "2 Years\nExchange",
-      icon: (
-        <svg
-          width="26"
-          height="26"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="#7a6251"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M17 1l4 4-4 4" />
-          <path d="M3 11V9a4 4 0 0 1 4-4h14" />
-          <path d="M7 23l-4-4 4-4" />
-          <path d="M21 13v2a4 4 0 0 1-4 4H3" />
-        </svg>
-      ),
-    },
-  ];
+
 
   return (
     <div className=" px-4">

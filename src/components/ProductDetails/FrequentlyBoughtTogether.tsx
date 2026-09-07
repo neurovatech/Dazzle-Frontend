@@ -96,7 +96,6 @@ export default function FrequentlyBoughtTogether({
             if (res?.data) {
               // isTba true হলে এই product skip করো
               if (res.data.isTba) {
-                console.log(`[FrequentlyBoughtTogether] Skipping ${pUuid} — isTba: true`);
                 continue;
               }
               variantUUID = res.data.variantUUID || variantUUID;
