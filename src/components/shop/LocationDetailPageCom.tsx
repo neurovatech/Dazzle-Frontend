@@ -132,7 +132,7 @@ const LocationDetailPageCom: React.FC<Props> = ({ store }) => {
       {/* ── Reviews ── */}
       <section className="py-12 px-4 sm:px-6 lg:px-8 bg-[#5c3a1e] dark:bg-[#1A1A1A] hidden">
         <div>
-          <h2 className="text-white text-xl font-bold mb-6">Customer Review</h2>
+          <h2 className="text-white text-xl font-bold mb-6">Customer Review </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {visibleReviews.map((review) => (
               <ReviewCard key={review.id} review={review} />
@@ -191,7 +191,7 @@ const LocationDetailPageCom: React.FC<Props> = ({ store }) => {
 
        <section className="py-12 px-4 sm:px-6 lg:px-8 bg-[#5c3a1e]">
         <div className="">
-          <h2 className="text-white text-xl font-bold mb-6">Customer Review</h2>
+          <h2 className="text-white text-xl font-bold mb-6">Customer Review   ({`${'Static Data'}`})</h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {visibleReviews.map((review) => (
