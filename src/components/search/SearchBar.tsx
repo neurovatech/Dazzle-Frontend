@@ -27,21 +27,44 @@ export default function SearchBar() {
   // static-position ambiguity entirely; re-measuring on scroll/resize keeps it
   // glued to the search bar even if the sticky header's own position shifts
   // while the dropdown is open.
+  //
+  // `dropdownCenterX` does the same job for horizontal placement on desktop.
+  // The old CSS (`lg:-left-70` etc.) shifted the panel left by a fixed amount
+  // relative to the search bar's own `position: relative` wrapper — that only
+  // worked while the panel was `position: absolute`. Once it became `fixed`
+  // (needed for `top` above), "left" is measured from the viewport instead,
+  // so that same offset instead dragged the panel toward the screen's left
+  // edge regardless of where the search bar actually sits. Measuring the
+  // wrapper's horizontal center and centering the panel on it with a
+  // `translateX(-50%)` keeps it visually centered under the search bar no
+  // matter the panel's own (dynamic) width.
   const [dropdownTop, setDropdownTop] = useState<number | null>(null);
+  const [dropdownCenterX, setDropdownCenterX] = useState<number | null>(null);
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 640px)");
+    const update = () => setIsDesktop(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
 
   useEffect(() => {
     if (!isFocused) return;
-    const updateTop = () => {
+    const updatePosition = () => {
       if (wrapperRef.current) {
-        setDropdownTop(wrapperRef.current.getBoundingClientRect().bottom);
+        const r = wrapperRef.current.getBoundingClientRect();
+        setDropdownTop(r.bottom);
+        setDropdownCenterX(r.left + r.width / 2);
       }
     };
-    updateTop();
-    window.addEventListener("scroll", updateTop, { passive: true });
-    window.addEventListener("resize", updateTop);
+    updatePosition();
+    window.addEventListener("scroll", updatePosition, { passive: true });
+    window.addEventListener("resize", updatePosition);
     return () => {
-      window.removeEventListener("scroll", updateTop);
-      window.removeEventListener("resize", updateTop);
+      window.removeEventListener("scroll", updatePosition);
+      window.removeEventListener("resize", updatePosition);
     };
   }, [isFocused]);
 
@@ -119,18 +142,27 @@ export default function SearchBar() {
       {/* ── Dropdown Panel ── */}
       <div
         className={`
-          fixed left-2 md:-left-70 lg:-left-70 right-2
+          fixed left-2 right-2
           sm:right-auto sm:min-w-260
           bg-white dark:bg-[#2e2b28] rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-600
           max-h-[80vh] overflow-y-auto
-          transition-all duration-300 ease-in-out z-999
+          transition-opacity duration-300 ease-in-out z-999
           ${
             isFocused
-              ? "opacity-100 translate-y-0 pointer-events-auto"
-              : "opacity-0 -translate-y-2 pointer-events-none"
+              ? "opacity-100 pointer-events-auto"
+              : "opacity-0 pointer-events-none"
           }
         `}
-        style={{ top: dropdownTop != null ? dropdownTop + 8 : undefined }}
+        style={{
+          top: dropdownTop != null ? dropdownTop + 8 : undefined,
+          ...(isDesktop && dropdownCenterX != null
+            ? { left: dropdownCenterX, right: "auto" }
+            : {}),
+          transform: isDesktop
+            ? `translateX(-50%) translateY(${isFocused ? "0" : "-8px"})`
+            : `translateY(${isFocused ? "0" : "-8px"})`,
+          transition: "opacity 300ms ease-in-out, transform 300ms ease-in-out",
+        }}
       >
         {!hasQuery && (
           <RecentSearches onSelectTerm={handleSelectTerm} onClose={handleClose} />
