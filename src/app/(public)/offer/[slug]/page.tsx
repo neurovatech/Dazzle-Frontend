@@ -139,7 +139,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     data?.campaignDescription ||
     `Shop exclusive deals from the ${name} campaign at Dazzle. Best prices on smartphones, laptops & gadgets in Bangladesh.`;
   const image = data?.campaign_image ?? data?.campaignImage;
-  const ogTitle = `${name} - Dazzle Offer`;
+  const ogTitle = `${name} `;
   const ogImage = buildOgImage(image, name);
 
   return {

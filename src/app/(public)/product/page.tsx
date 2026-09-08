@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     "Dazzle shop",
   ],
   openGraph: {
-    title: "Shop Mobiles, Laptops & Accessories - Dazzle",
+    title: "Shop Mobiles, Laptops & Accessories ",
     description:
       "Premium smartphones, laptops, accessories & gadgets. Best prices in Bangladesh.",
     url: absoluteUrl("/product"),
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Shop Mobiles, Laptops & Accessories - Dazzle",
+    title: "Shop Mobiles, Laptops & Accessories ",
     description:
       "Premium smartphones, laptops, accessories & gadgets at the best prices in Bangladesh.",
     images: [DEFAULT_OG_IMAGE.url],

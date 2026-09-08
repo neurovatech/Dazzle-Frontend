@@ -86,15 +86,15 @@ The API already returns everything required: `productName`, `brandName`, `discou
 
 **Verified live:**
 ```
-/categories/phones → "Phones - Buy Online at Best Price in Bangladesh | Dazzle - Dazzle"
-/blogs             → "Latest Blogs & Technology News - Dazzle - Dazzle"
+/categories/phones → "Phones - Buy Online at Best Price in Bangladesh | Dazzle "
+/blogs             → "Latest Blogs & Technology News  "
 ```
 
 [layout.tsx:40](src/app/layout.tsx:40) defines:
 ```ts
 title: { default: title, template: `%s - ${siteName}` }
 ```
-…and **57 title declarations already end in `- Dazzle` or `| Dazzle`**, so the template appends the brand a second time.
+…and **57 title declarations already end in `` or `| Dazzle`**, so the template appends the brand a second time.
 
 Affected: about-us, all 12 policy pages, blogs, announcement, career, press-coverage, brands, categories, sub-categories, offers, FAQ, feedback, corporate — essentially every page **except** product pages (which correctly pass the bare API `metaTags.title` and therefore render correctly).
 
@@ -102,7 +102,7 @@ Affected: about-us, all 12 policy pages, blogs, announcement, career, press-cove
 |---|---|
 | **Impact** | Google truncates titles near ~580px (~60 chars). A duplicated brand wastes ~9 characters of the most valuable SEO real estate on the site and looks unprofessional in the SERP |
 | **Root cause** | The `template` was added to the root layout after individual pages had already hardcoded the brand suffix |
-| **Fix** | Remove the hardcoded `- Dazzle` / `| Dazzle` suffix from child page titles and let the root template supply it. Use `title.absolute` where a page genuinely needs to bypass the template |
+| **Fix** | Remove the hardcoded `` / `| Dazzle` suffix from child page titles and let the root template supply it. Use `title.absolute` where a page genuinely needs to bypass the template |
 | **Risk** | **Low** — mechanical, but touches many files; needs a rendered-title check afterwards |
 
 ---

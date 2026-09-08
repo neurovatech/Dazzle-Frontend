@@ -110,7 +110,7 @@ Pages such as `about-us`, `privacy-policy`, `emi-policy`, `exchange-policy`, `re
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Page Title - Dazzle",
+  title: "Page Title ",
   description: "Meta description for indexing.",
 };
 ```
@@ -122,7 +122,7 @@ For pages that contain heavy state management or forms (e.g. `corporate`, `feedb
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Get In Touch & Support Center - Dazzle",
+  title: "Get In Touch & Support Center ",
   description: "Reach out to Dazzle customer support.",
 };
 
@@ -139,7 +139,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const decoded = decodeURIComponent(productSlug);
   const title = decoded.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
   return {
-    title: `${title} - Buy Online at Best Price in BD - Dazzle`,
+    title: `${title} - Buy Online at Best Price in BD `,
     description: `Buy ${title} in Bangladesh from Dazzle with official brand warranty.`,
   };
 }
@@ -158,7 +158,7 @@ This project is built to be easily expandable. Follow these patterns when adding
    import type { Metadata } from "next";
 
    export const metadata: Metadata = {
-     title: "New Page - Dazzle",
+     title: "New Page ",
      description: "Describe the new page.",
    };
 

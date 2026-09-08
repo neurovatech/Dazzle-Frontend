@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     "Explore Dazzle's latest campaigns, flash sales, and exclusive offers on smartphones, laptops, and gadgets in Bangladesh.",
   alternates: { canonical: "/offer" },
   openGraph: {
-    title: "Latest Offers & Campaigns - Dazzle",
+    title: "Latest Offers & Campaigns ",
     description: "Shop the best deals and limited-time offers at Dazzle.",
     url: absoluteUrl("/offer"),
     siteName: SITE_NAME,
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Latest Offers & Campaigns - Dazzle",
+    title: "Latest Offers & Campaigns ",
     description: "Shop the best deals and limited-time offers at Dazzle.",
     images: [DEFAULT_OG_IMAGE.url],
   },

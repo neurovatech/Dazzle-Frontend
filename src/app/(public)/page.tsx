@@ -91,7 +91,7 @@ const ShopSelector = dynamic(
  * copy is fixed editorial content, is pinned here.
  */
 const HOME_TITLE =
-  "Best Mobile, Laptop and Gadget Shop in Bangladesh - Dazzle";
+  "Best Mobile, Laptop and Gadget Shop in Bangladesh ";
 const HOME_DESCRIPTION =
   "Dazzle is the leading and top rated smartphone, laptops, tablets, and accessories selling shop in Bangladesh. Buy the latest tech products at the lowest price";
 const HOME_KEYWORDS = "Best Smartphone shop in Bangladesh";
@@ -119,7 +119,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const ogImage = { ...HOME_OG_IMAGE, alt: title };
 
   return {
-    // `absolute` bypasses the layout's "%s - Dazzle" template, which would
+    // `absolute` bypasses the layout's "%s " template, which would
     // otherwise render this title with the brand appended a second time.
     title: { absolute: title },
     description,

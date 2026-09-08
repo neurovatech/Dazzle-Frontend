@@ -53,10 +53,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { slug } = await params;
   const store = await getStoreBySlug(slug);
 
-  if (!store) return { title: "Store Not Found - Dazzle" };
+  if (!store) return { title: "Store Not Found " };
 
   const [description] = (store.description || "").split("~seperator~");
-  const ogTitle = `${store.branch_name} - Dazzle Store`;
+  const ogTitle = `${store.branch_name}  Store`;
   const ogDescription = description?.trim() || store.address;
   const ogImage = buildOgImage(store.thumbnail_img, store.branch_name);
 

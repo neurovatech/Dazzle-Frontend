@@ -39,7 +39,7 @@ const urbanist = Urbanist({
   variable: "--font-urbanist",
 });
 const FALLBACK_ICON = "https://dazzle.sgp1.cdn.digitaloceanspaces.com/32680/logo.png";
-const FALLBACK_TITLE = "Best Mobile, Laptop and Gadget Shop In Bangladesh - Dazzle";
+const FALLBACK_TITLE = "Best Mobile, Laptop and Gadget Shop In Bangladesh ";
 const FALLBACK_DESCRIPTION =
   "Shop the best mobile phones, laptops, and gadgets in Bangladesh at Dazzle. Exclusive deals, genuine products, fast delivery.";
 
