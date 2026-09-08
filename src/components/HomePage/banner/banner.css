@@ -62,10 +62,11 @@
 /* ── Active bullet — pill shape with gold gradient ── */
 .mySwiper .swiper-pagination-bullet-active {
   width: 28px;
-  background: linear-gradient(90deg, #d4a017 0%, #f5c842 50%, #d4a017 100%);
+  background: linear-gradient(90deg, #d4a017 0%, #f5c842 50%, #d4a017 100%) !important;
   box-shadow: 0 0 8px rgba(212, 160, 23, 0.55);
   transform: scaleY(1.1);
 }
+
  
 /* ── Hover on inactive bullets ── */
 .mySwiper .swiper-pagination-bullet:not(.swiper-pagination-bullet-active):hover {

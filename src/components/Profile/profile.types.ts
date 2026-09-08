@@ -18,18 +18,16 @@ export interface WishlistItem {
 export interface ApiOrderItem {
   productName?: string;
   comerzOrderNo: string;
+  orderToken?: string;
   createdAt: string;
-  // New boolean flags from updated API
   isHomeDelivery: boolean;
   isStorePickup: boolean;
   isShopPickup?: boolean;
   isFullPaymentAtStore: boolean;
   orderStatus?: string;
-  // Legacy string fields (kept for compatibility)
   paymentType?: string;
   paymentMethod?: string;
   deliveryMethod?: string;
-  // Financials
   productCount: number;
   productPrice: number;
   deliveryFee: number;
@@ -44,6 +42,14 @@ export interface ApiOrderItem {
   isOrderExecuted?: boolean;
   isDelivered: boolean;
   isCancelled: boolean;
+  // ── Address fields ──────────────────────────────────────────────────────────
+  userFullName?: string;
+  mobile?: string;
+  addressLine1?: string;
+  addressLine2?: string;
+  addressLabel?: string;
+  deliveryIns?: string;
+  remarks?: string;
   // Product items (from order-list API)
   comerzOrderItems?: {
     comerzOrderItemUUID: string;

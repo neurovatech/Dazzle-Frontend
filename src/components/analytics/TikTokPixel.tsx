@@ -11,8 +11,6 @@ export default async function TikTokPixel() {
   const settings = await getSiteSettings();
 
 
-  console.log("settings", settings)
-
   const cmsCode = settings.tikTokBaseCode?.trim();
   const envPixelId = process.env.NEXT_PUBLIC_TIKTOK_PIXEL_ID;
 

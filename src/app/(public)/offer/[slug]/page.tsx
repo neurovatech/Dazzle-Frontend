@@ -169,8 +169,6 @@ export default async function OfferDetailPage({ params }: PageProps) {
   const initialData = await getCampaignDetail(slug);
   if (!initialData) notFound();
 
-  console.log("OfferDetailPage initialData:", initialData);
-
   const campaignName        = initialData.campaign_name ?? initialData.campaignName ?? cleanSlug(slug);
   const campaignDescription = initialData.campaign_description ?? initialData.campaignDescription;
   const campaignImage       = initialData.campaign_image ?? initialData.campaignImage;

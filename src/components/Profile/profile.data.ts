@@ -16,11 +16,11 @@ import {
 } from "./profile.types";
 
 export const menuItems: MenuItem[] = [
-  { label: "Wishlist", icon: Heart },
   { label: "Orders", icon: ShoppingBag },
+  { label: "Wishlist", icon: Heart },
   { label: "Address", icon: MapPin },
   // { label: "Coupons", icon: Tag },
-  { label: "Compare", icon: GitCompare },
+  // { label: "Compare", icon: GitCompare },
   { label: "Change Password", icon: Lock },
 ];
 

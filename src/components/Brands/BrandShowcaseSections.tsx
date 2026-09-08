@@ -102,7 +102,6 @@ export default function BrandShowcaseSections({ brandSlug, activeCategory }: Pro
     refetchOnReconnect:   false,
   });
 
-  console.log("url", `/showcase-escalate/${showcaseSlug}?brand=1`)
 
   const topSelling = mapToCards(data?.data?.topSelling ?? []);
   const trending   = mapToCards(data?.data?.trending   ?? []);

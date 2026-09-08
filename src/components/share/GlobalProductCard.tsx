@@ -54,7 +54,6 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const showTbaFlag = isTba ?? !inStock;
   const href = `/product/${slug || title?.toLowerCase().replace(/\s+/g, "-")}`;
 
-  console.log(allProduct, "allProductallProductallProduct");
   const isendOfLifeDisabled = allProduct ? allProduct.endOfLife === true : endOfLife === true;
   return (
     <div

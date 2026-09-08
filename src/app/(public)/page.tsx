@@ -33,6 +33,8 @@ import {
   LatestBlogSkeleton,
 } from "@/components/share/Skeletons";
 import { api } from "@/lib/api";
+import { getSiteSettings } from "@/lib/getSiteSettings";
+import { hasRichText, SEO_RICH_TEXT_CLASS } from "@/lib/seo-content";
 
 // ── Below-the-fold: lazy (dynamic) imports ──
 // (Newest/Popular/Olds were removed: they were only referenced by a `tabsData`
@@ -124,24 +126,6 @@ export async function generateMetadata(): Promise<Metadata> {
     keywords,
     alternates: { canonical: SITE_URL },
 
-    /**
-     * Home page is deliberately excluded from search engines.
-     *
-     * Requested explicitly. Worth being clear about the reach: `noindex` drops
-     * this page from results and `nofollow` stops crawlers following its links,
-     * which is how most of the catalogue is discovered — so this suppresses far
-     * more than the home page alone. It is scoped to this route only; product,
-     * category and brand pages keep their own indexable metadata.
-     */
-    robots: {
-      index: false,
-      follow: false,
-      noimageindex: true,
-      noarchive: true,
-      nocache: true,
-      nosnippet: true,
-    },
-
     openGraph: {
       title,
       description,
@@ -192,6 +176,18 @@ async function getHeroBanners(): Promise<SlideItem[]> {
 
 export default async function Home() {
   const heroSlides = await getHeroBanners();
+
+  // `metaDescription` is misnamed on the backend — for the homepage it's
+  // actually a long-form CMS-authored HTML block (500+ KB), not meta-tag
+  // copy. generateMetadata() (root layout) already truncates it for the real
+  // <meta name="description"> tag; this is the one place its full body is
+  // meant to be shown to readers/crawlers as visible on-page SEO content, so
+  // it must be rendered here rather than only used for the meta tag.
+  const settings = await getSiteSettings();
+  const seoBodyContent = hasRichText(settings.metaDescription)
+    ? settings.metaDescription!
+    : "";
+
     function getNext15thDate() {
       const now = new Date();
       const currentDay = now.getDate();
@@ -395,6 +391,17 @@ export default async function Home() {
           <LatestBlog />
         </div>
       </Suspense>
+
+      {/* SEO body content — CMS-authored copy about Dazzle, shown to readers
+          and crawlers alike (see the seoBodyContent comment above). */}
+      {seoBodyContent && (
+        <section className="max-w-355 mx-auto px-4 md:px-12.5 py-8">
+          <article
+            className={SEO_RICH_TEXT_CLASS}
+            dangerouslySetInnerHTML={{ __html: seoBodyContent }}
+          />
+        </section>
+      )}
 
     </div>
   );

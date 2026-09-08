@@ -304,7 +304,7 @@ export default function StickyPurchaseBar({
               {showTbaFlag ? (
                 /* TBA — price & availability hide, show TBA badge */
                 <span className="bg-[#6D3F0E] text-white text-sm font-bold px-4 py-1.5 rounded-full shadow-md">
-                  TBA
+                  To Be Announced 
                 </span>
               ) : isUnavailable ? (
                 <p className="text-xl sm:text-2xl font-bold leading-tight text-gray-400 dark:text-gray-500">

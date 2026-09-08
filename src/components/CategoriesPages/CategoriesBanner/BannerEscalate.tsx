@@ -115,7 +115,7 @@ export default function BannerEscalate({
         loop={banners.length >= 2}
         autoplay={{ delay: 4000, disableOnInteraction: false }}
         pagination={{ clickable: true }}
-        className="rounded-2xl overflow-hidden"
+        className="rounded-2xl overflow-hidden mySwiper"
       >
         {banners
           .sort((a, b) => a.mediaFileOrder - b.mediaFileOrder)

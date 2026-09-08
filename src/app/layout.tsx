@@ -24,6 +24,7 @@ import {
   buildJsonLd,
   organizationSchema,
   webSiteSchema,
+  localBusinessSchema,
 } from "@/lib/structured-data";
 import {
   SITE_NAME,
@@ -124,6 +125,7 @@ export default async function RootLayout({
   const siteJsonLd = buildJsonLd(
     organizationSchema(settings),
     webSiteSchema(settings),
+    localBusinessSchema(settings),
   );
 
   return (

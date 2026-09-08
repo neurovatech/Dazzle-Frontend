@@ -125,14 +125,14 @@ const features = [
   { icon: Rocket, title: "Super fast", subtitle: "Delivery" },
   { icon: CreditCard, title: "36 Months", subtitle: "Installments" },
   { icon: RefreshCw, title: "2 Years", subtitle: "Replacement" },
-  { icon: ShoppingBag, title: "2 Years", subtitle: "Replacement" },
-  { icon: RefreshCw, title: "2 Years", subtitle: "Replacement" },
+  { icon: ShoppingBag, title: "Best Price in BD", subtitle: "Replacement" },
+  // { icon: RefreshCw, title: "2 Years", subtitle: "Replacement" },
 ];
 
 function BlogInformationSection() {
   return (
     <div className="mb-6">
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-5">
         {features.map((feature, index) => {
           const Icon = feature.icon;
           return (

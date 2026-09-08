@@ -74,6 +74,38 @@ export function organizationSchema(settings?: {
   });
 }
 
+// ─── LocalBusiness ─────────────────────────────────────────────────────────────
+/**
+ * Uses whatever contact fields site-settings actually has. `contactAddress` is
+ * a free-text CMS field (e.g. "Dazzle, Bangladesh"), not a structured
+ * street/city/postal breakdown — schema.org's `address` accepts a plain
+ * string, so it's passed through as-is rather than fabricated into a fake
+ * PostalAddress. A real street address in the CMS would let this emit a
+ * proper PostalAddress instead; ask whoever owns site-settings content to add
+ * one when it's available.
+ */
+export function localBusinessSchema(settings?: {
+  siteTitle?: string;
+  siteLogo?: string;
+  contactPhone?: string;
+  contactEmail?: string;
+  contactAddress?: string;
+}) {
+  if (!settings?.contactAddress && !settings?.contactPhone) return undefined;
+
+  return clean({
+    "@type": "LocalBusiness",
+    "@id": `${SITE_URL}/#localbusiness`,
+    name: settings?.siteTitle || "Dazzle",
+    url: SITE_URL,
+    image: settings?.siteLogo,
+    telephone: settings?.contactPhone,
+    email: settings?.contactEmail,
+    address: settings?.contactAddress,
+    parentOrganization: { "@id": ORG_ID },
+  });
+}
+
 // ─── WebSite (+ sitelinks search box) ─────────────────────────────────────────
 export function webSiteSchema(settings?: { siteTitle?: string }) {
   return clean({

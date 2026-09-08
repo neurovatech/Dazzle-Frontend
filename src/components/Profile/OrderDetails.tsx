@@ -20,8 +20,9 @@ import {
   Tag,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useAppSelector } from "@/store/hooks";
 import {
@@ -268,17 +269,80 @@ const ReturnWidget: React.FC<ReturnWidgetProps> = ({ orderDateISO, isDelivered, 
 // ─── Cancel Order Confirm Modal ───────────────────────────────────────────────
 function CancelOrderModal({
   orderNo, onClose, onConfirm, loading,
-}: { orderNo: string; onClose: () => void; onConfirm: () => void; loading: boolean }) {
+}: { orderNo: string; onClose: () => void; onConfirm: (reason: string) => void; loading: boolean }) {
+  const [selectedReason, setSelectedReason] = useState("Changed my mind");
+  const [customReason, setCustomReason] = useState("");
+
+  const CANCEL_REASONS = [
+    "Changed my mind",
+    "Ordered by mistake",
+    "Found a better price",
+    "Delivery time too long",
+    "Other",
+  ];
+
+  const isOther = selectedReason === "Other";
+  // Final reason — if "Other" selected, use the typed text
+  const finalReason = isOther ? customReason.trim() : selectedReason;
+  const canSubmit = !loading && finalReason.length > 0;
+
   return (
     <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-white dark:bg-[#2a2520] rounded-3xl w-full max-w-sm shadow-2xl p-6 text-center" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white dark:bg-[#2a2520] rounded-3xl w-full max-w-sm shadow-2xl p-6" onClick={(e) => e.stopPropagation()}>
         <div className="w-14 h-14 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
           <XOctagon size={26} className="text-red-500" />
         </div>
-        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1.5">Cancel this order?</h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-          Please confirm you want to cancel order <strong>#{orderNo}</strong>. This action cannot be undone.
+        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1.5 text-center">Cancel this order?</h3>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 text-center">
+          Order <strong>#{orderNo}</strong>. This action cannot be undone.
         </p>
+
+        {/* Reason selector */}
+        <div className="mb-5">
+          <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-2">
+            Reason for cancellation <span className="text-red-500">*</span>
+          </label>
+          <div className="space-y-2">
+            {CANCEL_REASONS.map((r) => (
+              <label key={r} className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl border cursor-pointer transition-all text-sm ${
+                selectedReason === r
+                  ? "border-red-400 bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-300"
+                  : "border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-red-200"
+              }`}>
+                <input
+                  type="radio"
+                  name="cancelReason"
+                  value={r}
+                  checked={selectedReason === r}
+                  onChange={() => {
+                    setSelectedReason(r);
+                    if (r !== "Other") setCustomReason("");
+                  }}
+                  className="accent-red-500 shrink-0"
+                />
+                {r}
+              </label>
+            ))}
+          </div>
+
+          {/* Custom reason input — visible only when "Other" is selected */}
+          {isOther && (
+            <div className="mt-3">
+              <textarea
+                value={customReason}
+                onChange={(e) => setCustomReason(e.target.value)}
+                placeholder="Please describe your reason..."
+                rows={3}
+                autoFocus
+                className="w-full border border-gray-200 dark:border-gray-600 rounded-2xl px-4 py-3 text-sm dark:bg-[#1e1a17] dark:text-white focus:outline-none focus:border-red-400 resize-none placeholder:text-gray-400 mt-1"
+              />
+              {customReason.trim().length === 0 && (
+                <p className="text-xs text-red-400 mt-1">Please enter a reason to continue.</p>
+              )}
+            </div>
+          )}
+        </div>
+
         <div className="flex gap-3">
           <button
             onClick={onClose}
@@ -288,8 +352,8 @@ function CancelOrderModal({
             No, keep it
           </button>
           <button
-            onClick={onConfirm}
-            disabled={loading}
+            onClick={() => canSubmit && onConfirm(finalReason)}
+            disabled={!canSubmit}
             className="flex-1 py-3 rounded-2xl bg-red-600 hover:bg-red-700 text-white text-sm font-semibold transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
           >
             {loading && <Loader2 size={15} className="animate-spin" />}
@@ -475,29 +539,52 @@ const TRACKING_STEPS = [
 ];
 
 /**
- * Returns the index of the LAST completed step (0-based).
- *
- * Pending / Booked / Processed  → 0  (only step 1 green)
- * Confirmed / Failed / Refunded → 1  (steps 1-2 green)
- * Shipping / In Transit …       → 2  (steps 1-3 green)
- * Completed / Delivered / Cancelled → 3  (all 4 green)
+ * Returns:
+ *   -1  → Cancelled (all nodes gray)
+ *    0  → Step 1 active only
+ *    1  → Steps 1-2 active
+ *    2  → Steps 1-3 active
+ *    3  → All 4 active
  */
 function getActiveStep(
   orderStatus?: string,
   orderCancelled?: boolean,
   orderDelivered?: boolean,
 ): number {
-  if (orderCancelled || orderDelivered) return 3;
+  // Explicit cancel flag → all gray
+  if (orderCancelled) return -1;
+  if (orderDelivered) return 3;
   if (!orderStatus) return 0;
+
   const s = orderStatus.toLowerCase().replace(/[\s_-]+/g, "");
 
-  // Walk from the last step downward — return the first match found
+  // Check "Cancelled" status string too → all gray
+  if (s === "cancelled" || s === "cancel") return -1;
+
+  // Walk from last step downward
   for (let i = TRACKING_STEPS.length - 1; i >= 0; i--) {
     if (TRACKING_STEPS[i].statuses.some((st) => s.includes(st.replace(/\s+/g, "")))) {
+      // If matched in step 3 (completed/delivered/cancelled)
+      if (i === 3) {
+        if (s.includes("cancel")) return -1; // cancelled → all gray
+        return 3; // completed/delivered → all green
+      }
       return i;
     }
   }
-  return 0; // default: step 1 only
+  return 0;
+}
+
+/** Returns the matched status label (original casing) for the current step */
+function getMatchedStatusLabel(orderStatus?: string): string {
+  if (!orderStatus) return "";
+  const s = orderStatus.toLowerCase().replace(/[\s_-]+/g, "");
+  for (const step of TRACKING_STEPS) {
+    for (const st of step.statuses) {
+      if (s.includes(st.replace(/\s+/g, ""))) return orderStatus;
+    }
+  }
+  return orderStatus;
 }
 
 // Legacy canonical steps (kept for timeline match)
@@ -517,12 +604,15 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showInvoice, setShowInvoice] = useState(false);
   const [showPayDueModal, setShowPayDueModal] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const queryClient = useQueryClient();
+  const router = useRouter();
 
   const { token, apiKey } = useAppSelector((s) => s.auth);
   const authHeader = token ? (token.startsWith("Bearer ") ? token : `Bearer ${token}`) : "";
 
   // ── Fetch Tracking details from API ──
-  const { data: trackingRes, isLoading } = useQuery<OrderTrackingResponse>({
+  const { data: trackingRes, isLoading, refetch: refetchTracking } = useQuery<OrderTrackingResponse>({
     queryKey: ["order-tracking", orderNo],
     queryFn: async () => api.get<OrderTrackingResponse>(`/order-tracking/${orderNo}`, {
       headers: { Authorization: authHeader, "X-API-Key": apiKey || "" },
@@ -550,38 +640,61 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
   const timeline = trackingData?.statusTimeline ?? [];
 
   // ── Cancel-order eligibility ──────────────────────────────────────────────
-  // Cancellation is blocked once the order has reached "Shipping" / "Sent Out" /
-  // "In Transit" (or is already delivered/cancelled).
-  //
-  // isTerminal falls back to the order-list's own status (`order?.status`) when
-  // the /order-tracking call hasn't resolved yet or fails — otherwise the whole
-  // Cancel Order option would silently disappear any time that one endpoint is
-  // slow or unavailable, even though we already know from the list whether the
-  // order is still active.
-  const isTerminal = trackingData
-    ? trackingData.orderCancelled || trackingData.orderDelivered
-    : order?.status === "Cancelled" || order?.status === "Delivered";
+  // 1. order-list এর isCancelled=true থাকলে already cancelled
+  // 2. trackingData থেকে orderCancelled/orderDelivered check
+  // 3. Shipping started হলে cancel করা যাবে না
+  const isTerminal = rawOrder?.isCancelled
+    || rawOrder?.isDelivered
+    || (trackingData
+      ? trackingData.orderCancelled || trackingData.orderDelivered
+      : order?.status === "Cancelled" || order?.status === "Delivered");
+
   const hasShipped = timeline.some((t) =>
     /shipping|transit|sentout|sent out|out for delivery/i.test((t.orderStatus || "").replace(/\s+/g, " ")),
   );
   const canCancel = !isTerminal && !hasShipped;
 
-  // NOTE (backend integration pending): there is no cancel-order endpoint in
-  // the API yet, so this button is UI-only for now. Once the endpoint exists,
-  // replace the body below with something like:
-  //
-  //   setCancelling(true);
-  //   await api.post(`/api/tokenized/v1/order-cancel/${orderNo}`, {}, {
-  //     headers: { Authorization: authHeader, "X-API-Key": apiKey || "" },
-  //   });
-  //   queryClient.invalidateQueries({ queryKey: ["order-tracking", orderNo] });
-  //   queryClient.invalidateQueries({ queryKey: ["order-list"] });
-  //
-  // The button, the eligibility check (canCancel) above, and the confirmation
-  // modal below are already fully built and just need the real call wired in.
-  const handleCancelOrder = () => {
-    toast("Order cancellation isn't connected to the backend yet.", { icon: "🚧" });
-    setShowCancelModal(false);
+  // ── Cancel order — real API call ──────────────────────────────────────────
+  const handleCancelOrder = async (reason: string) => {
+    // Use orderToken from rawOrder if available, otherwise fall back to comerzOrderNo
+    const token = rawOrder?.orderToken || orderNo;
+    if (!token) {
+      toast.error("Order token not found.");
+      return;
+    }
+
+    setCancelling(true);
+    try {
+      const res = await api.post<{ statusCode: number; status: string; message: string; errors?: string[] }>(
+        "/api/tokenized/v1/cancel-order",
+        { orderToken: token, cancelReason: reason },
+        { headers: { Authorization: authHeader, "X-API-Key": apiKey || "", "Content-Type": "application/json" } },
+      );
+
+      if (res?.statusCode === 200 && res?.status === "success") {
+        toast.success("Order cancelled successfully.");
+        // 1. Immediately refetch tracking data → UI updates without reload
+        await refetchTracking();
+        // 2. Invalidate order list cache
+        queryClient.invalidateQueries({ queryKey: ["order-list"] });
+        queryClient.invalidateQueries({ queryKey: ["order-tracking", orderNo] });
+        // 3. Redirect to profile Orders tab
+        router.push("/profile?tab=Orders");
+      } else {
+        const msg = res?.errors?.join(", ") || res?.message || "Failed to cancel order.";
+        toast.error(msg);
+      }
+    } catch (err: unknown) {
+      try {
+        const parsed = JSON.parse((err as Error).message);
+        toast.error(parsed?.errors?.join(", ") || parsed?.message || "Failed to cancel order.");
+      } catch {
+        toast.error("Failed to cancel order. Please try again.");
+      }
+    } finally {
+      setCancelling(false);
+      setShowCancelModal(false);
+    }
   };
 
   // ── Booking money / Cash on Delivery due-amount ───────────────────────────
@@ -597,11 +710,11 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
   const currentOrderStatus = rawOrder?.orderStatus || order?.status || "";
   const activeStep = getActiveStep(
     currentOrderStatus,
-    trackingData?.orderCancelled,
-    trackingData?.orderDelivered,
+    trackingData?.orderCancelled || rawOrder?.isCancelled,
+    trackingData?.orderDelivered || rawOrder?.isDelivered,
   );
-  // Payment allowed only in steps 0 (Placed) and 1 (Confirmed)
-  const canPayDue = activeStep <= 1 && dueAmount > 0;
+  // Payment allowed only in steps 0 (Placed) and 1 (Confirmed), not when cancelled
+  const canPayDue = activeStep >= 0 && activeStep <= 1 && dueAmount > 0;
 
   const handlePayDue = () => {
     if (!canPayDue) return;
@@ -620,6 +733,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
   }
 
   const alertLogs = trackingData?.alertsLogs || [];
+  console.log("trackingData", trackingData)
 
   return (
     <div className="p-5 rounded-3xl bg-[#F7F7F7] dark:bg-[#393430] font-sans space-y-6">
@@ -772,29 +886,34 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
           <div className="relative flex items-start justify-between mb-6">
             {/* background connecting line */}
             <div className="absolute top-4 left-[8%] right-[8%] h-[2px] bg-gray-200 dark:bg-zinc-700 z-0" />
-            {/* green progress line — grows from left as activeStep increases */}
-            <div
-              className="absolute top-4 left-[8%] h-[2px] bg-green-500 z-0 transition-all duration-500 ease-in-out"
-              style={{
-                width: activeStep === 0
-                  ? "0%"
-                  : `${(activeStep / (TRACKING_STEPS.length - 1)) * 84}%`,
-              }}
-            />
+            {/* green progress line — grows from left, hidden when cancelled */}
+            {activeStep >= 0 && (
+              <div
+                className="absolute top-4 left-[8%] h-[2px] bg-green-500 z-0 transition-all duration-500 ease-in-out"
+                style={{
+                  width: activeStep === 0
+                    ? "0%"
+                    : `${(activeStep / (TRACKING_STEPS.length - 1)) * 84}%`,
+                }}
+              />
+            )}
 
             {TRACKING_STEPS.map((step, idx) => {
-              const isCompleted = idx <= activeStep;
-              const isCancelledStep = trackingData?.orderCancelled && idx === activeStep && idx === 3;
+              // activeStep === -1 means cancelled → all nodes gray/red only on last step
+              const isCancelled = activeStep === -1;
+              const isCompleted = !isCancelled && idx <= activeStep;
+              const isCancelledNode = isCancelled && idx === 3; // last node shows X when cancelled
+
               return (
                 <div key={step.label} className="flex flex-col items-center z-10 flex-1">
                   <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
-                    isCancelledStep
+                    isCancelledNode
                       ? "border-red-500 bg-red-500"
                       : isCompleted
                       ? "border-green-500 bg-green-500"
                       : "border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-800"
                   }`}>
-                    {isCancelledStep ? (
+                    {isCancelledNode ? (
                       <XOctagon size={14} className="text-white" />
                     ) : isCompleted ? (
                       <CheckCircle size={14} className="text-white" />
@@ -803,7 +922,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
                     )}
                   </div>
                   <p className={`text-[11px] font-semibold mt-2 text-center leading-tight px-1 ${
-                    isCancelledStep
+                    isCancelledNode
                       ? "text-red-500 dark:text-red-400"
                       : isCompleted
                       ? "text-green-600 dark:text-green-400"
@@ -816,16 +935,16 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
             })}
           </div>
 
-          {/* Current status pill */}
+          {/* Current status pill — shows actual API status name */}
           <div className="flex items-center justify-center mb-4">
             <span className={`text-xs font-bold px-3 py-1 rounded-full ${
-              trackingData?.orderCancelled
+              activeStep === -1
                 ? "bg-red-100 text-red-600 dark:bg-red-950/40 dark:text-red-400"
-                : trackingData?.orderDelivered
+                : activeStep === 3
                 ? "bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400"
                 : "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400"
             }`}>
-              Current: {rawOrder?.orderStatus || statusText}
+              {rawOrder?.orderStatus || statusText}
             </span>
           </div>
 
@@ -853,25 +972,66 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
       <div>
         <h3 className="text-lg font-bold mb-3 text-gray-800 dark:text-white">Delivery Address</h3>
         <div className="bg-white dark:bg-[#2e2a27] p-4 rounded-2xl border border-gray-100 dark:border-zinc-800/80 space-y-3">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 bg-amber-50 dark:bg-amber-950/40 rounded-xl flex items-center justify-center shrink-0 border border-amber-100 dark:border-amber-900">
-              <MapPin size={18} className="text-[#7A4500] dark:text-[#d48c34]" />
+          {rawOrder?.isStorePickup || rawOrder?.isShopPickup ? (
+            /* Store Pickup */
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 bg-amber-50 dark:bg-amber-950/40 rounded-xl flex items-center justify-center shrink-0 border border-amber-100 dark:border-amber-900">
+                <MapPin size={18} className="text-[#7A4500] dark:text-[#d48c34]" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-amber-700 dark:text-amber-400 mb-0.5">🏪 Store Pickup</p>
+                <p className="text-sm font-bold text-gray-800 dark:text-white">
+                  {trackingData?.fullName || order?.rawApiData?.userFullName || "Customer"}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-300 mt-0.5">
+                  {trackingData?.address || "Store address not available"}
+                </p>
+              </div>
             </div>
-            <div>
-              <h4 className="font-bold text-sm text-gray-800 dark:text-white">
-                {trackingData?.fullName || "Customer"} ({trackingData?.mobile || "N/A"})
-              </h4>
-              <p className="text-xs text-gray-500 dark:text-gray-300 mt-0.5 leading-relaxed">
-                {trackingData?.address2 ? `${trackingData.address} - ${trackingData.address2}` : trackingData?.address || "Address details not available"}
-              </p>
-              {trackingData?.deliveryIns && (
-                <p className="text-xs text-amber-700 dark:text-amber-400 mt-1 font-medium">Delivery Instruction: {trackingData.deliveryIns}</p>
-              )}
-              {trackingData?.customerNotes && (
-                <p className="text-xs text-gray-400 mt-0.5">Notes: {trackingData.customerNotes}</p>
-              )}
+          ) : (
+            /* Home Delivery */
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 bg-amber-50 dark:bg-amber-950/40 rounded-xl flex items-center justify-center shrink-0 border border-amber-100 dark:border-amber-900">
+                <MapPin size={18} className="text-[#7A4500] dark:text-[#d48c34]" />
+              </div>
+              <div className="space-y-0.5">
+                <h4 className="font-bold text-sm text-gray-800 dark:text-white">
+                  {trackingData?.fullName || rawOrder?.userFullName || "Customer"}
+                  {(trackingData?.mobile || rawOrder?.mobile) && (
+                    <span className="font-normal text-gray-500 dark:text-gray-400">
+                      {" "}({trackingData?.mobile || rawOrder?.mobile})
+                    </span>
+                  )}
+                </h4>
+                {/* Address label */}
+                {rawOrder?.addressLabel && (
+                  <span className="inline-block text-[10px] bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full font-semibold">
+                    {rawOrder.addressLabel}
+                  </span>
+                )}
+                {/* Full address */}
+                <p className="text-xs text-gray-500 dark:text-gray-300 leading-relaxed">
+                  {trackingData?.address2
+                    ? `${trackingData.address} — ${trackingData.address2}`
+                    : trackingData?.address
+                    || rawOrder?.addressLine1
+                    || "Address details not available"}
+                </p>
+                {/* Delivery instruction */}
+                {(trackingData?.deliveryIns || rawOrder?.deliveryIns) && (
+                  <p className="text-xs text-amber-700 dark:text-amber-400 font-medium">
+                    📝 {trackingData?.deliveryIns || rawOrder?.deliveryIns}
+                  </p>
+                )}
+                {/* Customer notes */}
+                {(trackingData?.customerNotes || rawOrder?.remarks) && (
+                  <p className="text-xs text-gray-400 dark:text-gray-500">
+                    Notes: {trackingData?.customerNotes || rawOrder?.remarks}
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
@@ -927,12 +1087,12 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
 
                       {/* Full Pricing & Item Reference breakdown */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3 p-3 rounded-xl bg-gray-50 dark:bg-[#25211e] text-xs">
-                        <div>
+                        {/* <div>
                           <span className="text-gray-400 block text-[11px]">Item Reference Code</span>
                           <span className="font-mono text-gray-700 dark:text-gray-300 font-semibold truncate block">
                             {item.comerzOrderItemUUID ? `#${item.comerzOrderItemUUID.slice(0, 18)}...` : `#ITEM-${idx + 1}`}
                           </span>
-                        </div>
+                        </div> */}
                         <div>
                           <span className="text-gray-400 block text-[11px]">Pricing Details</span>
                           <div className="flex items-center gap-2 flex-wrap">
@@ -1157,7 +1317,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
           orderNo={trackingData?.orderNo || orderNo}
           onClose={() => setShowCancelModal(false)}
           onConfirm={handleCancelOrder}
-          loading={false}
+          loading={cancelling}
         />
       )}
 

@@ -1,0 +1,129 @@
+DAZZLE — STAGING SITE SEO AUDIT: WHAT NEEDS BACKEND / CMS / DEVOPS ACTION
+==========================================================================
+For: Backend developer / whoever manages hosting + CMS content
+From: Frontend
+Context: Comparing https://dazzle.com.bd/ (old, live) against
+         https://staging.bigpoint.com.bd/ (new site, per the shared audit
+         sheet). Everything the FRONTEND CODE could fix has already been
+         fixed and deployed (see section 4). Everything below this line is
+         either a deployment/environment setting or CMS content that only
+         someone with access to those systems can act on.
+
+
+1. ⚠️ HIGHEST PRIORITY — WRONG CANONICAL DOMAIN SITE-WIDE
+----------------------------------------------------------------
+Checked directly on the live staging site right now:
+
+    curl -s https://staging.bigpoint.com.bd/ | grep canonical
+    → <link rel="canonical" href="https://dazzle.com.bd"/>
+
+    curl -s https://staging.bigpoint.com.bd/categories/phones | grep canonical
+    → <link rel="canonical" href="https://dazzle.com.bd/categories/phones"/>
+
+EVERY page on staging currently declares its canonical URL as the OLD
+dazzle.com.bd domain — not itself. This is wrong for pages that exist only
+on the new site (most brand pages, several categories like
+gadget/drone, gadget/camera, accessories/airpods-case — none of these
+exist on dazzle.com.bd at all, so their canonical points at a URL that
+doesn't even exist there).
+
+Root cause: the frontend reads the site's own domain from an environment
+variable, `NEXT_PUBLIC_SITE_URL`. It is not set in the staging environment,
+so the code falls back to its hardcoded default — which is the OLD
+production domain (this fallback exists so local development doesn't
+crash, not for staging/production use).
+
+FIX (deployment config, not code):
+  Set the environment variable on the staging deployment:
+
+      NEXT_PUBLIC_SITE_URL=https://staging.bigpoint.com.bd
+
+  Then rebuild/redeploy. If/when this codebase goes live at a different
+  final domain (e.g. it replaces dazzle.com.bd directly), update this same
+  variable to that final domain at that time — every canonical, Open Graph
+  URL, and JSON-LD @id in the whole site derives from this one setting.
+
+This single fix will very likely resolve most of the sheet's "Canonical"
+column complaints in one deploy, not just the ones explicitly marked ❌.
+
+
+2. CATEGORY / SUBCATEGORY / BRAND "SEO CONTENT" — CMS DATA IS EMPTY
+----------------------------------------------------------------
+The frontend already has a fully working feature for this — it fetches
+`/seo/category/{slug}`, `/seo/subcategory/{slug}`, `/seo/brand/{slug}` and
+renders whatever `title`, `description`, `canonical` and `bottomContent`
+(long-form HTML) those return. Checked directly against the live API right
+now:
+
+    curl https://apix.bigpoint.com.bd/seo/category/phones
+    → {"title":"","keywords":"","canonical":"","bottomContent":"<p><br></p>","description":""}
+
+    curl https://apix.bigpoint.com.bd/seo/category/gadget
+    → identical — everything empty, bottomContent is a literally-blank paragraph
+
+This is true for essentially every category/subcategory/brand the sheet
+flags with "SEO Content ❌". The frontend correctly detects this as "no
+content" (rather than rendering an empty box) and falls back to its own
+generated title/description — which is why the sheet's comment about
+titles looking like "Phones - Buy Online at Best Price in Bangladesh -
+Dazzle" shows up: that IS the frontend's fallback, used only because the
+CMS field is empty. Filling in the CMS field lets the real custom copy
+take over automatically, no frontend change needed.
+
+FIX (content entry, not code):
+  Whoever has access to the admin panel needs to go through each
+  category/subcategory/brand and fill in: SEO title, meta description,
+  keywords, and the long-form "bottom content" paragraph(s). Priority
+  order suggested by the sheet: the 8 main categories first (phones,
+  tablet, laptop, smart-watch, gadget, accessories, sounds, smart-tv),
+  then subcategories with existing "seems need improvement" comments
+  (gadget/drone, gadget/camera, sounds/smart-speakers, monitor), then the
+  rest of the brand list.
+
+
+3. PAGES/BRANDS WITH NO LIVE PRODUCTS (THIN CONTENT)
+----------------------------------------------------------------
+A number of brand pages (acer, dell, lenovo, lg, hp, sennheiser, sony's
+competitors, ~60+ in total) and at least one category
+(accessories/airpods-case — sheet notes "no product live in new site")
+return zero products. A page with no products has nothing to build a
+title/description from, which is why the sheet shows Title/Meta/Content
+all ❌ for those specifically (this is different from issue #2 above —
+these are empty because there is no product data, not because CMS text is
+missing).
+
+FIX (catalog data, not code): either add live products under these
+brands/categories, or — if a brand/category genuinely has no stock for
+the foreseeable future — consider noindexing that specific page rather
+than leaving a thin/empty page indexable. This is a catalog/inventory
+decision, flagging it here so it isn't mistaken for a bug.
+
+
+4. ALREADY FIXED IN THE FRONTEND CODE (no action needed from you)
+----------------------------------------------------------------
+  - Home page: previously had `noindex, nofollow` set — this blocked
+    Google from indexing the homepage AND from following any link on it
+    (which is how most of the catalogue gets discovered). Removed.
+  - Home page: the long CMS "About Dazzle" content block existed in the
+    site-settings API (under the field `metaDescription` — a legacy
+    naming quirk; it's actually ~580KB of rich HTML, not meta-tag text)
+    but was never rendered anywhere on the page — only used, truncated, for
+    the invisible <meta name="description"> tag. It's now rendered as a
+    real visible content section near the bottom of the home page.
+  - Home page + site-wide: added LocalBusiness structured data (schema.org)
+    next to the existing Organization/WebSite schema, using
+    contactAddress/contactPhone/contactEmail from site-settings.
+
+    NOTE: `contactAddress` in site-settings currently holds only
+    "Dazzle, Bangladesh" — a free-text fallback, not a real street address.
+    Schema.org strongly prefers a structured address (street, area, city,
+    postal code) for LocalBusiness — if there's a real store address (the
+    physical showroom at Bashundhara City, for example), add it as a
+    proper address in site-settings and the frontend can upgrade this to a
+    full structured PostalAddress on request.
+
+
+Questions → ask the frontend developer who made these changes. Code
+references: src/lib/seo-config.ts (SITE_URL), src/lib/seo-content.ts
+(the /seo/* fetchers), src/lib/structured-data.ts (schema builders),
+src/app/(public)/page.tsx (home page).

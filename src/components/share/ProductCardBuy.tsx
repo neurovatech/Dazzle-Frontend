@@ -73,8 +73,6 @@ export default function ProductCardBuy({
   const [loadingCart, setLoadingCart] = useState(false);
   const [isTba, setIsTba] = useState(!inStock);
 
-  console.log(endOfLife, "endOfLifeendOfLifeendOfLife")
-
   // Wishlist toggle — used when showTbaFlag=true
   const handleWishlistToggle = () => {
     dispatch(

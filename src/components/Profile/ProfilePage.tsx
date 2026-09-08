@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 import { useState, useEffect } from "react";
 import { ArrowLeft, ChevronRight } from "lucide-react";
@@ -14,11 +15,22 @@ import ProfileOtp from "./ProfileOtp";
 
 const Profile: React.FC = () => {
   const [activeLabel, setActiveLabel] = useState<ActiveLabel>("Wishlist");
-  /** null = show side-nav menu, string = show that page (mobile only) */
   const [mobileView, setMobileView] = useState<ActiveLabel | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showOtp, setShowOtp] = useState<boolean>(false);
   const [darkMode, setDarkMode] = useState<boolean>(false);
+
+  // Read ?tab= from URL on mount — client-only, no Suspense needed
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get("tab");
+    const validTabs: ActiveLabel[] = ["Wishlist", "Orders", "Address", "Coupons", "Compare", "Change Password"];
+    if (tab && validTabs.includes(tab as ActiveLabel)) {
+      setActiveLabel(tab as ActiveLabel);
+      setMobileView(tab as ActiveLabel);
+    }
+  }, []);
+
 
   // Reset sub-views when tab changes
   useEffect(() => {

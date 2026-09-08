@@ -43,7 +43,6 @@ const LocationDetailPageCom: React.FC<Props> = ({ store }) => {
           { cache: "no-store" },
         );
 
-        console.log(res?.data, "res?.data")
         setReviews(Array.isArray(res?.data) ? res.data : []);
       } catch (err) {
         console.error("[LocationDetailPageCom] testimonials fetch failed:", err);

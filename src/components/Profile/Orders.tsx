@@ -62,6 +62,8 @@ function OrderRow({
     : order.productName || `${order.productCount} product${order.productCount !== 1 ? "s" : ""}`;
 
 
+    console.log(order, "orderorderorderorder")
+
   return (
     <div className="bg-white dark:bg-[#1c1a17] rounded-2xl border border-gray-100 dark:border-zinc-800 p-3 sm:p-4 flex flex-col gap-3">
       <div className="flex items-start gap-3">
