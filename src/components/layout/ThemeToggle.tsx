@@ -33,7 +33,12 @@ const MoonIcon = () => (
   </svg>
 );
 
-export default function ThemeToggle() {
+interface Props {
+  /** Overrides the default 54x54 sizing/shape — used to match a slot's own icon size. */
+  className?: string;
+}
+
+export default function ThemeToggle({ className }: Props) {
   const { theme, resolvedTheme, setTheme } = useTheme();
 
   const [mounted, setMounted] = useState(false);
@@ -67,7 +72,7 @@ export default function ThemeToggle() {
             : "Switch to dark theme"
           : "Toggle theme"
       }
-      className="w-13.5 h-13.5 rounded-xl bg-[#E9CCAE47] flex items-center justify-center transition-all duration-300"
+      className={`${className ?? "w-13.5 h-13.5"} rounded-xl bg-[#E9CCAE47] flex items-center justify-center transition-all duration-300`}
     >
       <div
         className={`transition-all duration-300 ${

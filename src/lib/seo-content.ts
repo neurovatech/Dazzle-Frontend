@@ -74,6 +74,35 @@ export function hasRichText(html?: string | null): boolean {
   );
 }
 
+/**
+ * Splits one CMS "SEO content" blob into its own logical sections, one per
+ * top-level `<h1>`/`<h2>` heading.
+ *
+ * Some of these CMS fields hold several different topics concatenated into
+ * a single blob rather than one subject per field — e.g. hseogl1 on
+ * site-settings is 160KB covering "Smartphone Shop", "Tablet and iPad
+ * Shop", and more, each under its own heading, one after another. Showing
+ * that whole thing as a single card is a wall of text; splitting on the
+ * headings recovers the per-topic cards the content actually has.
+ *
+ * Falls back to treating the whole blob as one section when it has no
+ * `<h1>`/`<h2>` at all, so this is safe to call on ordinary short content
+ * too — it just returns a single-element array unchanged.
+ */
+export function splitSeoSections(html?: string | null): { title: string; html: string }[] {
+  if (!hasRichText(html)) return [];
+  const parts = html!.split(/(?=<h[12][\s>])/i).filter((part) => hasRichText(part));
+  if (parts.length === 0) return [{ title: "", html: html! }];
+
+  return parts.map((section) => {
+    const headingMatch = section.match(/<h[12][^>]*>([\s\S]*?)<\/h[12]>/i);
+    const title = headingMatch
+      ? headingMatch[1].replace(/<[^>]+>/g, " ").replace(/&nbsp;|&#160;/gi, " ").replace(/\s+/g, " ").trim()
+      : "";
+    return { title, html: section };
+  });
+}
+
 /** Non-empty trimmed string, or undefined — for `apiValue || fallback` chains. */
 export function seoText(value?: string | null): string | undefined {
   const t = value?.trim();

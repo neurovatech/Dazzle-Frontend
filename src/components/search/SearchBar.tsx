@@ -17,6 +17,34 @@ export default function SearchBar() {
 
   const hasQuery = query.trim().length > 0;
 
+  // The dropdown's `top` used to come from CSS alone (`top: auto` under
+  // `position: fixed`, which falls back to the box's own "static position").
+  // That fallback is computed by walking the ancestor chain, and once the
+  // header became `position: sticky`, it stopped reflecting where the search
+  // bar is actually pinned on screen — the dropdown rendered wherever the
+  // search bar would sit in the DOCUMENT's un-scrolled flow instead. Measuring
+  // the wrapper's real bottom edge and setting `top` explicitly sidesteps that
+  // static-position ambiguity entirely; re-measuring on scroll/resize keeps it
+  // glued to the search bar even if the sticky header's own position shifts
+  // while the dropdown is open.
+  const [dropdownTop, setDropdownTop] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!isFocused) return;
+    const updateTop = () => {
+      if (wrapperRef.current) {
+        setDropdownTop(wrapperRef.current.getBoundingClientRect().bottom);
+      }
+    };
+    updateTop();
+    window.addEventListener("scroll", updateTop, { passive: true });
+    window.addEventListener("resize", updateTop);
+    return () => {
+      window.removeEventListener("scroll", updateTop);
+      window.removeEventListener("resize", updateTop);
+    };
+  }, [isFocused]);
+
   useEffect(() => {
     setIsFocused(false);
   }, [pathname]);
@@ -91,9 +119,8 @@ export default function SearchBar() {
       {/* ── Dropdown Panel ── */}
       <div
         className={`
-          fixed  left-2 md:-left-70 lg:-left-70 right-2 top-auto
-          sm:absolute  sm:right-auto sm:min-w-260
-          mt-2 sm:mt-0 sm:top-[calc(100%+8px)]
+          fixed left-2 md:-left-70 lg:-left-70 right-2
+          sm:right-auto sm:min-w-260
           bg-white dark:bg-[#2e2b28] rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-600
           max-h-[80vh] overflow-y-auto
           transition-all duration-300 ease-in-out z-999
@@ -103,6 +130,7 @@ export default function SearchBar() {
               : "opacity-0 -translate-y-2 pointer-events-none"
           }
         `}
+        style={{ top: dropdownTop != null ? dropdownTop + 8 : undefined }}
       >
         {!hasQuery && (
           <RecentSearches onSelectTerm={handleSelectTerm} onClose={handleClose} />

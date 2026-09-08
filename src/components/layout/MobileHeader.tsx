@@ -10,6 +10,7 @@ import {
   MobileMenuIcon,
   CloseIcon,
   Locationicon,
+  ChevronDownIcon,
 } from "@/icon";
 import ExplorePanel from "./ExplorePanel";
 
@@ -18,6 +19,7 @@ import { exploreCategories } from "./types";
 import type { ApiCategory } from "./Header";
 import { useAppSelector } from "@/store/hooks";
 import { useTheme } from "next-themes";
+import ThemeToggle from "./ThemeToggle";
 
 interface Props {
   categories?: ApiCategory[];
@@ -37,6 +39,45 @@ export default function MobileHeader({ categories }: Props) {
   const iconColor = resolvedTheme === "dark" ? "#fff" : "#222";
 
   const menuRef = useRef<HTMLDivElement>(null);
+
+  // ── Scroll detection: collapse to just the top row on scroll down, expand
+  // back to the full header (search + menu) on scroll up. Same pattern as
+  // MobileFooter's big/small toggle.
+  const [isCompact, setIsCompact] = useState(false);
+  const lastScrollY = useRef(0);
+  const ticking = useRef(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (ticking.current) return;
+      ticking.current = true;
+      requestAnimationFrame(() => {
+        const currentY = window.scrollY;
+        const diff = currentY - lastScrollY.current;
+
+        // Only move the baseline forward once we've actually acted on a
+        // scroll of at least the threshold — not on every frame. Momentum
+        // scrolling on phones delivers scroll events with tiny back-and-forth
+        // deltas (a few px each way) as it decelerates; comparing every frame
+        // to the frame right before it made isCompact flip on and off rapidly
+        // during that settling, which read as the header visibly shaking.
+        // Requiring a full 6px of NET movement since the last flip (rather
+        // than since the last frame) absorbs that jitter.
+        if (diff > 6 && currentY > 60) {
+          setIsCompact(true);
+          lastScrollY.current = currentY;
+        } else if (diff < -6) {
+          setIsCompact(false);
+          lastScrollY.current = currentY;
+        }
+
+        ticking.current = false;
+      });
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const cartItems = useAppSelector((state) => state.cart.items);
   const cartCount = cartItems.length;
@@ -79,7 +120,7 @@ export default function MobileHeader({ categories }: Props) {
   };
 
   return (
-    <div className="md:hidden lg:p-3 px-4" ref={menuRef}>
+    <div className="md:hidden lg:p-3 px-4 relative" ref={menuRef}>
       {/* Top row */}
       <div className="flex items-center justify-between lg:py-3.5 pb-3.5 pt-2">
         <Link href="/" className="shrink-0 mr-2">
@@ -94,6 +135,8 @@ export default function MobileHeader({ categories }: Props) {
         </Link>
 
         <div className="flex items-center gap-2">
+          <ThemeToggle className="w-10 h-10" />
+
           <Link
             href="/shop-location"
              aria-label="Shop location"
@@ -129,23 +172,38 @@ export default function MobileHeader({ categories }: Props) {
         </div>
       </div>
 
-      {/* Search + menu */}
-      <div className="flex pb-3 relative gap-2">
-        <SearchBar />
+      {/* Search + menu — hidden while the header is collapsed to its compact form */}
+      {!isCompact && (
+        <div className="flex pb-3 relative gap-2">
+          <SearchBar />
 
-        <button
-          onClick={() => setMobileMenuOpen((prev) => !prev)}
-          aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-  aria-expanded={mobileMenuOpen}
-          className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-gray-300 dark:bg-[#2e2b28]"
-        >
-          {mobileMenuOpen ? (
-            <CloseIcon color={iconColor} aria-hidden="true" />
-          ) : (
-            <MobileMenuIcon color={iconColor} aria-hidden="true" />
-          )}
-        </button>
-      </div>
+          <button
+            onClick={() => setMobileMenuOpen((prev) => !prev)}
+            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={mobileMenuOpen}
+            className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-gray-300 dark:bg-[#2e2b28]"
+          >
+            {mobileMenuOpen ? (
+              <CloseIcon color={iconColor} aria-hidden="true" />
+            ) : (
+              <MobileMenuIcon color={iconColor} aria-hidden="true" />
+            )}
+          </button>
+        </div>
+      )}
+
+      {/* Compact-mode expand toggle */}
+      {isCompact && (
+        <div className="flex justify-center pb-2">
+          <button
+            onClick={() => setIsCompact(false)}
+            aria-label="Expand header"
+            className="w-8 h-8 rounded-full bg-white/90 dark:bg-[#2e2b28] flex items-center justify-center text-[#222] dark:text-white shadow-md"
+          >
+            <ChevronDownIcon />
+          </button>
+        </div>
+      )}
 
       {/* Explore Panel */}
       <ExplorePanel

@@ -67,7 +67,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
     >
       <div className="bg-white p-2 sm:p-3 lg:p-4 pb-0! rounded-2xl sm:rounded-3xl relative">
         {/* Top Badges */}
-        <div className="flex justify-between items-start mb-2 sm:mb-3 h-5 sm:h-6 absolute top-2 sm:top-3 left-2 sm:left-3 right-2 sm:right-3 z-50">
+        <div className="flex justify-between items-start mb-2 sm:mb-3 h-5 sm:h-6 absolute top-2 sm:top-3 left-2 sm:left-3 right-2 sm:right-3 z-40">
           {/* Discount % — left */}
           {!endOfLife && discount > 0 ? (
             <span className="bg-[#ff7575] text-white text-[9px] sm:text-xs font-bold px-1.5 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-md">
@@ -114,7 +114,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
         </Link>
 
         {/* Action Row */}
-        <div className="flex items-center justify-between relative z-50">
+        <div className="flex items-center justify-between relative z-40">
           {isBestDeal === true && !endOfLife && (
             <button className="ml-auto bg-[#087400] text-white text-[8px] sm:text-xs font-bold px-1 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-md lg:w-[50%]! w-[80%] flex justify-center items-center gap-1">
               <svg
