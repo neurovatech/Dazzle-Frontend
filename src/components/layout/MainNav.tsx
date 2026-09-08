@@ -53,7 +53,7 @@ export default function MainNav() {
 
   return (
     <div className="border-b border-white/5">
-      <div className="max-w-350 mx-auto px-4">
+      <div className="max-w-350 mx-auto lg:px-8 px-4">
         <div className="hidden md:flex items-center gap-6 py-4">
           <Link href="/" className="shrink-0 mr-2">
             <div className="text-3xl flex font-black text-white tracking-tighter leading-none">

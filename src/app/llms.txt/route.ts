@@ -41,12 +41,11 @@ Dazzle is an authorized retailer of Apple, Samsung, Sony, Xiaomi, OnePlus, Motor
 
 ## Sitemaps
 
-- [Sitemap Index](${SITE_URL}/sitemap.xml)
+- [Static Pages](${SITE_URL}/sitemap.xml)
 - [Products](${SITE_URL}/product/sitemap.xml)
 - [Categories](${SITE_URL}/category/sitemap.xml)
 - [Brands](${SITE_URL}/brand/sitemap.xml)
 - [Blog & Content](${SITE_URL}/blog/sitemap.xml)
-- [Static Pages](${SITE_URL}/static/sitemap.xml)
 
 ## Policies
 
