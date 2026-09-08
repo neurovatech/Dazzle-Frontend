@@ -335,6 +335,11 @@ export const api = {
       body: body instanceof FormData ? body : JSON.stringify(body),
     }),
 
-  delete: <T = unknown>(endpoint: string, options?: Omit<FetchOptions, "method" | "body">) =>
-    apiFetch<T>(endpoint, { ...options, method: "DELETE" }),
+  /** `body` is optional — most DELETEs identify the resource via the URL, but some (e.g. wishlist-remove) require a JSON body instead. */
+  delete: <T = unknown>(endpoint: string, body?: unknown, options?: Omit<FetchOptions, "method" | "body">) =>
+    apiFetch<T>(endpoint, {
+      ...options,
+      method: "DELETE",
+      ...(body !== undefined ? { body: body instanceof FormData ? body : JSON.stringify(body) } : {}),
+    }),
 };

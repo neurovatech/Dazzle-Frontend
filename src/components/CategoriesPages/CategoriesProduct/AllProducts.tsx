@@ -376,6 +376,7 @@ function AllProducts({
                 endOfLife={product.endOfLife ?? false}
                 allowPreOrder={product.allowPreOrder ?? false}
                 recognitionBadge={product.recognitionBadge ?? ""}
+                priority={i < 4}
               />
             );
           })}

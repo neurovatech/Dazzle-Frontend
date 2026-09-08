@@ -24,6 +24,8 @@ export interface ProductCardProps {
   endOfLife?: boolean;
   allowPreOrder?: boolean;
   recognitionBadge?: string;
+  /** Skips lazy-loading for this card's image — pass true for the first row or two of a grid so above-the-fold product photos aren't left waiting on the browser's lazy-load heuristic. */
+  priority?: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   allProduct?: any; // Add this line to accept the allProduct prop
 }
@@ -48,6 +50,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   endOfLife = false,
   allowPreOrder = false,
   recognitionBadge,
+  priority = false,
   allProduct,
 }) => {
   const itemId = productUuid || uuid || "";
@@ -104,6 +107,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
               <ProductCardImage
                 src={image || ProductImage}
                 alt={title || "Product image"}
+                priority={priority}
               />
             </div>
           </div>

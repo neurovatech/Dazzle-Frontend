@@ -74,6 +74,12 @@ export default function ClipToCartCard({
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
             className="object-cover transition-transform duration-300 group-hover:scale-105"
+            // Swiper repositions slides via transform after its own mount;
+            // until then the browser's native `loading="lazy"` distance check
+            // can permanently mark an actually-visible slide's image as
+            // offscreen and never load it. Skip lazy-loading for the slides
+            // visible at the largest breakpoint (slidesPerView: 5) instead.
+            priority={index < 5}
           />
 
           {hasVideo && (

@@ -92,6 +92,14 @@ function ProductList({
               inStock={product.inStock}
               image={product.image}
               allProduct={product}
+              // Swiper positions slides via a transform applied after its own
+              // mount — until then the browser's native `loading="lazy"`
+              // distance check sees each slide at its pre-transform layout
+              // position, which can permanently mark an actually-visible
+              // slide's image as "far offscreen" and never load it. Skipping
+              // lazy-loading for the initially-visible slides sidesteps that
+              // instead of depending on the browser's heuristic being right.
+              priority={i < 4}
             />
           </SwiperSlide>
         ))}

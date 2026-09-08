@@ -1,8 +1,10 @@
 "use client";
 
-import { useAppSelector, useAppDispatch } from "@/store/hooks";
-import { toggleWishlist } from "@/store/slices/wishlistSlice";
-import { trackAddToWishlist } from "@/lib/analytics/pixelEvents";
+import { useState } from "react";
+import { useAppSelector } from "@/store/hooks";
+import { useAddToWishlist, useRemoveFromWishlist } from "@/hooks/useWishlist";
+import { api } from "@/lib/api";
+import type { DefaultVariantResponse } from "./ProductCardBuy";
 
 /**
  * Client island for the wishlist toggle only.
@@ -15,14 +17,7 @@ import { trackAddToWishlist } from "@/lib/analytics/pixelEvents";
 export default function ProductCardWishlist({
   productUuid,
   title,
-  slug,
-  image,
   price,
-  originalPrice,
-  discount,
-  badge,
-  inStock,
-  isBestDeal,
   disabled,
 }: {
   productUuid: string;
@@ -37,37 +32,50 @@ export default function ProductCardWishlist({
   isBestDeal: boolean;
   disabled: boolean;
 }) {
-  const dispatch = useAppDispatch();
   const wishlistItems = useAppSelector((state) => state.wishlist.items);
   const isWishlisted = wishlistItems.some((i) => i.productUuid === productUuid);
+  const { addToWishlist, isAdding } = useAddToWishlist();
+  const { removeFromWishlist, isRemoving } = useRemoveFromWishlist();
+  const [isResolvingVariant, setIsResolvingVariant] = useState(false);
+  const isBusy = isResolvingVariant || isAdding(productUuid) || isRemoving(productUuid);
 
-  const handleWishlist = () => {
-    if (!isWishlisted) {
-      trackAddToWishlist({ id: productUuid, name: title, price });
+  /**
+   * This card has no variant selector, so — same as its "Add to Cart"
+   * sibling (ProductCardBuy) — the variant the wishlist-add API requires
+   * is resolved via get-default-variant right before the call, rather than
+   * being known up front.
+   */
+  const handleWishlist = async () => {
+    if (isWishlisted) {
+      const wishListUuid = wishlistItems.find((i) => i.productUuid === productUuid)?.wishListUuid;
+      removeFromWishlist({ productUuid, wishListUuid });
+      return;
     }
-    dispatch(
-      toggleWishlist({
-        productUuid,
-        productName: title,
-        productSlug: slug,
-        image,
-        price,
-        originalPrice,
-        discount,
-        badge,
-        inStock,
-        isBestDeal,
-        addedAt: new Date().toISOString(),
-      }),
-    );
+
+    setIsResolvingVariant(true);
+    let variantUuid = productUuid;
+    try {
+      const res = await api.get<DefaultVariantResponse>(
+        `/get-default-variant/${productUuid.trim()}?priceSort=1&userDefine=0`,
+      );
+      if (res?.data?.variantUUID) variantUuid = res.data.variantUUID;
+    } catch (err) {
+      console.error("[ProductCardWishlist] get-default-variant error:", err);
+      // Resolution failed — fall back to the raw productUuid, same recovery
+      // ProductCardBuy's add-to-cart flow uses.
+    } finally {
+      setIsResolvingVariant(false);
+    }
+
+    addToWishlist({ productUuid, variantUuid, name: title, price });
   };
 
   return (
     <button
       onClick={handleWishlist}
-      disabled={disabled}
+      disabled={disabled || isBusy}
       className={`w-8 h-8 mt-1 rounded-full ml-[25px] border flex items-center justify-center transition-all duration-300 ${
-        disabled
+        disabled || isBusy
           ? "bg-gray-100 border-gray-200 text-gray-300 cursor-not-allowed opacity-60"
           : `hover:scale-110 active:scale-95 ${
               isWishlisted

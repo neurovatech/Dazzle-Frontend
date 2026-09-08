@@ -13,7 +13,7 @@ import ProductVariants from "./ProductVariants";
 import NoImg from "@/images/no_images.png";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { addToCart } from "@/store/slices/cartSlice";
-import { toggleWishlist } from "@/store/slices/wishlistSlice";
+import { useAddToWishlist, useRemoveFromWishlist } from "@/hooks/useWishlist";
 import { trackAddToCart } from "@/lib/analytics/pixelEvents";
 import { api } from "@/lib/api";
 import toast from "react-hot-toast";
@@ -282,27 +282,34 @@ function ProductQuicView({
   const showTbaFlag =
     showTbaFlagProp ?? (isTbaProp !== undefined ? isTbaProp : (displayIsTba || !displayInStock));
 
+  // The real product uuid — NOT displayId, which prefers the selected
+  // variant's id when one is selected. Sending a variant id where the API
+  // expects productUuid would 404 ("Product not found").
+  const wishlistProductUuid = product?.productUuid || productUuid || "";
+
   const wishlistItems = useAppSelector((state) => state.wishlist.items);
   const isWishlisted = wishlistItems.some(
-    (i) => i.productUuid === (displayId || productUuid || ""),
+    (i) => i.productUuid === wishlistProductUuid,
   );
 
+  const { addToWishlist, isAdding } = useAddToWishlist();
+  const { removeFromWishlist, isRemoving } = useRemoveFromWishlist();
+  const isAddingWishlist = isAdding(wishlistProductUuid) || isRemoving(wishlistProductUuid);
+
   const handleWishlistToggle = () => {
-    dispatch(
-      toggleWishlist({
-        productUuid: displayId || productUuid || "",
-        productName: displayTitle,
-        productSlug: displaySlug,
-        image: currentImage,
-        price: displayPrice,
-        originalPrice: displayOriginal,
-        discount: discount,
-        badge: "",
-        inStock: displayInStock,
-        isBestDeal: false,
-        addedAt: new Date().toISOString(),
-      }),
-    );
+    if (isWishlisted) {
+      const wishListUuid = wishlistItems.find((i) => i.productUuid === wishlistProductUuid)?.wishListUuid;
+      removeFromWishlist({ productUuid: wishlistProductUuid, wishListUuid });
+      return;
+    }
+    const variantUuid =
+      selectedVariant?.variantUuid || selectedVariant?.id || wishlistProductUuid;
+    addToWishlist({
+      productUuid: wishlistProductUuid,
+      variantUuid,
+      name: displayTitle,
+      price: displayPrice,
+    });
   };
 
   const discount =
@@ -811,7 +818,8 @@ function ProductQuicView({
             <button
               type="button"
               onClick={handleWishlistToggle}
-              className={`w-full flex items-center justify-center gap-2 h-11 px-4 rounded-xl text-sm font-semibold border transition-all duration-300 active:scale-95 ${
+              disabled={isAddingWishlist}
+              className={`w-full flex items-center justify-center gap-2 h-11 px-4 rounded-xl text-sm font-semibold border transition-all duration-300 active:scale-95 disabled:opacity-60 disabled:cursor-wait ${
                 isWishlisted
                   ? "bg-red-50 border-red-300 text-red-500"
                   : "bg-white border-orange-200 text-[#6D3F0E] hover:bg-orange-50 hover:border-orange-400 hover:shadow-md"

@@ -5,7 +5,7 @@ import React, { useState } from "react";
 import { CartIcon } from "@/icon";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { addToCart } from "@/store/slices/cartSlice";
-import { toggleWishlist as toggleWishlistAction } from "@/store/slices/wishlistSlice";
+import { useAddToWishlist, useRemoveFromWishlist } from "@/hooks/useWishlist";
 import { trackAddToCart } from "@/lib/analytics/pixelEvents";
 import ProductQuicView from "@/components/ProductDetails/ProductQuicView";
 import toast from "react-hot-toast";
@@ -72,24 +72,35 @@ export default function ProductCardBuy({
 
   const [loadingCart, setLoadingCart] = useState(false);
   const [isTba, setIsTba] = useState(!inStock);
+  const [isResolvingWishlistVariant, setIsResolvingWishlistVariant] = useState(false);
+  const { addToWishlist, isAdding } = useAddToWishlist();
+  const { removeFromWishlist, isRemoving } = useRemoveFromWishlist();
+  const isAddingWishlist = isResolvingWishlistVariant || isAdding(itemId) || isRemoving(itemId);
 
-  // Wishlist toggle — used when showTbaFlag=true
-  const handleWishlistToggle = () => {
-    dispatch(
-      toggleWishlistAction({
-        productUuid: itemId,
-        productName: title,
-        productSlug: slug,
-        image,
-        price,
-        originalPrice,
-        discount: 0,
-        badge: "",
-        inStock,
-        isBestDeal: false,
-        addedAt: new Date().toISOString(),
-      }),
-    );
+  // Wishlist toggle — used when showTbaFlag=true. No variant selector on this
+  // card, so — same as handleAddToCart below — get-default-variant resolves
+  // which variant the wishlist-add API call is actually for.
+  const handleWishlistToggle = async () => {
+    if (isWishlisted) {
+      const wishListUuid = wishlistItems.find((i) => i.productUuid === itemId)?.wishListUuid;
+      removeFromWishlist({ productUuid: itemId, wishListUuid });
+      return;
+    }
+
+    setIsResolvingWishlistVariant(true);
+    let variantUUID = itemId;
+    try {
+      const res = await api.get<DefaultVariantResponse>(
+        `/get-default-variant/${itemId.trim()}?priceSort=1&userDefine=0`,
+      );
+      if (res?.data?.variantUUID) variantUUID = res.data.variantUUID;
+    } catch (err) {
+      console.error("[GlobalProductCard] get-default-variant error (wishlist):", err);
+    } finally {
+      setIsResolvingWishlistVariant(false);
+    }
+
+    addToWishlist({ productUuid: itemId, variantUuid: variantUUID, name: title, price });
   };
 
   // Cart-এ product আছে কিনা check — persistent "Added" দেখাবে
@@ -263,7 +274,8 @@ export default function ProductCardBuy({
           {allowPreOrder ? (
             <button
               onClick={handleWishlistToggle}
-              className="flex-1 flex items-center justify-center gap-2 h-11 px-1 rounded-[13px] text-[13px] sm:text-[14px] font-semibold border transition-all duration-300 active:scale-95 bg-[#6D3F0E] border-[#6D3F0E] text-white hover:bg-[#5a3300] hover:shadow-md"
+              disabled={isAddingWishlist}
+              className="flex-1 flex items-center justify-center gap-2 h-11 px-1 rounded-[13px] text-[13px] sm:text-[14px] font-semibold border transition-all duration-300 active:scale-95 bg-[#6D3F0E] border-[#6D3F0E] text-white hover:bg-[#5a3300] hover:shadow-md disabled:opacity-60 disabled:cursor-wait"
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-4 h-4 shrink-0">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
@@ -273,7 +285,8 @@ export default function ProductCardBuy({
           ) : (
             <button
               onClick={handleWishlistToggle}
-              className={`flex-1 flex items-center justify-center gap-2 h-11 px-1 rounded-[13px] text-[13px] sm:text-[14px] leading-none font-semibold border transition-all duration-300 active:scale-95 ${
+              disabled={isAddingWishlist}
+              className={`flex-1 flex items-center justify-center gap-2 h-11 px-1 rounded-[13px] text-[13px] sm:text-[14px] leading-none font-semibold border transition-all duration-300 active:scale-95 disabled:opacity-60 disabled:cursor-wait ${
                 isWishlisted
                   ? "bg-red-50 border-red-300 text-red-500"
                   : "bg-white border-orange-200 text-[#6D3F0E] hover:bg-orange-50 hover:border-orange-400 hover:shadow-md"

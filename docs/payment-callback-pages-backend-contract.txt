@@ -1,0 +1,87 @@
+DAZZLE — PAYMENT GATEWAY RETURN PAGES: URL/QUERY CONTRACT
+============================================================
+For: Backend developer
+From: Frontend
+Context: Four frontend pages now exist for bKash / SSLCommerz to redirect
+         the customer's browser back to after they pay (or cancel/fail):
+
+    https://<site>/bkash-verify
+    https://<site>/sslcommerz-verify/payment-success
+    https://<site>/sslcommerz-verify/payment-error
+    https://<site>/sslcommerz-verify/payment-cancel
+
+These pages are built and live on the frontend already. This document is
+what the backend needs to point the gateways' callback URLs at, and what
+query parameters to attach when redirecting the browser to them, so the
+pages show the right thing.
+
+
+1. WHAT EACH PAGE READS FROM THE URL
+----------------------------------------------------------------
+All four pages look for an order reference in the query string, checked in
+this order: `orderNo`, then `order`, then (SSLCommerz pages only) `tran_id`.
+Whichever is present is used to call the EXISTING, already-working endpoint
+
+    GET /order-tracking/{orderNo}
+
+to pull the real order status/amount and show it on the page. This was a
+deliberate choice — rather than trusting whatever fields a payment gateway
+puts on its own redirect, the page asks our own order record what actually
+happened. So the one thing that matters most here is:
+
+    ➤ Whichever URL you redirect the browser to, include the order number
+      as `?orderNo=DZL-10001` (matching whatever /order-tracking already
+      expects — same value used in the "Track Order" feature).
+
+If `orderNo` is missing, the page still renders (using only the outcome the
+URL/status already implies) — it just can't show the amount/order-number
+card, and can't fire the Purchase pixel event (see section 3).
+
+
+2. PER-GATEWAY OUTCOME SIGNAL
+----------------------------------------------------------------
+bKash (single callback URL, three possible outcomes):
+    /bkash-verify?status=success&orderNo=DZL-10001
+    /bkash-verify?status=failure&orderNo=DZL-10001
+    /bkash-verify?status=cancel&orderNo=DZL-10001
+
+  This assumes bKash's own tokenized-checkout `status` value (success /
+  failure / cancel) is being forwarded as-is, or normalized to one of these
+  three. IMPORTANT — the frontend deliberately fails closed: any `status`
+  value other than exactly "success" (case-insensitive) renders the FAILURE
+  screen, not success. If bKash's real value differs from these three
+  strings, tell the frontend team the actual value(s) so the check can be
+  updated — do not rely on the frontend guessing right.
+
+SSLCommerz (three separate callback URLs — the URL itself is the outcome,
+no status query param needed):
+    /sslcommerz-verify/payment-success?orderNo=DZL-10001
+    /sslcommerz-verify/payment-error?orderNo=DZL-10001
+    /sslcommerz-verify/payment-cancel?orderNo=DZL-10001
+
+  Register these three as SSLCommerz's success_url / fail_url / cancel_url
+  respectively when initiating the session.
+
+
+3. WHY orderNo MATTERS BEYOND JUST DISPLAY
+----------------------------------------------------------------
+The success pages (both bKash's status=success and SSLCommerz's
+payment-success) fire a client-side Facebook Pixel "Purchase" event using
+the amount /order-tracking reports for that orderNo. Without orderNo on the
+redirect, that event can't fire at all for gateway-paid orders — meaning
+those purchases would be invisible to Facebook Ads reporting entirely
+(cash-on-delivery orders don't have this problem; they fire Purchase
+immediately in the checkout flow itself, see
+docs/tracking-backend-requirements.txt from the earlier tracking work).
+
+This also lines up with that same document's ask: fire the equivalent
+Purchase event server-side (Conversions API) from wherever your code
+actually confirms payment with bKash/SSLCommerz — using the SAME event_id
+convention described there — so the two can deduplicate instead of
+double-counting.
+
+
+Frontend implementation for reference:
+src/components/PaymentResult/PaymentResultView.tsx (shared UI + the
+/order-tracking fetch), src/app/bkash-verify/page.tsx, and
+src/app/sslcommerz-verify/payment-*/page.tsx.

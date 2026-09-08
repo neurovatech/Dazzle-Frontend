@@ -16,6 +16,7 @@ import FacebookPixel from "@/components/analytics/FacebookPixel";
 import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
 import TikTokPixel from "@/components/analytics/TikTokPixel";
 import RouteChangeTracker from "@/components/analytics/RouteChangeTracker";
+import WishlistSync from "@/components/WishlistSync";
 import { getSiteSettings, stripHtml, stripHeavyFields } from "@/lib/getSiteSettings";
 import { getQueryClient } from "@/lib/query-client";
 import type { SiteSettingsData } from "@/store/slices/siteSettingsSlice";
@@ -156,6 +157,7 @@ export default async function RootLayout({
         <ThemeProvider>
           <ReduxProvider>
             <QueryProvider state={dehydratedState}>
+              <WishlistSync />
               <Toaster
                 position="top-center"
                 reverseOrder={false}

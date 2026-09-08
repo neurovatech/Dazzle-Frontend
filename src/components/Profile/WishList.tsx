@@ -1,13 +1,33 @@
 "use client";
 
+import { useState } from "react";
 import { Heart, Trash2 } from "lucide-react";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
-import { removeFromWishlist, clearWishlist } from "@/store/slices/wishlistSlice";
+import { clearWishlist } from "@/store/slices/wishlistSlice";
+import { useRemoveFromWishlist } from "@/hooks/useWishlist";
 import ProductCard from "@/components/share/GlobalProductCard";
 
 const WishList = () => {
   const dispatch = useAppDispatch();
   const items    = useAppSelector((state) => state.wishlist.items);
+  const { removeFromWishlist, isRemoving } = useRemoveFromWishlist();
+  const [isClearingAll, setIsClearingAll] = useState(false);
+
+  // No bulk-delete endpoint exists yet — clears every item one at a time
+  // (skipping ones with no wishListUuid to delete by; those just drop out of
+  // local state) rather than only wiping the list locally and leaving them
+  // saved server-side.
+  const handleClearAll = async () => {
+    setIsClearingAll(true);
+    try {
+      await Promise.allSettled(
+        items.map((item) => removeFromWishlist({ productUuid: item.productUuid, wishListUuid: item.wishListUuid })),
+      );
+      dispatch(clearWishlist());
+    } finally {
+      setIsClearingAll(false);
+    }
+  };
 
   if (items.length === 0) {
     return (
@@ -33,8 +53,9 @@ const WishList = () => {
           {items.length} item{items.length !== 1 ? "s" : ""} saved
         </p>
         <button
-          onClick={() => dispatch(clearWishlist())}
-          className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-600 dark:text-red-400 transition-colors"
+          onClick={handleClearAll}
+          disabled={isClearingAll}
+          className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-600 dark:text-red-400 transition-colors disabled:opacity-60 disabled:cursor-wait"
         >
           <Trash2 size={13} />
           Clear all
@@ -59,8 +80,9 @@ const WishList = () => {
             />
             {/* Remove button */}
             <button
-              onClick={() => dispatch(removeFromWishlist(item.productUuid))}
-              className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-50 dark:bg-[#2e2b28] border border-red-200 dark:border-red-500/30 dark:text-white flex items-center justify-center text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors z-10"
+              onClick={() => removeFromWishlist({ productUuid: item.productUuid, wishListUuid: item.wishListUuid })}
+              disabled={isRemoving(item.productUuid) || isClearingAll}
+              className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-50 dark:bg-[#2e2b28] border border-red-200 dark:border-red-500/30 dark:text-white flex items-center justify-center text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors z-10 disabled:opacity-60 disabled:cursor-wait"
               aria-label="Remove from wishlist"
             >
               <Trash2 size={11} />

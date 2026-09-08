@@ -52,9 +52,7 @@ export default function ShopSelectorButton({
       <button
         onClick={onClick}
         aria-label="Open shop selector"
-        className="w-14 h-18 bg-[#1a1a1a] rounded-tl-full rounded-bl-full
-                   flex items-center justify-center shadow-2xl
-                   hover:bg-[#2a2a2a] transition-colors duration-200 active:scale-95"
+        className="w-14 h-18 bg-[#1a1a1a] rounded-tl-full rounded-bl-full flex items-center justify-center shadow-2xl hover:bg-[#2a2a2a] transition-colors duration-200 active:scale-95"
       >
         <ShopIcon />
       </button>

@@ -4,7 +4,7 @@ import { useState } from "react";
 import QuantitySelector from "./QuantitySelector";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { addToCart } from "@/store/slices/cartSlice";
-import { toggleWishlist } from "@/store/slices/wishlistSlice";
+import { useAddToWishlist, useRemoveFromWishlist } from "@/hooks/useWishlist";
 import { trackAddToCart } from "@/lib/analytics/pixelEvents";
 import toast from "react-hot-toast";
 import type { CareOption } from "./DazzleCare";
@@ -108,22 +108,22 @@ export default function StickyPurchaseBar({
   const [loadingBuyNow, setLoadingBuyNow] = useState(false);
 
   // ── Wishlist toggle — used when isTba=true ────────────────────
+  const { addToWishlist, isAdding } = useAddToWishlist();
+  const { removeFromWishlist, isRemoving } = useRemoveFromWishlist();
+  const isAddingWishlist = isAdding(productId || "") || isRemoving(productId || "");
+
   const handleWishlistToggle = () => {
-    dispatch(
-      toggleWishlist({
-        productUuid:   productId || "",
-        productName:   productName || "",
-        productSlug:   productSlug || "",
-        image:         productImage || "",
-        price:         productPrice ?? 0,
-        originalPrice: productOriginalPrice ?? 0,
-        discount:      0,
-        badge:         "",
-        inStock:       false,
-        isBestDeal:    false,
-        addedAt:       new Date().toISOString(),
-      }),
-    );
+    if (isWishlisted) {
+      const wishListUuid = wishlistItems.find((i) => i.productUuid === productId)?.wishListUuid;
+      removeFromWishlist({ productUuid: productId || "", wishListUuid });
+      return;
+    }
+    addToWishlist({
+      productUuid: productId || "",
+      variantUuid: variantUuid || productId || "",
+      name: productName || "",
+      price: productPrice ?? 0,
+    });
   };
   const [showLoginModal, setShowLoginModal] = useState(false);
 
@@ -348,7 +348,8 @@ export default function StickyPurchaseBar({
                 /* TBA — Add to Wishlist */
                 <button
                   onClick={handleWishlistToggle}
-                  className={`shrink-0 md:px-6 px-4 sm:px-8 md:py-3 py-3 text-sm sm:text-base font-semibold rounded-full transition-all duration-200 whitespace-nowrap shadow-sm flex items-center gap-2 ${
+                  disabled={isAddingWishlist}
+                  className={`shrink-0 md:px-6 px-4 sm:px-8 md:py-3 py-3 text-sm sm:text-base font-semibold rounded-full transition-all duration-200 whitespace-nowrap shadow-sm flex items-center gap-2 disabled:opacity-60 disabled:cursor-wait ${
                     isWishlisted
                       ? "bg-red-500 text-white"
                       : "bg-[#E9CCAE] hover:bg-[#D4B89A] text-black"

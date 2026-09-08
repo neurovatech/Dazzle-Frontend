@@ -87,6 +87,11 @@ function TrendingNow({
               inStock={product.inStock}
               image={product.image}
               allProduct={product}
+              // See ProductList.tsx's ProductCard for why: Swiper repositions
+              // slides via transform after mount, which can leave the browser
+              // thinking an actually-visible slide's image is offscreen and
+              // never load it under native `loading="lazy"`.
+              priority={i < 4}
             />
           </SwiperSlide>
         ))}

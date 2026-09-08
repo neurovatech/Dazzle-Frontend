@@ -102,7 +102,7 @@ export async function generateMetadata({
   return {
     title:
       cmsTitle ||
-      `${subCategoryName} - ${categoryName}${pageLabel} - Buy Online at Best Price in Bangladesh`,
+      `${subCategoryName} - ${categoryName}${pageLabel}`,
     description:
       cmsDescription ||
       `Shop the best selection of ${subCategoryName} in our ${categoryName} category at Dazzle. Best prices, official warranty, and fast delivery across Bangladesh.${currentPage > 1 ? ` Viewing page ${currentPage}.` : ""}`,

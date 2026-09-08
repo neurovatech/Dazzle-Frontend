@@ -27,6 +27,8 @@ export const NOINDEX_PATHS = [
   "/reset-password-token",
   "/newsletter-unsubscribe",
   "/product-compare",
+  "/bkash-verify",
+  "/sslcommerz-verify",
 ] as const;
 
 /** Metadata fragment for pages that must not be indexed. */

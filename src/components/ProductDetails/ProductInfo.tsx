@@ -22,11 +22,8 @@ import QuantitySelector from "./QuantitySelector";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { addToCart } from "@/store/slices/cartSlice";
 import toast from "react-hot-toast";
-import { toggleWishlist } from "@/store/slices/wishlistSlice";
-import {
-  trackAddToCart,
-  trackAddToWishlist,
-} from "@/lib/analytics/pixelEvents";
+import { useAddToWishlist, useRemoveFromWishlist } from "@/hooks/useWishlist";
+import { trackAddToCart } from "@/lib/analytics/pixelEvents";
 import type { CareOption } from "./DazzleCare";
 type StockStatus = "in_stock" | "overselling" | "pre_order" | "eol";
 
@@ -206,30 +203,24 @@ export default function ProductInfo({
     }, 1500);
   };
 
+  const { addToWishlist, isAdding } = useAddToWishlist();
+  const { removeFromWishlist, isRemoving } = useRemoveFromWishlist();
+  const isAddingWishlist = isAdding(productId) || isRemoving(productId);
+
   const handleWishlist = () => {
-    if (!isWishlisted) {
-      trackAddToWishlist({
-        id: productId,
-        name: title || "",
-        price: alldata?.discountedPrice || 0,
-      });
+    if (isWishlisted) {
+      const wishListUuid = wishlistItems.find((i) => i.productUuid === productId)?.wishListUuid;
+      removeFromWishlist({ productUuid: productId, wishListUuid });
+      return;
     }
-    dispatch(
-      toggleWishlist({
-        productUuid: productId,
-        productName: title || "",
-        productSlug: alldata?.productSlug || "",
-        image:
-          alldata?.thumbnailImg || alldata?.thumbnail || alldata?.image || "",
-        price: alldata?.discountedPrice || 0,
-        originalPrice: alldata?.regularPrice || 0,
-        discount: 0,
-        badge: "",
-        inStock,
-        isBestDeal: false,
-        addedAt: new Date().toISOString(),
-      }),
-    );
+    const variantUuid =
+      selectedVariant?.variantUuid || selectedVariant?.id || productId;
+    addToWishlist({
+      productUuid: productId,
+      variantUuid,
+      name: title || "",
+      price: alldata?.discountedPrice || 0,
+    });
   };
 
   return (
@@ -449,7 +440,8 @@ export default function ProductInfo({
         <div className="flex gap-4">
           <button
             onClick={handleWishlist}
-            className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full border flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 ${
+            disabled={isAddingWishlist}
+            className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full border flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 disabled:opacity-60 disabled:cursor-wait ${
               isWishlisted
                 ? "bg-red-50 border-red-300"
                 : "bg-white border-gray-200 hover:border-red-300"

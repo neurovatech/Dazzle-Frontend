@@ -52,7 +52,7 @@ const siteSettingsPersistConfig = {
 const wishlistPersistConfig = {
   key: "dazzle_wishlist",
   storage,
-  whitelist: ["items"],
+  whitelist: ["items", "wishListUuidByProduct"],
 };
 
 // cart — localStorage-এ persist থাকবে (page reload-এও cart থাকবে)

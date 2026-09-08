@@ -215,6 +215,12 @@ export default function ShopBrand({ brands }: Props) {
                       inStock={!product.isTba}
                       isTba={product.isTba}
                       image={product.thumbnails?.mediaFileUrl ?? ""}
+                      // See ProductList.tsx's ProductCard for why: Swiper
+                      // repositions slides via transform after mount, which
+                      // can leave the browser thinking an actually-visible
+                      // slide's image is offscreen and never load it under
+                      // native `loading="lazy"`.
+                      priority={idx < 5}
                     />
                   </SwiperSlide>
                 ))}

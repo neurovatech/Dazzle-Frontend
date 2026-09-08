@@ -97,6 +97,13 @@ function FlashSale({
               inStock={product.inStock}
               image={product.image}
               allProduct={product}
+              // Swiper repositions slides via transform after its own mount;
+              // until then the browser's native `loading="lazy"` distance
+              // check can permanently mark an actually-visible slide's image
+              // as offscreen and never load it. Skip lazy-loading for the
+              // slides visible at the largest breakpoint (slidesPerView: 5)
+              // instead of trusting that heuristic.
+              priority={i < 5}
             />
           </SwiperSlide>
         ))}
