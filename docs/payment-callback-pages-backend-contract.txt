@@ -81,7 +81,46 @@ convention described there — so the two can deduplicate instead of
 double-counting.
 
 
+4. ⚠️ REAL bKash REDIRECT OBSERVED IN PRODUCTION — PLEASE FIX
+----------------------------------------------------------------
+The actual URL bKash/the backend redirected a real customer to on staging:
+
+    /bkash-verify229e9097-d048-444e-8c22-436a8d57dd91?paymentID=TR0011Pvh0idt1788867580007&status=cancel&signature=tJqldxcKUp&apiVersion=1.2.0-beta/
+
+Two problems with this, compared to section 2's contract:
+
+  a) The order reference (`229e9097-d048-444e-8c22-436a8d57dd91`) is
+     concatenated directly onto "bkash-verify" with NO separator at all —
+     not `/bkash-verify/229e9097...` and not `?orderNo=229e9097...`, just
+     glued straight onto the path. That is not a URL shape any router
+     (ours or anyone else's) can parse as "page + order id" on its own.
+
+  b) The whole URL ends with a stray trailing `/` after `apiVersion=1.2.0-beta`
+     — i.e. the `/` landed INSIDE the last query value instead of being
+     absent or placed before the `?`.
+
+  The frontend has added a temporary workaround (Next.js middleware that
+  detects "/bkash-verify" immediately followed by more characters and
+  rewrites it internally to `/bkash-verify?orderNo=<that value>` before
+  routing happens) so this specific shape does not 404 — but this is a
+  patch for what's shipping today, not the intended contract. Please fix
+  the redirect to actually send `/bkash-verify?status=...&orderNo=...` as
+  described in section 2, with a real `&` or `?` before the order
+  reference, and no stray trailing slash after the last value.
+
+  Also — the value in that URL is a raw UUID (`229e9097-...`), not the
+  human order number format (`DZL-10001`) that `/order-tracking/{orderNo}`
+  expects elsewhere in this app (e.g. the "Track Order" feature). Please
+  confirm: does `/order-tracking/{orderNo}` also accept this UUID as a
+  valid lookup key? If not, send the actual `DZL-XXXXX` order number in
+  this redirect instead — otherwise the payment-result page can show the
+  right success/fail message but never the order/amount card for bKash
+  payments, and the Purchase pixel (section 3) won't have a real amount to
+  report either.
+
+
 Frontend implementation for reference:
 src/components/PaymentResult/PaymentResultView.tsx (shared UI + the
-/order-tracking fetch), src/app/bkash-verify/page.tsx, and
-src/app/sslcommerz-verify/payment-*/page.tsx.
+/order-tracking fetch), src/app/bkash-verify/page.tsx,
+src/app/sslcommerz-verify/payment-*/page.tsx, and src/middleware.ts (the
+temporary rewrite for the malformed URL in section 4).

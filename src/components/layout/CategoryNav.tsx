@@ -52,7 +52,7 @@ export default function CategoryNav({ categories, subCategories, explorAllData }
 
   return (
     <div ref={navRef} className="relative w-full hidden lg:flex">
-      <div className=" flex-col flex-1 items-center max-w-336 mx-auto px-0 sm:px-0 hidden lg:flex">
+      <div className=" flex-col flex-1 items-center max-w-336 mx-auto lg:px-2 sm:px-0 hidden lg:flex">
         <div className="flex items-center gap-3 py-2.5 w-full">
           <div className="relative shrink-0">
             <button
