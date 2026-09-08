@@ -547,9 +547,20 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
 
       <div className="max-w-350 mx-auto lg:px-4 px-2 pb-16">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* lg:top-6 z-999999  */}
-          {/* ── Left: Image Gallery ── */}
-          <div className="lg:col-span-5 ">
+          {/* ── Left: Image Gallery ──
+              Sticky only at lg: below that the two columns stack, so
+              "sticking" would just glue the gallery to the top of a page it
+              no longer shares a row with. `self-start` keeps this column at
+              its own natural height instead of stretching to match the
+              right column (grid items stretch by default), which is what
+              gives it room to actually move — sticky positioning has no
+              effect on an item already exactly as tall as its container.
+              With that, the browser naturally releases the stickiness the
+              moment this column's own content ends and the grid row
+              (i.e. this column + the info column) closes out, right where
+              the two-column layout gives way to the full-width
+              Specification/Description section below. */}
+          <div className="lg:col-span-5 lg:self-start lg:sticky lg:top-6">
             <div className="rounded-2xl shadow-sm p-3 transition-colors duration-200  dark:bg-[#3e3329] ">
               <ProductImageGallery
                 images={galleryImages}
@@ -752,15 +763,26 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
               </div>
             )} */}
           </div>
+        </div>
+        {/* ── Grid closes here, deliberately, right after the two-column
+            row (image gallery + product info) — everything below is a
+            plain sibling block, NOT another item in that same grid.
+            The sticky gallery column above releases at the bottom of ITS
+            OWN containing block; when Specification/Description/Related
+            Products used to be additional items of the SAME grid (via
+            lg:col-span-12), that containing block was the whole page's
+            worth of content instead of just this row, so the sticky
+            column stayed pinned and visibly overlapped that unrelated
+            content while scrolling through it. */}
 
-          <div className=" block lg:hidden">
-            {frequentlyBoughtProducts.length > 0 && (
-              <FrequentlyBoughtTogether products={frequentlyBoughtProducts} />
-            )}
-          </div>
+        <div className=" block lg:hidden">
+          {frequentlyBoughtProducts.length > 0 && (
+            <FrequentlyBoughtTogether products={frequentlyBoughtProducts} />
+          )}
+        </div>
 
-          <div className="lg:col-span-12 space-y-6">
-            {/* Specification & Description Tab Buttons */}
+        <div className="space-y-6 mt-6">
+          {/* Specification & Description Tab Buttons */}
             <div className="flex items-center gap-3">
               {!specGroups || specGroups.length === 0 ? (
                 ""
@@ -824,19 +846,18 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
             {/* )} */}
           </div>
 
-          {/* ── Related Products ── */}
-          {product?.subCategorySlug && (
-            <div className="lg:col-span-12">
-              <h2 className="text-lg font-bold text-gray-800 dark:text-white px-4 mb-3">
-                Related Products
-              </h2>
-              <RelatedProductSectionCom
-                subCategorySlug={product.subCategorySlug}
-                currentProductUuid={product.productUuid}
-              />
-            </div>
-          )}
-        </div>
+        {/* ── Related Products ── */}
+        {product?.subCategorySlug && (
+          <div className="mt-6">
+            <h2 className="text-lg font-bold text-gray-800 dark:text-white px-4 mb-3">
+              Related Products
+            </h2>
+            <RelatedProductSectionCom
+              subCategorySlug={product.subCategorySlug}
+              currentProductUuid={product.productUuid}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

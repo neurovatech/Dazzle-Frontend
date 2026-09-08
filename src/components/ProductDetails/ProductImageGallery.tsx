@@ -144,7 +144,7 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
       {/* ── Lightbox ── */}
       {lightboxOpen && (
         <div
-          className="fixed inset-0 z-10000 bg-black/90 flex flex-col items-center justify-center"
+          className="fixed inset-0 z-[10000] bg-black/90 flex flex-col items-center"
           onClick={closeLightbox}
         >
           {/* Close button */}
@@ -164,19 +164,31 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
             {lightboxIndex + 1} / {items.length}
           </p>
 
-          {/* Main lightbox image — stopPropagation so clicking image doesn't close */}
+          {/*
+            Image area takes whatever space is left ABOVE the thumbnail
+            strip (flex-1 + min-h-0), rather than a fixed 75vh — sized
+            independently of viewport height, 75vh could grow tall enough
+            on a short/laptop-height window to physically overlap the
+            thumbnail strip below it (which was `position: absolute` and
+            reserved no space of its own). This structure makes that
+            overlap impossible: the thumbnail row always claims its own
+            room first, in normal flow, and the image only ever gets what's
+            left over.
+          */}
           <div
-            className="relative w-[90vw] h-[75vh] max-w-3xl z-[10000]"
+            className="relative flex-1 min-h-0 w-full flex items-center justify-center pt-14 pb-4 px-4"
             onClick={(e) => e.stopPropagation()}
           >
-            <Image
-              src={items[lightboxIndex]?.url ?? items[0].url}
-              alt={items[lightboxIndex]?.color || `Product image ${lightboxIndex + 1}`}
-              fill
-              className="object-contain"
-              sizes="90vw"
-              priority
-            />
+            <div className="relative w-full h-full max-w-3xl">
+              <Image
+                src={items[lightboxIndex]?.url ?? items[0].url}
+                alt={items[lightboxIndex]?.color || `Product image ${lightboxIndex + 1}`}
+                fill
+                className="object-contain"
+                sizes="90vw"
+                priority
+              />
+            </div>
           </div>
 
           {/* Prev / Next buttons */}
@@ -205,10 +217,10 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
             </>
           )}
 
-          {/* Lightbox thumbnails strip */}
+          {/* Lightbox thumbnails strip — normal flow, shrink-0, so it always keeps its own space at the bottom instead of floating over the image. */}
           {items.length > 1 && (
             <div
-              className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 overflow-x-auto max-w-[90vw] px-2 pb-1 z-[10000]"
+              className="shrink-0 flex gap-2 overflow-x-auto max-w-[90vw] px-2 pb-4 z-[10000]"
               onClick={(e) => e.stopPropagation()}
             >
               {items.map((item, i) => {

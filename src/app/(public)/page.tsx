@@ -394,14 +394,14 @@ export default async function Home() {
 
       {/* SEO body content — CMS-authored copy about Dazzle, shown to readers
           and crawlers alike (see the seoBodyContent comment above). */}
-      {seoBodyContent && (
+      {/* {seoBodyContent && (
         <section className="max-w-355 mx-auto px-4 md:px-12.5 py-8">
           <article
             className={SEO_RICH_TEXT_CLASS}
             dangerouslySetInnerHTML={{ __html: seoBodyContent }}
           />
         </section>
-      )}
+      )} */}
 
     </div>
   );
