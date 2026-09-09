@@ -56,6 +56,8 @@ interface StickyPurchaseBarProps {
   isUnavailable?: boolean;
   isTba?: boolean;
   showTbaFlag?: boolean;
+  /** endOfLife=true → Add to Cart, Buy Now and Wishlist all disabled, same as GlobalProductCard/ProductCardBuy. */
+  endOfLife?: boolean;
   monthlyDuration?: string;
   storeAvailabilityHref?: string;
   onStoreAvailability?: () => void;
@@ -85,6 +87,7 @@ export default function StickyPurchaseBar({
   isUnavailable = false,
   isTba = false,
   showTbaFlag: showTbaFlagProp,
+  endOfLife = false,
   monthlyDuration = "12 months",
   storeAvailabilityHref = "#",
   onStoreAvailability,
@@ -344,7 +347,18 @@ export default function StickyPurchaseBar({
 
             {/* Add to Cart + Buy Now */}
             <div className="flex items-center md:gap-3 gap-1 shrink-0 mr-[10px] md:mr-0">
-              {showTbaFlag ? (
+              {endOfLife ? (
+                /* ── End of Life — Add to Cart, Buy Now and Wishlist all disabled ── */
+                <button
+                  disabled
+                  className="shrink-0 flex items-center gap-2 md:px-6 px-4 sm:px-8 md:py-3 py-3 text-sm sm:text-base font-semibold rounded-full whitespace-nowrap shadow-sm bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-60"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 shrink-0">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                  </svg>
+                  Discontinued
+                </button>
+              ) : showTbaFlag ? (
                 /* TBA — Add to Wishlist */
                 <button
                   onClick={handleWishlistToggle}

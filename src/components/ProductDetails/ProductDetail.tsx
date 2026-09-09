@@ -536,6 +536,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
           (!isVariantLoading && variants.length > 0 && selectedVariant === null)
         }
         isTba={product?.isTba ?? false}
+        endOfLife={product?.endOfLife ?? false}
         onExploreFinancing={() => setEmiOpen(true)}
         onStoreAvailability={() => setStoreAvailabilityOpen(true)}
         selectedPriceType={selectedPriceType}

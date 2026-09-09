@@ -71,6 +71,7 @@ export default function ProductInfo({
   const { theme } = useTheme();
 
   const stockStatus: StockStatus = inStock ? "in_stock" : "eol";
+  const endOfLife: boolean = alldata?.endOfLife === true;
   const variantPrice = selectedVariant?.price ?? 0;
   const productPrice = alldata?.discountedPrice ?? basePrice ?? 0;
   const effectivePrice = variantPrice > 0 ? variantPrice : productPrice;
@@ -208,6 +209,7 @@ export default function ProductInfo({
   const isAddingWishlist = isAdding(productId) || isRemoving(productId);
 
   const handleWishlist = () => {
+    if (endOfLife) return;
     if (isWishlisted) {
       const wishListUuid = wishlistItems.find((i) => i.productUuid === productId)?.wishListUuid;
       removeFromWishlist({ productUuid: productId, wishListUuid });
@@ -440,14 +442,18 @@ export default function ProductInfo({
         <div className="flex gap-4">
           <button
             onClick={handleWishlist}
-            disabled={isAddingWishlist}
-            className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full border flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 disabled:opacity-60 disabled:cursor-wait ${
+            disabled={isAddingWishlist || endOfLife}
+            className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full border flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 ${
               isWishlisted
                 ? "bg-red-50 border-red-300"
                 : "bg-white border-gray-200 hover:border-red-300"
             }`}
             aria-label={
-              isWishlisted ? "Remove from wishlist" : "Add to wishlist"
+              endOfLife
+                ? "Wishlist unavailable — product discontinued"
+                : isWishlisted
+                  ? "Remove from wishlist"
+                  : "Add to wishlist"
             }
           >
             <Heart
