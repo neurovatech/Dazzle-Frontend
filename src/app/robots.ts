@@ -8,10 +8,10 @@ import { SITE_URL, NOINDEX_PATHS } from "@/lib/seo-config";
  *  - Let crawlers reach the whole catalog (products, categories, brands, blogs).
  *  - Keep them out of private/transactional routes and token-bearing URLs.
  *  - Stop crawl budget being burned on faceted filter permutations.
- *  - Advertise every sitemap directly — /sitemap.xml itself lists all the
- *    static pages (home, policies, etc.), so it isn't just an index
- *    pointing elsewhere; the catalog's dynamic content types each still
- *    get their own dedicated sitemap alongside it.
+ *  - Advertise every sitemap directly — /sitemap.xml is a small index over
+ *    the four catalog sitemaps below, and /pages/sitemap.xml separately
+ *    covers the static pages (home, policies, etc.); listing all five here
+ *    means nothing depends on the index alone for discovery.
  */
 export default function robots(): MetadataRoute.Robots {
   const disallow = [
@@ -34,10 +34,11 @@ export default function robots(): MetadataRoute.Robots {
     ],
     sitemap: [
       `${SITE_URL}/sitemap.xml`,
-      `${SITE_URL}/category/sitemap.xml`,
-      `${SITE_URL}/product/sitemap.xml`,
-      `${SITE_URL}/brand/sitemap.xml`,
-      `${SITE_URL}/blog/sitemap.xml`,
+      `${SITE_URL}/pages/sitemap.xml`,
+      `${SITE_URL}/categories/sitemap.xml`,
+      `${SITE_URL}/products/sitemap.xml`,
+      `${SITE_URL}/brands/sitemap.xml`,
+      `${SITE_URL}/blogs/sitemap.xml`,
     ],
     host: SITE_URL,
   };

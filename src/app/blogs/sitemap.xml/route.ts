@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /**
- * GET /blog/sitemap.xml
+ * GET /blogs/sitemap.xml
  *
  * Covers: /blogs, /announcement, /career, /press-coverage
  */
@@ -37,7 +37,7 @@ async function getPostUrls(
         priority,
       }));
   } catch (err) {
-    console.error(`[blog/sitemap.xml] ${basePath}`, err);
+    console.error(`[blogs/sitemap.xml] ${basePath}`, err);
     return [];
   }
 }

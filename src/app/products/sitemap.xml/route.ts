@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /**
- * GET /product/sitemap.xml
+ * GET /products/sitemap.xml
  *
  * Streams every active product slug as a <url> entry.
  * Fetches in pages of 2 000 and deduplicates slugs before rendering.
@@ -44,7 +44,7 @@ async function getAllProductSlugs(): Promise<string[]> {
     }
     return Array.from(new Set(slugs));
   } catch (err) {
-    console.error("[product/sitemap.xml]", err);
+    console.error("[products/sitemap.xml]", err);
     return [];
   }
 }

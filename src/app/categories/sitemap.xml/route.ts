@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /**
- * GET /category/sitemap.xml
+ * GET /categories/sitemap.xml
  *
  * Includes:
  *   /categories
@@ -46,7 +46,7 @@ async function getCategoryUrls(): Promise<UrlEntry[]> {
     }
     return entries;
   } catch (err) {
-    console.error("[category/sitemap.xml]", err);
+    console.error("[categories/sitemap.xml]", err);
     return [];
   }
 }

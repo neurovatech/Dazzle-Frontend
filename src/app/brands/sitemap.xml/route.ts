@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /**
- * GET /brand/sitemap.xml
+ * GET /brands/sitemap.xml
  *
  * All active brand pages: /brands + /brands/{slug}
  */
@@ -36,7 +36,7 @@ async function getBrandUrls(): Promise<UrlEntry[]> {
     }
     return entries;
   } catch (err) {
-    console.error("[brand/sitemap.xml]", err);
+    console.error("[brands/sitemap.xml]", err);
     return [];
   }
 }
