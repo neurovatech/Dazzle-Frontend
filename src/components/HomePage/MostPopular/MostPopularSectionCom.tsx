@@ -110,7 +110,7 @@ export default async function MostPopularSectionCom() {
 
   return (
     <div>
-      <div className=" px-4">
+      <div className=" px-4 lg:px-0">
         <div className="flex justify-between items-center ">
           <h3 className="md:text-[32px] text-[20px] font-bold transition-colors text-transparent bg-clip-text bg-[linear-gradient(90deg,#101518_0%,#E9CCAE_46.15%,#B57908_100%)] dark:text-white">
             Most Popular

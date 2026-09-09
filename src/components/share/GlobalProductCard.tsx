@@ -266,7 +266,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
         >
           {showTbaFlag && !endOfLife ? (
             <div className="bg-[#6D3F0E] text-white text-[9px] sm:text-xs font-bold px-1.5 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-md">
-              TBA
+              To Be Announced
             </div>
           ) : (
             <>

@@ -105,7 +105,7 @@ async function LatestBlog() {
     }));
 
   return (
-    <section className="flex flex-col flex-1 max-w-355 mx-auto md:px-12.5 px-4 mt-10!">
+    <section className="flex flex-col flex-1 max-w-355 mx-auto md:px-12.5 px-4  mt-10!">
       <div className="flex justify-between items-center gap-6 pb-5">
         <h3 className="lg:text-[32px] text-[16px] font-bold transition-colors text-transparent bg-clip-text bg-[linear-gradient(90deg,#101518_0%,#E9CCAE_46.15%,#B57908_100%)] dark:text-white">
           Latest Blog

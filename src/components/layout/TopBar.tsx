@@ -5,7 +5,7 @@ import { topNavItems } from "./types";
 export default function TopBar() {
   return (
     <div className="hidden md:block">
-      <div className="max-w-355 py-2 px-9 rounded-br-[10px] rounded-bl-[10px] mx-auto  flex items-center justify-between bg-background text-black  transition-colors duration-300">
+      <div className="max-w-355 py-2 px-12 rounded-br-[10px] rounded-bl-[10px] mx-auto  flex items-center justify-between bg-background text-black  transition-colors duration-300">
         <nav className="flex items-center gap-6">
           {topNavItems.map((item) => (
             <Link
