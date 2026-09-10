@@ -35,7 +35,14 @@ export default function MobileHeader({ categories }: Props) {
   const [selectedBrand, setSelectedBrand] = useState("");
 
   const { resolvedTheme } = useTheme();
-  const iconColor = resolvedTheme === "dark" ? "#fff" : "#222";
+  // `resolvedTheme` is unknown on the server (next-themes only resolves it
+  // client-side), so the server always renders the light-mode color here.
+  // Gating on `mounted` keeps the FIRST client render matching that same
+  // light-mode default — the icon corrects to the real theme right after,
+  // instead of hydration flagging a server/client attribute mismatch.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const iconColor = mounted && resolvedTheme === "dark" ? "#fff" : "#222";
 
   const menuRef = useRef<HTMLDivElement>(null);
 

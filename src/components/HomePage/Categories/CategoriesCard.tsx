@@ -1,9 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import Image, { type StaticImageData } from "next/image";
 import NoImg from "@/images/no_images.png";
 import { api } from "@/lib/api";
 
@@ -46,6 +47,88 @@ const isEmpty = (value: string | null | undefined): boolean =>
   !value || value.trim() === "";
 
 const LIMIT = 16;
+
+/**
+ * One category icon image, with its own load state.
+ *
+ * The skeleton (CategoriesSkeleton) only covers the server data fetch —
+ * once that resolves, this box itself has been in the DOM and visible for
+ * a while before each icon's own bytes finish downloading. Tracking `loaded`
+ * per image keeps that same pulse placeholder (identical to
+ * CategoriesSkeleton's inner circle) showing until the real icon is actually
+ * paintable, instead of an empty box or a slow top-to-bottom image draw-in.
+ *
+ * `priority` on the first row: without it these default to `loading="lazy"`,
+ * and Swiper positions every slide (even the visible ones) via a CSS
+ * transform right after mount — which confuses the browser's native
+ * lazy-load distance heuristic into never firing the request at all, so the
+ * skeleton above would otherwise spin forever instead of resolving. Same
+ * fix already used for the other homepage carousels.
+ */
+function CategoryImage({
+  src,
+  alt,
+  priority = false,
+}: {
+  src: string | StaticImageData;
+  alt: string;
+  priority?: boolean;
+}) {
+  console.log("[CategoryImage RENDER]", alt);
+  const [loaded, setLoaded] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  // Read the DOM directly instead of relying only on the `onLoad` prop: a
+  // cached/preloaded image (every `priority` image here is preloaded via a
+  // <link rel="preload">) can already be `complete` the instant this effect
+  // runs, or can fire its native `load` event before React's synthetic
+  // handler attaches — either way `onLoad` alone silently misses it and the
+  // skeleton never clears. Checking `complete` up front and attaching a
+  // native listener as a fallback covers both cases.
+  useEffect(() => {
+    const img = imgRef.current;
+    console.log("[CategoryImage debug]", { hasImg: !!img, complete: img?.complete, src: img?.currentSrc });
+    if (!img) return;
+    if (img.complete) {
+      setLoaded(true);
+      return;
+    }
+    const handleLoad = () => setLoaded(true);
+    img.addEventListener("load", handleLoad);
+    img.addEventListener("error", handleLoad);
+    return () => {
+      img.removeEventListener("load", handleLoad);
+      img.removeEventListener("error", handleLoad);
+    };
+  }, [src]);
+
+  return (
+    <>
+      {!loaded && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-full bg-gray-300/40 dark:bg-zinc-700/30 animate-pulse" />
+        </div>
+      )}
+      <Image
+        ref={imgRef}
+        src={src}
+        alt={alt}
+        fill
+        sizes="(max-width: 768px) 25vw, 12vw"
+        priority={priority}
+        className={`object-contain p-2 transition-all duration-300 group-hover:scale-105 ${
+          loaded ? "opacity-100" : "opacity-0"
+        }`}
+        onLoad={() => setLoaded(true)}
+        onError={(e) => {
+          (e.currentTarget as HTMLImageElement).src =
+            (NoImg as any).src ?? NoImg.toString();
+          setLoaded(true);
+        }}
+      />
+    </>
+  );
+}
 
 function CategoriesCard({
   seeAllBtn = true,
@@ -179,7 +262,7 @@ function CategoriesCard({
           }}
           className="mySwiper w-full pt-1 pb-4"
         >
-          {displayCategories.map((item) => {
+          {displayCategories.map((item, index) => {
             const hasImage = !isEmpty(item.thumbnail_img);
             const hasName = !isEmpty(item.category_name);
             const hasSlug = !isEmpty(item.category_slug);
@@ -207,16 +290,10 @@ function CategoriesCard({
                     `}
                   >
                     <div className="relative w-full h-full flex items-center justify-center">
-                      <Image
+                      <CategoryImage
                         src={hasImage ? item.thumbnail_img : NoImg}
                         alt={hasName ? item.category_name : "Category"}
-                        fill
-                        sizes="(max-width: 768px) 25vw, 12vw"
-                        className="object-contain p-2 transition-transform duration-300 group-hover:scale-105"
-                        onError={(e) => {
-                          (e.currentTarget as HTMLImageElement).src =
-                            (NoImg as any).src ?? NoImg.toString();
-                        }}
+                        priority={index < 8}
                       />
                     </div>
                   </div>

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { CartIcon } from "@/icon";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { addToCart } from "@/store/slices/cartSlice";
@@ -68,7 +68,13 @@ export default function ProductCardBuy({
   const dispatch = useAppDispatch();
   const cartItems = useAppSelector((state) => state.cart.items);
   const wishlistItems = useAppSelector((state) => state.wishlist.items);
-  const isWishlisted = wishlistItems.some((i) => i.productUuid === itemId);
+  // Wishlist state syncs into Redux client-side only, so the server always
+  // renders "not wishlisted" — gate on `mounted` so the first client render
+  // matches, avoiding a hydration mismatch on already-wishlisted products.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const isWishlisted =
+    mounted && wishlistItems.some((i) => i.productUuid === itemId);
 
   const [loadingCart, setLoadingCart] = useState(false);
   const [isTba, setIsTba] = useState(!inStock);
@@ -104,7 +110,8 @@ export default function ProductCardBuy({
   };
 
   // Cart-এ product আছে কিনা check — persistent "Added" দেখাবে
-  const addedToCart = cartItems.some(
+  // (cart syncs client-side only — same `mounted` gate as isWishlisted above)
+  const addedToCart = mounted && cartItems.some(
     (item) =>
       item.productUuid === itemId ||
       item.variantUuid === itemId ||

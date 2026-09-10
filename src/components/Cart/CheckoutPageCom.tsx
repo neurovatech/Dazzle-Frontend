@@ -122,9 +122,22 @@ function distanceKm(lat1: number, lon1: number, lat2: number, lon2: number): num
 /** Centre of Dhaka — used when the browser will not give us a fix. */
 const DHAKA = { lat: 23.7771, lon: 90.4262 };
 
+/**
+ * /check-stock-availability's `status` is free text from the backend —
+ * "Instant", "Usually ready in 3 Days", "Usually ready in 2 hour", etc. —
+ * not a plain "available"/"in stock" enum, so a positive keyword match
+ * against those two phrases misses nearly every real value and undercounts
+ * stock everywhere. Only the genuinely negative case ("Out of Stock" and
+ * its variants) means the branch can't fulfil the order; anything else,
+ * however long the wait, is stock the branch actually has.
+ */
 const isInStock = (status: string) => {
   const s = (status || "").toLowerCase();
-  return s.includes("available") || s.includes("in stock");
+  return !(
+    s.includes("out of stock") ||
+    s.includes("not available") ||
+    s.includes("unavailable")
+  );
 };
 
 // ─── Constants (unused — kept for reference) ──────────────────────────────────
@@ -161,6 +174,80 @@ function Radio({ checked, onChange, label, sub, badge, disabled }: {
       </div>
       <div className={`shrink-0 w-4 h-4 rounded-full border-2 flex items-center justify-center ${checked ? "border-[#D4A97A]" : "border-gray-300 dark:border-zinc-700"}`}>
         {checked && <div className="w-2 h-2 rounded-full bg-[#D4A97A]" />}
+      </div>
+    </button>
+  );
+}
+
+/**
+ * One pickup-store option, styled to match the branch cards in the
+ * "Check Availability" modal (StoreAvailabilityModal): store name +
+ * "Nearest Store" badge + distance pill on one line, a readiness line
+ * underneath — using the backend's own status text ("Instant", "Usually
+ * ready in 3 Days", "Usually ready in 2 hour", ...) exactly as Check
+ * Availability shows it, not a made-up estimate. Only a genuine
+ * "Out of Stock" renders in red; every other real status is green.
+ */
+function PickupStoreCard({
+  checked,
+  onChange,
+  name,
+  km,
+  isNearest,
+  stock,
+}: {
+  checked: boolean;
+  onChange: () => void;
+  name: string;
+  km?: number;
+  isNearest: boolean;
+  stock?: { label: string; outOfStock: boolean };
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onChange}
+      className={`w-full text-left p-3.5 rounded-2xl border-2 transition-all ${
+        checked
+          ? "border-[#D4A97A] bg-amber-50/10 dark:bg-amber-950/10"
+          : "border-gray-200 dark:border-zinc-800"
+      }`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 space-y-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className={`text-sm font-bold ${checked ? "text-gray-900 dark:text-white" : "text-gray-500 dark:text-gray-400"}`}>
+              {name}
+            </span>
+            {isNearest && (
+              <span className="text-[9px] bg-orange-600 text-white font-extrabold px-2 py-0.5 rounded-full flex items-center gap-0.5">
+                <MapPin size={8} /> Nearest Store
+              </span>
+            )}
+          </div>
+          {stock && (
+            <p
+              className={`text-xs font-semibold ${
+                stock.outOfStock
+                  ? "text-red-500 dark:text-red-400"
+                  : "text-emerald-600 dark:text-emerald-400"
+              }`}
+            >
+              {stock.label}
+            </p>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          {km !== undefined && (
+            <span className="text-xs font-bold text-[#8a5a1e] dark:text-[#f0cd97] bg-[#E9CCAE] dark:bg-[#5a3d1f] py-1 px-2.5 rounded-lg">
+              {km} km away
+            </span>
+          )}
+          <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${checked ? "border-[#D4A97A]" : "border-gray-300 dark:border-zinc-700"}`}>
+            {checked && <div className="w-2 h-2 rounded-full bg-[#D4A97A]" />}
+          </div>
+        </div>
       </div>
     </button>
   );
@@ -302,19 +389,51 @@ export default function CheckoutPageCom() {
     [cartItems],
   );
 
-  /** branch uuid → how many of the ordered items that branch actually has. */
+  /**
+   * branch uuid → real stock status for the whole cart at that branch.
+   *
+   * Each cart line can carry its own status at the same branch ("Instant"
+   * for one item, "Usually ready in 2 Days" for another) — `label` picks
+   * the one line worth surfacing: any genuine "Out of Stock" wins (the
+   * branch can't fulfil the order as-is), otherwise the first line that
+   * isn't "Instant" (so a real wait is never hidden behind it), otherwise
+   * "Instant" once every line agrees. Always the backend's own wording,
+   * never a made-up estimate.
+   */
   const stockByStore = useMemo(() => {
-    const map: Record<string, { available: number; total: number }> = {};
+    const map: Record<
+      string,
+      { available: number; total: number; label: string; outOfStock: boolean }
+    > = {};
     if (checkableItems.length === 0) return map;
 
+    const statusesByBranch: Record<string, string[]> = {};
     stockQueries.forEach((res) => {
       (res.data?.data ?? []).forEach((branch) => {
-        const cur = map[branch.uuid] ?? { available: 0, total: 0 };
+        const cur = map[branch.uuid] ?? {
+          available: 0,
+          total: 0,
+          label: "",
+          outOfStock: false,
+        };
         cur.total += 1;
         if (isInStock(branch.status)) cur.available += 1;
         map[branch.uuid] = cur;
+        (statusesByBranch[branch.uuid] ??= []).push(branch.status || "");
       });
     });
+
+    Object.entries(statusesByBranch).forEach(([uuid, statuses]) => {
+      const outOfStock = statuses.find((s) =>
+        s.toLowerCase().includes("out of stock"),
+      );
+      const delayed = statuses.find(
+        (s) => s.trim().toLowerCase() !== "instant",
+      );
+      map[uuid].label = outOfStock || delayed || statuses[0] || "Instant";
+      map[uuid].outOfStock = !!outOfStock;
+    });
+
     return map;
   }, [stockQueries, checkableItems.length]);
 
@@ -928,29 +1047,18 @@ export default function CheckoutPageCom() {
                     // the API's own order would masquerade as "nearest".
                     const isNearest = km !== undefined && i === 0;
 
-                    // Everything the reader needs on one line: where it is, how
-                    // far, and whether their order is actually there.
-                    const sub = [
-                      store.address || "Dazzle Store",
-                      km !== undefined ? `${km} km away` : null,
-                      stock
-                        ? `${stock.available} of ${stock.total} items in stock`
-                        : null,
-                    ]
-                      .filter(Boolean)
-                      .join(" · ");
-
                     return (
-                      <Radio
+                      <PickupStoreCard
                         key={store.uuid}
                         checked={selectedStoreUuid === store.uuid}
                         onChange={() => {
                           storePickedByUser.current = true;
                           setSelectedStoreUuid(store.uuid);
                         }}
-                        label={store.branchName}
-                        sub={sub}
-                        badge={isNearest ? "Nearest Store" : undefined}
+                        name={store.branchName}
+                        km={km}
+                        isNearest={isNearest}
+                        stock={stock}
                       />
                     );
                   })}

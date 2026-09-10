@@ -35,6 +35,60 @@ interface BannerSliderProps {
   slidesPerView?: number;
 }
 
+/**
+ * One banner slide's image, with its own load state.
+ *
+ * `priority`/`fetchPriority` images still start downloading immediately —
+ * this only changes what's PAINTED while those bytes are in flight: the same
+ * `bg-gray-200 dark:bg-zinc-800 animate-pulse` placeholder this file already
+ * uses for slides with no image at all, sized to the exact same box, instead
+ * of an empty gap or a slow top-to-bottom image draw-in.
+ */
+function BannerImage({
+  src,
+  alt,
+  priority,
+  fetchPriorityValue,
+}: {
+  src: string;
+  alt: string;
+  priority: boolean;
+  fetchPriorityValue: "high" | "auto";
+}) {
+  const [loaded, setLoaded] = React.useState(false);
+  const imgRef = React.useRef<HTMLImageElement>(null);
+
+  // A cached image can finish loading (and fire its native `load` event)
+  // before React attaches the `onLoad` handler below, so that event is
+  // silently missed and the skeleton would never clear. Checking
+  // `complete` once on mount catches exactly that case.
+  React.useEffect(() => {
+    if (imgRef.current?.complete) setLoaded(true);
+  }, []);
+
+  return (
+    <>
+      {!loaded && (
+        <div className="absolute inset-0 bg-gray-200 dark:bg-zinc-800 animate-pulse rounded-[15px]" />
+      )}
+      <Image
+        ref={imgRef}
+        src={src}
+        alt={alt}
+        fill
+        className={`object-cover transition-opacity duration-300 ${
+          loaded ? "opacity-100" : "opacity-0"
+        }`}
+        sizes="(max-width: 767px) 100vw, (max-width: 1420px) 66vw, 936px"
+        priority={priority}
+        fetchPriority={fetchPriorityValue}
+        quality={70}
+        onLoad={() => setLoaded(true)}
+      />
+    </>
+  );
+}
+
 function Bannerslider({
   slides = [],
   autoplayDelay = 3000,
@@ -66,15 +120,11 @@ function Bannerslider({
         </div>
         {firstSlide?.imageUrl ? (
           <div className="relative w-full h-60 max-[450px]:h-50 sm:h-75 md:h-110 rounded-[15px] overflow-hidden block">
-            <Image
+            <BannerImage
               src={firstSlide.imageUrl}
               alt={firstSlide.title || "Hero Banner"}
-              fill
-              className="object-cover"
-              sizes="(max-width: 767px) 100vw, (max-width: 1420px) 66vw, 936px"
               priority
-              fetchPriority="high"
-              quality={70}
+              fetchPriorityValue="high"
             />
           </div>
         ) : (
@@ -127,15 +177,11 @@ function Bannerslider({
                 rel={slide.openNewTab ? "noopener noreferrer" : undefined}
                 className="relative w-full h-60 max-[450px]:h-50 sm:h-75 md:h-110 rounded-[15px] overflow-hidden block"
               >
-                <Image
+                <BannerImage
                   src={slide.imageUrl}
                   alt={slide.title || `Slide ${slide.id}`}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 767px) 100vw, (max-width: 1420px) 66vw, 936px"
                   priority={index === 0}
-                  fetchPriority={index === 0 ? "high" : "auto"}
-                  quality={70}
+                  fetchPriorityValue={index === 0 ? "high" : "auto"}
                 />
               </Link>
             ) : (

@@ -156,6 +156,12 @@ const navItems: NavItem[] = [
 export default function MobileFooter() {
   const pathname = usePathname();
   const token = useAppSelector((state) => state.auth.token);
+  // The auth token comes from Redux (hydrated from localStorage client-side),
+  // so the server always renders logged-out. Gating on `mounted` keeps the
+  // first client render matching that same logged-out link, avoiding a
+  // hydration mismatch on this href once the real token is known.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   // ── Scroll detection: big → small on scroll down, small → big on scroll up ──
   const [isCompact, setIsCompact] = useState(false);
@@ -202,7 +208,7 @@ export default function MobileFooter() {
    */
   const getHref = (id: string) => {
     if (id === "home") return "/";
-    if (id === "profile") return token ? "/profile" : "/auth/login";
+    if (id === "profile") return mounted && token ? "/profile" : "/auth/login";
     return `/${id}`;
   };
 

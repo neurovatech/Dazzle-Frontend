@@ -67,9 +67,22 @@ function calculateDistance(
 /** Centre of Dhaka — the fallback when the browser will not give us a fix. */
 const DHAKA = { lat: 23.7771, lon: 90.4262 };
 
+/**
+ * /check-stock-availability's `status` is free text from the backend —
+ * "Instant", "Usually ready in 3 Days", "Usually ready in 2 hour", etc. —
+ * not a plain "available"/"in stock" enum, so a positive keyword match
+ * against those two phrases misses nearly every real value and undercounts
+ * stock everywhere. Only the genuinely negative case ("Out of Stock" and
+ * its variants) means the branch can't fulfil the order; anything else,
+ * however long the wait, is stock the branch actually has.
+ */
 const isInStock = (status: string) => {
   const s = (status || "").toLowerCase();
-  return s.includes("available") || s.includes("in stock");
+  return !(
+    s.includes("out of stock") ||
+    s.includes("not available") ||
+    s.includes("unavailable")
+  );
 };
 
 /* ------------------------------------------------------------------ */
@@ -317,10 +330,10 @@ export default function StoreAvailabilityModal({
                       {/* Single item keeps the original one-line status. */}
                       {!showPerItem && (
                         <p
-                          className={`text-xs capitalize ${
+                          className={`text-xs capitalize font-semibold ${
                             allAvailable
-                              ? "text-emerald-600 font-semibold"
-                              : "text-red-500 font-semibold"
+                              ? "text-emerald-600 dark:text-emerald-400"
+                              : "text-red-500 dark:text-red-400"
                           }`}
                         >
                           {branch.items[0]?.status}
@@ -340,7 +353,7 @@ export default function StoreAvailabilityModal({
                     </div>
 
                     {distance !== undefined && (
-                      <span className="text-xs font-bold text-gray-500 bg-gray-100 dark:bg-gray-800 py-1 px-2.5 rounded-lg shrink-0">
+                      <span className="text-xs font-bold text-[#8a5a1e] dark:text-[#f0cd97] bg-[#E9CCAE] dark:bg-[#5a3d1f] py-1 px-2.5 rounded-lg">
                         {distance} km away
                       </span>
                     )}

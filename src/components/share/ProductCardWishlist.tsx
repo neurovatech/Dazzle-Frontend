@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAppSelector } from "@/store/hooks";
 import { useAddToWishlist, useRemoveFromWishlist } from "@/hooks/useWishlist";
 import { api } from "@/lib/api";
@@ -33,7 +33,15 @@ export default function ProductCardWishlist({
   disabled: boolean;
 }) {
   const wishlistItems = useAppSelector((state) => state.wishlist.items);
-  const isWishlisted = wishlistItems.some((i) => i.productUuid === productUuid);
+  // Wishlist state is synced into Redux client-side only (WishlistSync runs
+  // after mount), so the server always renders "not wishlisted". Gating on
+  // `mounted` keeps the first client render matching that same default —
+  // the heart corrects to the real state right after, instead of hydration
+  // flagging a server/client mismatch on already-wishlisted products.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const isWishlisted =
+    mounted && wishlistItems.some((i) => i.productUuid === productUuid);
   const { addToWishlist, isAdding } = useAddToWishlist();
   const { removeFromWishlist, isRemoving } = useRemoveFromWishlist();
   const [isResolvingVariant, setIsResolvingVariant] = useState(false);

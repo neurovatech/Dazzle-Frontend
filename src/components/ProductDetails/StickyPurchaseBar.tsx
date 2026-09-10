@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import QuantitySelector from "./QuantitySelector";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { addToCart } from "@/store/slices/cartSlice";
@@ -105,7 +105,13 @@ export default function StickyPurchaseBar({
   const dispatch = useAppDispatch();
   const cartItems = useAppSelector((state) => state.cart.items);
   const wishlistItems = useAppSelector((state) => state.wishlist.items);
-  const isWishlisted = wishlistItems.some((i) => i.productUuid === productId);
+  // Wishlist state syncs into Redux client-side only, so the server always
+  // renders "not wishlisted" — gate on `mounted` so the first client render
+  // matches, avoiding a hydration mismatch on already-wishlisted products.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const isWishlisted =
+    mounted && wishlistItems.some((i) => i.productUuid === productId);
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
   const router = useRouter();
   const [loadingBuyNow, setLoadingBuyNow] = useState(false);
@@ -135,7 +141,8 @@ export default function StickyPurchaseBar({
   const targetCartId    = `${variantUuid || productId || ""}${planId ? `__${planId}` : ""}`;
 
   // "Added" — only if THIS exact variant+plan combo is already in cart
-  const addedToCart = cartItems.some((item) => item.id === targetCartId);
+  // (cart syncs client-side only — same `mounted` gate as isWishlisted above)
+  const addedToCart = mounted && cartItems.some((item) => item.id === targetCartId);
 
   // ── Combined prices (product + selected care plan) ────────────
   const combinedOfferPrice    = (productPrice ?? 0) + careTotalOffer;

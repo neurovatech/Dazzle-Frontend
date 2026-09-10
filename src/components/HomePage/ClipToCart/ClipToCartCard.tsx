@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Play } from "lucide-react";
 import { CartIcon } from "@/icon";
@@ -32,7 +33,12 @@ export default function ClipToCartCard({
 }: ClipToCartCardProps) {
   const dispatch = useAppDispatch();
   const cartItems = useAppSelector((state) => state.cart.items);
-  const isAdded = cartItems.some((item) => item.id === product.id);
+  // Cart syncs client-side only, so the server always renders "not added" —
+  // gate on `mounted` so the first client render matches, avoiding a
+  // hydration mismatch on products already in the cart.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const isAdded = mounted && cartItems.some((item) => item.id === product.id);
 
   const hasVideo = !isEmpty(product.videoUrl);
   const hasDiscount =

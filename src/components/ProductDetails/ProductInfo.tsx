@@ -190,7 +190,13 @@ export default function ProductInfo({
     alldata?.productUuid || alldata?.uuid || alldata?.id || code || "";
 
   const wishlistItems = useAppSelector((state) => state.wishlist.items);
-  const isWishlisted = wishlistItems.some((i) => i.productUuid === productId);
+  // Wishlist state syncs into Redux client-side only, so the server always
+  // renders "not wishlisted" — gate on `mounted` so the first client render
+  // matches, avoiding a hydration mismatch on already-wishlisted products.
+  const [mountedWishlist, setMountedWishlist] = useState(false);
+  useEffect(() => setMountedWishlist(true), []);
+  const isWishlisted =
+    mountedWishlist && wishlistItems.some((i) => i.productUuid === productId);
   const handlePriceComparison = () => {
     setIsComparing(true);
     setCompareResult(null);

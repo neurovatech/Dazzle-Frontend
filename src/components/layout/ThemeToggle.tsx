@@ -76,7 +76,7 @@ export default function ThemeToggle({ className }: Props) {
     >
       <div
         className={`transition-all duration-300 ${
-          isDark ? "text-white" : "text-yellow-400"
+          mounted && isDark ? "text-white" : "text-yellow-400"
         }`}
       >
         {/* Before mount the theme is unknown; render an invisible placeholder of
