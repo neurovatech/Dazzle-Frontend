@@ -71,8 +71,11 @@ export default function SeoCardModal({ cards }: Props) {
 
 
   return (
+    
+    <div>
+    
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 lg:px-0">
-      <div className="rounded-2xl p-6 bg-white-50 dark:bg-[#1b1b1b] shadow-sm">
+      <div className="rounded-2xl p-6 bg-blue-50 dark:bg-[#1b1b1b] shadow-sm">
         <h1 className="font-bold">
           {" "}
           Dazzle - The Best Smartphone Shop in Bangladesh{" "}
@@ -158,7 +161,7 @@ export default function SeoCardModal({ cards }: Props) {
         </p>
       </div>
 
-      <div className="rounded-2xl p-6 bg-white-50 dark:bg-[#1b1b1b] shadow-sm">
+      <div className="rounded-2xl p-6 bg-purple-50 dark:bg-[#1b1b1b] shadow-sm">
         <h1 className="font-bold">
           Best Tablet and iPad Shop in Bangladesh
         </h1>
@@ -174,7 +177,7 @@ export default function SeoCardModal({ cards }: Props) {
         <p className="my-4 font-[Georgia,serif] text-base leading-[1.38] text-black dark:text-white"> Whether you’re looking for an{" "} {laptopCategories.map((laptop, index) => ( <span key={`${laptop.name}-${laptop.href}`}> <Link href={laptop.href} className="text-blue-700 underline underline-offset-2 transition-colors hover:text-blue-900" > {laptop.name} </Link> {index < laptopCategories.length - 2 ? ", " : index === laptopCategories.length - 2 ? ", or " : ""} </span> ))} , Dazzle’s laptop selection has it all. We carry premium brands, offering models for gaming, business, or casual use. Our laptops are available with flexible EMI options, official warranties, and knowledgeable support to help you choose the perfect device for your needs. </p>
       </div>
 
-      <div className="rounded-2xl p-6 bg-white-50 dark:bg-[#1b1b1b] shadow-sm">
+      <div className="rounded-2xl p-6 bg-yellow-50 dark:bg-[#1b1b1b] shadow-sm">
         <h1 className="font-bold">
           Best MacBook and iMac Selling Shop in Bangladesh
         </h1>
@@ -182,7 +185,7 @@ export default function SeoCardModal({ cards }: Props) {
         <p className="my-4 font-[Georgia,serif] text-base leading-[1.38] text-black dark:text-white"> As a top retailer of Apple products, Dazzle offers a range of MacBooks, iMacs, and Mac Studios. Our Apple inventory caters to professionals seeking high-performance devices for creative tasks, from video editing to design work. Every Apple product at Dazzle includes official warranties and access to our premium support team for a seamless experience. </p>
       </div>
 
-      <div className="rounded-2xl p-6 bg-white-50 dark:bg-[#1b1b1b] shadow-sm">
+      <div className="rounded-2xl p-6 bg-blue-50 dark:bg-[#1b1b1b] shadow-sm">
         <h1 className="font-bold">
           Best Apple Gadget Shop in Bangladesh
         </h1>
@@ -190,7 +193,7 @@ export default function SeoCardModal({ cards }: Props) {
         <p className="my-4 font-[Georgia,serif] text-base leading-[1.38] text-black dark:text-white"> Dazzle’s Apple gadget selection extends beyond phones and laptops, offering iPhones, AirPods, Apple Watches,iPads, MacBooks, and iMacs that complete your Apple ecosystem. With our Dazzle Care+ program, enjoy the peace of mind of a direct replacement within a year for many Apple devices, alongside competitive pricing and top-quality customer service. </p>
       </div>
 
-      <div className="rounded-2xl p-6 bg-white-50 dark:bg-[#1b1b1b] shadow-sm">
+      <div className="rounded-2xl p-6 bg-green-50-50 dark:bg-[#1b1b1b] shadow-sm">
         <h1 className="font-bold">
           Best Online Mobile Shop in Bangladesh
         </h1>
@@ -206,7 +209,7 @@ export default function SeoCardModal({ cards }: Props) {
         <p className="my-4 font-[Georgia,serif] text-base leading-[1.38] text-black dark:text-white"> For wearable technology, Dazzle offers an extensive collection of smartwatches from brands like Apple Watch, Samsung Galaxy Watch, Fitbit, Garmin, Huawei Watch, Amazfit, Fossil, Kieslect, Mibro, Xiaomi Watch, Redmi Watch, Realme Watch, Oppo, Honor, Diesel, Zeblaze, Noise, boAt,iMilab, Kospet, Haylou. Whether you &rsquo; re focused on fitness or connectivity, our selection caters to all needs. Dazzle’s commitment to genuine products, warranties, and competitive pricing makes us a trusted choice for smartwatches in Bangladesh. </p>
       </div>
 
-      <div className="rounded-2xl p-6 bg-white-50 dark:bg-[#1b1b1b] shadow-sm">
+      <div className="rounded-2xl p-6 bg-yellow-50 dark:bg-[#1b1b1b] shadow-sm">
         <h1 className="font-bold">
           Top AirPods & Earbuds Shop in Dhaka
         </h1>
@@ -214,7 +217,7 @@ export default function SeoCardModal({ cards }: Props) {
         <p className="my-4 font-[Georgia,serif] text-base leading-[1.38] text-black dark:text-white"> Experience top-quality sound with our wide range of Apple AirPods, True Wireless Earbuds, Bluetooth Headphones, Noise-Cancelling Headphones, Over-Ear and In-Ear Headphones, Bone Conduction Headphones, In-Ear Monitors. Dazzle’s curated audio collection includes True Wireless earbuds, noise-canceling options, and bone-conduction headphones, ensuring you find the perfect match for your listening needs, all backed by official warranties. </p>
       </div>
 
-      <div className="rounded-2xl p-6 bg-white-50 dark:bg-[#1b1b1b] shadow-sm">
+      <div className="rounded-2xl p-6 bg-blue-50 dark:bg-[#1b1b1b] shadow-sm">
         <h1 className="font-bold">
           Best Gadget and Accessories Shop in Bangladesh
         </h1>
@@ -222,7 +225,7 @@ export default function SeoCardModal({ cards }: Props) {
         <p className="my-4 font-[Georgia,serif] text-base leading-[1.38] text-black dark:text-white"> Dazzle offers a diverse range of gadgets, including Adapters and Cables, Chargers and Power Banks, Screen Protectors and Phone Cases, Laptop Sleeves and MacBook Cases, Keyboards, Mice, Stylus Pens, Wireless Chargers and Charging Docks, External Hard Drives and USB Hubs, Smartwatch Bands and Camera Lens Protectors, Bluetooth Trackers and Car Chargers, Webcams and Docking Stations. Our gadget collection is designed to elevate your lifestyle, with each product carefully selected for quality and durability. Find the latest technology and essential accessories, all guaranteed authentic and competitively priced. </p>
       </div>
 
-      <div className="rounded-2xl p-6 bg-white-50 dark:bg-[#1b1b1b] shadow-sm">
+      <div className="rounded-2xl p-6 bg-green-50 dark:bg-[#1b1b1b] shadow-sm">
         <h1 className="font-bold">
           Best Sounds, Headphones, and Microphone Selling Shop in Bangladesh
         </h1>
@@ -238,7 +241,7 @@ export default function SeoCardModal({ cards }: Props) {
         <p className="my-4 font-[Georgia,serif] text-base leading-[1.38] text-black dark:text-white"> Enhance your home entertainment with Dazzle’s range of Smart TVs from Sony, Samsung, and Xiaomi. Our Smart TVs offer cutting-edge technology, stunning visuals, and seamless connectivity options. With competitive pricing, delivery options, and quality assurance, Dazzle is your trusted source for Smart TVs in Bangladesh. </p>
       </div>
 
-      <div className="rounded-2xl p-6 bg-white-50 dark:bg-[#1b1b1b] shadow-sm">
+      <div className="rounded-2xl p-6 bg-purple-50 dark:bg-[#1b1b1b] shadow-sm">
         <h1 className="font-bold">
           Who is Dazzle?
         </h1>
@@ -246,7 +249,7 @@ export default function SeoCardModal({ cards }: Props) {
         <p className="my-4 font-[Georgia,serif] text-base leading-[1.38] text-black dark:text-white"> Dazzle is a leading retailer in Bangladesh, specializing in smartphones, laptops, tablets, smartwatches, gadgets, and accessories. Since 2015, Dazzle has served over 987,000 unique customers, delivered more than 1.89 million products, and built a strong community of over 1.9 million social media followers. With over 13,000 5-star Google reviews, 11 physical showrooms, a dedicated team of 187+ employees and more than 13,000 successful warranty claims, Dazzle has maintained a 99.7% customer satisfaction rate. Additionally, Dazzle operates global hubs in Dubai, Hong Kong and Singapore. </p>
       </div>
 
-      <div className="rounded-2xl p-6 bg-white-50 dark:bg-[#1b1b1b] shadow-sm">
+      <div className="rounded-2xl p-6 bg-blue-50 dark:bg-[#1b1b1b] shadow-sm">
         <h1 className="font-bold">
           Why Should You Buy from Dazzle?
         </h1>
@@ -254,7 +257,7 @@ export default function SeoCardModal({ cards }: Props) {
         <ul className="list-disc space-y-2 pl-6 font-[Georgia,serif] text-base leading-[1.38] my-4 text-black dark:text-white"> {benefits.map((benefit) => ( <li key={benefit.title} className="pl-1"> <strong className="font-bold"> {benefit.title} </strong> {": "} <span>{benefit.description}</span> </li> ))} </ul>
       </div>
 
-      <div className="rounded-2xl p-6 bg-white-50 dark:bg-[#1b1b1b] shadow-sm">
+      <div className="rounded-2xl p-6 bg-green-50 dark:bg-[#1b1b1b] shadow-sm">
         <h1 className="font-bold">
           Dazzle’s Social Presence and Reputation
         </h1>
@@ -325,7 +328,7 @@ export default function SeoCardModal({ cards }: Props) {
         </div>
       </div>
 
-      <div className="rounded-2xl p-6 bg-white-50 dark:bg-[#1b1b1b] shadow-sm">
+      <div className="rounded-2xl p-6 bg-purple-50 dark:bg-[#1b1b1b] shadow-sm">
         <h1 className="font-bold">
           Dazzle’s Awards and Acknowledgments
         </h1>
@@ -335,7 +338,11 @@ export default function SeoCardModal({ cards }: Props) {
         </p>
       </div>
 
-      <div className="rounded-2xl p-6 bg-white-50 dark:bg-[#1b1b1b] shadow-sm">
+    </div>
+
+
+    <div className="grid grid-cols-1 p-4 lg:px-0">
+            <div className="rounded-2xl p-6 bg-blue-50 dark:bg-[#1b1b1b] shadow-sm mb-4">
         <h1 className="font-bold">
           Why Customers Believe in Us and What They Say About Us
         </h1>
@@ -345,7 +352,7 @@ export default function SeoCardModal({ cards }: Props) {
         </p>
       </div>
 
-      <div className="rounded-2xl p-6 bg-white-50 dark:bg-[#1b1b1b] shadow-sm sm:col-span-2">
+      <div className="rounded-2xl p-6 bg-green-50 dark:bg-[#1b1b1b] shadow-sm sm:col-span-2">
         <h1 className="font-bold">
           Frequently Asked Questions about Dazzle
         </h1>
@@ -359,6 +366,8 @@ export default function SeoCardModal({ cards }: Props) {
           ))}
         </div>
       </div>
+
+    </div>
     </div>
   );
 }
