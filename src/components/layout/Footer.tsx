@@ -359,7 +359,7 @@ export default function Footer() {
                 ))}
                 <div className="relative z-10">
                   <h3 className="mb-5 border-b border-gray-800 pb-3 text-base font-medium">
-                    Contact
+                    Branch location
                   </h3>
                   {/* <ul className="space-y-4 text-sm text-gray-300">
                     <li>{siteSettings?.contactPhone}</li>
