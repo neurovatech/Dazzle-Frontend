@@ -164,6 +164,7 @@ export default function ProductInfo({
         inStock: !isVariantUnavailable,
         slug: alldata?.productSlug || "",
         minBookingPrice: alldata?.minBookingPrice ?? 0,
+        carePlanPrice: plan && plan.price > 0 ? plan.price : undefined,
       }),
     );
     trackAddToCart({

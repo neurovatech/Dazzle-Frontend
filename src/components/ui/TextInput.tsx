@@ -17,12 +17,12 @@ const TextInput: React.FC<TextInputProps> = ({
 }) => {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-sm font-semibold text-gray-800 dark:text-white">{label}</label>
+      <label className="text-base font-semibold text-gray-800 dark:text-white">{label}</label>
       <input
         {...register}
         type="text"
         placeholder={placeholder}
-        className={`w-full px-4 py-3.5 rounded-2xl bg-gray-100 dark:bg-[#3e3329] dark:text-white text-[16px] text-gray-800 placeholder-gray-400 outline-none border-2 transition-all duration-200 placeholder:text-[16px]
+        className={`w-full px-4 py-3.5 rounded-2xl bg-gray-100 dark:bg-[#3e3329] dark:text-white text-lg text-gray-800 placeholder-gray-400 outline-none border-2 transition-all duration-200 placeholder:text-lg
           ${
             error
               ? "border-red-400 focus:border-red-500 bg-red-50"
@@ -30,10 +30,10 @@ const TextInput: React.FC<TextInputProps> = ({
           }`}
       />
       {error && (
-        <p className="text-xs text-red-500 flex items-center gap-1 mt-0.5">
+        <p className="text-sm text-red-500 flex items-center gap-1 mt-0.5">
           <svg
-            width="12"
-            height="12"
+            width="14"
+            height="14"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"

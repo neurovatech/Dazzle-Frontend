@@ -196,6 +196,8 @@ export default function BrandProducts({
         if (minPrice !== undefined) queryParams.set("minDiscountedPrice", String(minPrice));
         if (maxPrice !== undefined) queryParams.set("maxDiscountedPrice", String(maxPrice));
 
+        console.log(`/products/attributes?${queryParams.toString()}`, "URL")
+
         const res = await api.get<{ data: AttributeGroup[]; priceData?: PriceData }>(
           `/products/attributes?${queryParams.toString()}`,
           { cache: "no-store" }

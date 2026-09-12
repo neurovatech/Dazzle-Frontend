@@ -27,6 +27,9 @@ const NA = (
 const LocationCard: React.FC<LocationCardProps> = ({ store }) => {
   const [mapOpen, setMapOpen] = useState(false);
 
+  // allowStorePickup: true => this store is disabled (per business rule — pickup NOT offered here).
+  const pickupDisabled = store.allowStorePickup === true;
+
   const hasThumbnail = !isEmpty(store.thumbnailImg);
   const hasCoords = !isEmpty(store.latitude) && !isEmpty(store.longitude);
 
@@ -38,7 +41,14 @@ const LocationCard: React.FC<LocationCardProps> = ({ store }) => {
 
   return (
     <>
-      <div className="bg-white dark:bg-[#1B1B1B] rounded-2xl overflow-hidden border border-gray-100 dark:border-[#2E2E2E] shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col px-[19px] py-[22px]">
+      <div
+        aria-disabled={pickupDisabled}
+        className={`bg-white dark:bg-[#1B1B1B] rounded-2xl overflow-hidden border border-gray-100 dark:border-[#2E2E2E] shadow-sm transition-shadow duration-300 flex flex-col px-[19px] py-[22px] ${
+          pickupDisabled
+            ? "opacity-50 grayscale pointer-events-none select-none"
+            : "hover:shadow-md"
+        }`}
+      >
         {/* Image */}
         <div className="relative h-55 w-full overflow-hidden rounded-2xl">
           <Image
@@ -56,6 +66,13 @@ const LocationCard: React.FC<LocationCardProps> = ({ store }) => {
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
 
+          {/* Pickup-disabled badge */}
+          {pickupDisabled && (
+            <span className="absolute top-3 right-3 bg-red-600 text-white text-[10px] font-semibold px-2.5 py-1 rounded-full shadow-sm">
+              Pickup Unavailable
+            </span>
+          )}
+
           {/* Distance badge */}
           {/* <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-[#000000BA] backdrop-blur-sm text-xs font-medium px-2.5 py-1.5 rounded-lg shadow-sm">
             <Image src={mapIcon} width={11} height={11} alt="" />
@@ -67,7 +84,8 @@ const LocationCard: React.FC<LocationCardProps> = ({ store }) => {
           {/* Map button */}
           <button
             onClick={() => setMapOpen(true)}
-            className="absolute bottom-3 left-3 flex items-center gap-1.5 border border-[#6D3F0E] bg-white/90 dark:bg-[#2A2A2A]/90 backdrop-blur-sm text-[#000000] dark:text-white text-sm font-medium px-3 py-2 rounded-[27px] shadow-[0px_4px_9.5px_1px_#6D3F0E6E] hover:bg-white dark:hover:bg-[#333333] transition-colors"
+            disabled={pickupDisabled}
+            className="absolute bottom-3 left-3 flex items-center gap-1.5 border border-[#6D3F0E] bg-white/90 dark:bg-[#2A2A2A]/90 backdrop-blur-sm text-[#000000] dark:text-white text-sm font-medium px-3 py-2 rounded-[27px] shadow-[0px_4px_9.5px_1px_#6D3F0E6E] hover:bg-white dark:hover:bg-[#333333] transition-colors disabled:cursor-not-allowed"
             aria-label="View on map"
           >
             <Map size={16} className="text-[#6D3F0E]" />

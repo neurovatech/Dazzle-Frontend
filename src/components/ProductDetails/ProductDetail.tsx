@@ -286,15 +286,18 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
   }, [product?.productUuid]);
 
   // ── Plan Accessories data processing ─────────────────────────
-  const { dazzleCareOptions, frequentlyBoughtProducts } = useMemo(() => {
+  const { dazzleCareOptions, frequentlyBoughtProducts, buyMoreProducts } = useMemo(() => {
     const groups = planAccessoriesData?.data;
     if (!groups || !Array.isArray(groups)) {
-      return { dazzleCareOptions: [], frequentlyBoughtProducts: [] };
+      return { dazzleCareOptions: [], frequentlyBoughtProducts: [], buyMoreProducts: [] };
     }
 
     const dazzleCareGroup = groups.find((g) => g.planGroup === "Dazzle_Care");
     const frequentlyBuyTogetherGroup = groups.find(
       (g) => g.planGroup === "Frequently_Buy_Together",
+    );
+    const buyMoreSaveMoreGroup = groups.find(
+      (g) => g.planGroup === "Buy_More_Save_More",
     );
 
     // Map Dazzle Care options
@@ -345,9 +348,10 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
       };
     });
 
-    // Map Frequently Bought Together products
-    const fbtProducts = (frequentlyBuyTogetherGroup?.items ?? []).map(
-      (item) => {
+    // Shared mapping for accessory-group items (Frequently_Buy_Together, Buy_More_Save_More)
+    type AccessoryItem = NonNullable<typeof frequentlyBuyTogetherGroup>["items"][number];
+    const mapAccessoryItems = (items: AccessoryItem[] | undefined) =>
+      (items ?? []).map((item) => {
         const img =
           item.thumbnail?.[0]?.mediaFileURL ||
           item.thumbnail?.[0]?.mediaFileUrl ||
@@ -374,12 +378,18 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
               ? `৳${regPrice.toLocaleString("en-US")}`
               : undefined,
         };
-      },
-    );
+      });
+
+    // Map Frequently Bought Together products
+    const fbtProducts = mapAccessoryItems(frequentlyBuyTogetherGroup?.items);
+
+    // Map Buy More Save More products
+    const bmsmProducts = mapAccessoryItems(buyMoreSaveMoreGroup?.items);
 
     return {
       dazzleCareOptions: dcOptions,
       frequentlyBoughtProducts: fbtProducts,
+      buyMoreProducts: bmsmProducts,
     };
   }, [planAccessoriesData, price]);
 
@@ -735,7 +745,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
 
             <div className="pb-5">
               <BuyMore
-                items={frequentlyBoughtProducts.map((p: any) => ({
+                items={buyMoreProducts.map((p: any) => ({
                   id: p.id,
                   name: p.name,
                   image: p.image,

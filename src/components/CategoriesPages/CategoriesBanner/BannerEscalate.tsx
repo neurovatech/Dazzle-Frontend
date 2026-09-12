@@ -79,7 +79,7 @@ export default function BannerEscalate({
   // Loading skeleton
   if (isLoading) {
     return (
-      <div className="w-full h-[120px] sm:h-[160px] md:h-[200px] animate-pulse bg-gray-100 dark:bg-[#2a2420] rounded-2xl mb-4" />
+      <div className="w-full aspect-[9/2] animate-pulse bg-gray-100 dark:bg-[#2a2420] rounded-2xl mb-4" />
     );
   }
 
@@ -91,13 +91,16 @@ export default function BannerEscalate({
     const b = banners[0];
     return (
       <div className="w-full mb-4">
-        <Link href={b.navigateToUrl || "#"}>
+        <Link
+          href={b.navigateToUrl || "#"}
+          className="relative block w-full aspect-[9/2] rounded-2xl overflow-hidden transition-all duration-500 hover:shadow-lg"
+        >
           <Image
             src={b.mediaFileURL}
             alt="Banner"
-            width={1200}
-            height={300}
-            className="w-full h-[120px] sm:h-[160px] md:h-[200px] object-cover rounded-2xl transition-all duration-500 hover:shadow-lg"
+            fill
+            sizes="100vw"
+            className="object-cover"
             priority
           />
         </Link>
@@ -119,16 +122,19 @@ export default function BannerEscalate({
       >
         {banners
           .sort((a, b) => a.mediaFileOrder - b.mediaFileOrder)
-          .map((b) => (
+          .map((b, i) => (
             <SwiperSlide key={b.fileUUID}>
-              <Link href={b.navigateToUrl || "#"}>
+              <Link
+                href={b.navigateToUrl || "#"}
+                className="relative block w-full aspect-[9/2]"
+              >
                 <Image
                   src={b.mediaFileURL}
                   alt="Banner"
-                  width={1200}
-                  height={300}
-                  className="w-full h-[120px] sm:h-[160px] md:h-[200px] object-cover"
-                  priority={b.mediaFileOrder === 1}
+                  fill
+                  sizes="100vw"
+                  className="object-cover"
+                  priority={i < 2}
                 />
               </Link>
             </SwiperSlide>

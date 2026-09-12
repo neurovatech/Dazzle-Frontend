@@ -16,6 +16,13 @@ export interface CartItem {
   inStock: boolean;
   slug?: string;
   minBookingPrice?: number;   // minimum booking deposit for this product
+  /**
+   * The Dazzle Care / protection plan's own price, when `accessoriesUuid` is
+   * set — already folded into `price` above (so totals stay correct without
+   * this), but kept as its own number so a receipt can show it as a
+   * separate, highlighted line instead of a single lump sum.
+   */
+  carePlanPrice?: number;
 }
 
 export interface CartState {
@@ -49,6 +56,7 @@ const cartSlice = createSlice({
         existing.variantUuid = action.payload.variantUuid || existing.variantUuid;
         existing.productUuid = action.payload.productUuid || existing.productUuid;
         existing.accessoriesUuid = action.payload.accessoriesUuid !== undefined ? action.payload.accessoriesUuid : existing.accessoriesUuid;
+        existing.carePlanPrice = action.payload.carePlanPrice !== undefined ? action.payload.carePlanPrice : existing.carePlanPrice;
       } else {
         state.items.push({ ...action.payload });
       }

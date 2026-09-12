@@ -18,6 +18,8 @@ export interface StoreItem {
   thumbnailImg: string;
   distance?: string;
   abroadBranch?: boolean;
+  /** true = store pickup is NOT offered here → the card is rendered disabled. */
+  allowStorePickup?: boolean;
   [key: string]: unknown; // allows StoreTabItem compatibility
 }
 

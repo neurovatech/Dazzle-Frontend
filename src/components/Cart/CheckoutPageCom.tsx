@@ -96,6 +96,8 @@ interface StoreItem {
   latitude?: string;
   longitude?: string;
   abroadBranch?: boolean;
+  /** true = store pickup is NOT offered here → the card is rendered disabled. */
+  allowStorePickup?: boolean;
 }
 
 /** One branch's stock answer for a single product+variant pair. */
@@ -197,6 +199,7 @@ function PickupStoreCard({
   km,
   isNearest,
   stock,
+  disabled,
 }: {
   checked: boolean;
   onChange: () => void;
@@ -204,13 +207,17 @@ function PickupStoreCard({
   km?: number;
   isNearest: boolean;
   stock?: { label: string; outOfStock: boolean };
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
-      onClick={onChange}
+      onClick={disabled ? undefined : onChange}
+      disabled={disabled}
       className={`w-full text-left p-3.5 rounded-2xl border-2 transition-all ${
-        checked
+        disabled
+          ? "opacity-50 grayscale cursor-not-allowed border-gray-200 dark:border-zinc-800"
+          : checked
           ? "border-[#D4A97A] bg-amber-50/10 dark:bg-amber-950/10"
           : "border-gray-200 dark:border-zinc-800"
       }`}
@@ -221,13 +228,18 @@ function PickupStoreCard({
             <span className={`text-sm font-bold ${checked ? "text-gray-900 dark:text-white" : "text-gray-500 dark:text-gray-400"}`}>
               {name}
             </span>
-            {isNearest && (
+            {isNearest && !disabled && (
               <span className="text-[9px] bg-orange-600 text-white font-extrabold px-2 py-0.5 rounded-full flex items-center gap-0.5">
                 <MapPin size={8} /> Nearest Store
               </span>
             )}
+            {disabled && (
+              <span className="text-[9px] bg-red-600 text-white font-extrabold px-2 py-0.5 rounded-full">
+                Pickup Unavailable
+              </span>
+            )}
           </div>
-          {stock && (
+          {stock && !disabled && (
             <p
               className={`text-xs font-semibold ${
                 stock.outOfStock
@@ -469,9 +481,15 @@ export default function CheckoutPageCom() {
       setStoreDistances(next);
       setIsLocatingStores(false);
 
-      // Preselect the closest branch, unless the reader already chose one.
+      // Preselect the closest branch that actually allows pickup, unless the
+      // reader already chose one.
       if (!storePickedByUser.current) {
-        const nearest = Object.entries(next).sort((a, b) => a[1] - b[1])[0];
+        const pickupAllowedUuids = new Set(
+          storeList.filter((s) => s.allowStorePickup !== true).map((s) => s.uuid),
+        );
+        const nearest = Object.entries(next)
+          .filter(([uuid]) => pickupAllowedUuids.has(uuid))
+          .sort((a, b) => a[1] - b[1])[0];
         if (nearest) setSelectedStoreUuid(nearest[0]);
       }
     };
@@ -487,7 +505,9 @@ export default function CheckoutPageCom() {
   }, [storeList]);
 
   useEffect(() => {
-    if (storeList.length > 0 && !selectedStoreUuid) setSelectedStoreUuid(storeList[0].uuid);
+    if (selectedStoreUuid) return;
+    const firstAvailable = storeList.find((s) => s.allowStorePickup !== true);
+    if (firstAvailable) setSelectedStoreUuid(firstAvailable.uuid);
   }, [storeList, selectedStoreUuid]);
 
   // ── Fetch minBookingPrice for cart items that are missing it ────────────────
@@ -706,6 +726,14 @@ export default function CheckoutPageCom() {
     ? couponDiscountFor(appliedCoupon, subtotal)
     : 0;
 
+  // Already folded into each item's own `price` (so Subtotal/Total need no
+  // change) — tracked separately only so the receipt can show it as its own,
+  // highlighted line instead of a single lump sum.
+  const careTotal = cartItems.reduce(
+    (sum, item) => sum + (item.carePlanPrice ?? 0) * item.quantity,
+    0,
+  );
+
   const deliveryFee = useMemo(() => {
     if (deliveryType === "pickup") return 0;
     const svc = visibleServices.find((s) => s.value === serviceLevel);
@@ -858,27 +886,45 @@ export default function CheckoutPageCom() {
       const orderToken = resInvoice.data.orderToken;
 
       for (const item of cartItems) {
+        const accessoriesUuid = item.accessoriesUuid?.trim();
+
         for (let q = 0; q < item.quantity; q++) {
-          const productPayload: any = {
+          const basePayload: any = {
             productUuid:   item.productUuid || item.id,
             variantUuid:   item.variantUuid || item.id,
             usersCommUuid: apiKey,
             orderToken,
           };
-          // accessoriesUuid is optional — only include if non-empty
-          if (item.accessoriesUuid && item.accessoriesUuid.trim()) {
-            productPayload.accessoriesUuid = item.accessoriesUuid.trim();
-          }
 
+          // Base product line — always sent without accessoriesUuid, even
+          // when this item has a Dazzle Care plan attached.
           const res = await api.post<CreateOrderProductResponse>(
             "/api/tokenized/v1/create-order-product",
-            productPayload,
+            basePayload,
             { headers: { Authorization: authHeader, "X-API-Key": apiKey || "" } }
           );
           if (!res || res.status !== "success") {
             toast.error(res?.errors?.join(", ") || res?.message || "Failed to add product.");
             setIsSubmitting(false);
             return;
+          }
+
+          // Dazzle Care / accessory line — a SECOND, separate call for the
+          // same product+variant, this time carrying accessoriesUuid, so the
+          // backend registers the care plan's own price as its own order
+          // line instead of folding it into the single call above.
+          if (accessoriesUuid) {
+            const carePayload: any = { ...basePayload, accessoriesUuid };
+            const resCare = await api.post<CreateOrderProductResponse>(
+              "/api/tokenized/v1/create-order-product",
+              carePayload,
+              { headers: { Authorization: authHeader, "X-API-Key": apiKey || "" } }
+            );
+            if (!resCare || resCare.status !== "success") {
+              toast.error(resCare?.errors?.join(", ") || resCare?.message || "Failed to add Dazzle Care plan.");
+              setIsSubmitting(false);
+              return;
+            }
           }
         }
       }
@@ -1059,6 +1105,8 @@ export default function CheckoutPageCom() {
                     // the API's own order would masquerade as "nearest".
                     const isNearest = km !== undefined && i === 0;
 
+                    const pickupDisabled = store.allowStorePickup === true;
+
                     return (
                       <PickupStoreCard
                         key={store.uuid}
@@ -1071,6 +1119,7 @@ export default function CheckoutPageCom() {
                         km={km}
                         isNearest={isNearest}
                         stock={stock}
+                        disabled={pickupDisabled}
                       />
                     );
                   })}
@@ -1315,7 +1364,34 @@ export default function CheckoutPageCom() {
                       <img src={item.image} alt={item.name} className="object-contain max-h-full max-w-full" />
                     </div>
                     <div className="flex-1 space-y-1">
-                      <h4 className="text-xs font-semibold text-gray-800 dark:text-zinc-200 leading-snug line-clamp-2">{item.name}</h4>
+                      {/* Cart-added Dazzle Care/protection plans are baked into
+                          `name` as a second line after "\n" (see ProductInfo/
+                          StickyPurchaseBar's cartName) — split it out and
+                          highlight it the same way the real cart page
+                          (CartItem.tsx) already does, instead of running it
+                          into the product name as one plain line. */}
+                      {(() => {
+                        const newlineIdx = item.name.indexOf("\n");
+                        if (newlineIdx === -1) {
+                          return (
+                            <h4 className="text-xs font-semibold text-gray-800 dark:text-zinc-200 leading-snug line-clamp-2">
+                              {item.name}
+                            </h4>
+                          );
+                        }
+                        const productLine = item.name.slice(0, newlineIdx);
+                        const carePlanLine = item.name.slice(newlineIdx + 1);
+                        return (
+                          <>
+                            <h4 className="text-xs font-semibold text-gray-800 dark:text-zinc-200 leading-snug line-clamp-2">
+                              {productLine}
+                            </h4>
+                            <p className="text-[11px] font-bold italic text-[#B57908] dark:text-[#D4A97A] leading-snug">
+                              {carePlanLine}
+                            </p>
+                          </>
+                        );
+                      })()}
                       <div className="flex items-center justify-between gap-2 pt-2">
                         <div className="flex items-center border border-gray-200 dark:border-zinc-800 rounded-lg overflow-hidden bg-white dark:bg-zinc-900">
                           <button type="button" onClick={() => dispatch(decreaseQty(item.id))} className="p-1.5 hover:bg-gray-50 dark:hover:bg-zinc-800 transition"><Minus size={10} className="text-gray-500" /></button>
@@ -1348,7 +1424,20 @@ export default function CheckoutPageCom() {
 
               {/* Totals */}
               <div className="space-y-3 pt-4 border-t border-gray-100 dark:border-zinc-800/80 text-sm font-semibold">
-                <div className="flex justify-between"><span className="text-gray-500">Subtotal</span><span>{fmt(subtotal)}</span></div>
+                {/* Subtotal shown here is product-only (full `subtotal` minus
+                    the care total below) — `subtotal` itself still carries
+                    the care amount for booking/COD/coupon math further down,
+                    this just makes "Subtotal + Dazzle Care + Delivery Fee =
+                    Total" an arithmetic identity the receipt itself proves,
+                    instead of Total silently already including Care while
+                    the Care line looked like a separate, unadded amount. */}
+                <div className="flex justify-between"><span className="text-gray-500">Subtotal</span><span>{fmt(subtotal - careTotal)}</span></div>
+                {careTotal > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Dazzle Care</span>
+                    <span className="font-semibold text-[#B57908] dark:text-[#D4A97A]">+{fmt(careTotal)}</span>
+                  </div>
+                )}
                 {couponDiscount > 0 && (
                   <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
                     <span>Coupon ({appliedCoupon?.code})</span>

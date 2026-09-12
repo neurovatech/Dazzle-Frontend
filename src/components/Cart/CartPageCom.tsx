@@ -144,6 +144,12 @@ export default function CartPageCom() {
     (sum, item) => sum + item.price * item.quantity,
     0,
   );
+  // Already folded into each item's `price` above (so Subtotal/Total need no
+  // change) — tracked separately only so it can be shown as its own line.
+  const careTotal = cartItems.reduce(
+    (sum, item) => sum + (item.carePlanPrice ?? 0) * item.quantity,
+    0,
+  );
   const baseDeliveryFees: Record<DeliveryOption, number> = {
     regular: 0,
     fast: 150,
@@ -161,11 +167,20 @@ export default function CartPageCom() {
   };
   const rate = rateMap[selectedCurrency] || 1;
 
-  const subtotal = (baseSubtotal / rate).toLocaleString(undefined, {
+  // Product-only — `baseSubtotal` itself still carries the Dazzle Care
+  // amount (used for `baseTotalBill` below), this is just what's LABELED
+  // "Subtotal" so "Subtotal + Dazzle Care = Total" is an arithmetic
+  // identity the receipt proves, instead of Total silently already
+  // including Care while the Care line looked like a separate, unadded sum.
+  const subtotal = ((baseSubtotal - careTotal) / rate).toLocaleString(undefined, {
     minimumFractionDigits: 0,
     maximumFractionDigits: selectedCurrency === "BDT" ? 0 : 2,
   });
   const deliveryFee = (baseDeliveryFee / rate).toLocaleString(undefined, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: selectedCurrency === "BDT" ? 0 : 2,
+  });
+  const careTotalFmt = (careTotal / rate).toLocaleString(undefined, {
     minimumFractionDigits: 0,
     maximumFractionDigits: selectedCurrency === "BDT" ? 0 : 2,
   });
@@ -247,6 +262,16 @@ export default function CartPageCom() {
                   {subtotal} {selectedCurrency}
                 </span>
               </div>
+              {careTotal > 0 && (
+                <div className="flex justify-between mb-2">
+                  <span className="text-sm text-gray-500 dark:text-gray-300">
+                    Dazzle Care
+                  </span>
+                  <span className="text-sm font-bold text-[#B57908] dark:text-[#D4A97A]">
+                    +{careTotalFmt} {selectedCurrency}
+                  </span>
+                </div>
+              )}
               <hr className="border-dashed border-gray-300 dark:border-gray-600" />
 
               <div className="flex justify-between my-4">

@@ -230,6 +230,7 @@ export default function StickyPurchaseBar({
         inStock: true,
         slug: productSlug || "",
         minBookingPrice: minBookingPrice ?? 0,
+        carePlanPrice: plan && plan.price > 0 ? plan.price : undefined,
       })
     );
     trackAddToCart({ id: productId || finalVariantUuid, name: cartName, price: finalPrice, quantity: qty });

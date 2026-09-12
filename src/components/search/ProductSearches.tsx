@@ -61,6 +61,7 @@ interface NormalizedProduct {
   regularPrice: number;
   discountedPrice: number;
   isStockAvailable: boolean;
+  isTba?: boolean;
 }
 
 interface ProductSearchesProps { query?: string; onClose?: () => void; }
@@ -98,6 +99,8 @@ function ProductSkeleton() {
 
 // ── Product card (shared between both screens) ──────────────────────
 function ProductRow({ product, onClose }: { product: NormalizedProduct; onClose?: () => void }) {
+
+  console.log(product, "productproductproduct")
   const formatPrice = (p: number) => `৳${p.toLocaleString("en-BD")}`;
   return (
     <Link
@@ -121,17 +124,22 @@ function ProductRow({ product, onClose }: { product: NormalizedProduct; onClose?
         <p className="text-xs text-gray-700 dark:text-white font-medium group-hover/prod:text-[#b8864e] transition-colors leading-snug">
           {product.productName}
         </p>
-        <p className={`text-xs font-medium mt-0.5 ${product.isStockAvailable ? "text-green-500" : "text-red-500"}`}>
-          {product.isStockAvailable ? "In Stock" : "Out of Stock"}
-        </p>
         <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-          <span className="text-sm font-bold text-gray-800 dark:text-white">
-            {formatPrice(product.discountedPrice)}
-          </span>
-          {product.regularPrice > product.discountedPrice && (
-            <span className="text-xs text-gray-400 line-through">
-              {formatPrice(product.regularPrice)}
+          {product.isTba ? (
+            <span className="bg-[#6D3F0E] text-white text-[9px] font-bold px-2 py-0.5 rounded-full">
+              To Be Announced
             </span>
+          ) : (
+            <>
+              <span className="text-sm font-bold text-gray-800 dark:text-white">
+                {formatPrice(product.discountedPrice)}
+              </span>
+              {product.regularPrice > product.discountedPrice && (
+                <span className="text-xs text-gray-400 line-through">
+                  {formatPrice(product.regularPrice)}
+                </span>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -220,6 +228,7 @@ export default function ProductSearches({ query, onClose }: ProductSearchesProps
     regularPrice:     h.document.regularPrice,
     discountedPrice:  h.document.discountedPrice,
     isStockAvailable: h.document.isStockAvailable,
+    isTba:            h.document.isTba,
   }));
 
   // Normalise category products
@@ -231,6 +240,7 @@ export default function ProductSearches({ query, onClose }: ProductSearchesProps
     regularPrice:     p.regularPrice,
     discountedPrice:  p.discountedPrice,
     isStockAvailable: !p.isTba,
+    isTba:            p.isTba,
   }));
 
   // ── Screen 2 — Category drill-down ─────────────────────────────

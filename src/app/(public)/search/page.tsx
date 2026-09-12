@@ -21,6 +21,7 @@ interface ProductDocument {
   discountedPrice: number;
   disRate: number;
   isStockAvailable: boolean;
+  isTba?: boolean;
 }
 
 interface SearchApiResponse {
@@ -181,17 +182,22 @@ function SearchResults() {
                 <p className="font-semibold dark:text-white text-[15px]  h-11 text-[#575757] line-clamp-2 group-hover:text-[#B57908] transition-colors">
                   {p.productName}
                 </p>
-                <p className={`text-[15px] font-semibold mt-1 ${p.isStockAvailable ? "text-green-500" : "text-red-500"}`}>
-                  {p.isStockAvailable ? "In Stock" : "Out of Stock"}
-                </p>
                 <div className="flex items-baseline gap-1.5 mt-auto pt-2 flex-wrap">
-                  <span className="items-center flex gap-1 font-bold text-[20px] leading-[1.6] tracking-[0%] text-gray-900 dark:text-white">
-                    {formatPrice(p.discountedPrice)}
-                  </span>
-                  {p.regularPrice > p.discountedPrice && (
-                    <span className="text-gray-400 text-[14px] font-normal leading-[1.6] line-through flex items-center gap-1 pl-1">
-                      {formatPrice(p.regularPrice)}
-                    </span>
+                  {p.isTba ? (
+                    <div className="bg-[#6D3F0E] text-white text-[9px] sm:text-xs font-bold px-1.5 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-md">
+                      To Be Announced
+                    </div>
+                  ) : (
+                    <>
+                      <span className="items-center flex gap-1 font-bold text-[20px] leading-[1.6] tracking-[0%] text-gray-900 dark:text-white">
+                        {formatPrice(p.discountedPrice)}
+                      </span>
+                      {p.regularPrice > p.discountedPrice && (
+                        <span className="text-gray-400 text-[14px] font-normal leading-[1.6] line-through flex items-center gap-1 pl-1">
+                          {formatPrice(p.regularPrice)}
+                        </span>
+                      )}
+                    </>
                   )}
                 </div>
                 <p className="text-[15px] text-gray-400 dark:text-white mt-1 truncate font-bold">
