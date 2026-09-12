@@ -14,7 +14,7 @@ import ChangePassword from "./ChangePassword";
 import ProfileOtp from "./ProfileOtp";
 
 const Profile: React.FC = () => {
-  const [activeLabel, setActiveLabel] = useState<ActiveLabel>("Wishlist");
+  const [activeLabel, setActiveLabel] = useState<ActiveLabel>("Orders");
   const [mobileView, setMobileView] = useState<ActiveLabel | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showOtp, setShowOtp] = useState<boolean>(false);

@@ -7,7 +7,7 @@ import { api } from "@/lib/api";
 import NoData from "@/components/ui/NoData";
 
 export const metadata: Metadata = {
-  title: "Latest Blogs & Technology News",
+  title: "Blogs",
   description:
     "Stay updated with the latest technology trends, smartphone reviews, gadget comparisons, and laptop guides in Bangladesh at Dazzle.",
 };

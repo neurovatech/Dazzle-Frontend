@@ -47,10 +47,16 @@ const FALLBACK_DESCRIPTION =
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSiteSettings();
 
+  
+
 
   const title = settings.metaTitle || settings.siteTitle || FALLBACK_TITLE;
+  // const title =  FALLBACK_TITLE;
   const description = stripHtml(settings.metaDescription) || FALLBACK_DESCRIPTION;
-  const siteName = settings.siteTitle || SITE_NAME;
+  // const siteName = settings.siteTitle || SITE_NAME;
+  const siteName = "";
+
+// console.log("generateMetadata settings:", settings);
 
   const iconUrl = settings.favicon || FALLBACK_ICON;
 
@@ -68,7 +74,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: {
       default: title,
-      template: `%s - ${siteName}`,
+      template: `%s `,
     },
     description,
     keywords: settings.metaKeywords || undefined,

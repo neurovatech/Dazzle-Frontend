@@ -4,7 +4,7 @@ import Breadcrumb from "@/components/share/Breadcrumb";
 import { api } from "@/lib/api";
 
 export const metadata: Metadata = {
-  title: "Shop by Brand",
+  title: "Brands | Dazzle",
   description: "Browse premium tech and gadget brands at Dazzle.",
 };
 
