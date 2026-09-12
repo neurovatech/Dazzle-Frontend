@@ -74,7 +74,6 @@ function CategoryImage({
   alt: string;
   priority?: boolean;
 }) {
-  console.log("[CategoryImage RENDER]", alt);
   const [loaded, setLoaded] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
 
@@ -87,7 +86,6 @@ function CategoryImage({
   // native listener as a fallback covers both cases.
   useEffect(() => {
     const img = imgRef.current;
-    console.log("[CategoryImage debug]", { hasImg: !!img, complete: img?.complete, src: img?.currentSrc });
     if (!img) return;
     if (img.complete) {
       setLoaded(true);

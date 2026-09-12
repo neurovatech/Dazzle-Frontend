@@ -249,7 +249,7 @@ export default function StickyPurchaseBar({
   */
  const handleBuyNow = async () => {
   if (!isAuthenticated) {
-    router.push("/auth/login");
+    router.push("/auth/login?redirect=/checkout");
     // toast.error("Please log in to continue with your purchase.");
     setShowLoginModal(true);
     return;

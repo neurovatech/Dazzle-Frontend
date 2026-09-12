@@ -15,12 +15,21 @@ export default function AuthLayout({
 
   useEffect(() => {
     if (token) {
-      router.back();
-      const fallback = setTimeout(() => {
-        router.push("/");
-      }, 300);
-
-      return () => clearTimeout(fallback);
+      // This effect also fires the instant LoginForm's own onSuccess handler
+      // sets the token — i.e. right as that handler calls
+      // `router.push(redirectUrl)` to send the user to checkout (or wherever
+      // they came from). `router.back()` here raced that push and, being a
+      // history-relative jump, usually won: it landed the user on whatever
+      // page was open *before* they clicked "Log in" — the cart page in the
+      // reported case — instead of the checkout page they were headed to.
+      // Reading the same `redirect` param LoginForm already targets, and
+      // using `replace` instead of `back`/`push`, makes both effects agree
+      // on the same destination regardless of which one runs first, and
+      // stops piling up an extra history entry either way.
+      const redirectUrl = new URLSearchParams(window.location.search).get(
+        "redirect",
+      );
+      router.replace(redirectUrl || "/");
     } else {
       setChecking(false);
     }

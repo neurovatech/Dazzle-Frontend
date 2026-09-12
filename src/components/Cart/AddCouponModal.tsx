@@ -4,23 +4,36 @@ import GlobalModal from "@/components/share/GlobalModal";
 
 type CouponTab = "coupon" | "points";
 
-type Coupon = {
+export type Coupon = {
   id: number;
   code: string;
   description: string;
   applicableFor: string;
+  /** % taken off the subtotal, capped at `maxDiscount` — 0 for flat-amount deals. */
+  discountPercent: number;
+  maxDiscount: number;
+  /** Flat taka off, for deals priced in points rather than a percentage. */
+  flatDiscount?: number;
 };
 
-const COUPONS: Coupon[] = [
-  { id: 1, code: "RAMADAN12", description: "10% off upto ৳1,00,000", applicableFor: "For Phone" },
-  { id: 2, code: "RAMADAN12", description: "10% off upto ৳1,00,000", applicableFor: "For Phone" },
-  { id: 3, code: "RAMADAN12", description: "10% off upto ৳1,00,000", applicableFor: "For Phone" },
-  { id: 4, code: "RAMADAN12", description: "10% off upto ৳1,00,000", applicableFor: "For Phone" },
+/** discountPercent-based cap, or the flat amount, whichever the coupon uses. */
+export function couponDiscountFor(coupon: Coupon, subtotal: number): number {
+  if (coupon.discountPercent > 0) {
+    return Math.min((subtotal * coupon.discountPercent) / 100, coupon.maxDiscount);
+  }
+  return Math.min(coupon.flatDiscount ?? 0, subtotal);
+}
+
+export const COUPONS: Coupon[] = [
+  { id: 1, code: "RAMADAN12", description: "10% off upto ৳1,00,000", applicableFor: "For Phone", discountPercent: 10, maxDiscount: 100000 },
+  { id: 2, code: "RAMADAN12", description: "10% off upto ৳1,00,000", applicableFor: "For Phone", discountPercent: 10, maxDiscount: 100000 },
+  { id: 3, code: "RAMADAN12", description: "10% off upto ৳1,00,000", applicableFor: "For Phone", discountPercent: 10, maxDiscount: 100000 },
+  { id: 4, code: "RAMADAN12", description: "10% off upto ৳1,00,000", applicableFor: "For Phone", discountPercent: 10, maxDiscount: 100000 },
 ];
 
 const POINTS_DEALS: Coupon[] = [
-  { id: 5, code: "POINTS50", description: "50 points = ৳50 off", applicableFor: "All Products" },
-  { id: 6, code: "POINTS100", description: "100 points = ৳120 off", applicableFor: "All Products" },
+  { id: 5, code: "POINTS50", description: "50 points = ৳50 off", applicableFor: "All Products", discountPercent: 0, maxDiscount: 0, flatDiscount: 50 },
+  { id: 6, code: "POINTS100", description: "100 points = ৳120 off", applicableFor: "All Products", discountPercent: 0, maxDiscount: 0, flatDiscount: 120 },
 ];
 
 type AddCouponModalProps = {

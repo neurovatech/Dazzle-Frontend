@@ -117,7 +117,7 @@ const LocationCard: React.FC<LocationCardProps> = ({ store }) => {
 
                 <div>
                   <p className="text-[#747474] dark:text-gray-400 uppercase text-sm mt-2">
-                    Contact
+                    Branch location
                   </p>
                   <span className="font-semibold text-[#6D3F0E] dark:text-[#D89B5C]">
                     {isEmpty(store.contactNo) ? NA : store.contactNo}

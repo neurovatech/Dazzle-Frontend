@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/rules-of-hooks */
 "use client";
 
 import { useState } from "react";
@@ -47,7 +46,10 @@ export default function FrequentlyBoughtTogether({
   onAddToCart,
 }: FrequentlyBoughtTogetherProps) {
   const dispatch = useAppDispatch();
-  const [adding, setAdding] = useState(false);
+  const cartItems = useAppSelector((state) => state.cart.items);
+  // Which card's Add button is mid-flight — keyed by the same id used below,
+  // so only that one card shows "Adding..." instead of the whole section.
+  const [addingId, setAddingId] = useState<string | null>(null);
 
   if (!products || products.length === 0) return null;
 
@@ -61,94 +63,79 @@ export default function FrequentlyBoughtTogether({
     );
   };
 
-  const totalPrice = products.reduce((s, p) => s + parsePrice(p, "price"), 0);
-  const totalOriginalPrice = products.reduce(
-    (s, p) => s + parsePrice(p, "originalPrice"),
-    0,
-  );
-
-  const availableCount = products.filter((p) => p.inStock).length;
-
-  const cartItems = useAppSelector((state) => state.cart.items);
-
-  const handleAddToCartAll = async () => {
-    const inStockItems = products.filter((p) => p.inStock);
-    if (inStockItems.length === 0) {
-      toast.error("No available products to add.");
-      return;
-    }
-
-    setAdding(true);
+  /**
+   * Adds one card's product to the cart.
+   *
+   * The variant to add isn't known up front — same as ProductCardBuy's
+   * add-to-cart flow — so it's resolved via get-default-variant right
+   * before the dispatch rather than assumed from the product uuid.
+   */
+  const handleAddOne = async (p: Product) => {
+    const pUuid = (p.productUuid || p.id || "").trim();
+    const cardKey = pUuid || p.name || "";
+    setAddingId(cardKey);
     try {
-      let addedCount = 0;
-      for (const p of inStockItems) {
-        const pUuid = (p.productUuid || p.id || "").trim();
-        let variantUUID = pUuid;  // default fallback
-        let finalPrice = parsePrice(p, "price");
-        let finalRegPrice = parsePrice(p, "originalPrice");
-        let finalImage = p.image || "";
+      let variantUUID = pUuid;
+      let finalPrice = parsePrice(p, "price");
+      let finalRegPrice = parsePrice(p, "originalPrice");
+      let finalImage = p.image || "";
 
-        if (pUuid) {
-          try {
-            const res = await api.get<DefaultVariantResponse>(
-              `/get-default-variant/${pUuid}?priceSort=1&userDefine=0`
-            );
-            if (res?.data) {
-              // isTba true হলে এই product skip করো
-              if (res.data.isTba) {
-                continue;
-              }
-              variantUUID = res.data.variantUUID || variantUUID;
-              finalPrice = res.data.offerPrice ?? finalPrice;
-              finalRegPrice = res.data.regularPrice ?? finalRegPrice;
-              if (res.data.thumbnailURL) {
-                finalImage = res.data.thumbnailURL;
-              }
+      if (pUuid) {
+        try {
+          const res = await api.get<DefaultVariantResponse>(
+            `/get-default-variant/${pUuid}?priceSort=1&userDefine=0`,
+          );
+          if (res?.data) {
+            if (res.data.isTba) {
+              toast.error(`${p.name || "This item"} is not available right now.`);
+              return;
             }
-          } catch (err) {
-            console.error(`[FrequentlyBoughtTogether] get-default-variant failed for ${pUuid}:`, err);
+            variantUUID = res.data.variantUUID || variantUUID;
+            finalPrice = res.data.offerPrice ?? finalPrice;
+            finalRegPrice = res.data.regularPrice ?? finalRegPrice;
+            if (res.data.thumbnailURL) {
+              finalImage = res.data.thumbnailURL;
+            }
           }
+        } catch (err) {
+          console.error(
+            `[FrequentlyBoughtTogether] get-default-variant failed for ${pUuid}:`,
+            err,
+          );
         }
-
-        const isAlreadyInCart = cartItems.some(
-          (item) => item.id === variantUUID || item.variantUuid === variantUUID
-        );
-
-        if (isAlreadyInCart) {
-          continue;
-        }
-
-        dispatch(
-          addToCart({
-            id: variantUUID,
-            productUuid: pUuid,
-            variantUuid: variantUUID,
-            name: p.name || "Product",
-            brand: "",
-            image: finalImage,
-            price: finalPrice,
-            originalPrice: finalRegPrice,
-            quantity: 1,
-            inStock: true,
-            slug: p.slug || "",
-          })
-        );
-        trackAddToCart({ id: pUuid || variantUUID, name: p.name || "Product", price: finalPrice });
-        addedCount++;
       }
 
-      if (addedCount > 0) {
-        toast.success(`${addedCount} item${addedCount > 1 ? "s" : ""} added to cart! 🛒`);
-        if (onAddToCart) {
-          onAddToCart();
-        }
-      } else {
-        toast.error("Products already added to cart!");
+      const isAlreadyInCart = cartItems.some(
+        (item) => item.id === variantUUID || item.variantUuid === variantUUID,
+      );
+      if (isAlreadyInCart) {
+        toast.error(`${p.name || "This item"} is already in your cart.`);
+        return;
       }
+
+      dispatch(
+        addToCart({
+          id: variantUUID,
+          productUuid: pUuid,
+          variantUuid: variantUUID,
+          name: p.name || "Product",
+          brand: "",
+          image: finalImage,
+          price: finalPrice,
+          originalPrice: finalRegPrice,
+          quantity: 1,
+          inStock: true,
+          slug: p.slug || "",
+        }),
+      );
+      trackAddToCart({ id: pUuid || variantUUID, name: p.name || "Product", price: finalPrice });
+      toast.success(`${p.name || "Product"} added to cart! 🛒`);
+      onAddToCart?.();
     } catch (err) {
-      console.error("[FrequentlyBoughtTogether] handleAddToCartAll error:", err);
+      console.error("[FrequentlyBoughtTogether] handleAddOne error:", err);
+      toast.error("Something went wrong. Please try again.");
     } finally {
-      setAdding(false);
+      setAddingId(null);
     }
   };
 
@@ -156,50 +143,28 @@ export default function FrequentlyBoughtTogether({
     <div className="py-4 w-full">
       <h3 className="py-3 font-bold">Frequently Buy Together</h3>
 
-      <div className="flex flex-wrap items-stretch gap-2 sm:gap-3 w-full">
-        {products.map((prod, index) => (
-          <div key={index} className="flex items-stretch gap-2 sm:gap-3 min-w-0">
-            <div className="w-[150px] sm:w-[180px] shrink-0">
-              <ProductCard {...prod} />
-            </div>
-            {index < products.length - 1 && (
-              <span className="text-xl sm:text-2xl text-gray-400 dark:text-gray-500 font-light select-none shrink-0 flex items-center">
-                +
-              </span>
-            )}
-          </div>
-        ))}
-
-        <span className="text-xl sm:text-2xl text-gray-400 dark:text-gray-500 font-light select-none shrink-0 flex items-center">
-          =
-        </span>
-
-        <div className="flex flex-col items-start sm:items-center px-1 sm:px-2 shrink-0 justify-center">
-          <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
-            {products.length} Items
-          </span>
-          <span className="text-orange-500 font-bold text-base sm:text-lg whitespace-nowrap">
-            BDT {totalPrice.toLocaleString("en-US")}
-          </span>
-          {totalOriginalPrice > totalPrice && (
-            <span className="text-gray-400 dark:text-gray-500 text-xs sm:text-sm line-through whitespace-nowrap">
-              BDT {totalOriginalPrice.toLocaleString("en-US")}
-            </span>
-          )}
-        </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+        {products.map((prod, index) => {
+          const cardKey = (prod.productUuid || prod.id || prod.name || String(index)).trim();
+          // Matched on productUuid, not the cart row's own id/variantUuid —
+          // handleAddOne can resolve a different variant than prod.id via
+          // get-default-variant, but the original productUuid is always
+          // preserved on the dispatched cart line.
+          const pUuid = (prod.productUuid || prod.id || "").trim();
+          const alreadyInCart = pUuid
+            ? cartItems.some((item) => item.productUuid === pUuid)
+            : false;
+          return (
+            <ProductCard
+              key={cardKey}
+              {...prod}
+              onAdd={() => handleAddOne(prod)}
+              adding={addingId === cardKey}
+              added={alreadyInCart}
+            />
+          );
+        })}
       </div>
-
-      <button
-        onClick={handleAddToCartAll}
-        disabled={availableCount === 0 || adding}
-        className={`shrink-0 px-6 mt-4 sm:px-8 py-3 text-sm sm:text-base font-semibold rounded-full transition-colors duration-150 whitespace-nowrap shadow-sm
-          ${availableCount === 0 || adding
-            ? "bg-gray-200 text-gray-400 cursor-not-allowed opacity-60"
-            : "bg-[#E9CCAE] hover:bg-[#D4B89A] active:bg-[#C0A486] text-black cursor-pointer"
-          }`}
-      >
-        {adding ? "Adding..." : `Add ${availableCount} item${availableCount !== 1 ? "s" : ""} to cart`}
-      </button>
     </div>
   );
 }

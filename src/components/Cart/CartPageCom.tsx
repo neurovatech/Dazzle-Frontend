@@ -396,7 +396,7 @@ export default function CartPageCom() {
                 Cancel
               </button>
               <Link
-                href="/auth/login"
+                href="/auth/login?redirect=/checkout"
                 className="flex-1 py-2.5 rounded-xl bg-[#D4A97A] hover:bg-[#c89a6b] text-white text-sm font-bold text-center transition"
                 onClick={() => setShowLoginModal(false)}
               >

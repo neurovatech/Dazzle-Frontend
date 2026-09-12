@@ -481,7 +481,7 @@ function ProductQuicView({
 
   const handleBuyNow = async () => {
     if (!isAuthenticated) {
-      router.push("/auth/login");
+      router.push("/auth/login?redirect=/checkout");
       // setShowLoginWarning(true);
       return;
     }
@@ -806,7 +806,7 @@ function ProductQuicView({
               <span>
                 Please{" "}
                 <Link
-                  href="/auth/login"
+                  href="/auth/login?redirect=/checkout"
                   className=" text-gray-600 font-bold hover:underline"
                 >
                   log in

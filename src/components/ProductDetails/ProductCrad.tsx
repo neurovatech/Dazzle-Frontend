@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { ShoppingCart, Check } from "lucide-react";
 import NoImg from "@/images/no_images.png";
 
 interface ProductCardProps {
@@ -10,6 +11,9 @@ interface ProductCardProps {
   price?: string;
   originalPrice?: string;
   onAdd?: () => void;
+  adding?: boolean;
+  /** Already in the cart — shows a persistent green "Added!" pill instead of "Add". */
+  added?: boolean;
 }
 
 export default function ProductCard({
@@ -19,24 +23,46 @@ export default function ProductCard({
   price = "৳1,00,000",
   originalPrice = "৳1,30,000",
   onAdd,
+  adding = false,
+  added = false,
 }: ProductCardProps) {
   const hasImage = Boolean(image && image.trim() !== "");
 
   return (
-    <div className="w-full h-full bg-white dark:bg-[#1f1a16] border border-[#E7E7E7] dark:border-[#3a2f28] rounded-[10px] p-3 flex flex-col font-sans transition-colors duration-200">
-      <div className="relative rounded-2xl flex items-center justify-center h-10 mb-3 overflow-visible">
+    <div className="w-full h-full bg-white dark:bg-[#1f1a16] rounded-2xl p-3 flex flex-col font-sans transition-colors duration-200">
+      <div className="relative rounded-xl bg-[#fff] dark:bg-[#2e2b28] h-35 mb-4">
         <Image
           src={hasImage ? (image as string) : NoImg}
           alt={name}
           fill
-          className="object-contain rounded-2xl"
+          className="object-contain p-4"
           sizes="(max-width: 768px) 100vw, 300px"
         />
+
+        {added ? (
+          <span
+            className="absolute -bottom-3 right-3 flex items-center gap-1.5 bg-[#1DBF56] text-white text-xs font-semibold px-3.5 py-1.5 rounded-full shadow-md"
+          >
+            <Check size={14} />
+            Added!
+          </span>
+        ) : (
+          <button
+            type="button"
+            onClick={onAdd}
+            disabled={!inStock || adding || !onAdd}
+            aria-label={`Add ${name} to cart`}
+            className="absolute -bottom-3 right-3 flex items-center gap-1.5 bg-white dark:bg-[#1f1a16] border border-[#D4A97A] text-[#B57908] dark:text-[#D4A97A] text-xs font-semibold px-3.5 py-1.5 rounded-full shadow-md hover:bg-[#FBF3E9] dark:hover:bg-[#342a20] active:scale-95 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-[#1f1a16]"
+          >
+            <ShoppingCart size={14} />
+            {adding ? "Adding..." : "Add"}
+          </button>
+        )}
       </div>
 
       {/* Content */}
-      <div className="pt-5 px-1 flex flex-col flex-1">
-        <p className="text-gray-700 dark:text-gray-200 text-sm font-medium leading-snug mb-1">
+      <div className="px-1 flex flex-col flex-1">
+        <p className="text-gray-700 dark:text-gray-200 text-sm font-medium leading-snug mb-1 line-clamp-2">
           {name.replace("...", "")}{" "}
           {inStock ? (
             <span className="text-green-500 dark:text-green-400 font-semibold ml-1">

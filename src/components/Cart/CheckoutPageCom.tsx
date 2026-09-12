@@ -7,11 +7,13 @@ import Link from "next/link";
 import {
   CreditCard, Truck, Check, ShieldCheck,
   MapPin, Lock, Loader2, AlertTriangle, Plus, Minus,
+  Ticket, ChevronRight, X as XIcon,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import Bikask from "@/images/bKash-Logo.svg";
 import SSl from "@/images/ssl-logo.svg";
 import Image from "next/image";
+import AddCouponModal, { type Coupon, couponDiscountFor, COUPONS } from "./AddCouponModal";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { increaseQty, decreaseQty, clearCart, patchMinBookingPrice } from "@/store/slices/cartSlice";
 import { useQuery, useQueries } from "@tanstack/react-query";
@@ -313,6 +315,8 @@ export default function CheckoutPageCom() {
   const [serviceLevel, setServiceLevel] = useState<ServiceLevel>("regular");
   const [paymentOption, setPaymentOption] = useState<PaymentOption>("full_online");
   const [paymentGateway, setPaymentGateway] = useState<"bkash" | "ssl">("bkash");
+  const [couponModalOpen, setCouponModalOpen] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
 
   // ── Misc ──────────────────────────────────────────────────────────────────
   const [remarks, setRemarks] = useState("");
@@ -694,6 +698,14 @@ export default function CheckoutPageCom() {
   // ── Price Calculations — all from API data ────────────────────────────────
   const subtotal = cartItems.reduce((s, i) => s + i.price * i.quantity, 0);
 
+  // Coupon deals here are frontend-only mock data (see AddCouponModal) — no
+  // backend endpoint validates a code or applies it to the order, so this
+  // discount only affects what's shown/charged on this page, not anything
+  // sent to the order-creation API.
+  const couponDiscount = appliedCoupon
+    ? couponDiscountFor(appliedCoupon, subtotal)
+    : 0;
+
   const deliveryFee = useMemo(() => {
     if (deliveryType === "pickup") return 0;
     const svc = visibleServices.find((s) => s.value === serviceLevel);
@@ -710,13 +722,13 @@ export default function CheckoutPageCom() {
   }, [paymentOption, selectedAreaObj, remainingAfterBooking]);
 
   const amountDue =
-    paymentOption === "full_online"     ? subtotal + deliveryFee
+    paymentOption === "full_online"     ? subtotal + deliveryFee - couponDiscount
     : paymentOption === "booking"       ? totalBookingMoney
-    : paymentOption === "cod"           ? subtotal + deliveryFee + codCharge
+    : paymentOption === "cod"           ? subtotal + deliveryFee + codCharge - couponDiscount
     : paymentOption === "full_at_store" ? 0
-    : subtotal + deliveryFee;
+    : subtotal + deliveryFee - couponDiscount;
 
-  const total = subtotal + deliveryFee + codCharge;
+  const total = subtotal + deliveryFee + codCharge - couponDiscount;
   const fmt = (v: number) => "৳" + v.toLocaleString("en-IN");
 
   // ── Save new address to address book — called inside handleConfirmOrder ──────
@@ -922,7 +934,7 @@ export default function CheckoutPageCom() {
                 <p className="text-xs text-amber-700 dark:text-amber-300">You must log in to place an order.</p>
               </div>
             </div>
-            <Link href="/auth/login" className="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl">LOG IN NOW</Link>
+            <Link href="/auth/login?redirect=/checkout" className="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl">LOG IN NOW</Link>
           </div>
         )}
 
@@ -1100,6 +1112,53 @@ export default function CheckoutPageCom() {
                   </div>
                 </div>
               )}
+
+              {/* Apply Coupon Code */}
+              <div className="pt-4 border-t border-gray-100 dark:border-zinc-800">
+                {appliedCoupon ? (
+                  <div className="flex items-center justify-between gap-3 rounded-2xl bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/40 px-4 py-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-8 h-8 rounded-full bg-[#7B4F1E] flex items-center justify-center text-white shrink-0">
+                        <Ticket size={15} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{appliedCoupon.code} applied</p>
+                        <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">You saved {fmt(couponDiscount)}</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setAppliedCoupon(null)}
+                      aria-label="Remove coupon"
+                      className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-zinc-800 transition"
+                    >
+                      <XIcon size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setCouponModalOpen(true)}
+                    className="w-full rounded-2xl bg-[#FBF3E7] dark:bg-amber-950/20 border border-[#F0DFC4] dark:border-amber-900/40 px-4 py-3 text-left transition hover:bg-[#F7EBD9] dark:hover:bg-amber-950/30"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-full bg-[#7B4F1E] flex items-center justify-center text-white shrink-0">
+                          <Ticket size={15} />
+                        </div>
+                        <span className="text-sm font-bold text-gray-900 dark:text-white">Apply Coupon Code</span>
+                      </div>
+                      <ChevronRight size={18} className="text-gray-400 shrink-0" />
+                    </div>
+                    {COUPONS[0] && (
+                      <div className="mt-2.5 ml-10.5 inline-flex items-center gap-1.5 bg-white dark:bg-[#1c1917] rounded-lg px-2.5 py-1 text-xs font-semibold text-[#7B4F1E] dark:text-[#D4A97A] border border-[#F0DFC4] dark:border-amber-900/40">
+                        <Ticket size={11} />
+                        {COUPONS[0].description}
+                      </div>
+                    )}
+                  </button>
+                )}
+              </div>
 
               {/* Payment Option */}
               <div className="space-y-3 pt-4 border-t border-gray-100 dark:border-zinc-800">
@@ -1290,6 +1349,12 @@ export default function CheckoutPageCom() {
               {/* Totals */}
               <div className="space-y-3 pt-4 border-t border-gray-100 dark:border-zinc-800/80 text-sm font-semibold">
                 <div className="flex justify-between"><span className="text-gray-500">Subtotal</span><span>{fmt(subtotal)}</span></div>
+                {couponDiscount > 0 && (
+                  <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
+                    <span>Coupon ({appliedCoupon?.code})</span>
+                    <span>-{fmt(couponDiscount)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between"><span className="text-gray-500">Delivery Fee</span><span>{fmt(deliveryFee)}</span></div>
                 {codCharge > 0 && (
                   <div className="flex justify-between text-amber-600">
@@ -1333,6 +1398,15 @@ export default function CheckoutPageCom() {
           </div>
         </div>
       </div>
+
+      <AddCouponModal
+        isOpen={couponModalOpen}
+        onClose={() => setCouponModalOpen(false)}
+        onApply={(coupon: Coupon) => {
+          setAppliedCoupon(coupon);
+          setCouponModalOpen(false);
+        }}
+      />
 
       {/* Success Modal */}
       {orderConfirmed && (
