@@ -1,9 +1,10 @@
 "use client";
-import { useRef } from "react";
 import { Loader2, X, Download } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { ApiOrderItem, OrderTrackingResponse } from "./profile.types";
+import jsPDF from "jspdf";
+import { autoTable } from "jspdf-autotable";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 const fmtDate = (iso?: string) => {
@@ -19,9 +20,9 @@ const fmtDate = (iso?: string) => {
 /**
  * Shared invoice viewer + PDF download, used from both the order list
  * (quick action) and the order details page ("Invoice Details" button).
- * Downloading opens a print dialog scoped to the invoice markup only —
- * "Save as PDF" in that dialog is the actual PDF generator, no server
- * PDF service is needed for this.
+ * The PDF is built directly with jsPDF/autoTable — real, selectable-text
+ * pages saved straight to disk, not a print-dialog "Save as PDF" detour
+ * that depends on the browser's own print pipeline.
  */
 export default function InvoiceModal({
   order, onClose, authHeader, apiKey,
@@ -29,7 +30,6 @@ export default function InvoiceModal({
   order: ApiOrderItem; onClose: () => void; authHeader: string; apiKey: string;
 }) {
   const orderNo = order.comerzOrderNo;
-  const printRef = useRef<HTMLDivElement>(null);
   const { data: res, isLoading } = useQuery<OrderTrackingResponse>({
     queryKey: ["order-invoice-detail", orderNo],
     queryFn: () => api.get<OrderTrackingResponse>(`/order-tracking/${orderNo}`, {
@@ -38,33 +38,125 @@ export default function InvoiceModal({
     enabled: !!orderNo,
   });
   const d = res?.data;
-
-  const handleDownload = () => {
-    if (!printRef.current) return;
-    const html = printRef.current.innerHTML;
-    const win = window.open("", "_blank");
-    if (!win) return;
-    win.document.write(`
-      <html><head><title>Invoice #${orderNo}</title>
-      <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; color: #222; }
-        .inv-header { display: flex; justify-content: space-between; margin-bottom: 20px; }
-        .brand { font-size: 28px; font-weight: 900; }
-        .tm { font-size: 12px; vertical-align: super; }
-        table { width: 100%; border-collapse: collapse; margin-top: 16px; }
-        th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; font-size: 13px; }
-        th { background: #f5f5f5; font-weight: 700; }
-        .red { color: #e53e3e; } .green { color: #38a169; }
-        .bold { font-weight: 700; }
-      </style></head><body>${html}</body></html>
-    `);
-    win.document.close();
-    win.focus();
-    win.print();
-    win.close();
-  };
+  const billAddressLine1 = d?.addressLine1 || d?.address;
+  const billAddressLine2 = d?.addressLine2 || d?.address2;
 
   const duAmt = Math.max(0, (d?.grandAmount ?? order.total ?? 0) - (d?.paidAmount ?? 0));
+
+  const handleDownload = () => {
+    const doc = new jsPDF({ unit: "pt", format: "a4" });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const marginX = 40;
+    let y = 50;
+
+    // ── Brand + contact (left) ──
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(22);
+    doc.text("dazzle", marginX, y);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.text("TM", marginX + doc.getTextWidth("dazzle") + 2, y - 8);
+
+    doc.setFontSize(9);
+    doc.setTextColor(110);
+    doc.text("Dazzle Store, Dhaka, Bangladesh", marginX, y + 18);
+    doc.text("Hotline: 09638001122", marginX, y + 30);
+    doc.text("Whatsapp: 09638001122", marginX, y + 42);
+
+    // ── Invoice info + bill-to (right) ──
+    doc.setTextColor(20);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text(`Invoice no: ${orderNo}`, pageWidth - marginX, y, { align: "right" });
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(120);
+    doc.text(`Date: ${fmtDate(d?.createdAt || order.createdAt)}`, pageWidth - marginX, y + 14, { align: "right" });
+
+    let billY = y + 32;
+    if (d) {
+      doc.setTextColor(20);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.text("Bill to", pageWidth - marginX, billY, { align: "right" });
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.text(d.fullName || "", pageWidth - marginX, billY + 12, { align: "right" });
+      doc.text(d.mobile || "", pageWidth - marginX, billY + 24, { align: "right" });
+      const addr = billAddressLine2 ? `${billAddressLine1}, ${billAddressLine2}` : (billAddressLine1 || "");
+      const addrLines = doc.splitTextToSize(addr, 220);
+      doc.text(addrLines, pageWidth - marginX, billY + 36, { align: "right" });
+      billY += 36 + addrLines.length * 11;
+    }
+
+    const [dueR, dueG, dueB] = duAmt === 0 ? [56, 161, 105] : [229, 62, 62];
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(dueR, dueG, dueB);
+    doc.text(
+      `Due Amount: ${duAmt.toLocaleString("en-IN")} BDT (${duAmt === 0 ? "Paid" : "Unpaid"})`,
+      pageWidth - marginX,
+      billY + 16,
+      { align: "right" },
+    );
+
+    y = Math.max(y + 60, billY + 36);
+    doc.setDrawColor(220);
+    doc.line(marginX, y, pageWidth - marginX, y);
+    y += 18;
+
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(8);
+    doc.setTextColor(120);
+    const notice =
+      "*** Attention Please: dazzle sells only original Products. We offer anytime double money back guarantee if the product is not original ***";
+    const noticeLines = doc.splitTextToSize(notice, pageWidth - marginX * 2);
+    doc.text(noticeLines, marginX, y);
+    y += noticeLines.length * 10 + 10;
+
+    const rows =
+      order.comerzOrderItems && order.comerzOrderItems.length > 0
+        ? order.comerzOrderItems.map((item) => [
+            item.productName,
+            item.variantName || "N/A",
+            item.offerPrice.toLocaleString("en-IN"),
+            "1",
+            item.finalPrice.toLocaleString("en-IN"),
+          ])
+        : [
+            [
+              `${order.productCount} product${order.productCount !== 1 ? "s" : ""}`,
+              "N/A",
+              (order.productPrice ?? 0).toLocaleString("en-IN"),
+              String(order.productCount),
+              `${order.total.toLocaleString("en-IN")}${order.paymentType === "COD" ? " (1% COD)" : ""}`,
+            ],
+          ];
+
+    autoTable(doc, {
+      startY: y,
+      head: [["Product", "Accessory", "Unit Price", "Quantity", "Total"]],
+      body: rows,
+      foot: [
+        ["Shipping", "", "", "", String(order.deliveryFee ?? 0)],
+        ["Discount Total", "", "", "", String(order.discount ?? 0)],
+        ["Paid Amount", "", "", "", (d?.paidAmount ?? 0).toLocaleString("en-IN")],
+        ["Due Amount", "", "", "", duAmt.toLocaleString("en-IN")],
+        ["Total", "", "", "", order.total.toLocaleString("en-IN")],
+      ],
+      margin: { left: marginX, right: marginX },
+      styles: { fontSize: 9, textColor: 90, lineColor: 220, lineWidth: 0.5 },
+      headStyles: { fillColor: [245, 245, 245], textColor: 20, fontStyle: "bold" },
+      footStyles: { fillColor: [245, 245, 245], textColor: 20, fontStyle: "bold" },
+      columnStyles: {
+        2: { halign: "right" },
+        3: { halign: "center" },
+        4: { halign: "right" },
+      },
+    });
+
+    doc.save(`Invoice-${orderNo}.pdf`);
+  };
 
   return (
     <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={onClose}>
@@ -84,7 +176,7 @@ export default function InvoiceModal({
         {isLoading ? (
           <div className="flex items-center justify-center py-16"><Loader2 className="w-8 h-8 text-[#B57908] animate-spin" /></div>
         ) : (
-          <div ref={printRef} className="px-6 pb-6">
+          <div className="px-6 pb-6">
             {/* Invoice top */}
             <div className="border border-gray-200 rounded-xl p-5 mb-4">
               <div className="flex items-start justify-between flex-wrap gap-4">
@@ -106,7 +198,7 @@ export default function InvoiceModal({
                       <p className="font-bold text-gray-900 text-sm">Bill to</p>
                       <p className="font-semibold">{d.fullName}</p>
                       <p>{d.mobile}</p>
-                      <p className="max-w-[200px]">{d.address}{d.address2 ? `, ${d.address2}` : ""}</p>
+                      <p className="max-w-[200px]">{billAddressLine1}{billAddressLine2 ? `, ${billAddressLine2}` : ""}</p>
                     </div>
                   )}
                   <div className="mt-3 flex items-center gap-2 justify-end">
