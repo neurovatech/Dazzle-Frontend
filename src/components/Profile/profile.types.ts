@@ -94,6 +94,12 @@ export interface OrderTrackingData {
   mobile: string;
   address: string;
   address2?: string;
+  /** Real field names on the live API — `address`/`address2` above are kept for back-compat. */
+  addressLine1?: string;
+  addressLine2?: string;
+  addressLabel?: string;
+  isHomeDelivery?: boolean;
+  isStorePickup?: boolean;
   deliveryIns?: string;
   customerNotes?: string;
   subTotal: number;

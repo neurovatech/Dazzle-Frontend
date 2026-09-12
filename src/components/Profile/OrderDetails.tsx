@@ -737,6 +737,20 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
   // Payment allowed only in steps 0 (Placed) and 1 (Confirmed), not when cancelled
   const canPayDue = activeStep >= 0 && activeStep <= 1 && dueAmount > 0;
 
+  // ── Delivery address — order-tracking's own isStorePickup/isHomeDelivery
+  // and addressLine1/addressLine2 are the live, authoritative fields for this
+  // order; rawOrder (from order-list) can disagree and is only a fallback for
+  // while tracking data hasn't loaded yet.
+  const isPickupDelivery = trackingData
+    ? trackingData.isStorePickup === true
+    : !!(rawOrder?.isStorePickup || rawOrder?.isShopPickup);
+  const deliveryAddressLabel = trackingData?.addressLabel || rawOrder?.addressLabel;
+  const deliveryAddressLine1 = trackingData?.addressLine1 || trackingData?.address;
+  const deliveryAddressLine2 = trackingData?.addressLine2 || trackingData?.address2;
+  const deliveryAddressText = deliveryAddressLine2
+    ? `${deliveryAddressLine1} — ${deliveryAddressLine2}`
+    : deliveryAddressLine1 || rawOrder?.addressLine1;
+
   const handlePayDue = () => {
     if (!canPayDue) return;
     setShowPayDueModal(true);
@@ -992,7 +1006,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
       <div>
         <h3 className="text-xl font-bold mb-3 text-gray-800 dark:text-white">Delivery Address</h3>
         <div className="bg-white dark:bg-[#2e2a27] p-4 rounded-2xl border border-gray-100 dark:border-zinc-800/80 space-y-3">
-          {rawOrder?.isStorePickup || rawOrder?.isShopPickup ? (
+          {isPickupDelivery ? (
             /* Store Pickup */
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 bg-amber-50 dark:bg-amber-950/40 rounded-xl flex items-center justify-center shrink-0 border border-amber-100 dark:border-amber-900">
@@ -1004,7 +1018,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
                   {trackingData?.fullName || order?.rawApiData?.userFullName || "Customer"}
                 </p>
                 <p className="text-sm text-gray-500 dark:text-gray-300 mt-0.5">
-                  {trackingData?.address || "Store address not available"}
+                  {deliveryAddressLine1 || "Store address not available"}
                 </p>
               </div>
             </div>
@@ -1024,18 +1038,14 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
                   )}
                 </h4>
                 {/* Address label */}
-                {rawOrder?.addressLabel && (
+                {deliveryAddressLabel && (
                   <span className="inline-block text-[12px] bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full font-semibold">
-                    {rawOrder.addressLabel}
+                    {deliveryAddressLabel}
                   </span>
                 )}
                 {/* Full address */}
                 <p className="text-sm text-gray-500 dark:text-gray-300 leading-relaxed">
-                  {trackingData?.address2
-                    ? `${trackingData.address} — ${trackingData.address2}`
-                    : trackingData?.address
-                    || rawOrder?.addressLine1
-                    || "Address details not available"}
+                  {deliveryAddressText || "Address details not available"}
                 </p>
                 {/* Delivery instruction */}
                 {(trackingData?.deliveryIns || rawOrder?.deliveryIns) && (
@@ -1168,7 +1178,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
               <div className="flex justify-between items-center text-sm font-medium text-gray-600 dark:text-gray-300 pb-2 border-b border-gray-100 dark:border-zinc-800">
                 <span>Delivery Type</span>
                 <span className="font-semibold text-gray-800 dark:text-white">
-                  {rawOrder?.isHomeDelivery ? "🏠 Home Delivery" : rawOrder?.isStorePickup || rawOrder?.isShopPickup ? "🏪 Store Pickup" : "—"}
+                  {isPickupDelivery ? "🏪 Store Pickup" : "🏠 Home Delivery"}
                 </span>
               </div>
 

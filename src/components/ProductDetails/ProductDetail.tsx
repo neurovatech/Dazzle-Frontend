@@ -79,6 +79,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
           planGroup: string;
           items: {
             accessoriesUuid: string;
+            bundleProdUuid: string;
             bundleCode: string;
             planGroup: string;
             productCode: string;
@@ -333,7 +334,9 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
       //               || "";
 
       return {
-        id: item.accessoriesUuid,
+        // The order-creation API expects the plan's own product uuid here,
+        // not the plan-accessories catalog row's accessoriesUuid.
+        id: item.bundleProdUuid,
         title,
         description,
         price: optPrice,
