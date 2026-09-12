@@ -3,7 +3,7 @@ import { Loader2, X, Download } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { ApiOrderItem, OrderTrackingResponse } from "./profile.types";
-import jsPDF from "jspdf";
+import { jsPDF } from "jspdf";
 import { autoTable } from "jspdf-autotable";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -53,9 +53,13 @@ export default function InvoiceModal({
     doc.setFont("helvetica", "bold");
     doc.setFontSize(22);
     doc.text("dazzle", marginX, y);
+    // Width must be measured at the font size "dazzle" was actually drawn at —
+    // measuring after switching to the smaller "TM" font undersizes it and
+    // lands "TM" mid-word instead of after the wordmark.
+    const dazzleWidth = doc.getTextWidth("dazzle");
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
-    doc.text("TM", marginX + doc.getTextWidth("dazzle") + 2, y - 8);
+    doc.text("TM", marginX + dazzleWidth + 2, y - 8);
 
     doc.setFontSize(9);
     doc.setTextColor(110);
