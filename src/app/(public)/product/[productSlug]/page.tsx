@@ -137,8 +137,7 @@ const getProduct = cache((productSlug: string) =>
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { productSlug } = await params;
  
-  const res = await getProduct(productSlug).catch(() => null);
- 
+  const res = await getProduct(productSlug).catch(() => null); 
   if (!res?.found || !res?.data) {
     // No API data available at all — nothing to build metadata from.
     return {};

@@ -26,9 +26,9 @@ export default async function ShopBrandSectionCom() {
   return (
     <div className="md:px-12.5 px-4">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="md:text-[32px] text-[20px] font-bold text-transparent bg-clip-text bg-[linear-gradient(90deg,#101518_0%,#E9CCAE_46.15%,#B57908_100%)] dark:text-white">
+        <h1 className="md:text-[32px] text-[20px] font-bold text-transparent bg-clip-text bg-[linear-gradient(90deg,#101518_0%,#E9CCAE_46.15%,#B57908_100%)] dark:text-white">
           Shop by Brand
-        </h3>
+        </h1>
         <Link href="/brands" className="text-sm font-medium text-primary  bg-orange-50 border-orange-200 px-4 py-2 rounded-[10px] dark:text-[#2e2b28]  hover:underline hover:text-[#CB843B]! transition-colors duration-300 ">
           See all
         </Link>

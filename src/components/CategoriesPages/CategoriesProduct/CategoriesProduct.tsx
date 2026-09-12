@@ -477,13 +477,13 @@ function CategoriesProduct({
 
       <div className="md:hidden flex md:px-12.5 px-4 pt-2 md:mt-[15px] flex-wrap items-center justify-between gap-3 md:pb-3 relative">
         <div className="md:hidden block">
-          <h3 className="md:text-[32px] text-[20px] font-bold text-transparent bg-clip-text bg-[linear-gradient(90deg,#101518_0%,#E9CCAE_46.15%,#B57908_100%)] dark:text-white">
+          <h1 className="md:text-[32px] text-[20px] font-bold text-transparent bg-clip-text bg-[linear-gradient(90deg,#101518_0%,#E9CCAE_46.15%,#B57908_100%)] dark:text-white">
             Products of{" "}
             <span className="capitalize">
               {" "}
               {subCategorySlug || categorySlug}{" "}
             </span>
-          </h3>
+          </h1>
           {/* <p className="text-xs text-gray-400 mt-0.5">
             {displayTotal.toLocaleString()} products found
             {selectedBrandSlug && (

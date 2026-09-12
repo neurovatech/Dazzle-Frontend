@@ -315,9 +315,9 @@ function AllProducts({
 
       <div className="md:flex md:flex-wrap items-center justify-between gap-3 pb-3 hidden">
         <div>
-          <h3 className="md:text-[32px] text-[20px] font-bold text-transparent bg-clip-text bg-[linear-gradient(90deg,#101518_0%,#E9CCAE_46.15%,#B57908_100%)] dark:text-white">
+          <h1 className="md:text-[32px] text-[20px] font-bold text-transparent bg-clip-text bg-[linear-gradient(90deg,#101518_0%,#E9CCAE_46.15%,#B57908_100%)] dark:text-white">
             Products of <span className="capitalize"> {subCategorySlug || categorySlug} </span>
-          </h3>
+          </h1>
           <p className="text-xs text-gray-400 mt-0.5">
             {displayTotal.toLocaleString()} products found
             {selectedBrandSlug && (

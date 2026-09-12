@@ -733,7 +733,6 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
   }
 
   const alertLogs = trackingData?.alertsLogs || [];
-  console.log("trackingData", trackingData)
 
   return (
     <div className="p-5 rounded-3xl bg-[#F7F7F7] dark:bg-[#393430] font-sans space-y-6">

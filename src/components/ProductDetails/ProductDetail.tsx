@@ -134,6 +134,8 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
     );
   }, [groups, variants, selectedAttrs]);
 
+  console.log(selectedVariant, "selectedVariant")
+
   const isOptionAvailable = (group: string, option: string) =>
     variants.some(
       (v) =>
@@ -719,7 +721,9 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
               <PriceAvailability
                 product={product}
                 offerPrice={
-                  selectedVariant?.price === 0 ? price : selectedVariant?.price
+                  selectedVariant && selectedVariant.price > 0
+                    ? selectedVariant.price
+                    : price
                 }
                 originalPrice={originalPrice}
                 careTotalOffer={careTotalOffer}

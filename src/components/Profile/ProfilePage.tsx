@@ -24,7 +24,7 @@ const Profile: React.FC = () => {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get("tab");
-    const validTabs: ActiveLabel[] = ["Wishlist", "Orders", "Address", "Coupons", "Compare", "Change Password"];
+    const validTabs: ActiveLabel[] = ["Orders", "Wishlist",  "Address", "Coupons", "Compare", "Change Password"];
     if (tab && validTabs.includes(tab as ActiveLabel)) {
       setActiveLabel(tab as ActiveLabel);
       setMobileView(tab as ActiveLabel);
@@ -82,10 +82,12 @@ const Profile: React.FC = () => {
     if (showOtp) return <ProfileOtp />;
 
     switch (activeLabel) {
-      case "Wishlist":
-        return <WishList />;
       case "Orders":
         return <Orders onOrderClick={setSelectedOrder} />;
+
+      case "Wishlist":
+        return <WishList />;
+      
       case "Address":
         return <DeliveryAddress />;
       // case "Coupons":
@@ -196,7 +198,7 @@ const Profile: React.FC = () => {
               {!selectedOrder && !showOtp && (
                 <h1
                   className={`text-3xl font-bold text-gray-900 dark:text-white ${
-                    activeLabel === "Wishlist" ? "mb-8" : "mb-6"
+                    activeLabel === "Orders" ? "mb-8" : "mb-6"
                   }`}
                 >
                   {pageTitle}

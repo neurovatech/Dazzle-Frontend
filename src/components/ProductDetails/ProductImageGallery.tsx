@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import ProductImageThumbnails from "./ProductImageThumbnails";
 import { X, ChevronLeft, ChevronRight, ZoomIn } from "lucide-react";
@@ -141,8 +142,17 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
         />
       </div>
 
-      {/* ── Lightbox ── */}
-      {lightboxOpen && (
+      {/* ── Lightbox ──
+          Rendered through a portal straight onto <body>: the gallery's own
+          column is `lg:sticky` (see ProductDetail.tsx) so it and everything
+          left rendered in-place inside it forms its own stacking context.
+          A `position: fixed` element trapped inside that context can only
+          ever paint above OTHER content inside the same context — no
+          z-index value escapes it — so at the sticky ancestor's stacking
+          level, this lightbox was rendering BELOW unrelated page content
+          like the sticky header, letting it show through on top of the
+          modal. Porting straight to <body> sidesteps the trap entirely. */}
+      {lightboxOpen && typeof document !== "undefined" && createPortal(
         <div
           className="fixed inset-0 z-[10000] bg-black/90 flex flex-col items-center"
           onClick={closeLightbox}
@@ -258,7 +268,8 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
               })}
             </div>
           )}
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   );
