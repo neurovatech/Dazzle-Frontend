@@ -146,22 +146,31 @@ const DazzleCare: React.FC<DazzleCareProps> = ({ options, onSelectionChange }) =
                           Save {formatPrice(opt.originalPrice - opt.price)}
                         </p>
                       )}
-                      <p className="text-sm font-bold text-gray-900 whitespace-nowrap">
+                      <p className="text-sm font-bold text-gray-900 whitespace-nowrap flex gap-2">
                         {opt.price > 0 ? formatPrice(opt.price) : (
                           <span className="text-gray-400 text-xs">Calculated on purchase</span>
                         )}
+
+                        {warrantyYrs && (
+                    <span className="lg:hidden flex  text-[10px] font-semibold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full">
+                      {warrantyYrs} Coverage
+                    </span>
+                  )}
                       </p>
                       {hasSaving && (
                         <p className="text-xs text-gray-400 line-through whitespace-nowrap">
-                          {formatPrice(opt.originalPrice)}
+                          {formatPrice(opt.originalPrice)} 
+                           
                         </p>
                       )}
+
+                      
                     </div>
                   </div>
 
                   {/* Warranty badge */}
                   {warrantyYrs && (
-                    <span className="inline-block text-[10px] font-semibold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full">
+                    <span className="lg:inline-block hidden text-[10px] font-semibold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full">
                       {warrantyYrs} Coverage
                     </span>
                   )}

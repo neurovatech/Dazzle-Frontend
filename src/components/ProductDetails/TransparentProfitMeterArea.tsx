@@ -122,7 +122,7 @@ export default function TransparentProfitMeterArea({
   const dazzlePrice = liveData?.discountedPrice ?? price;
 
   return (
-    <div className="lg:flex gap-3 my-6">
+    <div className="flex gap-3 my-6">
 
       {/* ── 1. Transparent Profit Meter button ── */}
       <button onClick={() => setShowProfit(true)}
