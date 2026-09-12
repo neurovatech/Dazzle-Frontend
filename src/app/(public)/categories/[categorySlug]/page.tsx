@@ -314,7 +314,7 @@ export default async function CategoriesPage({
         <div className="lg:col-span-3 md:block hidden"></div>
         <div className="lg:col-span-9">
         {seoBottomContent && (
-          <section className="md:px-12.5 px-4 pb-14 pt-6">
+          <section className="md:px-12.5 px-4 pb-14 pt-6 overflow-hidden">
             <div className="max-w-4xl">
               <article
                 className={SEO_RICH_TEXT_CLASS}

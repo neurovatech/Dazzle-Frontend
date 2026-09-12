@@ -303,7 +303,7 @@ export default async function BrandDetailsPage({
           <div className="lg:col-span-3 md:block hidden"></div>
           <div className="lg:col-span-9">
             {brandSeoContent && (
-              <section className="px-4 ">
+              <section className="px-4 overflow-hidden">
                 <div className="max-w-4xl">
                   <article
                     className="text-sm leading-relaxed text-[#222] dark:text-white

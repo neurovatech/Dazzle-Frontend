@@ -49,6 +49,12 @@ async function handleProxy(
         }
       } else if (contentType.includes("multipart/form-data")) {
         fetchOptions.body = await request.formData();
+        // The re-parsed FormData gets a brand-new boundary when fetch serializes
+        // it again — forwarding the browser's original content-type header would
+        // leave a stale boundary that doesn't match the actual body, so the
+        // backend can't parse any fields. Dropping it lets fetch set a fresh,
+        // correct Content-Type for the new body.
+        headers.delete("content-type");
       } else {
         const bodyText = await request.text();
         if (bodyText) {

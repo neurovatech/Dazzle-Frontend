@@ -30,6 +30,7 @@ import {
   ReturnReason,
   OrderTrackingResponse,
   OrderTrackingData,
+  OrderListResponse,
 } from "./profile.types";
 import InvoiceModal from "./InvoiceModal";
 import Image from "next/image";
@@ -97,8 +98,8 @@ const ReturnModal: React.FC<ReturnModalProps> = ({ orderNo, onClose }) => {
               <RotateCcw size={18} className="text-orange-600" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white">Return Request</h2>
-              <p className="text-xs text-gray-400">Order #{orderNo}</p>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Return Request</h2>
+              <p className="text-sm text-gray-400">Order #{orderNo}</p>
             </div>
           </div>
           <button
@@ -115,11 +116,11 @@ const ReturnModal: React.FC<ReturnModalProps> = ({ orderNo, onClose }) => {
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle size={32} className="text-green-600" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Request Submitted!</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Request Submitted!</h3>
+              <p className="text-base text-gray-500 dark:text-gray-400 mb-2">
                 Your return request for Order <strong>#{orderNo}</strong> has been received.
               </p>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mb-6">
+              <p className="text-sm text-gray-400 dark:text-gray-500 mb-6">
                 Our team will contact you within 24-48 hours to arrange pickup.
               </p>
               <button
@@ -132,7 +133,7 @@ const ReturnModal: React.FC<ReturnModalProps> = ({ orderNo, onClose }) => {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-base font-semibold text-gray-700 dark:text-gray-300 mb-2">
                   Reason for Return <span className="text-red-500">*</span>
                 </label>
                 <div className="space-y-2">
@@ -153,14 +154,14 @@ const ReturnModal: React.FC<ReturnModalProps> = ({ orderNo, onClose }) => {
                         onChange={() => setReason(r)}
                         className="accent-[#7A4500]"
                       />
-                      <span className="text-sm text-gray-700 dark:text-gray-300">{r}</span>
+                      <span className="text-base text-gray-700 dark:text-gray-300">{r}</span>
                     </label>
                   ))}
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-base font-semibold text-gray-700 dark:text-gray-300 mb-2">
                   Additional Details <span className="text-gray-400 font-normal">(optional)</span>
                 </label>
                 <textarea
@@ -168,7 +169,7 @@ const ReturnModal: React.FC<ReturnModalProps> = ({ orderNo, onClose }) => {
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Describe the issue in more detail..."
                   rows={3}
-                  className="w-full border border-gray-200 dark:border-gray-600 rounded-2xl px-4 py-3 text-sm dark:bg-[#1e1a17] dark:text-white focus:outline-none focus:border-[#7A4500] resize-none placeholder:text-gray-400"
+                  className="w-full border border-gray-200 dark:border-gray-600 rounded-2xl px-4 py-3 text-base dark:bg-[#1e1a17] dark:text-white focus:outline-none focus:border-[#7A4500] resize-none placeholder:text-gray-400"
                 />
               </div>
 
@@ -234,16 +235,16 @@ const ReturnWidget: React.FC<ReturnWidgetProps> = ({ orderDateISO, isDelivered, 
           <div className="flex-1">
             {canReturn ? (
               <>
-                <p className="text-sm font-semibold text-green-700 dark:text-green-400">Return Available</p>
-                <p className="text-xs text-green-600 dark:text-green-500 mt-0.5">
+                <p className="text-base font-semibold text-green-700 dark:text-green-400">Return Available</p>
+                <p className="text-sm text-green-600 dark:text-green-500 mt-0.5">
                   <Clock size={11} className="inline mr-1" />
                   {daysLeft} day{daysLeft !== 1 ? "s" : ""} left in your 7-day return window
                 </p>
               </>
             ) : (
               <>
-                <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">Return Window Closed</p>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                <p className="text-base font-semibold text-gray-500 dark:text-gray-400">Return Window Closed</p>
+                <p className="text-sm text-gray-400 dark:text-gray-500 mt-0.5">
                   Maximum 7 days return policy. This order was placed {daysAgo} days ago.
                 </p>
               </>
@@ -253,7 +254,7 @@ const ReturnWidget: React.FC<ReturnWidgetProps> = ({ orderDateISO, isDelivered, 
           {canReturn && (
             <button
               onClick={() => setShowModal(true)}
-              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-xl transition-colors flex-shrink-0"
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-xl transition-colors flex-shrink-0"
             >
               Return Item
             </button>
@@ -292,19 +293,19 @@ function CancelOrderModal({
         <div className="w-14 h-14 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
           <XOctagon size={26} className="text-red-500" />
         </div>
-        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1.5 text-center">Cancel this order?</h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 text-center">
+        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1.5 text-center">Cancel this order?</h3>
+        <p className="text-base text-gray-500 dark:text-gray-400 mb-4 text-center">
           Order <strong>#{orderNo}</strong>. This action cannot be undone.
         </p>
 
         {/* Reason selector */}
         <div className="mb-5">
-          <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-semibold text-gray-600 dark:text-gray-300 mb-2">
             Reason for cancellation <span className="text-red-500">*</span>
           </label>
           <div className="space-y-2">
             {CANCEL_REASONS.map((r) => (
-              <label key={r} className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl border cursor-pointer transition-all text-sm ${
+              <label key={r} className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl border cursor-pointer transition-all text-base ${
                 selectedReason === r
                   ? "border-red-400 bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-300"
                   : "border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-red-200"
@@ -334,10 +335,10 @@ function CancelOrderModal({
                 placeholder="Please describe your reason..."
                 rows={3}
                 autoFocus
-                className="w-full border border-gray-200 dark:border-gray-600 rounded-2xl px-4 py-3 text-sm dark:bg-[#1e1a17] dark:text-white focus:outline-none focus:border-red-400 resize-none placeholder:text-gray-400 mt-1"
+                className="w-full border border-gray-200 dark:border-gray-600 rounded-2xl px-4 py-3 text-base dark:bg-[#1e1a17] dark:text-white focus:outline-none focus:border-red-400 resize-none placeholder:text-gray-400 mt-1"
               />
               {customReason.trim().length === 0 && (
-                <p className="text-xs text-red-400 mt-1">Please enter a reason to continue.</p>
+                <p className="text-sm text-red-400 mt-1">Please enter a reason to continue.</p>
               )}
             </div>
           )}
@@ -347,14 +348,14 @@ function CancelOrderModal({
           <button
             onClick={onClose}
             disabled={loading}
-            className="flex-1 py-3 rounded-2xl border border-gray-200 dark:border-gray-600 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
+            className="flex-1 py-3 rounded-2xl border border-gray-200 dark:border-gray-600 text-base font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
           >
             No, keep it
           </button>
           <button
             onClick={() => canSubmit && onConfirm(finalReason)}
             disabled={!canSubmit}
-            className="flex-1 py-3 rounded-2xl bg-red-600 hover:bg-red-700 text-white text-sm font-semibold transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+            className="flex-1 py-3 rounded-2xl bg-red-600 hover:bg-red-700 text-white text-base font-semibold transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
           >
             {loading && <Loader2 size={15} className="animate-spin" />}
             Yes, cancel it
@@ -415,8 +416,8 @@ function PayDueModal({
               <Wallet size={17} className="text-amber-700 dark:text-amber-400" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-gray-900 dark:text-white">Pay Due Amount</h2>
-              <p className="text-xs text-gray-400">Order #{orderNo}</p>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">Pay Due Amount</h2>
+              <p className="text-sm text-gray-400">Order #{orderNo}</p>
             </div>
           </div>
           <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-zinc-700 transition">
@@ -430,8 +431,8 @@ function PayDueModal({
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle size={32} className="text-green-600" />
               </div>
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">Payment Submitted!</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Payment Submitted!</h3>
+              <p className="text-base text-gray-500 dark:text-gray-400 mb-5">
                 Your payment of <strong>৳{parsedAmount.toLocaleString("en-IN")}</strong> via <strong>{METHODS.find(m => m.value === method)?.label}</strong> has been recorded.
               </p>
               <button onClick={onClose} className="w-full py-3 bg-[#7A4500] text-white rounded-2xl font-semibold hover:bg-[#5a3300] transition">
@@ -442,11 +443,11 @@ function PayDueModal({
             <div className="space-y-5">
               {/* Order summary */}
               <div className="bg-amber-50 dark:bg-amber-950/20 rounded-2xl p-4 space-y-2">
-                <div className="flex justify-between text-xs text-gray-600 dark:text-gray-300">
+                <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300">
                   <span>Order Total</span>
                   <span className="font-semibold">৳{(dueAmount).toLocaleString("en-IN")}</span>
                 </div>
-                <div className="flex justify-between text-xs font-bold text-red-600 dark:text-red-400 border-t border-amber-200 dark:border-amber-800 pt-2">
+                <div className="flex justify-between text-sm font-bold text-red-600 dark:text-red-400 border-t border-amber-200 dark:border-amber-800 pt-2">
                   <span>Remaining Due</span>
                   <span>৳{dueAmount.toLocaleString("en-IN")}</span>
                 </div>
@@ -454,26 +455,26 @@ function PayDueModal({
 
               {/* Amount input */}
               <div>
-                <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1.5">
+                <label className="block text-sm font-semibold text-gray-600 dark:text-gray-300 mb-1.5">
                   Payment Amount <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-gray-500">৳</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-base font-bold text-gray-500">৳</span>
                   <input
                     type="number"
                     value={amount}
                     onChange={(e) => { setAmount(e.target.value); setError(""); }}
                     min={1}
                     max={dueAmount}
-                    className="w-full pl-8 pr-4 py-3 rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-sm text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-400"
+                    className="w-full pl-8 pr-4 py-3 rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-base text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-400"
                   />
                 </div>
-                {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+                {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
               </div>
 
               {/* Payment method */}
               <div>
-                <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-semibold text-gray-600 dark:text-gray-300 mb-2">
                   Payment Method <span className="text-red-500">*</span>
                 </label>
                 <div className="grid grid-cols-2 gap-2">
@@ -492,8 +493,8 @@ function PayDueModal({
                         <Image src={m.imgSrc} alt={m.label} className="h-6 w-auto object-contain" />
                       ) : (
                         <>
-                          <span className="text-base">{m.icon}</span>
-                          <span className={`text-sm font-semibold truncate ${
+                          <span className="text-lg">{m.icon}</span>
+                          <span className={`text-base font-semibold truncate ${
                             method === m.value
                               ? "text-amber-800 dark:text-amber-300"
                               : "text-gray-600 dark:text-gray-300"
@@ -509,7 +510,7 @@ function PayDueModal({
               <button
                 onClick={handlePay}
                 disabled={loading || parsedAmount <= 0}
-                className="w-full py-3.5 bg-[#7A4500] hover:bg-[#5a3300] text-white rounded-2xl font-bold text-sm transition disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full py-3.5 bg-[#7A4500] hover:bg-[#5a3300] text-white rounded-2xl font-bold text-base transition disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <><Loader2 size={16} className="animate-spin" /> Processing...</>
@@ -612,7 +613,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
   const authHeader = token ? (token.startsWith("Bearer ") ? token : `Bearer ${token}`) : "";
 
   // ── Fetch Tracking details from API ──
-  const { data: trackingRes, isLoading, refetch: refetchTracking } = useQuery<OrderTrackingResponse>({
+  const { data: trackingRes, isLoading } = useQuery<OrderTrackingResponse>({
     queryKey: ["order-tracking", orderNo],
     queryFn: async () => api.get<OrderTrackingResponse>(`/order-tracking/${orderNo}`, {
       headers: { Authorization: authHeader, "X-API-Key": apiKey || "" },
@@ -673,12 +674,32 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
 
       if (res?.statusCode === 200 && res?.status === "success") {
         toast.success("Order cancelled successfully.");
-        // 1. Immediately refetch tracking data → UI updates without reload
-        await refetchTracking();
-        // 2. Invalidate order list cache
+
+        // The cancel call can succeed on the backend before its own read APIs
+        // (order-tracking / order-list) catch up, so an immediate refetch can
+        // still come back saying "not cancelled" — that's what was forcing a
+        // manual reload for Cancel/Pay Due to actually disable. Since the POST
+        // above already confirmed the cancellation, write it into the cache
+        // directly so both buttons disable instantly, then let a background
+        // invalidation reconcile with the server whenever it catches up.
+        queryClient.setQueryData<OrderTrackingResponse>(
+          ["order-tracking", orderNo],
+          (old) => (old?.data ? { ...old, data: { ...old.data, orderCancelled: true } } : old),
+        );
+        queryClient.setQueriesData<OrderListResponse>(
+          { queryKey: ["order-list"] },
+          (old) =>
+            old
+              ? {
+                  ...old,
+                  data: old.data.map((o) =>
+                    o.comerzOrderNo === orderNo ? { ...o, isCancelled: true } : o,
+                  ),
+                }
+              : old,
+        );
         queryClient.invalidateQueries({ queryKey: ["order-list"] });
-        queryClient.invalidateQueries({ queryKey: ["order-tracking", orderNo] });
-        // 3. Redirect to profile Orders tab
+        // Redirect to profile Orders tab
         router.push("/profile?tab=Orders");
       } else {
         const msg = res?.errors?.join(", ") || res?.message || "Failed to cancel order.";
@@ -725,7 +746,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
     return (
       <div className="p-12 text-center bg-[#F7F7F7] dark:bg-[#393430] rounded-3xl flex flex-col items-center justify-center font-sans">
         <Loader2 className="w-8 h-8 text-[#7A4500] animate-spin mb-3" />
-        <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+        <p className="text-base font-medium text-gray-600 dark:text-gray-300">
           Fetching tracking details for Order #{orderNo}...
         </p>
       </div>
@@ -739,16 +760,16 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
       {/* Header Section */}
       <div className="rounded-2xl flex justify-between items-start flex-wrap gap-4">
         <div>
-          <h2 className="text-[#7A4500] dark:text-[#d48c34] text-xl font-bold">
+          <h2 className="text-[#7A4500] dark:text-[#d48c34] text-2xl font-bold">
             Order #{trackingData?.orderNo || orderNo}
           </h2>
-          <p className="text-gray-400 text-xs mt-1">
+          <p className="text-gray-400 text-sm mt-1">
             Placed on {formatDate(trackingData?.createdAt || order?.orderDate)}
           </p>
         </div>
 
         <span
-          className={`text-xs font-semibold px-3 py-1 rounded-full ${
+          className={`text-sm font-semibold px-3 py-1 rounded-full ${
             statusText === "Cancelled"
               ? "bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400"
               : statusText === "Delivered"
@@ -764,13 +785,13 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
       <div className="flex flex-wrap items-center gap-2">
         <button
           onClick={() => setShowInvoice(true)}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white dark:bg-[#2e2a27] border border-gray-200 dark:border-zinc-700 text-xs font-bold text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-zinc-800 transition"
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white dark:bg-[#2e2a27] border border-gray-200 dark:border-zinc-700 text-sm font-bold text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-zinc-800 transition"
         >
           <FileText size={14} /> Invoice Details
         </button>
         <Link
           href="/support"
-          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white dark:bg-[#2e2a27] border border-gray-200 dark:border-zinc-700 text-xs font-bold text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-zinc-800 transition"
+          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white dark:bg-[#2e2a27] border border-gray-200 dark:border-zinc-700 text-sm font-bold text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-zinc-800 transition"
         >
           <HelpCircle size={14} /> Need Help?
         </Link>
@@ -780,7 +801,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
             onClick={() => canCancel && setShowCancelModal(true)}
             disabled={!canCancel}
             title={!canCancel ? "This order can no longer be cancelled because shipping has already started" : undefined}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl border text-xs font-bold transition ml-auto ${
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl border text-sm font-bold transition ml-auto ${
               canCancel
                 ? "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/50"
                 : "bg-gray-100 dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 text-gray-400 cursor-not-allowed"
@@ -793,7 +814,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
 
       {/* ── Why cancellation is unavailable ── */}
       {!isTerminal && !canCancel && (
-        <div className="flex items-start gap-2.5 p-3.5 rounded-2xl bg-gray-100 dark:bg-zinc-800/60 border border-gray-200 dark:border-zinc-700 text-xs text-gray-500 dark:text-gray-400">
+        <div className="flex items-start gap-2.5 p-3.5 rounded-2xl bg-gray-100 dark:bg-zinc-800/60 border border-gray-200 dark:border-zinc-700 text-sm text-gray-500 dark:text-gray-400">
           <Truck size={15} className="mt-0.5 shrink-0" />
           <span>Shipping has already started, so this order can no longer be cancelled. If you still need to cancel it, please contact support.</span>
         </div>
@@ -808,10 +829,10 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
           <div className="flex-1">
             <div className="flex items-start justify-between gap-3 flex-wrap">
               <div>
-                <p className="text-sm font-bold text-amber-900 dark:text-amber-200">
+                <p className="text-base font-bold text-amber-900 dark:text-amber-200">
                   Due: ৳{dueAmount.toLocaleString("en-IN")}
                 </p>
-                <p className="text-xs text-amber-700 dark:text-amber-300 mt-1 leading-relaxed max-w-md">
+                <p className="text-sm text-amber-700 dark:text-amber-300 mt-1 leading-relaxed max-w-md">
                   {isBookingMoney
                     ? "Only the booking money (advance) has been paid. The remaining amount is due on delivery."
                     : isCOD
@@ -819,7 +840,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
                     : "This order hasn't been fully paid yet."}
                 </p>
                 {!canPayDue && activeStep >= 2 && (
-                  <p className="text-xs text-red-500 dark:text-red-400 mt-1.5 flex items-center gap-1">
+                  <p className="text-sm text-red-500 dark:text-red-400 mt-1.5 flex items-center gap-1">
                     <AlertTriangle size={11} />
                     Payment is disabled for Shipping or Completed/Cancelled orders.
                   </p>
@@ -828,7 +849,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
               <button
                 onClick={handlePayDue}
                 disabled={!canPayDue}
-                className={`shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition ${
+                className={`shrink-0 px-4 py-2 rounded-xl text-sm font-bold transition ${
                   canPayDue
                     ? "bg-[#7A4500] hover:bg-[#5a3300] text-white"
                     : "bg-gray-200 dark:bg-zinc-700 text-gray-400 dark:text-zinc-500 cursor-not-allowed"
@@ -848,8 +869,8 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
             <div key={idx} className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 flex items-start gap-3">
               <Bell className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
               <div>
-                <p className="text-xs font-bold text-amber-900 dark:text-amber-200">{alert.alertTypes || "Notice"}</p>
-                <p className="text-xs text-amber-700 dark:text-amber-300 mt-0.5">{alert.description}</p>
+                <p className="text-sm font-bold text-amber-900 dark:text-amber-200">{alert.alertTypes || "Notice"}</p>
+                <p className="text-sm text-amber-700 dark:text-amber-300 mt-0.5">{alert.description}</p>
               </div>
             </div>
           ))}
@@ -867,14 +888,14 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
 
       {/* ── Order Tracking — 4-step flow with green active highlight ── */}
       <div>
-        <h3 className="text-lg font-bold mb-3 text-gray-800 dark:text-white">Order Tracking</h3>
+        <h3 className="text-xl font-bold mb-3 text-gray-800 dark:text-white">Order Tracking</h3>
         <div className="bg-white dark:bg-[#2e2a27] p-5 rounded-2xl border border-gray-100 dark:border-zinc-800/80">
 
           {/* Tracking code */}
           {trackingData?.trackingCode && (
             <div className="flex items-center gap-2 mb-4 pb-4 border-b border-gray-100 dark:border-zinc-800">
               <Truck size={15} className="text-[#7A4500] dark:text-[#d48c34] shrink-0" />
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 Tracking: <span className="font-bold text-gray-800 dark:text-white">{trackingData.trackingCode}</span>
                 {trackingData.courierName ? ` · ${trackingData.courierName}` : ""}
               </p>
@@ -920,7 +941,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
                       <Circle size={8} className="text-gray-300 dark:text-zinc-600 fill-current" />
                     )}
                   </div>
-                  <p className={`text-[11px] font-semibold mt-2 text-center leading-tight px-1 ${
+                  <p className={`text-[13px] font-semibold mt-2 text-center leading-tight px-1 ${
                     isCancelledNode
                       ? "text-red-500 dark:text-red-400"
                       : isCompleted
@@ -936,7 +957,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
 
           {/* Current status pill — shows actual API status name */}
           <div className="flex items-center justify-center mb-4">
-            <span className={`text-xs font-bold px-3 py-1 rounded-full ${
+            <span className={`text-sm font-bold px-3 py-1 rounded-full ${
               activeStep === -1
                 ? "bg-red-100 text-red-600 dark:bg-red-950/40 dark:text-red-400"
                 : activeStep === 3
@@ -950,13 +971,13 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
           {/* Detailed timeline */}
           {timeline.length > 0 && (
             <div className="border-t border-gray-100 dark:border-zinc-800 pt-4 space-y-3">
-              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">Status History</p>
+              <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-2">Status History</p>
               {timeline.map((t, idx) => (
                 <div key={idx} className="flex items-start gap-3">
                   <div className="w-2 h-2 rounded-full bg-green-500 mt-1.5 shrink-0" />
                   <div>
-                    <p className="text-xs font-semibold text-gray-800 dark:text-white">{t.orderStatus}</p>
-                    <p className="text-[11px] text-gray-400 mt-0.5">
+                    <p className="text-sm font-semibold text-gray-800 dark:text-white">{t.orderStatus}</p>
+                    <p className="text-[13px] text-gray-400 mt-0.5">
                       {t.createdBy || "System"} · {formatDate(t.createdAt)}
                     </p>
                   </div>
@@ -969,7 +990,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
 
       {/* ── Delivery Details Section ── */}
       <div>
-        <h3 className="text-lg font-bold mb-3 text-gray-800 dark:text-white">Delivery Address</h3>
+        <h3 className="text-xl font-bold mb-3 text-gray-800 dark:text-white">Delivery Address</h3>
         <div className="bg-white dark:bg-[#2e2a27] p-4 rounded-2xl border border-gray-100 dark:border-zinc-800/80 space-y-3">
           {rawOrder?.isStorePickup || rawOrder?.isShopPickup ? (
             /* Store Pickup */
@@ -978,11 +999,11 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
                 <MapPin size={18} className="text-[#7A4500] dark:text-[#d48c34]" />
               </div>
               <div>
-                <p className="text-xs font-bold text-amber-700 dark:text-amber-400 mb-0.5">🏪 Store Pickup</p>
-                <p className="text-sm font-bold text-gray-800 dark:text-white">
+                <p className="text-sm font-bold text-amber-700 dark:text-amber-400 mb-0.5">🏪 Store Pickup</p>
+                <p className="text-base font-bold text-gray-800 dark:text-white">
                   {trackingData?.fullName || order?.rawApiData?.userFullName || "Customer"}
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-300 mt-0.5">
+                <p className="text-sm text-gray-500 dark:text-gray-300 mt-0.5">
                   {trackingData?.address || "Store address not available"}
                 </p>
               </div>
@@ -994,7 +1015,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
                 <MapPin size={18} className="text-[#7A4500] dark:text-[#d48c34]" />
               </div>
               <div className="space-y-0.5">
-                <h4 className="font-bold text-sm text-gray-800 dark:text-white">
+                <h4 className="font-bold text-base text-gray-800 dark:text-white">
                   {trackingData?.fullName || rawOrder?.userFullName || "Customer"}
                   {(trackingData?.mobile || rawOrder?.mobile) && (
                     <span className="font-normal text-gray-500 dark:text-gray-400">
@@ -1004,12 +1025,12 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
                 </h4>
                 {/* Address label */}
                 {rawOrder?.addressLabel && (
-                  <span className="inline-block text-[10px] bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full font-semibold">
+                  <span className="inline-block text-[12px] bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full font-semibold">
                     {rawOrder.addressLabel}
                   </span>
                 )}
                 {/* Full address */}
-                <p className="text-xs text-gray-500 dark:text-gray-300 leading-relaxed">
+                <p className="text-sm text-gray-500 dark:text-gray-300 leading-relaxed">
                   {trackingData?.address2
                     ? `${trackingData.address} — ${trackingData.address2}`
                     : trackingData?.address
@@ -1018,13 +1039,13 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
                 </p>
                 {/* Delivery instruction */}
                 {(trackingData?.deliveryIns || rawOrder?.deliveryIns) && (
-                  <p className="text-xs text-amber-700 dark:text-amber-400 font-medium">
+                  <p className="text-sm text-amber-700 dark:text-amber-400 font-medium">
                     📝 {trackingData?.deliveryIns || rawOrder?.deliveryIns}
                   </p>
                 )}
                 {/* Customer notes */}
                 {(trackingData?.customerNotes || rawOrder?.remarks) && (
-                  <p className="text-xs text-gray-400 dark:text-gray-500">
+                  <p className="text-sm text-gray-400 dark:text-gray-500">
                     Notes: {trackingData?.customerNotes || rawOrder?.remarks}
                   </p>
                 )}
@@ -1037,11 +1058,11 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
       {/* ── Product Information Section ── */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
+          <h3 className="text-xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
             <Package size={20} className="text-[#7A4500] dark:text-[#d48c34]" />
             Product Information
           </h3>
-          <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-950/40 text-[#7A4500] dark:text-[#d48c34]">
+          <span className="text-sm font-semibold px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-950/40 text-[#7A4500] dark:text-[#d48c34]">
             {rawOrder?.comerzOrderItems?.length || rawOrder?.productCount || 1} Item(s)
           </span>
         </div>
@@ -1066,34 +1087,34 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
                       <div className="flex items-start justify-between gap-2 flex-wrap">
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-300">
+                            <span className="text-[13px] font-bold px-2 py-0.5 rounded bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-300">
                               #{idx + 1}
                             </span>
-                            <h4 className="text-sm font-bold text-gray-900 dark:text-white">
+                            <h4 className="text-base font-bold text-gray-900 dark:text-white">
                               {item.productName}
                             </h4>
                           </div>
                           {item.variantName && item.variantName !== item.productName && (
-                            <p className="text-xs text-amber-700 dark:text-amber-400 font-medium mt-1">
+                            <p className="text-sm text-amber-700 dark:text-amber-400 font-medium mt-1">
                               Variant / Spec: <span className="text-gray-700 dark:text-gray-300">{item.variantName}</span>
                             </p>
                           )}
                         </div>
-                        <span className="text-sm font-extrabold text-[#7A4500] dark:text-[#d48c34] bg-amber-50 dark:bg-amber-950/40 px-3 py-1 rounded-xl border border-amber-200/60 dark:border-amber-800/50">
+                        <span className="text-base font-extrabold text-[#7A4500] dark:text-[#d48c34] bg-amber-50 dark:bg-amber-950/40 px-3 py-1 rounded-xl border border-amber-200/60 dark:border-amber-800/50">
                           ৳{finalPrice.toLocaleString("en-IN")}
                         </span>
                       </div>
 
                       {/* Full Pricing & Item Reference breakdown */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3 p-3 rounded-xl bg-gray-50 dark:bg-[#25211e] text-xs">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3 p-3 rounded-xl bg-gray-50 dark:bg-[#25211e] text-sm">
                         {/* <div>
-                          <span className="text-gray-400 block text-[11px]">Item Reference Code</span>
+                          <span className="text-gray-400 block text-[13px]">Item Reference Code</span>
                           <span className="font-mono text-gray-700 dark:text-gray-300 font-semibold truncate block">
                             {item.comerzOrderItemUUID ? `#${item.comerzOrderItemUUID.slice(0, 18)}...` : `#ITEM-${idx + 1}`}
                           </span>
                         </div> */}
                         <div>
-                          <span className="text-gray-400 block text-[11px]">Pricing Details</span>
+                          <span className="text-gray-400 block text-[13px]">Pricing Details</span>
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-semibold text-gray-800 dark:text-gray-200">
                               ৳{offerPrice.toLocaleString("en-IN")}
@@ -1125,10 +1146,10 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
                 <ShoppingBag size={20} className="text-[#7A4500] dark:text-[#d48c34]" />
               </div>
               <div className="flex-1 min-w-0">
-                <h4 className="text-sm font-bold text-gray-900 dark:text-white">
+                <h4 className="text-base font-bold text-gray-900 dark:text-white">
                   {rawOrder?.productName || `Product (${rawOrder?.productCount || 1} Item)`}
                 </h4>
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-sm text-gray-400 mt-1">
                   Total Product Price: <span className="font-bold text-[#7A4500] dark:text-[#d48c34]">৳{(rawOrder?.productPrice ?? 0).toLocaleString("en-IN")}</span>
                 </p>
               </div>
@@ -1139,69 +1160,69 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
 
       {/* ── Order Summary Section ── */}
       <div>
-        <h3 className="text-lg font-bold mb-3 text-gray-800 dark:text-white">Order Summary</h3>
-        <div className="bg-white dark:bg-[#2e2a27] p-4 rounded-2xl border border-gray-100 dark:border-zinc-800/80 space-y-3 text-sm">
+        <h3 className="text-xl font-bold mb-3 text-gray-800 dark:text-white">Order Summary</h3>
+        <div className="bg-white dark:bg-[#2e2a27] p-4 rounded-2xl border border-gray-100 dark:border-zinc-800/80 space-y-3 text-base">
           {trackingData ? (
             <>
               {/* Delivery method */}
-              <div className="flex justify-between items-center text-xs font-medium text-gray-600 dark:text-gray-300 pb-2 border-b border-gray-100 dark:border-zinc-800">
+              <div className="flex justify-between items-center text-sm font-medium text-gray-600 dark:text-gray-300 pb-2 border-b border-gray-100 dark:border-zinc-800">
                 <span>Delivery Type</span>
                 <span className="font-semibold text-gray-800 dark:text-white">
                   {rawOrder?.isHomeDelivery ? "🏠 Home Delivery" : rawOrder?.isStorePickup || rawOrder?.isShopPickup ? "🏪 Store Pickup" : "—"}
                 </span>
               </div>
 
-              <div className="flex justify-between items-center text-xs font-medium text-gray-600 dark:text-gray-300">
+              <div className="flex justify-between items-center text-sm font-medium text-gray-600 dark:text-gray-300">
                 <span>Product Price</span>
                 <span>৳{(rawOrder?.productPrice ?? 0).toLocaleString("en-IN")}</span>
               </div>
               {(rawOrder?.deliveryFee ?? 0) > 0 && (
-                <div className="flex justify-between items-center text-xs font-medium text-gray-600 dark:text-gray-300">
+                <div className="flex justify-between items-center text-sm font-medium text-gray-600 dark:text-gray-300">
                   <span>Delivery Fee</span>
                   <span>৳{(rawOrder?.deliveryFee ?? 0).toLocaleString("en-IN")}</span>
                 </div>
               )}
               {(rawOrder?.discount ?? 0) > 0 && (
-                <div className="flex justify-between items-center text-xs font-medium text-green-600 dark:text-green-400">
+                <div className="flex justify-between items-center text-sm font-medium text-green-600 dark:text-green-400">
                   <span>Discount</span>
                   <span>-৳{(rawOrder?.discount ?? 0).toLocaleString("en-IN")}</span>
                 </div>
               )}
-              <div className="flex justify-between items-center text-xs font-medium text-gray-600 dark:text-gray-300">
+              <div className="flex justify-between items-center text-sm font-medium text-gray-600 dark:text-gray-300">
                 <span>Subtotal</span>
                 <span>৳{(rawOrder?.subTotal ?? trackingData?.subTotal ?? 0).toLocaleString("en-IN")}</span>
               </div>
               {(rawOrder?.codCharge ?? 0) > 0 && (
-                <div className="flex justify-between items-center text-xs font-medium text-orange-600 dark:text-orange-400">
+                <div className="flex justify-between items-center text-sm font-medium text-orange-600 dark:text-orange-400">
                   <span>COD Charge</span>
                   <span>৳{(rawOrder?.codCharge ?? 0).toLocaleString("en-IN")}</span>
                 </div>
               )}
               {(rawOrder?.roundOff ?? 0) !== 0 && (
-                <div className="flex justify-between items-center text-xs font-medium text-gray-400 dark:text-gray-500">
+                <div className="flex justify-between items-center text-sm font-medium text-gray-400 dark:text-gray-500">
                   <span>Round Off</span>
                   <span>{(rawOrder?.roundOff ?? 0) >= 0 ? "+" : ""}৳{(rawOrder?.roundOff ?? 0).toFixed(2)}</span>
                 </div>
               )}
-              <div className="flex justify-between items-center text-xs font-medium text-gray-600 dark:text-gray-300">
+              <div className="flex justify-between items-center text-sm font-medium text-gray-600 dark:text-gray-300">
                 <span>Paid Amount</span>
                 <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
                   ৳{(rawOrder?.paidAmount ?? paidAmount).toLocaleString("en-IN")}
                 </span>
               </div>
               {dueAmount > 0 && (
-                <div className="flex justify-between items-center text-xs font-bold text-red-500">
+                <div className="flex justify-between items-center text-sm font-bold text-red-500">
                   <span>Due Amount</span>
                   <span>৳{dueAmount.toLocaleString("en-IN")}</span>
                 </div>
               )}
               <div className="border-t border-gray-100 dark:border-zinc-800 pt-3 flex justify-between items-center font-bold text-gray-900 dark:text-white">
                 <span>Grand Total</span>
-                <span className="text-[#7A4500] dark:text-[#d48c34] text-base">
+                <span className="text-[#7A4500] dark:text-[#d48c34] text-lg">
                   ৳{(rawOrder?.grandTotal ?? grandAmount).toLocaleString("en-IN")}
                 </span>
               </div>
-              <div className="pt-1 flex items-center justify-between text-[11px]">
+              <div className="pt-1 flex items-center justify-between text-[13px]">
                 <span className="text-gray-400">Order Status:</span>
                 <span className={`font-semibold px-2 py-0.5 rounded-full ${
                   rawOrder?.orderStatus === "Pending"
@@ -1215,7 +1236,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
                   {rawOrder?.orderStatus || statusText}
                 </span>
               </div>
-              <div className="pt-1 flex items-center justify-between text-[11px]">
+              <div className="pt-1 flex items-center justify-between text-[13px]">
                 <span className="text-gray-400">Payment Status:</span>
                 <span className={`font-semibold px-2 py-0.5 rounded-full ${
                   rawOrder?.isFullPaid
@@ -1229,61 +1250,61 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
           ) : (
             /* Fallback when tracking API hasn't resolved — use rawApiData directly */
             <>
-              <div className="flex justify-between items-center text-xs font-medium text-gray-600 dark:text-gray-300 pb-2 border-b border-gray-100 dark:border-zinc-800">
+              <div className="flex justify-between items-center text-sm font-medium text-gray-600 dark:text-gray-300 pb-2 border-b border-gray-100 dark:border-zinc-800">
                 <span>Delivery Type</span>
                 <span className="font-semibold text-gray-800 dark:text-white">
                   {rawOrder?.isHomeDelivery ? "🏠 Home Delivery" : rawOrder?.isStorePickup || rawOrder?.isShopPickup ? "🏪 Store Pickup" : "—"}
                 </span>
               </div>
               {(rawOrder?.productPrice ?? 0) > 0 && (
-                <div className="flex justify-between items-center text-xs font-medium text-gray-600 dark:text-gray-300">
+                <div className="flex justify-between items-center text-sm font-medium text-gray-600 dark:text-gray-300">
                   <span>Product Price</span>
                   <span>৳{(rawOrder?.productPrice ?? 0).toLocaleString("en-IN")}</span>
                 </div>
               )}
               {(rawOrder?.deliveryFee ?? 0) > 0 && (
-                <div className="flex justify-between items-center text-xs font-medium text-gray-600 dark:text-gray-300">
+                <div className="flex justify-between items-center text-sm font-medium text-gray-600 dark:text-gray-300">
                   <span>Delivery Fee</span>
                   <span>৳{(rawOrder?.deliveryFee ?? 0).toLocaleString("en-IN")}</span>
                 </div>
               )}
               {(rawOrder?.discount ?? 0) > 0 && (
-                <div className="flex justify-between items-center text-xs font-medium text-green-600 dark:text-green-400">
+                <div className="flex justify-between items-center text-sm font-medium text-green-600 dark:text-green-400">
                   <span>Discount</span>
                   <span>-৳{(rawOrder?.discount ?? 0).toLocaleString("en-IN")}</span>
                 </div>
               )}
               {(rawOrder?.subTotal ?? 0) > 0 && (
-                <div className="flex justify-between items-center text-xs font-medium text-gray-600 dark:text-gray-300">
+                <div className="flex justify-between items-center text-sm font-medium text-gray-600 dark:text-gray-300">
                   <span>Subtotal</span>
                   <span>৳{(rawOrder?.subTotal ?? 0).toLocaleString("en-IN")}</span>
                 </div>
               )}
               {(rawOrder?.codCharge ?? 0) > 0 && (
-                <div className="flex justify-between items-center text-xs font-medium text-orange-600 dark:text-orange-400">
+                <div className="flex justify-between items-center text-sm font-medium text-orange-600 dark:text-orange-400">
                   <span>COD Charge</span>
                   <span>৳{(rawOrder?.codCharge ?? 0).toLocaleString("en-IN")}</span>
                 </div>
               )}
               {(rawOrder?.roundOff ?? 0) !== 0 && (
-                <div className="flex justify-between items-center text-xs text-gray-400">
+                <div className="flex justify-between items-center text-sm text-gray-400">
                   <span>Round Off</span>
                   <span>{(rawOrder?.roundOff ?? 0) >= 0 ? "+" : ""}৳{(rawOrder?.roundOff ?? 0).toFixed(2)}</span>
                 </div>
               )}
               {(rawOrder?.paidAmount ?? 0) > 0 && (
-                <div className="flex justify-between items-center text-xs font-medium text-gray-600 dark:text-gray-300">
+                <div className="flex justify-between items-center text-sm font-medium text-gray-600 dark:text-gray-300">
                   <span>Paid Amount</span>
                   <span className="text-emerald-600 font-semibold">৳{(rawOrder?.paidAmount ?? 0).toLocaleString("en-IN")}</span>
                 </div>
               )}
               <div className="border-t border-gray-100 dark:border-zinc-800 pt-3 flex justify-between items-center font-bold text-gray-900 dark:text-white">
                 <span>Grand Total</span>
-                <span className="text-[#7A4500] dark:text-[#d48c34] text-base">
+                <span className="text-[#7A4500] dark:text-[#d48c34] text-lg">
                   {order?.total ?? `৳${(rawOrder?.grandTotal ?? rawOrder?.total ?? 0).toLocaleString("en-IN")}`}
                 </span>
               </div>
-              <div className="pt-1 flex items-center justify-between text-[11px]">
+              <div className="pt-1 flex items-center justify-between text-[13px]">
                 <span className="text-gray-400">Order Status:</span>
                 <span className={`font-semibold px-2 py-0.5 rounded-full ${
                   rawOrder?.orderStatus === "Pending"
@@ -1295,7 +1316,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
                   {rawOrder?.orderStatus || order?.status || "—"}
                 </span>
               </div>
-              <div className="pt-1 flex items-center justify-between text-[11px]">
+              <div className="pt-1 flex items-center justify-between text-[13px]">
                 <span className="text-gray-400">Payment:</span>
                 <span className={`font-semibold px-2 py-0.5 rounded-full ${
                   rawOrder?.isFullPaid
