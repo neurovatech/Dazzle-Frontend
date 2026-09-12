@@ -1188,7 +1188,7 @@ export default function CheckoutPageCom() {
                   <button
                     type="button"
                     onClick={() => setCouponModalOpen(true)}
-                    className="w-full rounded-2xl bg-[#FBF3E7] dark:bg-amber-950/20 border border-[#F0DFC4] dark:border-amber-900/40 px-4 py-3 text-left transition hover:bg-[#F7EBD9] dark:hover:bg-amber-950/30"
+                    className="w-full hidden rounded-2xl bg-[#FBF3E7] dark:bg-amber-950/20 border border-[#F0DFC4] dark:border-amber-900/40 px-4 py-3 text-left transition hover:bg-[#F7EBD9] dark:hover:bg-amber-950/30"
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2.5">
@@ -1209,9 +1209,15 @@ export default function CheckoutPageCom() {
                 )}
               </div>
 
+              
+            </Section>
+
+
+            <Section step={4} title=" Payment Method">
+
               {/* Payment Option */}
               <div className="space-y-3 pt-4 border-t border-gray-100 dark:border-zinc-800">
-                <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2"><CreditCard size={16} /> Payment Method</p>
+                {/* <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2"><CreditCard size={16} /> Payment Method</p> */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {paymentOptions.map((opt) => (
                     <Radio key={opt.value} checked={paymentOption === opt.value}
@@ -1278,12 +1284,14 @@ export default function CheckoutPageCom() {
                 <input type="text" value={remarks} onChange={(e) => setRemarks(e.target.value)} placeholder="e.g. Call before delivery"
                   className="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#D4A97A] dark:text-white" />
               </div>
+
+              
             </Section>
 
 
 
 
-            <Section step={4} title="Payment Gateway">
+            <Section step={5} title="Payment Gateway">
 
               {/* Payment Option */}
               <div className="space-y-3 pt-4 border-t border-gray-100 dark:border-zinc-800">
@@ -1350,7 +1358,7 @@ export default function CheckoutPageCom() {
           <div className="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-6 lg:self-start">
             <div className="bg-white dark:bg-[#1C1A17] rounded-3xl border border-gray-100 dark:border-zinc-800 p-6 sm:p-8 shadow-sm space-y-6">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full border-2 border-[#D4A97A] flex items-center justify-center text-[#D4A97A] font-bold text-sm shrink-0">5</div>
+                <div className="w-8 h-8 rounded-full border-2 border-[#D4A97A] flex items-center justify-center text-[#D4A97A] font-bold text-sm shrink-0">6</div>
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">Order ({cartItems.length})</h2>
               </div>
 

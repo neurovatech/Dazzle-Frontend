@@ -201,12 +201,28 @@ export default function StickyPurchaseBar({
       }
 
       if (patches.length > 0) {
-        finalVariantUuid = patches[0].variantUuid;
-        if (typeof patches[0].price === "number") finalPrice = patches[0].price;
-        if (typeof patches[0].originalPrice === "number") {
-          finalOriginalPrice = patches[0].originalPrice;
+        const patch = patches[0];
+
+        // `replaced` means get-default-variant's recovery came back with a
+        // DIFFERENT variant than the one actually selected on this page (e.g.
+        // this exact color/storage/region combo has no valid price on the
+        // backend). Silently swapping that in would add a different product
+        // to the cart under the name the user picked, at a price that isn't
+        // even for what they chose — surface it instead, same as the
+        // unresolved case above.
+        if (patch.replaced) {
+          toast.error("This exact option is currently unavailable. Please choose a different color, storage, or region.");
+          return false;
         }
-        if (patches[0].image) finalImage = patches[0].image;
+
+        finalVariantUuid = patch.variantUuid;
+        // patch.price is the bare product price — combinedOfferPrice's care-plan
+        // addition must be re-applied, or a refreshed price silently drops it.
+        if (typeof patch.price === "number") finalPrice = patch.price + careTotalOffer;
+        if (typeof patch.originalPrice === "number") {
+          finalOriginalPrice = patch.originalPrice + careTotalRegular;
+        }
+        if (patch.image) finalImage = patch.image;
       }
     } catch (err) {
       console.error("[StickyPurchaseBar] order verification failed:", err);

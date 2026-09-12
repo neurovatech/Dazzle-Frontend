@@ -206,12 +206,22 @@ export default function ProductCardBuy({
         }
 
         if (patches.length > 0) {
-          variantUUID = patches[0].variantUuid;
-          if (typeof patches[0].price === "number") finalPrice = patches[0].price;
-          if (typeof patches[0].originalPrice === "number") {
-            finalRegPrice = patches[0].originalPrice;
+          const patch = patches[0];
+
+          // `replaced` means the backend rejected the resolved variant and
+          // recovery came back with a DIFFERENT one — adding that would put a
+          // different product in the cart than what this card shows.
+          if (patch.replaced) {
+            toast.error("This product is currently unavailable.");
+            return;
           }
-          if (patches[0].image) finalImage = patches[0].image;
+
+          variantUUID = patch.variantUuid;
+          if (typeof patch.price === "number") finalPrice = patch.price;
+          if (typeof patch.originalPrice === "number") {
+            finalRegPrice = patch.originalPrice;
+          }
+          if (patch.image) finalImage = patch.image;
         }
       } catch (err) {
         console.error("[GlobalProductCard] order verification failed:", err);
@@ -308,22 +318,18 @@ export default function ProductCardBuy({
               <span>{isWishlisted ? "Wishlisted" : "Add to Wishlist"}</span>
             </button>
           )}
-          <ProductQuicView slug={slug} productUuid={itemId} title={title} price={price} image={image} showTbaFlag={showTbaFlag} />
         </>
       ) : isTba ? (
-        /* ── isTba (not in stock) ──────────────────────────────────────── */
-        <>
-          <button
-            disabled
-            className="flex-1 flex items-center justify-center gap-2.5 h-11 py-0.75 px-1 rounded-[13px] text-[16px] leading-none font-medium border border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-70"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3 h-3 sm:w-4 sm:h-4 shrink-0">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
-            </svg>
-            <span>Not in Stock</span>
-          </button>
-          <ProductQuicView slug={slug} productUuid={itemId} title={title} price={price} image={image} showTbaFlag={showTbaFlag} />
-        </>
+        /* ── isTba (not in stock) — no Add to Cart, no Quick View ────────── */
+        <button
+          disabled
+          className="flex-1 flex items-center justify-center gap-2.5 h-11 py-0.75 px-1 rounded-[13px] text-[16px] leading-none font-medium border border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-70"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3 h-3 sm:w-4 sm:h-4 shrink-0">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+          </svg>
+          <span>Not in Stock</span>
+        </button>
       ) : (
         /* ── Normal — Add to Cart + Quick View ─────────────────────────── */
         <>

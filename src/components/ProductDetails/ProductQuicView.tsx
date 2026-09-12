@@ -422,12 +422,22 @@ function ProductQuicView({
       }
 
       if (patches.length > 0) {
-        variantUUID = patches[0].variantUuid;
-        if (typeof patches[0].price === "number") finalPrice = patches[0].price;
-        if (typeof patches[0].originalPrice === "number") {
-          finalRegPrice = patches[0].originalPrice;
+        const patch = patches[0];
+
+        // `replaced` means the backend rejected the resolved variant and
+        // recovery came back with a DIFFERENT one — adding that would put a
+        // different product in the cart than what Quick View shows.
+        if (patch.replaced) {
+          toast.error("This product is currently unavailable.");
+          return false;
         }
-        if (patches[0].image) finalImage = patches[0].image;
+
+        variantUUID = patch.variantUuid;
+        if (typeof patch.price === "number") finalPrice = patch.price;
+        if (typeof patch.originalPrice === "number") {
+          finalRegPrice = patch.originalPrice;
+        }
+        if (patch.image) finalImage = patch.image;
       }
     } catch (err) {
       console.error("[QuickView] order verification failed:", err);
