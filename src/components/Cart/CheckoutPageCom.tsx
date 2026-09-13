@@ -352,6 +352,24 @@ export default function CheckoutPageCom() {
     }
   }, [savedAddresses, selectedAddressUuid]);
 
+  // "Existing Address" defaults to selected, but it's useless with nothing in
+  // it — jump straight to "New Address" so the reader isn't staring at an
+  // empty tab. Guests can never have saved addresses; logged-in readers need
+  // the address-list call to actually resolve before we know it's empty.
+  const autoSwitchedNoAddress = useRef(false);
+  useEffect(() => {
+    if (autoSwitchedNoAddress.current) return;
+    if (!isAuthenticated) {
+      autoSwitchedNoAddress.current = true;
+      setAddressTab("new");
+      return;
+    }
+    if (addressListRes && savedAddresses.length === 0) {
+      autoSwitchedNoAddress.current = true;
+      setAddressTab("new");
+    }
+  }, [isAuthenticated, addressListRes, savedAddresses]);
+
   const { data: areaListRes } = useQuery<AreaListResponse>({
     queryKey: ["areaList"],
     queryFn: () => api.get<AreaListResponse>("area-list", { headers: { "X-API-Key": apiKey || "", Authorization: authHeader } }),

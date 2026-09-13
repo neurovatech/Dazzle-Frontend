@@ -1143,12 +1143,12 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
                           </div>
                         </div>
 
-                        {minBooking > 0 && (
+                        {/* {minBooking > 0 && (
                           <div className="sm:col-span-2 pt-2 border-t border-gray-200/60 dark:border-zinc-700/60 flex items-center justify-between text-amber-800 dark:text-amber-300">
                             <span>Minimum Booking Price (Advance):</span>
                             <span className="font-bold">৳{fmtBDT(minBooking)}</span>
                           </div>
-                        )}
+                        )} */}
                       </div>
                     </div>
                   </div>
