@@ -37,6 +37,12 @@ import Image from "next/image";
 import Bikask from "@/images/bKash-Logo.svg";
 import SSl from "@/images/ssl-logo.svg";
 
+// ─── Helper: whole-currency formatting — no product/order price here is ever
+// meant to show fractional taka. Truncated, not rounded, so the visible
+// whole-taka figure never shifts from what was actually charged, e.g.
+// ৳429.65 always shows as ৳429, never ৳430. ──────────────────────────────────
+const fmtBDT = (n: number) => Math.floor(n).toLocaleString("en-IN");
+
 // ─── Helper: 7-day return window check ───────────────────────────────────────
 function isWithinReturnWindow(orderDateISO: string): boolean {
   if (!orderDateISO) return false;
@@ -396,7 +402,7 @@ function PayDueModal({
 
   const handlePay = async () => {
     if (parsedAmount <= 0) { setError("Please enter a valid amount."); return; }
-    if (parsedAmount > dueAmount) { setError(`Amount cannot exceed due amount ৳${dueAmount.toLocaleString("en-IN")}.`); return; }
+    if (parsedAmount > dueAmount) { setError(`Amount cannot exceed due amount ৳${fmtBDT(dueAmount)}.`); return; }
     setError("");
     setLoading(true);
     await new Promise((r) => setTimeout(r, 1200)); // placeholder for real API call
@@ -433,7 +439,7 @@ function PayDueModal({
               </div>
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Payment Submitted!</h3>
               <p className="text-base text-gray-500 dark:text-gray-400 mb-5">
-                Your payment of <strong>৳{parsedAmount.toLocaleString("en-IN")}</strong> via <strong>{METHODS.find(m => m.value === method)?.label}</strong> has been recorded.
+                Your payment of <strong>৳{fmtBDT(parsedAmount)}</strong> via <strong>{METHODS.find(m => m.value === method)?.label}</strong> has been recorded.
               </p>
               <button onClick={onClose} className="w-full py-3 bg-[#7A4500] text-white rounded-2xl font-semibold hover:bg-[#5a3300] transition">
                 Done
@@ -445,11 +451,11 @@ function PayDueModal({
               <div className="bg-amber-50 dark:bg-amber-950/20 rounded-2xl p-4 space-y-2">
                 <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300">
                   <span>Order Total</span>
-                  <span className="font-semibold">৳{(dueAmount).toLocaleString("en-IN")}</span>
+                  <span className="font-semibold">৳{fmtBDT(dueAmount)}</span>
                 </div>
                 <div className="flex justify-between text-sm font-bold text-red-600 dark:text-red-400 border-t border-amber-200 dark:border-amber-800 pt-2">
                   <span>Remaining Due</span>
-                  <span>৳{dueAmount.toLocaleString("en-IN")}</span>
+                  <span>৳{fmtBDT(dueAmount)}</span>
                 </div>
               </div>
 
@@ -515,7 +521,7 @@ function PayDueModal({
                 {loading ? (
                   <><Loader2 size={16} className="animate-spin" /> Processing...</>
                 ) : (
-                  <><Wallet size={16} /> Confirm & Pay ৳{parsedAmount > 0 ? parsedAmount.toLocaleString("en-IN") : "0"}</>
+                  <><Wallet size={16} /> Confirm & Pay ৳{parsedAmount > 0 ? fmtBDT(parsedAmount) : "0"}</>
                 )}
               </button>
             </div>
@@ -844,7 +850,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
             <div className="flex items-start justify-between gap-3 flex-wrap">
               <div>
                 <p className="text-base font-bold text-amber-900 dark:text-amber-200">
-                  Due: ৳{dueAmount.toLocaleString("en-IN")}
+                  Due: ৳{fmtBDT(dueAmount)}
                 </p>
                 <p className="text-sm text-amber-700 dark:text-amber-300 mt-1 leading-relaxed max-w-md">
                   {isBookingMoney
@@ -1111,7 +1117,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
                           )}
                         </div>
                         <span className="text-base font-extrabold text-[#7A4500] dark:text-[#d48c34] bg-amber-50 dark:bg-amber-950/40 px-3 py-1 rounded-xl border border-amber-200/60 dark:border-amber-800/50">
-                          ৳{finalPrice.toLocaleString("en-IN")}
+                          ৳{fmtBDT(finalPrice)}
                         </span>
                       </div>
 
@@ -1127,11 +1133,11 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
                           <span className="text-gray-400 block text-[13px]">Pricing Details</span>
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-semibold text-gray-800 dark:text-gray-200">
-                              ৳{offerPrice.toLocaleString("en-IN")}
+                              ৳{fmtBDT(offerPrice)}
                             </span>
                             {discount > 0 && (
                               <span className="text-emerald-600 dark:text-emerald-400 font-bold">
-                                (-৳{discount.toLocaleString("en-IN")} discount)
+                                (-৳{fmtBDT(discount)} discount)
                               </span>
                             )}
                           </div>
@@ -1140,7 +1146,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
                         {minBooking > 0 && (
                           <div className="sm:col-span-2 pt-2 border-t border-gray-200/60 dark:border-zinc-700/60 flex items-center justify-between text-amber-800 dark:text-amber-300">
                             <span>Minimum Booking Price (Advance):</span>
-                            <span className="font-bold">৳{minBooking.toLocaleString("en-IN")}</span>
+                            <span className="font-bold">৳{fmtBDT(minBooking)}</span>
                           </div>
                         )}
                       </div>
@@ -1160,7 +1166,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
                   {rawOrder?.productName || `Product (${rawOrder?.productCount || 1} Item)`}
                 </h4>
                 <p className="text-sm text-gray-400 mt-1">
-                  Total Product Price: <span className="font-bold text-[#7A4500] dark:text-[#d48c34]">৳{(rawOrder?.productPrice ?? 0).toLocaleString("en-IN")}</span>
+                  Total Product Price: <span className="font-bold text-[#7A4500] dark:text-[#d48c34]">৳{fmtBDT(rawOrder?.productPrice ?? 0)}</span>
                 </p>
               </div>
             </div>
@@ -1184,52 +1190,52 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
 
               <div className="flex justify-between items-center text-sm font-medium text-gray-600 dark:text-gray-300">
                 <span>Product Price</span>
-                <span>৳{(rawOrder?.productPrice ?? 0).toLocaleString("en-IN")}</span>
+                <span>৳{fmtBDT(rawOrder?.productPrice ?? 0)}</span>
               </div>
               {(rawOrder?.deliveryFee ?? 0) > 0 && (
                 <div className="flex justify-between items-center text-sm font-medium text-gray-600 dark:text-gray-300">
                   <span>Delivery Fee</span>
-                  <span>৳{(rawOrder?.deliveryFee ?? 0).toLocaleString("en-IN")}</span>
+                  <span>৳{fmtBDT(rawOrder?.deliveryFee ?? 0)}</span>
                 </div>
               )}
               {(rawOrder?.discount ?? 0) > 0 && (
                 <div className="flex justify-between items-center text-sm font-medium text-green-600 dark:text-green-400">
                   <span>Discount</span>
-                  <span>-৳{(rawOrder?.discount ?? 0).toLocaleString("en-IN")}</span>
+                  <span>-৳{fmtBDT(rawOrder?.discount ?? 0)}</span>
                 </div>
               )}
               <div className="flex justify-between items-center text-sm font-medium text-gray-600 dark:text-gray-300">
                 <span>Subtotal</span>
-                <span>৳{(rawOrder?.subTotal ?? trackingData?.subTotal ?? 0).toLocaleString("en-IN")}</span>
+                <span>৳{fmtBDT(rawOrder?.subTotal ?? trackingData?.subTotal ?? 0)}</span>
               </div>
               {(rawOrder?.codCharge ?? 0) > 0 && (
                 <div className="flex justify-between items-center text-sm font-medium text-orange-600 dark:text-orange-400">
                   <span>COD Charge</span>
-                  <span>৳{(rawOrder?.codCharge ?? 0).toLocaleString("en-IN")}</span>
+                  <span>৳{fmtBDT(rawOrder?.codCharge ?? 0)}</span>
                 </div>
               )}
               {(rawOrder?.roundOff ?? 0) !== 0 && (
                 <div className="flex justify-between items-center text-sm font-medium text-gray-400 dark:text-gray-500">
                   <span>Round Off</span>
-                  <span>{(rawOrder?.roundOff ?? 0) >= 0 ? "+" : ""}৳{(rawOrder?.roundOff ?? 0).toFixed(2)}</span>
+                  <span>{(rawOrder?.roundOff ?? 0) >= 0 ? "+" : ""}৳{fmtBDT(rawOrder?.roundOff ?? 0)}</span>
                 </div>
               )}
               <div className="flex justify-between items-center text-sm font-medium text-gray-600 dark:text-gray-300">
                 <span>Paid Amount</span>
                 <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
-                  ৳{(rawOrder?.paidAmount ?? paidAmount).toLocaleString("en-IN")}
+                  ৳{fmtBDT(rawOrder?.paidAmount ?? paidAmount)}
                 </span>
               </div>
-              {dueAmount > 0 && (
+              {/* {dueAmount > 0 && (
                 <div className="flex justify-between items-center text-sm font-bold text-red-500">
                   <span>Due Amount</span>
-                  <span>৳{dueAmount.toLocaleString("en-IN")}</span>
+                  <span>৳{fmtBDT(dueAmount)}</span>
                 </div>
-              )}
+              )} */}
               <div className="border-t border-gray-100 dark:border-zinc-800 pt-3 flex justify-between items-center font-bold text-gray-900 dark:text-white">
                 <span>Grand Total</span>
                 <span className="text-[#7A4500] dark:text-[#d48c34] text-lg">
-                  ৳{(rawOrder?.grandTotal ?? grandAmount).toLocaleString("en-IN")}
+                  ৳{fmtBDT(rawOrder?.grandTotal ?? grandAmount)}
                 </span>
               </div>
               <div className="pt-1 flex items-center justify-between text-[13px]">
@@ -1269,49 +1275,49 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
               {(rawOrder?.productPrice ?? 0) > 0 && (
                 <div className="flex justify-between items-center text-sm font-medium text-gray-600 dark:text-gray-300">
                   <span>Product Price</span>
-                  <span>৳{(rawOrder?.productPrice ?? 0).toLocaleString("en-IN")}</span>
+                  <span>৳{fmtBDT(rawOrder?.productPrice ?? 0)}</span>
                 </div>
               )}
               {(rawOrder?.deliveryFee ?? 0) > 0 && (
                 <div className="flex justify-between items-center text-sm font-medium text-gray-600 dark:text-gray-300">
                   <span>Delivery Fee</span>
-                  <span>৳{(rawOrder?.deliveryFee ?? 0).toLocaleString("en-IN")}</span>
+                  <span>৳{fmtBDT(rawOrder?.deliveryFee ?? 0)}</span>
                 </div>
               )}
               {(rawOrder?.discount ?? 0) > 0 && (
                 <div className="flex justify-between items-center text-sm font-medium text-green-600 dark:text-green-400">
                   <span>Discount</span>
-                  <span>-৳{(rawOrder?.discount ?? 0).toLocaleString("en-IN")}</span>
+                  <span>-৳{fmtBDT(rawOrder?.discount ?? 0)}</span>
                 </div>
               )}
               {(rawOrder?.subTotal ?? 0) > 0 && (
                 <div className="flex justify-between items-center text-sm font-medium text-gray-600 dark:text-gray-300">
                   <span>Subtotal</span>
-                  <span>৳{(rawOrder?.subTotal ?? 0).toLocaleString("en-IN")}</span>
+                  <span>৳{fmtBDT(rawOrder?.subTotal ?? 0)}</span>
                 </div>
               )}
               {(rawOrder?.codCharge ?? 0) > 0 && (
                 <div className="flex justify-between items-center text-sm font-medium text-orange-600 dark:text-orange-400">
                   <span>COD Charge</span>
-                  <span>৳{(rawOrder?.codCharge ?? 0).toLocaleString("en-IN")}</span>
+                  <span>৳{fmtBDT(rawOrder?.codCharge ?? 0)}</span>
                 </div>
               )}
               {(rawOrder?.roundOff ?? 0) !== 0 && (
                 <div className="flex justify-between items-center text-sm text-gray-400">
                   <span>Round Off</span>
-                  <span>{(rawOrder?.roundOff ?? 0) >= 0 ? "+" : ""}৳{(rawOrder?.roundOff ?? 0).toFixed(2)}</span>
+                  <span>{(rawOrder?.roundOff ?? 0) >= 0 ? "+" : ""}৳{fmtBDT(rawOrder?.roundOff ?? 0)}</span>
                 </div>
               )}
               {(rawOrder?.paidAmount ?? 0) > 0 && (
                 <div className="flex justify-between items-center text-sm font-medium text-gray-600 dark:text-gray-300">
                   <span>Paid Amount</span>
-                  <span className="text-emerald-600 font-semibold">৳{(rawOrder?.paidAmount ?? 0).toLocaleString("en-IN")}</span>
+                  <span className="text-emerald-600 font-semibold">৳{fmtBDT(rawOrder?.paidAmount ?? 0)}</span>
                 </div>
               )}
               <div className="border-t border-gray-100 dark:border-zinc-800 pt-3 flex justify-between items-center font-bold text-gray-900 dark:text-white">
                 <span>Grand Total</span>
                 <span className="text-[#7A4500] dark:text-[#d48c34] text-lg">
-                  {order?.total ?? `৳${(rawOrder?.grandTotal ?? rawOrder?.total ?? 0).toLocaleString("en-IN")}`}
+                  {order?.total ?? `৳${fmtBDT(rawOrder?.grandTotal ?? rawOrder?.total ?? 0)}`}
                 </span>
               </div>
               <div className="pt-1 flex items-center justify-between text-[13px]">

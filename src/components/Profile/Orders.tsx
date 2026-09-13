@@ -36,7 +36,7 @@ function toOrderModel(o: ApiOrderItem): Order {
     date: fmtDate(o.createdAt),
     orderDate: o.createdAt,
     status,
-    total: `৳${(o.total ?? 0).toLocaleString("en-IN")}`,
+    total: `৳${Math.floor(o.total ?? 0).toLocaleString("en-IN")}`,
     totalNumber: o.total,
     rawApiData: o,
   };
@@ -78,7 +78,7 @@ function OrderRow({
           </div>
           <p className="text-xs text-gray-400 mt-1">Order #{order.comerzOrderNo}</p>
           <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">
-            ৳{(order.total ?? 0).toLocaleString("en-IN")}
+            ৳{Math.floor(order.total ?? 0).toLocaleString("en-IN")}
           </p>
         </div>
       </div>
