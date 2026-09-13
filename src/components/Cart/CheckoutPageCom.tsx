@@ -406,9 +406,10 @@ export default function CheckoutPageCom() {
     queryFn: () => api.get<{ data: StoreItem[] }>("/stores"),
   });
   const storeList = useMemo(
-    // allowStorePickup=true means this branch does NOT accept pickup — hide it
-    // outright rather than showing it disabled, same as abroad branches.
-    () => (storeListRes?.data || []).filter((s) => !s.abroadBranch && s.allowStorePickup !== true),
+    // allowStorePickup=true means this branch DOES accept pickup — show it.
+    // allowStorePickup=false (or undefined/null) means pickup not offered — hide it.
+    // abroadBranch always hidden.
+    () => (storeListRes?.data || []).filter((s) => !s.abroadBranch && s.allowStorePickup === true),
     [storeListRes],
   );
 
@@ -674,7 +675,7 @@ export default function CheckoutPageCom() {
     if (deliveryType === "pickup") {
       return [
         { value: "full_online",   label: "Full Payment Online",  sub: "SSL / bKash" },
-        { value: "booking",       label: "Booking Money",        sub: `Min. Booking: ৳${totalBookingMoney.toLocaleString("en-IN")}`, disabled: totalBookingMoney === 0 },
+        { value: "booking",       label: "Booking Money",        sub: `Min. Booking: ৳ ${totalBookingMoney.toLocaleString("en-IN")}`, disabled: totalBookingMoney === 0 },
         { value: "full_at_store", label: "Full Payment at Store" },
       ];
     }
@@ -702,7 +703,7 @@ export default function CheckoutPageCom() {
       opts.push({
         value: "booking",
         label: "Booking Money",
-        sub: `Min. Booking: ৳${totalBookingMoney.toLocaleString("en-IN")}`,
+        sub: `Min. Booking: ৳ ${totalBookingMoney.toLocaleString("en-IN")}`,
         disabled: totalBookingMoney === 0,
       });
     }
@@ -713,10 +714,10 @@ export default function CheckoutPageCom() {
       const fixed = selectedAreaObj.codFixedCharge || 0;
       const chargeParts = [
         pct > 0 ? `${pct}%` : null,
-        fixed > 0 ? `৳${fixed}` : null,
+        fixed > 0 ? `৳ ${fixed}` : null,
       ].filter(Boolean);
       const chargeText = chargeParts.length > 0
-        ? ` (COD charge: ${chargeParts.join(" + ")} on remaining after booking)`
+        ? ` (COD charge: ${chargeParts.join(" + ")})`
         : " (no extra COD charge)";
       opts.push({
         value: "cod",
@@ -768,14 +769,15 @@ export default function CheckoutPageCom() {
     return svc ? svc.charge : 0;
   }, [deliveryType, visibleServices, serviceLevel]);
 
-  const remainingAfterBooking = Math.max(0, subtotal - totalBookingMoney);
+  // Total products + Dazzle Care
+  const totalProductsWithCare = subtotal;
 
   const codCharge = useMemo(() => {
     if (paymentOption !== "cod" || !selectedAreaObj) return 0;
-    const pctCharge = Math.round((remainingAfterBooking * (selectedAreaObj.codChargePercentage || 0)) / 100);
+    const pctCharge = Math.round((totalProductsWithCare * (selectedAreaObj.codChargePercentage || 0)) / 100);
     const fixedCharge = Number(selectedAreaObj.codFixedCharge || 0);
     return pctCharge + fixedCharge;
-  }, [paymentOption, selectedAreaObj, remainingAfterBooking]);
+  }, [paymentOption, selectedAreaObj, totalProductsWithCare]);
 
   const amountDue =
     paymentOption === "full_online"     ? subtotal + deliveryFee - couponDiscount
@@ -1133,7 +1135,7 @@ export default function CheckoutPageCom() {
                     // the API's own order would masquerade as "nearest".
                     const isNearest = km !== undefined && i === 0;
 
-                    const pickupDisabled = store.allowStorePickup === true;
+                    const pickupDisabled = store.allowStorePickup === false;
 
                     return (
                       <PickupStoreCard
@@ -1182,7 +1184,7 @@ export default function CheckoutPageCom() {
                     {visibleServices.map((s) => (
                       <Radio key={s.value} checked={serviceLevel === s.value} onChange={() => setServiceLevel(s.value)}
                         label={s.label}
-                        sub={`${s.sub}${s.charge > 0 ? ` — ৳${s.charge}` : " — Free"}`}
+                        sub={`${s.sub}${s.charge > 0 ? ` — ৳ ${s.charge}` : " — Free"}`}
                         badge={s.badge}
                       />
                     ))}
@@ -1265,11 +1267,11 @@ export default function CheckoutPageCom() {
 
                 {paymentOption === "cod" && codCharge > 0 && (
                   <div className="text-xs bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 rounded-xl px-3 py-2 text-amber-700 dark:text-amber-400">
-                    💰 COD Charge: <strong>৳{codCharge.toLocaleString("en-IN")}</strong>
+                    💰 COD Charge: <strong>৳ {codCharge.toLocaleString("en-IN")}</strong>
                     {selectedAreaObj && (
                       <>
-                        {selectedAreaObj.codChargePercentage > 0 && ` (${selectedAreaObj.codChargePercentage}% on ৳${remainingAfterBooking.toLocaleString("en-IN")} remaining after booking)`}
-                        {selectedAreaObj.codFixedCharge > 0 && ` + ৳${selectedAreaObj.codFixedCharge} fixed charge`}
+                        {selectedAreaObj.codChargePercentage > 0 && ` (${selectedAreaObj.codChargePercentage}% on ৳ ${totalProductsWithCare.toLocaleString("en-IN")})`}
+                        {selectedAreaObj.codFixedCharge > 0 && ` + ৳ ${selectedAreaObj.codFixedCharge} fixed charge`}
                       </>
                     )}
                   </div>
@@ -1328,7 +1330,7 @@ export default function CheckoutPageCom() {
                 {/* Booking Money info */}
                 {paymentOption === "booking" && totalBookingMoney > 0 && (
                   <div className="text-xs bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/40 rounded-xl px-3 py-2 text-blue-700 dark:text-blue-400">
-                    📌 Total Booking Money in your cart: <strong>৳{totalBookingMoney.toLocaleString("en-IN")}</strong>
+                    📌 Total Booking Money in your cart: <strong>৳ {totalBookingMoney.toLocaleString("en-IN")}</strong>
                     <br />Partial Payment can be made after Order Confirmation from the panel. Once order is shifted, Partial Payment is not available.
                   </div>
                 )}
@@ -1339,8 +1341,8 @@ export default function CheckoutPageCom() {
                     💰 COD Charge: <strong>৳{codCharge.toLocaleString("en-IN")}</strong>
                     {selectedAreaObj && (
                       <>
-                        {selectedAreaObj.codChargePercentage > 0 && ` (${selectedAreaObj.codChargePercentage}% on ৳${remainingAfterBooking.toLocaleString("en-IN")} remaining after booking)`}
-                        {selectedAreaObj.codFixedCharge > 0 && ` + ৳${selectedAreaObj.codFixedCharge} fixed charge`}
+                        {selectedAreaObj.codChargePercentage > 0 && ` (${selectedAreaObj.codChargePercentage}% on ৳${totalProductsWithCare.toLocaleString("en-IN")})`}
+                        {selectedAreaObj.codFixedCharge > 0 && ` + ৳ ${selectedAreaObj.codFixedCharge} fixed charge`}
                       </>
                     )}
                   </div>
@@ -1486,9 +1488,9 @@ export default function CheckoutPageCom() {
                     <span>
                       COD Charge
                       {(selectedAreaObj?.codChargePercentage ?? 0) > 0 && ` (${selectedAreaObj?.codChargePercentage ?? 0}%)`}
-                      {(selectedAreaObj?.codFixedCharge ?? 0) > 0 && ` + ৳${selectedAreaObj?.codFixedCharge} fixed`}
+                      {(selectedAreaObj?.codFixedCharge ?? 0) > 0 && ` + ৳ ${selectedAreaObj?.codFixedCharge} fixed`}
                     </span>
-                    <span>{codCharge}</span>
+                    <span>{fmt(codCharge)}</span>
                   </div>
                 )}
                 <div className="flex justify-between pt-3 border-t border-dashed border-gray-200 dark:border-zinc-800">
@@ -1539,7 +1541,7 @@ export default function CheckoutPageCom() {
           <div className="bg-white dark:bg-[#1C1A17] rounded-3xl max-w-md w-full p-6 text-center space-y-4 border border-gray-100 dark:border-zinc-800">
             <div className="w-16 h-16 rounded-full bg-green-500 flex items-center justify-center mx-auto text-white"><ShieldCheck size={36} /></div>
             <h3 className="text-xl font-bold text-gray-900 dark:text-white">Order Placed Successfully! 🎉</h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Order No: <strong className="text-gray-800 dark:text-white">{confirmedOrder?.orderNo}</strong><br />Total: {fmt(confirmedOrder?.total || total)}</p>
+            <p className="text-[14px] text-gray-500 dark:text-gray-400">Order No: <strong className="text-gray-800 dark:text-white">{confirmedOrder?.orderNo}</strong><br />Total: ৳ { (confirmedOrder?.total || total)}</p>
             <Link href="/profile" className="inline-block w-full py-3 bg-[#D4A97A] text-white font-bold rounded-xl hover:bg-[#c89a6b] transition text-xs tracking-wider">VIEW ORDER HISTORY</Link>
           </div>
         </div>
