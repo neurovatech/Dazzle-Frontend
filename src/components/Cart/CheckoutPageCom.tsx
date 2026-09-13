@@ -406,7 +406,9 @@ export default function CheckoutPageCom() {
     queryFn: () => api.get<{ data: StoreItem[] }>("/stores"),
   });
   const storeList = useMemo(
-    () => (storeListRes?.data || []).filter((s) => !s.abroadBranch),
+    // allowStorePickup=true means this branch does NOT accept pickup — hide it
+    // outright rather than showing it disabled, same as abroad branches.
+    () => (storeListRes?.data || []).filter((s) => !s.abroadBranch && s.allowStorePickup !== true),
     [storeListRes],
   );
 
@@ -512,15 +514,10 @@ export default function CheckoutPageCom() {
       setStoreDistances(next);
       setIsLocatingStores(false);
 
-      // Preselect the closest branch that actually allows pickup, unless the
-      // reader already chose one.
+      // Preselect the closest branch, unless the reader already chose one.
+      // storeList already excludes pickup-disallowed branches entirely.
       if (!storePickedByUser.current) {
-        const pickupAllowedUuids = new Set(
-          storeList.filter((s) => s.allowStorePickup !== true).map((s) => s.uuid),
-        );
-        const nearest = Object.entries(next)
-          .filter(([uuid]) => pickupAllowedUuids.has(uuid))
-          .sort((a, b) => a[1] - b[1])[0];
+        const nearest = Object.entries(next).sort((a, b) => a[1] - b[1])[0];
         if (nearest) setSelectedStoreUuid(nearest[0]);
       }
     };
@@ -537,8 +534,8 @@ export default function CheckoutPageCom() {
 
   useEffect(() => {
     if (selectedStoreUuid) return;
-    const firstAvailable = storeList.find((s) => s.allowStorePickup !== true);
-    if (firstAvailable) setSelectedStoreUuid(firstAvailable.uuid);
+    // storeList already excludes pickup-disallowed branches entirely.
+    if (storeList[0]) setSelectedStoreUuid(storeList[0].uuid);
   }, [storeList, selectedStoreUuid]);
 
   // ── Fetch minBookingPrice for cart items that are missing it ────────────────

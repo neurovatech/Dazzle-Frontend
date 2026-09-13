@@ -23,6 +23,9 @@ const fmtDate = (iso?: string) => {
 // truncate (not round) so the visible whole-taka figure never shifts from what
 // was actually charged, e.g. ৳429.65 always shows as ৳429, never ৳430.
 const fmtBDT = (n: number) => Math.floor(n).toLocaleString("en-IN");
+// Every price cell in the line-items/totals table states its currency
+// explicitly, rather than a bare number a reader has to assume is taka.
+const fmtBDTLabel = (n: number) => `${fmtBDT(n)} BDT`;
 
 /**
  * jsPDF's addImage needs a raster (PNG/JPEG), so the logo svg is rasterized
@@ -106,9 +109,10 @@ export default function InvoiceModal({
 
     doc.setFontSize(9);
     doc.setTextColor(110);
-    doc.text("Dazzle Store, Dhaka, Bangladesh", marginX, y + 18);
-    doc.text("Hotline: 09638001122", marginX, y + 30);
-    doc.text("Whatsapp: 09638001122", marginX, y + 42);
+    doc.text("Dazzle (Finlay Branch)", marginX, y + 18);
+    doc.text("Shop NO: 414 & 429, 4th Floor, Finlay Square, East Nasirabad", marginX, y + 30);
+    doc.text("Hotline: 01969991122 / Whatsapp: 01972999969", marginX, y + 42);
+    doc.text("BIN NO - 003313011-0505", marginX, y + 54);
 
     // ── Invoice info + bill-to (right) ──
     doc.setTextColor(20);
@@ -149,7 +153,7 @@ export default function InvoiceModal({
       { align: "right" },
     );
 
-    y = Math.max(y + 60, billY + 36);
+    y = Math.max(y + 72, billY + 36);
     doc.setDrawColor(220);
     doc.line(marginX, y, pageWidth - marginX, y);
     y += 18;
@@ -168,32 +172,33 @@ export default function InvoiceModal({
         ? order.comerzOrderItems.map((item) => [
             item.productName,
             item.variantName || "N/A",
-            fmtBDT(item.offerPrice),
+            fmtBDTLabel(item.offerPrice),
             "1",
-            fmtBDT(item.finalPrice),
+            fmtBDTLabel(item.finalPrice),
           ])
         : [
             [
               `${order.productCount} product${order.productCount !== 1 ? "s" : ""}`,
               "N/A",
-              fmtBDT(order.productPrice ?? 0),
+              fmtBDTLabel(order.productPrice ?? 0),
               String(order.productCount),
-              fmtBDT(order.total),
+              fmtBDTLabel(order.total),
             ],
           ];
 
     const footRows = [
-      ["Shipping", "", "", "", fmtBDT(order.deliveryFee ?? 0)],
-      ["Discount Total", "", "", "", fmtBDT(order.discount ?? 0)],
-      ...(codCharge > 0 ? [["COD Charge", "", "", "", fmtBDT(codCharge)]] : []),
-      ["Paid Amount", "", "", "", fmtBDT(d?.paidAmount ?? 0)],
-      ["Due Amount", "", "", "", fmtBDT(duAmt)],
-      ["Total", "", "", "", fmtBDT(order.total)],
+      ["Shipping", "", "", "", fmtBDTLabel(order.deliveryFee ?? 0)],
+      ["Discount Total", "", "", "", fmtBDTLabel(order.discount ?? 0)],
+      ...(codCharge > 0 ? [["COD Charge", "", "", "", fmtBDTLabel(codCharge)]] : []),
+      ["Paid Amount", "", "", "", fmtBDTLabel(d?.paidAmount ?? 0)],
+      ["Due Amount", "", "", "", fmtBDTLabel(duAmt)],
+      ["Total", "", "", "", fmtBDTLabel(order.total)],
     ];
+    const totalRowIndex = footRows.length - 1;
 
     autoTable(doc, {
       startY: y,
-      head: [["Product", "Accessory", "Unit Price", "Quantity", "Total"]],
+      head: [["Product", "Variant", "Unit Price", "Quantity", "Total"]],
       body: rows,
       foot: footRows,
       margin: { left: marginX, right: marginX },
@@ -204,6 +209,16 @@ export default function InvoiceModal({
         2: { halign: "right" },
         3: { halign: "center" },
         4: { halign: "right" },
+      },
+      // The grand Total row is the one number a reader actually needs to walk
+      // away with — it gets the brand colour so it doesn't blend into the
+      // Shipping/Discount/Paid/Due rows above it.
+      didParseCell: (data) => {
+        if (data.section === "foot" && data.row.index === totalRowIndex) {
+          data.cell.styles.fillColor = [109, 63, 14];
+          data.cell.styles.textColor = [255, 255, 255];
+          data.cell.styles.fontSize = 10.5;
+        }
       },
     });
 
@@ -235,10 +250,11 @@ export default function InvoiceModal({
                 {/* Brand left */}
                 <div>
                   <Image src={LogoBlack} alt="Dazzle" className="h-7 w-auto" priority />
-                  <p className="text-xs text-gray-500 mt-2 leading-relaxed max-w-[220px]">
-                    Dazzle Store, Dhaka, Bangladesh<br />
-                    Hotline: 09638001122<br />
-                    Whatsapp: 09638001122
+                  <p className="text-xs text-gray-500 mt-2 leading-relaxed max-w-[260px]">
+                    Dazzle (Finlay Branch)<br />
+                    Shop NO: 414 &amp; 429, 4th Floor, Finlay Square, East Nasirabad<br />
+                    Hotline: 01969991122 / Whatsapp: 01972999969<br />
+                    BIN NO - 003313011-0505
                   </p>
                 </div>
                 {/* Invoice info right */}
@@ -276,7 +292,7 @@ export default function InvoiceModal({
               <thead>
                 <tr className="bg-gray-50">
                   <th className="border border-gray-200 p-2 text-left font-bold">Product</th>
-                  <th className="border border-gray-200 p-2 text-left font-bold">Accessory</th>
+                  <th className="border border-gray-200 p-2 text-left font-bold">Variant</th>
                   <th className="border border-gray-200 p-2 text-right font-bold">Unit Price</th>
                   <th className="border border-gray-200 p-2 text-center font-bold">Quantity</th>
                   <th className="border border-gray-200 p-2 text-right font-bold">Total</th>
@@ -288,28 +304,28 @@ export default function InvoiceModal({
                     <tr key={item.comerzOrderItemUUID}>
                       <td className="border border-gray-200 p-2">{item.productName}</td>
                       <td className="border border-gray-200 p-2 text-gray-400">{item.variantName || "N/A"}</td>
-                      <td className="border border-gray-200 p-2 text-right">{fmtBDT(item.offerPrice)}</td>
+                      <td className="border border-gray-200 p-2 text-right">{fmtBDTLabel(item.offerPrice)}</td>
                       <td className="border border-gray-200 p-2 text-center">1</td>
-                      <td className="border border-gray-200 p-2 text-right">{fmtBDT(item.finalPrice)}</td>
+                      <td className="border border-gray-200 p-2 text-right">{fmtBDTLabel(item.finalPrice)}</td>
                     </tr>
                   ))
                 ) : (
                   <tr>
                     <td className="border border-gray-200 p-2">{order.productCount} product{order.productCount !== 1 ? "s" : ""}</td>
                     <td className="border border-gray-200 p-2 text-gray-400">N/A</td>
-                    <td className="border border-gray-200 p-2 text-right">{fmtBDT(order.productPrice ?? 0)}</td>
+                    <td className="border border-gray-200 p-2 text-right">{fmtBDTLabel(order.productPrice ?? 0)}</td>
                     <td className="border border-gray-200 p-2 text-center">{order.productCount}</td>
-                    <td className="border border-gray-200 p-2 text-right">{fmtBDT(order.total)}</td>
+                    <td className="border border-gray-200 p-2 text-right">{fmtBDTLabel(order.total)}</td>
                   </tr>
                 )}
-                <tr className="bg-gray-50"><td colSpan={4} className="border border-gray-200 p-2 font-bold">Shipping</td><td className="border border-gray-200 p-2 text-right">{fmtBDT(order.deliveryFee ?? 0)}</td></tr>
-                <tr className="bg-gray-50"><td colSpan={4} className="border border-gray-200 p-2 font-bold">Discount Total</td><td className="border border-gray-200 p-2 text-right">{fmtBDT(order.discount ?? 0)}</td></tr>
+                <tr className="bg-gray-50"><td colSpan={4} className="border border-gray-200 p-2 font-bold">Shipping</td><td className="border border-gray-200 p-2 text-right">{fmtBDTLabel(order.deliveryFee ?? 0)}</td></tr>
+                <tr className="bg-gray-50"><td colSpan={4} className="border border-gray-200 p-2 font-bold">Discount Total</td><td className="border border-gray-200 p-2 text-right">{fmtBDTLabel(order.discount ?? 0)}</td></tr>
                 {codCharge > 0 && (
-                  <tr className="bg-gray-50"><td colSpan={4} className="border border-gray-200 p-2 font-bold">COD Charge</td><td className="border border-gray-200 p-2 text-right text-orange-600 font-bold">{fmtBDT(codCharge)}</td></tr>
+                  <tr className="bg-gray-50"><td colSpan={4} className="border border-gray-200 p-2 font-bold">COD Charge</td><td className="border border-gray-200 p-2 text-right text-orange-600 font-bold">{fmtBDTLabel(codCharge)}</td></tr>
                 )}
-                <tr className="bg-gray-50"><td colSpan={4} className="border border-gray-200 p-2 font-bold">Paid Amount</td><td className="border border-gray-200 p-2 text-right text-green-600 font-bold">{fmtBDT(d?.paidAmount ?? 0)}</td></tr>
-                <tr className="bg-gray-50"><td colSpan={4} className="border border-gray-200 p-2 font-bold">Due Amount</td><td className="border border-gray-200 p-2 text-right text-red-600 font-bold">{fmtBDT(duAmt)}</td></tr>
-                <tr className="bg-gray-50"><td colSpan={4} className="border border-gray-200 p-2 font-bold">Total</td><td className="border border-gray-200 p-2 text-right font-bold">{fmtBDT(order.total)}</td></tr>
+                <tr className="bg-gray-50"><td colSpan={4} className="border border-gray-200 p-2 font-bold">Paid Amount</td><td className="border border-gray-200 p-2 text-right text-green-600 font-bold">{fmtBDTLabel(d?.paidAmount ?? 0)}</td></tr>
+                <tr className="bg-gray-50"><td colSpan={4} className="border border-gray-200 p-2 font-bold">Due Amount</td><td className="border border-gray-200 p-2 text-right text-red-600 font-bold">{fmtBDTLabel(duAmt)}</td></tr>
+                <tr className="bg-[#6D3F0E]"><td colSpan={4} className="border border-gray-200 p-2.5 font-bold text-white text-sm">Total</td><td className="border border-gray-200 p-2.5 text-right font-bold text-white text-sm">{fmtBDTLabel(order.total)}</td></tr>
               </tbody>
             </table>
           </div>
