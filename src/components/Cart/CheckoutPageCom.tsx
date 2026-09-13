@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import Breadcrumb from "@/components/share/Breadcrumb";
 import Link from "next/link";
 import {
@@ -283,6 +284,7 @@ function Section({ step, title, children }: { step: number; title: string; child
 // ─── Main Component ────────────────────────────────────────────────────────────
 export default function CheckoutPageCom() {
   const dispatch = useAppDispatch();
+  const router = useRouter();
   const cartItems = useAppSelector((s) => s.cart.items);
   /*
    * Store Pickup shows the branch list inline rather than in a modal: the list
@@ -336,6 +338,17 @@ export default function CheckoutPageCom() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderConfirmed, setOrderConfirmed] = useState(false);
   const [confirmedOrder, setConfirmedOrder] = useState<{ orderNo: string; total: number } | null>(null);
+
+  // Checkout only makes sense with something in the cart — a direct link, a
+  // refresh after checking out, or a cart cleared in another tab all leave it
+  // empty. `orderConfirmed` guards the one case where the cart is SUPPOSED to
+  // be empty here: right after this page's own successful order, which also
+  // clears the cart before showing the confirmation screen below.
+  useEffect(() => {
+    if (cartItems.length === 0 && !orderConfirmed) {
+      router.push("/cart");
+    }
+  }, [cartItems.length, orderConfirmed, router]);
 
   // ── API fetches ────────────────────────────────────────────────────────────
   const { data: addressListRes } = useQuery<AddressListResponse>({

@@ -263,15 +263,15 @@ export default function StickyPurchaseBar({
   * bar is about to buy: verify-order-product decides whether the variant is
   * still orderable, and get-default-variant supplies a replacement when it is
   * not, so the line is corrected in the cart before we navigate.
+  *
+  * The cart itself needs no login — it's local, persisted state — so the item
+  * is added FIRST regardless of auth, and only THEN do we branch on where to
+  * send the reader. Checking `isAuthenticated` before adding meant a logged-
+  * out Buy Now sent the reader straight to /auth/login without ever adding
+  * the product, so by the time login redirected them to /checkout the cart
+  * was still empty.
   */
  const handleBuyNow = async () => {
-  if (!isAuthenticated) {
-    router.push("/auth/login?redirect=/checkout");
-    // toast.error("Please log in to continue with your purchase.");
-    setShowLoginModal(true);
-    return;
-  }
-
   if (isUnavailable || loadingBuyNow) return;
 
   setLoadingBuyNow(true);
@@ -281,6 +281,12 @@ export default function StickyPurchaseBar({
     // orderable, and any failure has already shown its own reason.
     const success = await handleAddToCart();
     if (!success) return;
+
+    if (!isAuthenticated) {
+      router.push("/auth/login?redirect=/checkout");
+      setShowLoginModal(true);
+      return;
+    }
 
     router.push("/checkout");
   } catch (err) {

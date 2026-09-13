@@ -6,6 +6,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { addToCart } from "@/store/slices/cartSlice";
 import { trackAddToCart } from "@/lib/analytics/pixelEvents";
 import { api } from "@/lib/api";
+import { verifyOrderProduct } from "@/lib/verify-order-product";
 import toast from "react-hot-toast";
 
 interface DefaultVariantResponse {
@@ -111,6 +112,38 @@ export default function FrequentlyBoughtTogether({
       if (isAlreadyInCart) {
         toast.error(`${p.name || "This item"} is already in your cart.`);
         return;
+      }
+
+      // ── Verify BEFORE the item ever reaches the cart ──────────────────
+      try {
+        const { patches, unresolved } = await verifyOrderProduct({
+          id: variantUUID,
+          productUuid: pUuid,
+          variantUuid: variantUUID,
+          name: p.name || "Product",
+        });
+
+        if (unresolved.length > 0) {
+          toast.error(`${p.name || "This item"}: ${unresolved[0].reason}`);
+          return;
+        }
+
+        if (patches.length > 0) {
+          const patch = patches[0];
+          if (patch.replaced) {
+            toast.error(`${p.name || "This item"} is currently unavailable.`);
+            return;
+          }
+          variantUUID = patch.variantUuid;
+          if (typeof patch.price === "number") finalPrice = patch.price;
+          if (typeof patch.originalPrice === "number") finalRegPrice = patch.originalPrice;
+          if (patch.image) finalImage = patch.image;
+        }
+      } catch (err) {
+        console.error("[FrequentlyBoughtTogether] order verification failed:", err);
+        // The check itself errored (e.g. network down) rather than rejecting
+        // this specific line — add with the resolved variant instead of
+        // blocking the user entirely.
       }
 
       dispatch(

@@ -365,8 +365,11 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
             : (item.regularPrice ?? 0);
         const regPrice = item.regularPrice ?? 0;
         return {
-          // cart-ready raw data
-          id: item.accessoriesUuid,
+          // cart-ready raw data — bundleProdUuid is this item's own real
+          // product uuid; accessoriesUuid is the plan-accessories catalog
+          // row's id and is NOT resolvable via get-default-variant (verified
+          // against the live API: it 404s "Default variant not found").
+          id: item.bundleProdUuid,
           slug: item.productSlug || "",
           rawPrice: offerPrice,
           rawOriginalPrice: regPrice,

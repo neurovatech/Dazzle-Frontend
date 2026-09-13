@@ -59,7 +59,7 @@ const PasswordInput: React.FC<PasswordInputProps> = ({
           {...register}
           type={showPassword ? "text" : "password"}
           placeholder={placeholder}
-          className={`w-full px-4 py-3.5 pr-12 rounded-2xl bg-gray-100 dark:bg-[#3e3329] dark:text-white text-lg text-gray-800 placeholder-gray-400 outline-none border-2 transition-all duration-200 placeholder:text-lg
+          className={`w-full px-4 py-3.5 pr-12 rounded-2xl bg-gray-100 dark:bg-[#3e3329] dark:text-white text-3xl leading-none tracking-wider text-gray-800 placeholder-gray-400 outline-none border-2 transition-all duration-200 placeholder:text-lg placeholder:tracking-normal
             ${
               error
                 ? "border-red-400 focus:border-red-500 bg-red-50"

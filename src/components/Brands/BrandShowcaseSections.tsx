@@ -81,19 +81,54 @@ function SkeletonRow() {
 
 interface Props {
   brandSlug: string;
-  /** When a category chip is active, call the API with that slug instead */
+  /**
+   * The chip/tab row on the brand page — these are sub-category slugs
+   * (e.g. "iphone", "mac-mini"), so they're sent as subCategory=1, verified
+   * against the live API: showcase-escalate/iphone?subCategory=1 finds real
+   * results, the same slug with ?category=1 finds nothing ("iphone" is
+   * registered as a sub-category, not a top-level one).
+   */
   activeCategory?: string | null;
+  /**
+   * Top-level category the visitor arrived from (?fromCategory=phones from the
+   * mega-menu) — same value BrandProductListClient uses for the main grid.
+   * This one genuinely is a top-level category slug, so it's sent as
+   * category=1, distinct from the chip row above.
+   *
+   * showcase-escalate has no combined brand+category filter (verified against
+   * the live API: passing a second filter alongside brand=1 is silently
+   * ignored, and brand=1 with another scope flag together is a 400), so
+   * whenever a category or sub-category is in play — chip or arrived-from —
+   * these two sections show that CATEGORY's top selling/trending across all
+   * brands rather than this brand's alone; only with neither active do they
+   * stay brand-only.
+   */
+  topCategory?: string | null;
 }
 
-export default function BrandShowcaseSections({ brandSlug, activeCategory }: Props) {
-  // Use activeCategory slug when selected, otherwise fall back to brandSlug
-  const showcaseSlug = activeCategory?.trim() || brandSlug;
+export default function BrandShowcaseSections({ brandSlug, activeCategory, topCategory }: Props) {
+  const chipSlug = activeCategory?.trim() || null;
+  const topSlug  = topCategory?.trim() || null;
+
+  let showcaseSlug: string;
+  let showcaseParam: "subCategory" | "category" | "brand";
+
+  if (chipSlug) {
+    showcaseSlug = chipSlug;
+    showcaseParam = "subCategory";
+  } else if (topSlug) {
+    showcaseSlug = topSlug;
+    showcaseParam = "category";
+  } else {
+    showcaseSlug = brandSlug;
+    showcaseParam = "brand";
+  }
 
   const { data, isLoading } = useQuery<BrandShowcaseResponse>({
-    queryKey: ["brand-showcase", showcaseSlug],
+    queryKey: ["brand-showcase", showcaseSlug, showcaseParam],
     queryFn: () =>
       api.get<BrandShowcaseResponse>(
-        `/showcase-escalate/${showcaseSlug}?brand=1`,
+        `/showcase-escalate/${showcaseSlug}?${showcaseParam}=1`,
         { cache: "no-store" },
       ),
     staleTime: 10 * 60 * 1000,
@@ -101,8 +136,6 @@ export default function BrandShowcaseSections({ brandSlug, activeCategory }: Pro
     refetchOnWindowFocus: false,
     refetchOnReconnect:   false,
   });
-
-
   const topSelling = mapToCards(data?.data?.topSelling ?? []);
   const trending   = mapToCards(data?.data?.trending   ?? []);
 

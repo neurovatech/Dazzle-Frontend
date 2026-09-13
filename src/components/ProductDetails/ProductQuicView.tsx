@@ -489,15 +489,13 @@ function ProductQuicView({
   //   }
   // };
 
+  // The cart needs no login — it's local, persisted state — so the item is
+  // added FIRST regardless of auth, and only then do we decide where to send
+  // the reader. Checking `isAuthenticated` before adding meant a logged-out
+  // Buy Now sent the reader straight to /auth/login without ever adding the
+  // product, so by the time login redirected them to /checkout the cart was
+  // still empty.
   const handleBuyNow = async () => {
-    if (!isAuthenticated) {
-      router.push("/auth/login?redirect=/checkout");
-      // setShowLoginWarning(true);
-      return;
-    }
-
-    setShowLoginWarning(false); // logged in thakle warning hide
-
     if (loadingBuyNow) return;
 
     setLoadingBuyNow(true);
@@ -507,6 +505,13 @@ function ProductQuicView({
       // orderable, and any failure has already shown its own reason.
       const added = await handleAddToCart();
       if (!added) return;
+
+      setShowLoginWarning(false); // logged in thakle warning hide
+
+      if (!isAuthenticated) {
+        router.push("/auth/login?redirect=/checkout");
+        return;
+      }
 
       router.push("/checkout");
     } catch (err) {

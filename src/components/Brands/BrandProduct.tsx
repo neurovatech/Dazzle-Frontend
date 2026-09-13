@@ -535,7 +535,7 @@ export default function BrandProducts({
           />
 
           {/* ── Top Selling + Trending — brand-specific from showcase-escalate ── */}
-          <BrandShowcaseSections brandSlug={brandSlug} activeCategory={activeCategory} />
+          <BrandShowcaseSections brandSlug={brandSlug} activeCategory={activeCategory} topCategory={topCategory} />
 
           {/* productList area */}
           <div ref={productListRef} className="scroll-mt-4">

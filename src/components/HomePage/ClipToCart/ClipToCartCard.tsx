@@ -8,7 +8,24 @@ import toast from "react-hot-toast";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { addToCart } from "@/store/slices/cartSlice";
 import { trackAddToCart } from "@/lib/analytics/pixelEvents";
+import { api } from "@/lib/api";
+import { verifyOrderProduct } from "@/lib/verify-order-product";
 import { isEmpty, formatPrice, type ClipProduct } from "./clipToCart.shared";
+
+interface DefaultVariantResponse {
+  statusCode: number;
+  status: string;
+  message?: string;
+  data?: {
+    productUUID: string;
+    variantUUID: string;
+    regularPrice: number;
+    offerPrice: number;
+    wholeSalePrice: number;
+    thumbnailURL: string;
+    isTba: boolean;
+  };
+}
 
 interface ClipToCartCardProps {
   product: ClipProduct;
@@ -39,6 +56,7 @@ export default function ClipToCartCard({
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const isAdded = mounted && cartItems.some((item) => item.id === product.id);
+  const [isAdding, setIsAdding] = useState(false);
 
   const hasVideo = !isEmpty(product.videoUrl);
   const hasDiscount =
@@ -46,24 +64,88 @@ export default function ClipToCartCard({
     product.regularPrice &&
     product.discountedPrice < product.regularPrice;
 
-  const handleCartClick = (e: React.MouseEvent) => {
+  /**
+   * product.id is the product's own uuid, not a variant — same as
+   * ProductCardBuy, the variant is resolved via get-default-variant and
+   * confirmed via verify-order-product before it ever reaches the cart.
+   */
+  const handleCartClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (isAdded) return;
-    dispatch(
-      addToCart({
-        id: product.id,
-        name: product.title,
-        brand: product.brandName || "",
-        image: product.image || "",
-        price: product.discountedPrice ?? product.regularPrice ?? 0,
-        originalPrice: product.regularPrice ?? 0,
-        quantity: 1,
-        inStock: true,
-        slug: product.productSlug || "",
-      }),
-    );
-    trackAddToCart({ id: product.id, name: product.title, price: product.discountedPrice ?? product.regularPrice ?? 0, brand: product.brandName });
-    toast.success(`${product.title} added to cart! 🛒`);
+    if (isAdded || isAdding) return;
+
+    setIsAdding(true);
+    try {
+      let variantUUID = product.id;
+      let finalPrice = product.discountedPrice ?? product.regularPrice ?? 0;
+      let finalRegPrice = product.regularPrice ?? 0;
+      let finalImage = product.image || "";
+
+      try {
+        const res = await api.get<DefaultVariantResponse>(
+          `/get-default-variant/${product.id}?priceSort=1&userDefine=0`,
+        );
+        if (res?.data) {
+          if (res.data.isTba) {
+            toast.error(`${product.title} is not available right now.`);
+            return;
+          }
+          variantUUID = res.data.variantUUID || variantUUID;
+          finalPrice = res.data.offerPrice ?? finalPrice;
+          finalRegPrice = res.data.regularPrice ?? finalRegPrice;
+          if (res.data.thumbnailURL) finalImage = res.data.thumbnailURL;
+        }
+      } catch (err) {
+        console.error(`[ClipToCartCard] get-default-variant failed for ${product.id}:`, err);
+      }
+
+      try {
+        const { patches, unresolved } = await verifyOrderProduct({
+          id: variantUUID,
+          productUuid: product.id,
+          variantUuid: variantUUID,
+          name: product.title,
+        });
+
+        if (unresolved.length > 0) {
+          toast.error(`${product.title}: ${unresolved[0].reason}`);
+          return;
+        }
+
+        if (patches.length > 0) {
+          const patch = patches[0];
+          if (patch.replaced) {
+            toast.error(`${product.title} is currently unavailable.`);
+            return;
+          }
+          variantUUID = patch.variantUuid;
+          if (typeof patch.price === "number") finalPrice = patch.price;
+          if (typeof patch.originalPrice === "number") finalRegPrice = patch.originalPrice;
+          if (patch.image) finalImage = patch.image;
+        }
+      } catch (err) {
+        console.error("[ClipToCartCard] order verification failed:", err);
+      }
+
+      dispatch(
+        addToCart({
+          id: variantUUID,
+          productUuid: product.id,
+          variantUuid: variantUUID,
+          name: product.title,
+          brand: product.brandName || "",
+          image: finalImage,
+          price: finalPrice,
+          originalPrice: finalRegPrice,
+          quantity: 1,
+          inStock: true,
+          slug: product.productSlug || "",
+        }),
+      );
+      trackAddToCart({ id: product.id, name: product.title, price: finalPrice, brand: product.brandName });
+      toast.success(`${product.title} added to cart! 🛒`);
+    } finally {
+      setIsAdding(false);
+    }
   };
 
   return (
@@ -157,12 +239,18 @@ export default function ClipToCartCard({
 
           <button
             onClick={handleCartClick}
-            className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-all duration-300 hover:scale-110 active:scale-95 ${
+            disabled={isAdding}
+            className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-all duration-300 hover:scale-110 active:scale-95 disabled:opacity-60 disabled:cursor-wait disabled:hover:scale-100 ${
               isAdded ? "bg-green-500" : "bg-[#101518] dark:bg-white"
             }`}
             aria-label={isAdded ? "Added to cart" : "Add to cart"}
           >
-            {isAdded ? (
+            {isAdding ? (
+              <svg className="w-4 h-4 animate-spin text-[#E9CCAE] dark:text-black" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+              </svg>
+            ) : isAdded ? (
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
