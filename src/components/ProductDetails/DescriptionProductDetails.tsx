@@ -22,41 +22,6 @@ interface DescriptionProps {
 const DescriptionProductDetails: React.FC<DescriptionProps> = ({
   description,
 }) => {
-  const [open, setOpen] = useState(true);
-  const cards = [
-    {
-      variant: "white",
-      title:
-        "Welcome to Dazzle Mobile & Gadget Shop – Your Premier Destination for Cutting-Edge Devices in Bangladesh",
-      description:
-        "Looking for the best Apple products, the top smartphones, and the latest and greatest in the world of gadgets? Look no further than Dazzle Mobile & Gadget Shop – your ultimate tech haven in Bangladesh.",
-      wrapper: "bg-white border border-gray-200",
-    },
-    {
-      variant: "purple",
-      title:
-        "Welcome to Dazzle Mobile & Gadget Shop – Your Premier Destination for Cutting-Edge Devices in Bangladesh",
-      description:
-        "Looking for the best Apple products, the top smartphones, and the latest and greatest in the world of gadgets? Look no further than Dazzle Mobile & Gadget Shop – your ultimate tech haven in Bangladesh.",
-      wrapper: "bg-[#EEEEFF] border border-[#DDDDF5]",
-    },
-    {
-      variant: "green",
-      title:
-        "Welcome to Dazzle Mobile & Gadget Shop – Your Premier Destination for Cutting-Edge Devices in Bangladesh",
-      description:
-        "Looking for the best Apple products, the top smartphones, and the latest and greatest in the world of gadgets? Look no further than Dazzle Mobile & Gadget Shop – your ultimate tech haven in Bangladesh.",
-      wrapper: "bg-[#F0FAF4] border border-[#D9F0E3]",
-    },
-    {
-      variant: "peach",
-      title:
-        "Welcome to Dazzle Mobile & Gadget Shop – Your Premier Destination for Cutting-Edge Devices in Bangladesh",
-      description:
-        "Looking for the best Apple products, the top smartphones, and the latest and greatest in the world of gadgets? Look no further than Dazzle Mobile & Gadget Shop – your ultimate tech haven in Bangladesh.",
-      wrapper: "bg-[#FFF6EE] border border-[#FFE8D0]",
-    },
-  ];
 
   return (
     <div className="w-full">
@@ -120,7 +85,7 @@ const DescriptionProductDetails: React.FC<DescriptionProps> = ({
           />
         ) : (
           <>
-            <Image
+            {/* <Image
               src={ProductBanner}
               width={500}
               height={500}
@@ -142,7 +107,7 @@ const DescriptionProductDetails: React.FC<DescriptionProps> = ({
                   </p>
                 </div>
               ))}
-            </div>
+            </div> */}
           </>
         )}
       </div>

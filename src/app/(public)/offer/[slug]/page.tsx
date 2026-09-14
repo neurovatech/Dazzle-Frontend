@@ -42,7 +42,7 @@ export interface CampaignDetailResponse {
   campaignDescription?: string;
   campaign_description?: string;
   campaignImage?: string;
-  campaign_image?: string;
+  thumbnails?: string;
   endedAt?: string;
   ended_at?: string;
   data: CampaignProduct[];
@@ -138,7 +138,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     data?.campaign_description ||
     data?.campaignDescription ||
     `Shop exclusive deals from the ${name} campaign at Dazzle. Best prices on smartphones, laptops & gadgets in Bangladesh.`;
-  const image = data?.campaign_image ?? data?.campaignImage;
+  const image = data?.thumbnails ?? data?.campaignImage;
   const ogTitle = `${name} `;
   const ogImage = buildOgImage(image, name);
 
@@ -168,10 +168,11 @@ export default async function OfferDetailPage({ params }: PageProps) {
   const { slug } = await params;
   const initialData = await getCampaignDetail(slug);
   if (!initialData) notFound();
+  console.log("initialData", initialData);
 
   const campaignName        = initialData.campaign_name ?? initialData.campaignName ?? cleanSlug(slug);
   const campaignDescription = initialData.campaign_description ?? initialData.campaignDescription;
-  const campaignImage       = initialData.campaign_image ?? initialData.campaignImage;
+  const campaignImage       = initialData.thumbnails ?? initialData.campaignImage;
   const endedAt             = initialData.ended_at ?? initialData.endedAt;
 
   const resolvedSlug =

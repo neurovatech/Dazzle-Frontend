@@ -11,6 +11,8 @@ export default function OfferCard({ campaign }: { campaign: Campaign }) {
   const [imageSrc, setImageSrc] = useState(campaign.image_url || NoImg.src);
   const endDate = campaign.ended_at ? new Date(campaign.ended_at) : null;
 
+  console.log("campaign", campaign);
+
   return (
     <div className="bg-white dark:bg-[#1c1917] shadow-[0px_0px_32px_0px_#0000001A] rounded-3xl px-[22px] py-[19px] border border-[#F2F2F2] dark:border-white/5 overflow-hidden flex flex-col">
       {/* Banner image */}

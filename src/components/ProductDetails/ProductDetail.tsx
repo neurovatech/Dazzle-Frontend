@@ -59,13 +59,16 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
   const [showDescription, setShowDescription] = useState(false);
   const descriptionRef = useRef<HTMLDivElement>(null);
 
-  const { data: variantApiData, isLoading: isVariantLoading } = useQuery<VariantApiResponse>({
-    queryKey: ["product-variants", product?.productUuid],
-    queryFn: () =>
-      api.get<VariantApiResponse>(`/product-variants/${product!.productUuid}`),
-    enabled: !!product?.productUuid,
-    staleTime: 10 * 60 * 1000,
-  });
+  const { data: variantApiData, isLoading: isVariantLoading } =
+    useQuery<VariantApiResponse>({
+      queryKey: ["product-variants", product?.productUuid],
+      queryFn: () =>
+        api.get<VariantApiResponse>(
+          `/product-variants/${product!.productUuid}`,
+        ),
+      enabled: !!product?.productUuid,
+      staleTime: 10 * 60 * 1000,
+    });
 
   const { data: planAccessoriesData } = useQuery({
     queryKey: ["plan-accessories", product?.productUuid],
@@ -103,7 +106,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
     staleTime: 10 * 60 * 1000,
   });
 
-
   // ── Consolidate ────────────────────────────────────────────────
   const { groups, variants } = useMemo(
     () => consolidateVariants(variantApiData?.data ?? []),
@@ -135,7 +137,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
     );
   }, [groups, variants, selectedAttrs]);
 
-  console.log(selectedVariant, "selectedVariant")
+  console.log(selectedVariant, "selectedVariant");
 
   const isOptionAvailable = (group: string, option: string) =>
     variants.some(
@@ -287,119 +289,124 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
   }, [product?.productUuid]);
 
   // ── Plan Accessories data processing ─────────────────────────
-  const { dazzleCareOptions, frequentlyBoughtProducts, buyMoreProducts } = useMemo(() => {
-    const groups = planAccessoriesData?.data;
-    if (!groups || !Array.isArray(groups)) {
-      return { dazzleCareOptions: [], frequentlyBoughtProducts: [], buyMoreProducts: [] };
-    }
-
-    const dazzleCareGroup = groups.find((g) => g.planGroup === "Dazzle_Care");
-    const frequentlyBuyTogetherGroup = groups.find(
-      (g) => g.planGroup === "Frequently_Buy_Together",
-    );
-    const buyMoreSaveMoreGroup = groups.find(
-      (g) => g.planGroup === "Buy_More_Save_More",
-    );
-
-    // Map Dazzle Care options
-    const dcOptions = (dazzleCareGroup?.items ?? []).map((item) => {
-      const parenIdx = item.productName.indexOf("(");
-      const colonIdx = item.productName.indexOf(":");
-      let title = item.productName;
-      let description = "";
-
-      if (parenIdx !== -1) {
-        title = item.productName.slice(0, parenIdx).trim();
-        description = item.productName
-          .slice(parenIdx + 1)
-          .replace(/\)$/, "")
-          .trim();
-      } else if (colonIdx !== -1) {
-        title = item.productName.slice(0, colonIdx).trim();
-        description = item.productName.slice(colonIdx + 1).trim();
+  const { dazzleCareOptions, frequentlyBoughtProducts, buyMoreProducts } =
+    useMemo(() => {
+      const groups = planAccessoriesData?.data;
+      if (!groups || !Array.isArray(groups)) {
+        return {
+          dazzleCareOptions: [],
+          frequentlyBoughtProducts: [],
+          buyMoreProducts: [],
+        };
       }
-      const optPrice =
-        item.discountedPrice > 0
-          ? item.discountedPrice
-          : item.salesOnRate > 0
-            ? Math.round((price * item.salesOnRate) / 100)
-            : 0;
 
-      const optOriginalPrice =
-        item.regularPrice > 0 ? item.regularPrice : optPrice; // same if no markup
+      const dazzleCareGroup = groups.find((g) => g.planGroup === "Dazzle_Care");
+      const frequentlyBuyTogetherGroup = groups.find(
+        (g) => g.planGroup === "Frequently_Buy_Together",
+      );
+      const buyMoreSaveMoreGroup = groups.find(
+        (g) => g.planGroup === "Buy_More_Save_More",
+      );
 
-      // // thumbnail URL
-      // const thumbUrl = item.thumbnail?.[0]?.mediaFileURL
-      //               || item.thumbnail?.[0]?.mediaFileUrl
-      //               || "";
+      // Map Dazzle Care options
+      const dcOptions = (dazzleCareGroup?.items ?? []).map((item) => {
+        const parenIdx = item.productName.indexOf("(");
+        const colonIdx = item.productName.indexOf(":");
+        let title = item.productName;
+        let description = "";
 
-      return {
-        // The order-creation API expects the plan's own product uuid here,
-        // not the plan-accessories catalog row's accessoriesUuid.
-        id: item.bundleProdUuid,
-        title,
-        description,
-        price: optPrice,
-        originalPrice: optOriginalPrice,
-        icon: "🛡️",
-        thumbnail:
-          item.thumbnail?.[0]?.mediaFileURL ||
-          item.thumbnail?.[0]?.mediaFileUrl ||
-          "",
-        salesOnRate: item.salesOnRate ?? 0,
-        warrantyDays: item.stdWarrantyProdDay ?? 0,
-      };
-    });
-
-    // Shared mapping for accessory-group items (Frequently_Buy_Together, Buy_More_Save_More)
-    type AccessoryItem = NonNullable<typeof frequentlyBuyTogetherGroup>["items"][number];
-    const mapAccessoryItems = (items: AccessoryItem[] | undefined) =>
-      (items ?? []).map((item) => {
-        const img =
-          item.thumbnail?.[0]?.mediaFileURL ||
-          item.thumbnail?.[0]?.mediaFileUrl ||
-          "";
-        const offerPrice =
+        if (parenIdx !== -1) {
+          title = item.productName.slice(0, parenIdx).trim();
+          description = item.productName
+            .slice(parenIdx + 1)
+            .replace(/\)$/, "")
+            .trim();
+        } else if (colonIdx !== -1) {
+          title = item.productName.slice(0, colonIdx).trim();
+          description = item.productName.slice(colonIdx + 1).trim();
+        }
+        const optPrice =
           item.discountedPrice > 0
             ? item.discountedPrice
-            : (item.regularPrice ?? 0);
-        const regPrice = item.regularPrice ?? 0;
+            : item.salesOnRate > 0
+              ? Math.round((price * item.salesOnRate) / 100)
+              : 0;
+
+        const optOriginalPrice =
+          item.regularPrice > 0 ? item.regularPrice : optPrice; // same if no markup
+
+        // // thumbnail URL
+        // const thumbUrl = item.thumbnail?.[0]?.mediaFileURL
+        //               || item.thumbnail?.[0]?.mediaFileUrl
+        //               || "";
+
         return {
-          // cart-ready raw data — bundleProdUuid is this item's own real
-          // product uuid; accessoriesUuid is the plan-accessories catalog
-          // row's id and is NOT resolvable via get-default-variant (verified
-          // against the live API: it 404s "Default variant not found").
+          // The order-creation API expects the plan's own product uuid here,
+          // not the plan-accessories catalog row's accessoriesUuid.
           id: item.bundleProdUuid,
-          slug: item.productSlug || "",
-          rawPrice: offerPrice,
-          rawOriginalPrice: regPrice,
-          // display data
-          image: img,
-          name: item.productName,
-          inStock: !item.isTba,
-          price:
-            offerPrice > 0 ? `৳${offerPrice.toLocaleString("en-US")}` : "0",
-          originalPrice:
-            regPrice > offerPrice
-              ? `৳${regPrice.toLocaleString("en-US")}`
-              : undefined,
+          title,
+          description,
+          price: optPrice,
+          originalPrice: optOriginalPrice,
+          icon: "🛡️",
+          thumbnail:
+            item.thumbnail?.[0]?.mediaFileURL ||
+            item.thumbnail?.[0]?.mediaFileUrl ||
+            "",
+          salesOnRate: item.salesOnRate ?? 0,
+          warrantyDays: item.stdWarrantyProdDay ?? 0,
         };
       });
 
-    // Map Frequently Bought Together products
-    const fbtProducts = mapAccessoryItems(frequentlyBuyTogetherGroup?.items);
+      // Shared mapping for accessory-group items (Frequently_Buy_Together, Buy_More_Save_More)
+      type AccessoryItem = NonNullable<
+        typeof frequentlyBuyTogetherGroup
+      >["items"][number];
+      const mapAccessoryItems = (items: AccessoryItem[] | undefined) =>
+        (items ?? []).map((item) => {
+          const img =
+            item.thumbnail?.[0]?.mediaFileURL ||
+            item.thumbnail?.[0]?.mediaFileUrl ||
+            "";
+          const offerPrice =
+            item.discountedPrice > 0
+              ? item.discountedPrice
+              : (item.regularPrice ?? 0);
+          const regPrice = item.regularPrice ?? 0;
+          return {
+            // cart-ready raw data — bundleProdUuid is this item's own real
+            // product uuid; accessoriesUuid is the plan-accessories catalog
+            // row's id and is NOT resolvable via get-default-variant (verified
+            // against the live API: it 404s "Default variant not found").
+            id: item.bundleProdUuid,
+            slug: item.productSlug || "",
+            rawPrice: offerPrice,
+            rawOriginalPrice: regPrice,
+            // display data
+            image: img,
+            name: item.productName,
+            inStock: !item.isTba,
+            price:
+              offerPrice > 0 ? `৳${offerPrice.toLocaleString("en-US")}` : "0",
+            originalPrice:
+              regPrice > offerPrice
+                ? `৳${regPrice.toLocaleString("en-US")}`
+                : undefined,
+          };
+        });
 
-    // Map Buy More Save More products
-    const bmsmProducts = mapAccessoryItems(buyMoreSaveMoreGroup?.items);
+      // Map Frequently Bought Together products
+      const fbtProducts = mapAccessoryItems(frequentlyBuyTogetherGroup?.items);
 
-    return {
-      dazzleCareOptions: dcOptions,
-      frequentlyBoughtProducts: fbtProducts,
-      buyMoreProducts: bmsmProducts,
-    };
-  }, [planAccessoriesData, price]);
+      // Map Buy More Save More products
+      const bmsmProducts = mapAccessoryItems(buyMoreSaveMoreGroup?.items);
 
-
+      return {
+        dazzleCareOptions: dcOptions,
+        frequentlyBoughtProducts: fbtProducts,
+        buyMoreProducts: bmsmProducts,
+      };
+    }, [planAccessoriesData, price]);
 
   // ── Derived care plan totals (offer + regular) ─────────────────
   const selectedCareOptions = useMemo(
@@ -449,7 +456,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
     enabled: !!product?.productUuid,
     staleTime: 10 * 60 * 1000,
   });
-
 
   // Map API response → ProductSpecifications props shape
   const specGroups = useMemo(() => {
@@ -522,6 +528,8 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
     galleryImages[0]?.url ||
     product?.thumbnailImg ||
     "";
+
+  console.log(product, "product?.description");
 
   return (
     <div className="min-h-screen font-sans bg-[#fffbf6] dark:bg-[#2e2b28]">
@@ -804,23 +812,24 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
 
         <div className="space-y-6 mt-6">
           {/* Specification & Description Tab Buttons */}
-            <div className="flex items-center gap-3">
-              {!specGroups || specGroups.length === 0 ? (
-                ""
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setShowDescription(false)}
-                  className={`px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 ${
-                    !showDescription
-                      ? "bg-[#E9CCAE] text-black shadow-sm"
-                      : "bg-[#F7F7F7] dark:bg-[#3e3329] text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-[#4a3f36]"
-                  }`}
-                >
-                  Specification
-                </button>
-              )}
+          <div className="flex items-center gap-3">
+            {!specGroups || specGroups.length === 0 ? (
+              ""
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowDescription(false)}
+                className={`px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 ${
+                  !showDescription
+                    ? "bg-[#E9CCAE] text-black shadow-sm"
+                    : "bg-[#F7F7F7] dark:bg-[#3e3329] text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-[#4a3f36]"
+                }`}
+              >
+                Specification
+              </button>
+            )}
 
+            {product?.description ? (
               <button
                 type="button"
                 onClick={() => {
@@ -847,14 +856,18 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
               >
                 Description
               </button>
-            </div>
-
-            {!specGroups || specGroups.length === 0 ? (
-              ""
             ) : (
-              <ProductSpecifications groups={specGroups} />
+              ""
             )}
+          </div>
 
+          {!specGroups || specGroups.length === 0 ? (
+            ""
+          ) : (
+            <ProductSpecifications groups={specGroups} />
+          )}
+
+          {product?.description ? (
             <div
               ref={descriptionRef}
               className="mt-6 border-t border-gray-200 dark:border-gray-700 pt-6 scroll-mt-24"
@@ -864,8 +877,12 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
               </h3>
               <DescriptionProductDetails description={product?.description} />
             </div>
-            {/* )} */}
-          </div>
+          ) : (
+            ""
+          )}
+
+          {/* )} */}
+        </div>
 
         {/* ── Related Products ── */}
         {product?.subCategorySlug && (

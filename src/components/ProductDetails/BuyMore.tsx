@@ -236,23 +236,25 @@ const BuyMore: React.FC<BuyMoreProps> = ({ items }: any) => {
                     {item.name}
                   </p>
                   <div
-    role="tooltip"
-    className="absolute z-10 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-opacity duration-300 
+                    role="tooltip"
+                    className="absolute z-10 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-opacity duration-300 
       bottom-full left-1/2 -translate-x-1/2 mb-2 
       inline-block px-3 py-2 text-sm font-medium text-white 
       bg-gray-900 rounded-lg shadow-sm whitespace-nowrap
       dark:bg-gray-700"
-  >
-    {item.name}
-    {/* Arrow */}
-    <div className="tooltip-arrow absolute w-2 h-2 bg-gray-900 dark:bg-gray-700 rotate-45 -bottom-1 left-1/2 -translate-x-1/2"></div>
-  </div>
+                  >
+                    {item.name}
+                    {/* Arrow */}
+                    <div className="tooltip-arrow absolute w-2 h-2 bg-gray-900 dark:bg-gray-700 rotate-45 -bottom-1 left-1/2 -translate-x-1/2"></div>
+                  </div>
                 </div>
 
                 {/* Price */}
                 <div className="text-right shrink-0 flex gap-2 items-center justify-center">
-                  <div className="flex px-4 py-1 gap-2 items-center justify-center rounded-[10px] bg-[#FF98000F]
-]">
+                  <div
+                    className="flex px-4 py-1 gap-2 items-center justify-center rounded-[10px] bg-[#FF98000F]
+]"
+                  >
                     <svg
                       width="18"
                       height="18"
@@ -298,7 +300,10 @@ const BuyMore: React.FC<BuyMoreProps> = ({ items }: any) => {
                         </clipPath>
                       </defs>
                     </svg>
-                    <p className="text bg-clip-text text-transparent bg-[linear-gradient(90deg,#F44336_0%,#FF9800_100%)]"> {formatPrice(item.originalPrice - item.price)} </p>
+                    <p className="text bg-clip-text text-transparent bg-[linear-gradient(90deg,#F44336_0%,#FF9800_100%)]">
+                      {" "}
+                      {formatPrice(item.originalPrice - item.price)}{" "}
+                    </p>
                   </div>
                   <p
                     className={`text-sm font-bold ${isChecked ? "text-orange-500" : "text-gray-900"}`}
