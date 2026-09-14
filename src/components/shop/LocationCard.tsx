@@ -45,7 +45,7 @@ const LocationCard: React.FC<LocationCardProps> = ({ store }) => {
         aria-disabled={pickupDisabled}
         className={`bg-white dark:bg-[#1B1B1B] rounded-2xl overflow-hidden border border-gray-100 dark:border-[#2E2E2E] shadow-sm transition-shadow duration-300 flex flex-col px-[19px] py-[22px] ${
           pickupDisabled
-            ? "opacity-50 grayscale pointer-events-none select-none"
+            ? "grayscale pointer-events-none select-none"
             : "hover:shadow-md"
         }`}
       >
