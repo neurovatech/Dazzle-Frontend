@@ -42,12 +42,8 @@ const LocationCard: React.FC<LocationCardProps> = ({ store }) => {
   return (
     <>
       <div
-        aria-disabled={pickupDisabled}
-        className={`bg-white dark:bg-[#1B1B1B] rounded-2xl overflow-hidden border border-gray-100 dark:border-[#2E2E2E] shadow-sm transition-shadow duration-300 flex flex-col px-[19px] py-[22px] ${
-          pickupDisabled
-            ? "grayscale pointer-events-none select-none"
-            : "hover:shadow-md"
-        }`}
+        // aria-disabled={pickupDisabled}
+        className={`bg-white dark:bg-[#1B1B1B] rounded-2xl overflow-hidden border border-gray-100 dark:border-[#2E2E2E] shadow-sm transition-shadow duration-300 flex flex-col px-[19px] py-[22px]`}
       >
         {/* Image */}
         <div className="relative h-55 w-full overflow-hidden rounded-2xl">
@@ -84,7 +80,7 @@ const LocationCard: React.FC<LocationCardProps> = ({ store }) => {
           {/* Map button */}
           <button
             onClick={() => setMapOpen(true)}
-            disabled={pickupDisabled}
+            // disabled={pickupDisabled}
             className="absolute bottom-3 left-3 flex items-center gap-1.5 border border-[#6D3F0E] bg-white/90 dark:bg-[#2A2A2A]/90 backdrop-blur-sm text-[#000000] dark:text-white text-sm font-medium px-3 py-2 rounded-[27px] shadow-[0px_4px_9.5px_1px_#6D3F0E6E] hover:bg-white dark:hover:bg-[#333333] transition-colors disabled:cursor-not-allowed"
             aria-label="View on map"
           >
