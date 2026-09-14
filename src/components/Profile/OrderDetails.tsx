@@ -36,6 +36,7 @@ import InvoiceModal from "./InvoiceModal";
 import Image from "next/image";
 import Bikask from "@/images/bKash-Logo.svg";
 import SSl from "@/images/ssl-logo.svg";
+import { getOrderCorrectTotal } from "@/lib/cod-calculator";
 
 // ─── Helper: whole-currency formatting — no product/order price here is ever
 // meant to show fractional taka. Truncated, not rounded, so the visible
@@ -725,7 +726,14 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
   };
 
   // ── Booking money / Cash on Delivery due-amount ───────────────────────────
-  const grandAmount = trackingData?.grandAmount ?? order?.totalNumber ?? 0;
+  // Use two-step COD formula to get the correct grand total (e.g. 409,449 not 409,408)
+  const _rawOrderCorrect = rawOrder ? getOrderCorrectTotal(rawOrder) : null;
+  const grandAmount =
+    _rawOrderCorrect?.correctTotal ||
+    trackingData?.grandAmount ||
+    (order?.totalNumber ?? 0);
+  const displayCodCharge = _rawOrderCorrect?.codCharge ?? (rawOrder?.codCharge ?? 0);
+  const displayRoundOff = _rawOrderCorrect?.roundOff ?? (rawOrder?.roundOff ?? 0);
   const paidAmount = trackingData?.paidAmount ?? 0;
   const dueAmount = Math.max(0, grandAmount - paidAmount);
   const paymentType = rawOrder?.paymentType; // "COD" | "OP" | "Partial" | undefined
@@ -1208,16 +1216,16 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
                 <span>Subtotal</span>
                 <span>৳{fmtBDT(rawOrder?.subTotal ?? trackingData?.subTotal ?? 0)}</span>
               </div>
-              {(rawOrder?.codCharge ?? 0) > 0 && (
+              {displayCodCharge > 0 && (
                 <div className="flex justify-between items-center text-sm font-medium text-orange-600 dark:text-orange-400">
                   <span>COD Charge</span>
-                  <span>৳{fmtBDT(rawOrder?.codCharge ?? 0)}</span>
+                  <span>৳{fmtBDT(displayCodCharge)}</span>
                 </div>
               )}
-              {(rawOrder?.roundOff ?? 0) !== 0 && (
+              {displayRoundOff !== 0 && (
                 <div className="flex justify-between items-center text-sm font-medium text-gray-400 dark:text-gray-500">
                   <span>Round Off</span>
-                  <span>{(rawOrder?.roundOff ?? 0) >= 0 ? "+" : ""}৳{fmtBDT(rawOrder?.roundOff ?? 0)}</span>
+                  <span>{displayRoundOff >= 0 ? "+" : ""}৳{fmtBDT(displayRoundOff)}</span>
                 </div>
               )}
               <div className="flex justify-between items-center text-sm font-medium text-gray-600 dark:text-gray-300">
@@ -1235,7 +1243,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
               <div className="border-t border-gray-100 dark:border-zinc-800 pt-3 flex justify-between items-center font-bold text-gray-900 dark:text-white">
                 <span>Grand Total</span>
                 <span className="text-[#7A4500] dark:text-[#d48c34] text-lg">
-                  ৳{fmtBDT(rawOrder?.grandTotal ?? grandAmount)}
+                  ৳{fmtBDT(grandAmount)}
                 </span>
               </div>
               <div className="pt-1 flex items-center justify-between text-[13px]">
@@ -1296,16 +1304,16 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
                   <span>৳{fmtBDT(rawOrder?.subTotal ?? 0)}</span>
                 </div>
               )}
-              {(rawOrder?.codCharge ?? 0) > 0 && (
+              {displayCodCharge > 0 && (
                 <div className="flex justify-between items-center text-sm font-medium text-orange-600 dark:text-orange-400">
                   <span>COD Charge</span>
-                  <span>৳{fmtBDT(rawOrder?.codCharge ?? 0)}</span>
+                  <span>৳{fmtBDT(displayCodCharge)}</span>
                 </div>
               )}
-              {(rawOrder?.roundOff ?? 0) !== 0 && (
+              {displayRoundOff !== 0 && (
                 <div className="flex justify-between items-center text-sm text-gray-400">
                   <span>Round Off</span>
-                  <span>{(rawOrder?.roundOff ?? 0) >= 0 ? "+" : ""}৳{fmtBDT(rawOrder?.roundOff ?? 0)}</span>
+                  <span>{displayRoundOff >= 0 ? "+" : ""}৳{fmtBDT(displayRoundOff)}</span>
                 </div>
               )}
               {(rawOrder?.paidAmount ?? 0) > 0 && (
@@ -1317,7 +1325,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
               <div className="border-t border-gray-100 dark:border-zinc-800 pt-3 flex justify-between items-center font-bold text-gray-900 dark:text-white">
                 <span>Grand Total</span>
                 <span className="text-[#7A4500] dark:text-[#d48c34] text-lg">
-                  {order?.total ?? `৳${fmtBDT(rawOrder?.grandTotal ?? rawOrder?.total ?? 0)}`}
+                  ৳{fmtBDT(grandAmount)}
                 </span>
               </div>
               <div className="pt-1 flex items-center justify-between text-[13px]">

@@ -8,7 +8,7 @@ import Link from "next/link";
 import {
   CreditCard, Truck, Check, ShieldCheck,
   MapPin, Lock, Loader2, AlertTriangle, Plus, Minus,
-  Ticket, ChevronRight, X as XIcon,
+  Ticket, ChevronRight, X as XIcon, Navigation, Info,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import Bikask from "@/images/bKash-Logo.svg";
@@ -21,6 +21,7 @@ import { useQuery, useQueries } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { trackInitiateCheckout, trackPurchase, generateEventId } from "@/lib/analytics/pixelEvents";
 import { getClickIds, readTrackingCookie } from "@/lib/analytics/clickIds";
+import { calculateCodDetails } from "@/lib/cod-calculator";
 
 // ─── API Types ────────────────────────────────────────────────────────────────
 interface CreateInvoiceResponse { statusCode: number; status: string; message: string; data?: { orderToken: string; orderNo: string }; errors?: string[]; }
@@ -300,7 +301,9 @@ export default function CheckoutPageCom() {
    * reorders that list nearest-first.
    */
   const [storeDistances, setStoreDistances] = useState<Record<string, number>>({});
+  const [nearestBranchId, setNearestBranchId] = useState<string | null>(null);
   const [isLocatingStores, setIsLocatingStores] = useState(false);
+  const [locError, setLocError] = useState<string | null>(null);
   // Stops the nearest store from overriding a choice the reader made by hand.
   const storePickedByUser = useRef(false);
   const { isAuthenticated, token, apiKey, user } = useAppSelector((s) => s.auth);
@@ -440,33 +443,61 @@ export default function CheckoutPageCom() {
     [cartItems],
   );
 
+  // 1. Initial query: fetch all branches and their base stock availability
   const stockQueries = useQueries({
     queries:
       deliveryType === "pickup"
-        ? storeList.flatMap((store) =>
-            checkableItems.map((item) => ({
-              queryKey: ["pickup-stock", item.productUuid, item.variantUuid, store.uuid],
-              queryFn: () =>
-                api.get<StockAvailabilityResponse>("/check-stock-availability", {
-                  params: {
-                    productUUID: item.productUuid!,
-                    variantUUID:  item.variantUuid!,
-                    branchUUID:   store.uuid,
-                  },
-                }),
-              enabled: deliveryType === "pickup" && storeList.length > 0,
-              staleTime: 2 * 60 * 1000,
-            })),
-          )
+        ? checkableItems.map((item) => ({
+            queryKey: ["pickup-stock-all", item.productUuid, item.variantUuid],
+            queryFn: () =>
+              api.get<StockAvailabilityResponse>("/check-stock-availability", {
+                params: {
+                  productUUID: item.productUuid!,
+                  variantUUID: item.variantUuid!,
+                },
+              }),
+            enabled: deliveryType === "pickup",
+            staleTime: 2 * 60 * 1000,
+          }))
         : [],
   });
+
+  // 2. Nearest branch query: re-verifies stock with branchUUID when nearest branch is identified
+  const nearestBranchQueries = useQueries({
+    queries:
+      deliveryType === "pickup" && nearestBranchId
+        ? checkableItems.map((item) => ({
+            queryKey: [
+              "pickup-stock-nearest",
+              item.productUuid,
+              item.variantUuid,
+              nearestBranchId,
+            ],
+            queryFn: () =>
+              api.get<StockAvailabilityResponse>("/check-stock-availability", {
+                params: {
+                  productUUID: item.productUuid!,
+                  variantUUID: item.variantUuid!,
+                  branchUUID: nearestBranchId,
+                },
+              }),
+            enabled: deliveryType === "pickup" && !!nearestBranchId,
+            staleTime: 2 * 60 * 1000,
+          }))
+        : [],
+  });
+
+  const isStockLoading = stockQueries.some((q) => q.isLoading);
+  const isNearestStockLoading = nearestBranchQueries.some(
+    (q) => q.isLoading || q.isFetching,
+  );
 
   /**
    * branch uuid → real stock status for the whole cart at that branch.
    *
-   * Now that each query is scoped to one (product+variant, branch) pair,
-   * the result data array has exactly one branch entry each.
-   * We aggregate across all cart items for the same branch.
+   * Base query provides stock for all branches.
+   * When nearestBranchQueries resolves with branchUUID data, it overrides
+   * that branch's status with real-time branch data.
    */
   const stockByStore = useMemo(() => {
     const map: Record<
@@ -476,6 +507,8 @@ export default function CheckoutPageCom() {
     if (checkableItems.length === 0) return map;
 
     const statusesByBranch: Record<string, string[]> = {};
+
+    // Base query answers for all branches
     stockQueries.forEach((res) => {
       (res.data?.data ?? []).forEach((branch) => {
         const cur = map[branch.uuid] ?? {
@@ -491,6 +524,33 @@ export default function CheckoutPageCom() {
       });
     });
 
+    // Branch-specific stock overrides from branchUUID query
+    if (nearestBranchId) {
+      const nearestStatuses: string[] = [];
+      let nearestAvailable = 0;
+      let nearestTotal = 0;
+
+      nearestBranchQueries.forEach((res) => {
+        (res.data?.data ?? []).forEach((branch) => {
+          if (branch.uuid === nearestBranchId) {
+            nearestTotal += 1;
+            if (isInStock(branch.status)) nearestAvailable += 1;
+            nearestStatuses.push(branch.status || "");
+          }
+        });
+      });
+
+      if (nearestStatuses.length > 0) {
+        statusesByBranch[nearestBranchId] = nearestStatuses;
+        map[nearestBranchId] = {
+          available: nearestAvailable,
+          total: nearestTotal,
+          label: "",
+          outOfStock: false,
+        };
+      }
+    }
+
     Object.entries(statusesByBranch).forEach(([uuid, statuses]) => {
       const outOfStock = statuses.find((s) =>
         s.toLowerCase().includes("out of stock"),
@@ -498,12 +558,14 @@ export default function CheckoutPageCom() {
       const delayed = statuses.find(
         (s) => s.trim().toLowerCase() !== "instant",
       );
-      map[uuid].label = outOfStock || delayed || statuses[0] || "Instant";
-      map[uuid].outOfStock = !!outOfStock;
+      if (map[uuid]) {
+        map[uuid].label = outOfStock || delayed || statuses[0] || "Instant";
+        map[uuid].outOfStock = !!outOfStock;
+      }
     });
 
     return map;
-  }, [stockQueries, checkableItems.length]);
+  }, [stockQueries, nearestBranchQueries, nearestBranchId, checkableItems.length]);
 
   /**
    * Nearest branch first once a location is known; the API's own order until then.
@@ -520,6 +582,7 @@ export default function CheckoutPageCom() {
 
   const locateNearestStore = useCallback(() => {
     setIsLocatingStores(true);
+    setLocError(null);
 
     const computeAll = (lat: number, lon: number) => {
       const next: Record<string, number> = {};
@@ -533,21 +596,31 @@ export default function CheckoutPageCom() {
       setStoreDistances(next);
       setIsLocatingStores(false);
 
-      // Preselect the closest branch, unless the reader already chose one.
-      // storeList already excludes pickup-disallowed branches entirely.
-      if (!storePickedByUser.current) {
-        const nearest = Object.entries(next).sort((a, b) => a[1] - b[1])[0];
-        if (nearest) setSelectedStoreUuid(nearest[0]);
+      // Preselect the closest branch & trigger branchUUID stock check
+      if (Object.keys(next).length > 0) {
+        const nearestEntry = Object.entries(next).sort((a, b) => a[1] - b[1])[0];
+        if (nearestEntry) {
+          const nearestId = nearestEntry[0];
+          setNearestBranchId(nearestId);
+          if (!storePickedByUser.current) {
+            setSelectedStoreUuid(nearestId);
+          }
+        }
       }
     };
 
     if (!navigator.geolocation) {
+      setLocError("Geolocation is not supported by your browser.");
       computeAll(DHAKA.lat, DHAKA.lon);
       return;
     }
     navigator.geolocation.getCurrentPosition(
       (pos) => computeAll(pos.coords.latitude, pos.coords.longitude),
-      () => computeAll(DHAKA.lat, DHAKA.lon),
+      (err) => {
+        console.error("Geolocation error:", err);
+        setLocError("Location access denied. Using center coordinates of Dhaka.");
+        computeAll(DHAKA.lat, DHAKA.lon);
+      },
     );
   }, [storeList]);
 
@@ -790,21 +863,33 @@ export default function CheckoutPageCom() {
   // Total products + Dazzle Care
   const totalProductsWithCare = subtotal;
 
-  const codCharge = useMemo(() => {
-    if (paymentOption !== "cod" || !selectedAreaObj) return 0;
-    const pctCharge = Math.round((totalProductsWithCare * (selectedAreaObj.codChargePercentage || 0)) / 100);
-    const fixedCharge = Number(selectedAreaObj.codFixedCharge || 0);
-    return pctCharge + fixedCharge;
-  }, [paymentOption, selectedAreaObj, totalProductsWithCare]);
+  const codDetails = useMemo(() => {
+    if (paymentOption !== "cod" || !selectedAreaObj) {
+      return { codCharge: 0, grandTotal: subtotal + deliveryFee, roundOff: 0, initialGrandTotal: subtotal + deliveryFee, diff: 0 };
+    }
+    const baseForCod = subtotal + deliveryFee;
+    const pct = selectedAreaObj.codChargePercentage || 0;
+    const fixed = Number(selectedAreaObj.codFixedCharge || 0);
+    return calculateCodDetails(baseForCod, pct, fixed);
+  }, [paymentOption, selectedAreaObj, subtotal, deliveryFee]);
+
+  const codCharge = codDetails.codCharge;
+  const codRoundOff = codDetails.roundOff;
+
+  const total = useMemo(() => {
+    if (paymentOption === "cod" && selectedAreaObj) {
+      return codDetails.grandTotal - couponDiscount;
+    }
+    return subtotal + deliveryFee + codCharge - couponDiscount;
+  }, [paymentOption, selectedAreaObj, codDetails, subtotal, deliveryFee, codCharge, couponDiscount]);
 
   const amountDue =
     paymentOption === "full_online"     ? subtotal + deliveryFee - couponDiscount
     : paymentOption === "booking"       ? totalBookingMoney
-    : paymentOption === "cod"           ? subtotal + deliveryFee + codCharge - couponDiscount
+    : paymentOption === "cod"           ? total
     : paymentOption === "full_at_store" ? 0
     : subtotal + deliveryFee - couponDiscount;
 
-  const total = subtotal + deliveryFee + codCharge - couponDiscount;
   const fmt = (v: number) => "৳" + v.toLocaleString("en-IN");
 
   // ── Save new address to address book — called inside handleConfirmOrder ──────
@@ -1137,23 +1222,41 @@ export default function CheckoutPageCom() {
             {deliveryType === "pickup" && (
               <Section step={2} title="Select Pickup Store">
                 <div className="space-y-3">
-                  {isLocatingStores && (
-                    <p className="text-xs text-gray-400 flex items-center gap-1.5">
-                      <Loader2 size={12} className="animate-spin" />
-                      Finding your nearest branch...
-                    </p>
+                  {/* Find Nearest Branch Store button */}
+                  <button
+                    type="button"
+                    onClick={locateNearestStore}
+                    disabled={isLocatingStores || isNearestStockLoading}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[#FBF3E7] dark:bg-amber-950/20 border border-[#F0DFC4] dark:border-amber-900/40 text-[#7B4F1E] dark:text-[#E0B888] font-bold text-xs hover:bg-[#F7EBD9] dark:hover:bg-amber-950/30 transition disabled:opacity-50 cursor-pointer"
+                  >
+                    <Navigation
+                      size={14}
+                      className={isLocatingStores || isNearestStockLoading ? "animate-spin" : ""}
+                    />
+                    {isLocatingStores
+                      ? "Locating Your Device..."
+                      : isNearestStockLoading
+                      ? "Checking Nearest Branch Stock..."
+                      : "Find Nearest Branch Store"}
+                  </button>
+
+                  {locError && (
+                    <div className="flex items-start gap-2 bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400 p-2.5 rounded-lg text-xs border border-amber-100 dark:border-amber-900/40">
+                      <Info size={14} className="flex-shrink-0 mt-0.5" />
+                      <span>{locError}</span>
+                    </div>
                   )}
 
                   {sortedStoreList.map((store, i) => {
                     const km = storeDistances[store.uuid];
                     const stock = stockByStore[store.uuid];
-                    const isNearest = km !== undefined && i === 0;
+                    const isNearest = nearestBranchId ? store.uuid === nearestBranchId : (km !== undefined && i === 0);
                     const pickupDisabled = store.allowStorePickup === false;
                     // Loading: queries running but no data yet for this store
                     const isLoadingStock =
                       deliveryType === "pickup" &&
                       !stock &&
-                      stockQueries.some((q) => q.isLoading);
+                      (isStockLoading || (isNearestStockLoading && store.uuid === nearestBranchId));
 
                     return (
                       <PickupStoreCard
@@ -1166,7 +1269,7 @@ export default function CheckoutPageCom() {
                         name={store.branchName}
                         km={km}
                         isNearest={isNearest}
-                        // stock={isLoadingStock ? undefined : stock}
+                        stock={isLoadingStock ? undefined : stock}
                         stockLoading={isLoadingStock}
                         disabled={pickupDisabled}
                       />
@@ -1289,7 +1392,7 @@ export default function CheckoutPageCom() {
                     💰 COD Charge: <strong>৳ {codCharge.toLocaleString("en-IN")}</strong>
                     {selectedAreaObj && (
                       <>
-                        {selectedAreaObj.codChargePercentage > 0 && ` (${selectedAreaObj.codChargePercentage}% on ৳ ${totalProductsWithCare.toLocaleString("en-IN")})`}
+                        {selectedAreaObj.codChargePercentage > 0 && ` (${selectedAreaObj.codChargePercentage}% COD charge)`}
                         {selectedAreaObj.codFixedCharge > 0 && ` + ৳ ${selectedAreaObj.codFixedCharge} fixed charge`}
                       </>
                     )}
@@ -1360,7 +1463,7 @@ export default function CheckoutPageCom() {
                     💰 COD Charge: <strong>৳{codCharge.toLocaleString("en-IN")}</strong>
                     {selectedAreaObj && (
                       <>
-                        {selectedAreaObj.codChargePercentage > 0 && ` (${selectedAreaObj.codChargePercentage}% on ৳${totalProductsWithCare.toLocaleString("en-IN")})`}
+                        {selectedAreaObj.codChargePercentage > 0 && ` (${selectedAreaObj.codChargePercentage}% COD charge)`}
                         {selectedAreaObj.codFixedCharge > 0 && ` + ৳ ${selectedAreaObj.codFixedCharge} fixed charge`}
                       </>
                     )}
@@ -1510,6 +1613,12 @@ export default function CheckoutPageCom() {
                       {(selectedAreaObj?.codFixedCharge ?? 0) > 0 && ` + ৳ ${selectedAreaObj?.codFixedCharge} fixed`}
                     </span>
                     <span>{fmt(codCharge)}</span>
+                  </div>
+                )}
+                {codRoundOff !== 0 && paymentOption === "cod" && (
+                  <div className="flex justify-between text-gray-400 text-xs">
+                    <span>Round Off</span>
+                    <span>{codRoundOff > 0 ? "+" : ""}{fmt(codRoundOff)}</span>
                   </div>
                 )}
                 <div className="flex justify-between pt-3 border-t border-dashed border-gray-200 dark:border-zinc-800">

@@ -16,6 +16,7 @@ import { api } from "@/lib/api";
 import { OrderListResponse, ApiOrderItem, Order } from "./profile.types";
 import InvoiceModal from "./InvoiceModal";
 import Image from "next/image";
+import { getOrderCorrectTotal } from "@/lib/cod-calculator";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 const fmtDate = (iso?: string) => {
@@ -48,14 +49,16 @@ function toOrderModel(o: ApiOrderItem): Order {
     : o.isDelivered
       ? "Delivered"
       : "In Progress";
+  // Correct total includes COD charge if applicable
+  const correctTotal = getOrderCorrectTotal(o).correctTotal;
   return {
     id: o.comerzOrderNo,
     comerzOrderNo: o.comerzOrderNo,
     date: fmtDate(o.createdAt),
     orderDate: o.createdAt,
     status,
-    total: `৳${Math.floor(o.total ?? 0).toLocaleString("en-IN")}`,
-    totalNumber: o.total,
+    total: `৳${Math.floor(correctTotal).toLocaleString("en-IN")}`,
+    totalNumber: correctTotal,
     rawApiData: o,
   };
 }
@@ -96,7 +99,8 @@ function OrderRow({
   const productWithImage = items.find((item: any) => item.thumbnail);
   const thumbnail = productWithImage?.thumbnail;
 
-  console.log(order, "orderorderorderorderorderorder");
+  // Correct total = grandTotal (includes COD charge) || subTotal+deliveryFee+codCharge || total
+  const correctTotal = getOrderCorrectTotal(order).correctTotal;
 
   return (
     <div className="bg-white dark:bg-[#1c1a17] rounded-2xl border border-gray-100 dark:border-zinc-800 p-3 sm:p-4 flex flex-col gap-3">
@@ -128,7 +132,7 @@ function OrderRow({
             Order #{order.comerzOrderNo}
           </p>
           <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">
-            ৳{Math.floor(order.total ?? 0).toLocaleString("en-IN")}
+            ৳{Math.floor(correctTotal).toLocaleString("en-IN")}
           </p>
         </div>
       </div>

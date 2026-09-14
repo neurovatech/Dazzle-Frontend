@@ -7,6 +7,7 @@ import { ApiOrderItem, OrderTrackingResponse } from "./profile.types";
 import { jsPDF } from "jspdf";
 import { autoTable } from "jspdf-autotable";
 import LogoBlack from "@/images/header-logo-black.svg";
+import { getOrderCorrectTotal } from "@/lib/cod-calculator";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 const fmtDate = (iso?: string) => {
@@ -83,9 +84,12 @@ export default function InvoiceModal({
   // the order-list item (`order`) is only a fallback until tracking loads.
   const isPickupDelivery = d ? d.isStorePickup === true : !!(order.isStorePickup || order.isShopPickup);
   const addressLabel = d?.addressLabel || order.addressLabel;
-  const codCharge = order.codCharge ?? 0;
-
-  const duAmt = Math.max(0, (d?.grandAmount ?? order.total ?? 0) - (d?.paidAmount ?? 0));
+  // Use two-step COD formula: e.g. Product 405244 + Delivery 110 = 405354 → COD 1% = 4094 → Grand 409449
+  const _orderCalc = getOrderCorrectTotal(order);
+  const codCharge = _orderCalc.codCharge;
+  const codRoundOff = _orderCalc.roundOff;
+  const correctTotal = _orderCalc.correctTotal || d?.grandAmount || (order.total ?? 0);
+  const duAmt = Math.max(0, correctTotal - (d?.paidAmount ?? 0));
 
   const handleDownload = async () => {
     const doc = new jsPDF({ unit: "pt", format: "a4" });
@@ -273,9 +277,10 @@ export default function InvoiceModal({
       ["Shipping", "", "", "", fmtBDTLabel(order.deliveryFee ?? 0)],
       ["Discount Total", "", "", "", fmtBDTLabel(order.discount ?? 0)],
       ...(codCharge > 0 ? [["COD Charge", "", "", "", fmtBDTLabel(codCharge)]] : []),
+      ...(codRoundOff !== 0 ? [["Round Off", "", "", "", `${codRoundOff > 0 ? "+" : ""}${codRoundOff}`]] : []),
       ["Paid Amount", "", "", "", fmtBDTLabel(d?.paidAmount ?? 0)],
       ["Due Amount", "", "", "", fmtBDTLabel(duAmt)],
-      ["Total", "", "", "", fmtBDTLabel(order.total)],
+      ["Total", "", "", "", fmtBDTLabel(correctTotal)],
     ];
 
     autoTable(doc, {
@@ -489,7 +494,7 @@ export default function InvoiceModal({
                       <td className="p-2.5 text-gray-400 italic">N/A</td>
                       <td className="p-2.5 text-right whitespace-nowrap font-medium">{fmtBDTLabel(order.productPrice ?? 0)}</td>
                       <td className="p-2.5 text-center whitespace-nowrap font-semibold">{order.productCount}</td>
-                      <td className="p-2.5 text-right whitespace-nowrap font-bold">{fmtBDTLabel(order.total)}</td>
+                      <td className="p-2.5 text-right whitespace-nowrap font-bold">{fmtBDTLabel(correctTotal)}</td>
                     </tr>
                   )}
 
@@ -508,6 +513,12 @@ export default function InvoiceModal({
                       <td className="p-2.5 text-right whitespace-nowrap font-extrabold text-amber-700">{fmtBDTLabel(codCharge)}</td>
                     </tr>
                   )}
+                  {codRoundOff !== 0 && (
+                    <tr className="bg-[#FAF7F2]">
+                      <td colSpan={4} className="p-2.5 font-bold text-gray-500">Round Off</td>
+                      <td className="p-2.5 text-right whitespace-nowrap font-semibold text-gray-500">{codRoundOff > 0 ? "+" : ""}{codRoundOff}</td>
+                    </tr>
+                  )}
                   <tr className="bg-emerald-50/50">
                     <td colSpan={4} className="p-2.5 font-bold text-emerald-900">Paid Amount</td>
                     <td className="p-2.5 text-right whitespace-nowrap font-extrabold text-emerald-600">{fmtBDTLabel(d?.paidAmount ?? 0)}</td>
@@ -518,7 +529,7 @@ export default function InvoiceModal({
                   </tr>
                   <tr className="bg-gradient-to-r from-[#6D3F0E] via-[#854A11] to-[#B57908] text-white">
                     <td colSpan={4} className="p-3 font-extrabold text-white text-[11px] md:text-xs tracking-wide">Total</td>
-                    <td className="p-3 text-right whitespace-nowrap font-black text-white text-[11px] md:text-xs tracking-wide">{fmtBDTLabel(order.total)}</td>
+                    <td className="p-3 text-right whitespace-nowrap font-black text-white text-[11px] md:text-xs tracking-wide">{fmtBDTLabel(correctTotal)}</td>
                   </tr>
                 </tbody>
               </table>
