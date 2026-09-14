@@ -1148,7 +1148,7 @@ export default function CheckoutPageCom() {
                         name={store.branchName}
                         km={km}
                         isNearest={isNearest}
-                        stock={stock}
+                        // stock={stock}
                         disabled={pickupDisabled}
                       />
                     );
