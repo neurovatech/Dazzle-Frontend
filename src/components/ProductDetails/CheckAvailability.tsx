@@ -936,18 +936,21 @@ export default function CheckAvailability({
     product?.variants?.[0]?.variantUuid ||
     "";
 
+  const [nearestBranchUUID, setNearestBranchUUID] = useState<string | null>(null);
+
   // Fetch real stock availability from API when modal is open
   const {
     data: stockData,
     isLoading: isStockLoading,
     isError: isStockError,
   } = useQuery<StockAvailabilityResponse>({
-    queryKey: ["check-stock-availability", productUUID, variantUUID],
+    queryKey: ["check-stock-availability", productUUID, variantUUID, nearestBranchUUID],
     queryFn: () =>
       api.get<StockAvailabilityResponse>("/check-stock-availability", {
         params: {
           productUUID,
           variantUUID,
+          ...(nearestBranchUUID ? { branchUUID: nearestBranchUUID } : {}),
         },
       }),
     enabled: availabilityModalOpen && !!productUUID,
@@ -1045,6 +1048,17 @@ export default function CheckAvailability({
         }
       });
       setDistances(computedDistances);
+
+      if (Object.keys(computedDistances).length > 0) {
+        const nearestId = Object.keys(computedDistances).reduce(
+          (a, b) => (computedDistances[a] < computedDistances[b] ? a : b),
+          "",
+        );
+        if (nearestId) {
+          setNearestBranchUUID(nearestId);
+        }
+      }
+
       setIsLocating(false);
     };
 
