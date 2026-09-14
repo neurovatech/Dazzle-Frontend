@@ -127,7 +127,7 @@ const Profile: React.FC = () => {
           </div>
         ) : (
           <div className="pb-20">
-            <div className="sticky top-0 bg-white dark:bg-[#393430] border-b border-gray-100 md:px-4 md:py-3 flex items-center gap-3 z-9999">
+            <div className="sticky top-0 bg-white dark:bg-[#393430] border-b border-gray-100 md:px-4 md:py-3 flex items-center gap-3 lg:z-9999 z-40">
               <button
                 onClick={handleMobileBack}
                 className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-gray-100 dark:hover:bg-[#555] transition-colors"

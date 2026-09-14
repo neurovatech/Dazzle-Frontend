@@ -113,6 +113,7 @@ export default function ShowcaseProductGrid({
     <div className="w-full">
       {/* Product grid */}
       {allProducts.length > 0 ? (
+        // <div className={`grid grid-cols-2 ${colClass} lg:gap-2 gap-2`}>
         <div className={`grid grid-cols-2 ${colClass} lg:gap-2 gap-2`}>
           {allProducts.map((product) => (
             <div key={product.productUuid}>

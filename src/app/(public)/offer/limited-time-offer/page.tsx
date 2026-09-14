@@ -73,14 +73,14 @@ export default async function LimitedTimeOffer() {
         <SortDropdown />{" "}
       </div> */}
         <div className="lg:col-span-12 h-full">
-          <div className="grid md:grid-cols-5 grid-cols-2 lg:gap-4 gap-2">
+          {/* <div className="grid md:grid-cols-5 grid-cols-2 lg:gap-4 gap-2"> */}
             <ShowcaseProductGrid
               showcaseSlug="hot-deal"
               initialProducts={products}
               initialTotalPages={totalPages}
               cols={5}
             />
-          </div>
+          {/* </div> */}
         </div>
       </div>
     </div>

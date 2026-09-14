@@ -392,13 +392,14 @@ const ProfileSideNav: React.FC<ProfileSideNavProps> = ({
         {/* Menu items */}
         <div className="bg-[#F7F7F7] dark:bg-[#393430] rounded-xl mt-4 p-4 space-y-1">
           {menuItems.map(({ label, icon: Icon }) => {
-            const isActive = activeLabel === label && !showChevrons;
+            // const isActive = activeLabel === label && !showChevrons;
+            const isActive = activeLabel === label;
             return (
               <button
                 key={label}
                 onClick={() => onMenuClick(label as ActiveLabel)}
-                className={`group flex items-center justify-between w-full px-3 py-2.5 rounded-xl transition-colors
-                  ${isActive ? "bg-[#6D3F0E] text-white" : "text-gray-400 hover:bg-[#6D3F0E] hover:text-white"}`}
+                className={`group flex items-center justify-between w-full px-3 py-2.5 rounded-xl transition-colors 
+                  ${isActive ? "bg-[#6D3F0E] text-white" : "text-gray-400 hover:bg-[#6D3F0E]! hover:text-white"}`}
               >
                 <div className="flex items-center gap-2.5">
                   <Icon
