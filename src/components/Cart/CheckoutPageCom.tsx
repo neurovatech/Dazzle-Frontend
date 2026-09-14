@@ -200,6 +200,7 @@ function PickupStoreCard({
   km,
   isNearest,
   stock,
+  stockLoading,
   disabled,
 }: {
   checked: boolean;
@@ -208,6 +209,7 @@ function PickupStoreCard({
   km?: number;
   isNearest: boolean;
   stock?: { label: string; outOfStock: boolean };
+  stockLoading?: boolean;
   disabled?: boolean;
 }) {
   return (
@@ -249,6 +251,11 @@ function PickupStoreCard({
               }`}
             >
               {stock.label}
+            </p>
+          )}
+          {stockLoading && !disabled && !stock && (
+            <p className="text-xs font-semibold text-gray-400 flex items-center gap-1">
+              <Loader2 size={12} className="animate-spin" /> Checking availability...
             </p>
           )}
         </div>
@@ -420,35 +427,46 @@ export default function CheckoutPageCom() {
    * each cart line is its own query and the answers are merged by branch below.
    * Only runs once Store Pickup is chosen — nobody on Home Delivery needs it.
    */
-  const stockQueries = useQueries({
-    queries: cartItems
-      .filter((i) => i.productUuid && i.variantUuid)
-      .map((item) => ({
-        queryKey: ["pickup-stock", item.productUuid, item.variantUuid],
-        queryFn: () =>
-          api.get<StockAvailabilityResponse>("/check-stock-availability", {
-            params: { productUUID: item.productUuid!, variantUUID: item.variantUuid! },
-          }),
-        enabled: deliveryType === "pickup",
-        staleTime: 2 * 60 * 1000,
-      })),
-  });
-
+  /**
+   * Stock per branch — per cart item + per store.
+   *
+   * /check-stock-availability?productUUID=...&variantUUID=...&branchUUID=...
+   *
+   * Only runs when Store Pickup is selected AND stores + cart items are ready.
+   * Results are merged by branchUUID → { available, total, label, outOfStock }.
+   */
   const checkableItems = useMemo(
     () => cartItems.filter((i) => i.productUuid && i.variantUuid),
     [cartItems],
   );
 
+  const stockQueries = useQueries({
+    queries:
+      deliveryType === "pickup"
+        ? storeList.flatMap((store) =>
+            checkableItems.map((item) => ({
+              queryKey: ["pickup-stock", item.productUuid, item.variantUuid, store.uuid],
+              queryFn: () =>
+                api.get<StockAvailabilityResponse>("/check-stock-availability", {
+                  params: {
+                    productUUID: item.productUuid!,
+                    variantUUID:  item.variantUuid!,
+                    branchUUID:   store.uuid,
+                  },
+                }),
+              enabled: deliveryType === "pickup" && storeList.length > 0,
+              staleTime: 2 * 60 * 1000,
+            })),
+          )
+        : [],
+  });
+
   /**
    * branch uuid → real stock status for the whole cart at that branch.
    *
-   * Each cart line can carry its own status at the same branch ("Instant"
-   * for one item, "Usually ready in 2 Days" for another) — `label` picks
-   * the one line worth surfacing: any genuine "Out of Stock" wins (the
-   * branch can't fulfil the order as-is), otherwise the first line that
-   * isn't "Instant" (so a real wait is never hidden behind it), otherwise
-   * "Instant" once every line agrees. Always the backend's own wording,
-   * never a made-up estimate.
+   * Now that each query is scoped to one (product+variant, branch) pair,
+   * the result data array has exactly one branch entry each.
+   * We aggregate across all cart items for the same branch.
    */
   const stockByStore = useMemo(() => {
     const map: Record<
@@ -1129,13 +1147,13 @@ export default function CheckoutPageCom() {
                   {sortedStoreList.map((store, i) => {
                     const km = storeDistances[store.uuid];
                     const stock = stockByStore[store.uuid];
-
-                    // Only the closest branch is badged, and only once a
-                    // location is actually known — otherwise the first row of
-                    // the API's own order would masquerade as "nearest".
                     const isNearest = km !== undefined && i === 0;
-
                     const pickupDisabled = store.allowStorePickup === false;
+                    // Loading: queries running but no data yet for this store
+                    const isLoadingStock =
+                      deliveryType === "pickup" &&
+                      !stock &&
+                      stockQueries.some((q) => q.isLoading);
 
                     return (
                       <PickupStoreCard
@@ -1148,7 +1166,8 @@ export default function CheckoutPageCom() {
                         name={store.branchName}
                         km={km}
                         isNearest={isNearest}
-                        // stock={stock}
+                        // stock={isLoadingStock ? undefined : stock}
+                        stockLoading={isLoadingStock}
                         disabled={pickupDisabled}
                       />
                     );
