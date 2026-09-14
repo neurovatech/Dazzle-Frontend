@@ -63,11 +63,11 @@ const LocationCard: React.FC<LocationCardProps> = ({ store }) => {
           />
 
           {/* Pickup-disabled badge */}
-          {pickupDisabled && (
+          {/* {pickupDisabled && (
             <span className="absolute top-3 right-3 bg-red-600 text-white text-[10px] font-semibold px-2.5 py-1 rounded-full shadow-sm">
               Pickup Unavailable
             </span>
-          )}
+          )} */}
 
           {/* Distance badge */}
           {/* <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-[#000000BA] backdrop-blur-sm text-xs font-medium px-2.5 py-1.5 rounded-lg shadow-sm">
