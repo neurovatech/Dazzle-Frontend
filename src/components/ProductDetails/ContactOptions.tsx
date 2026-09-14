@@ -8,17 +8,25 @@ interface ContactOptionsProps {
 }
 
 const ContactOptions: React.FC<ContactOptionsProps> = ({
-  whatsappNumber = "8801700000000",
+  whatsappNumber = "01972999969",
   messengerUsername = "yourpagename",
   phoneNumber = "+8801700000000",
 }) => {
   const handleWhatsApp = () => {
     const message = encodeURIComponent("Hi, I'm interested in your product.");
-    window.open(`https://wa.me/${whatsappNumber}?text=${message}`, "_blank", "noopener,noreferrer");
+    window.open(
+      `https://wa.me/${whatsappNumber}?text=${message}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
   };
 
   const handleMessenger = () => {
-    window.open(`https://m.me/${messengerUsername}`, "_blank", "noopener,noreferrer");
+    window.open(
+      `https://m.me/${messengerUsername}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
   };
 
   const handleCall = () => {

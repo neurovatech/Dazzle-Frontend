@@ -21,6 +21,7 @@ export interface AvailabilityItem {
 interface BranchStock {
   uuid: string;
   branchName: string;
+  branchAddress?: string;
   latitude: string;
   longitude: string;
   status: string;
@@ -159,6 +160,7 @@ export default function StoreAvailabilityModal({
   const isNearestLoading = nearestBranchResults.some(
     (r) => r.isLoading || r.isFetching,
   );
+
   const isError = results.length > 0 && results.every((r) => r.isError);
 
   /**
@@ -177,6 +179,7 @@ export default function StoreAvailabilityModal({
       {
         uuid: string;
         branchName: string;
+        branchAddress?: string;
         latitude: string;
         longitude: string;
         items: { name: string; status: string; inStock: boolean }[];
@@ -194,15 +197,21 @@ export default function StoreAvailabilityModal({
           status: branch.status,
           inStock: isInStock(branch.status),
         };
-        if (existing) existing.items.push(entry);
-        else
+        if (existing) {
+          existing.items.push(entry);
+          if (branch.branchAddress && !existing.branchAddress) {
+            existing.branchAddress = branch.branchAddress;
+          }
+        } else {
           byUuid.set(branch.uuid, {
             uuid: branch.uuid,
             branchName: branch.branchName,
+            branchAddress: branch.branchAddress,
             latitude: branch.latitude,
             longitude: branch.longitude,
             items: [entry],
           });
+        }
       });
     });
 
@@ -214,6 +223,9 @@ export default function StoreAvailabilityModal({
       (res.data?.data ?? []).forEach((branch) => {
         const existing = byUuid.get(branch.uuid);
         if (existing) {
+          if (branch.branchAddress) {
+            existing.branchAddress = branch.branchAddress;
+          }
           const itemEntry = existing.items.find((i) => i.name === label);
           if (itemEntry) {
             itemEntry.status = branch.status;
@@ -229,6 +241,7 @@ export default function StoreAvailabilityModal({
           byUuid.set(branch.uuid, {
             uuid: branch.uuid,
             branchName: branch.branchName,
+            branchAddress: branch.branchAddress,
             latitude: branch.latitude,
             longitude: branch.longitude,
             items: [
@@ -404,6 +417,12 @@ export default function StoreAvailabilityModal({
                           </span>
                         )}
                       </div>
+
+                      {branch.branchAddress && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400 leading-snug">
+                          {branch.branchAddress}
+                        </p>
+                      )}
 
                       {/* Single item keeps the original one-line status. */}
                       {!showPerItem && (

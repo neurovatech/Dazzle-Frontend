@@ -14,7 +14,16 @@ import { X, LogIn } from "lucide-react";
 import { verifyOrderProduct } from "@/lib/verify-order-product";
 
 const StoreIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <path d="M3 9l1-5h16l1 5" />
     <path d="M3 9h18v11a1 1 0 01-1 1H4a1 1 0 01-1-1V9z" />
     <path d="M9 21V12h6v9" />
@@ -22,7 +31,16 @@ const StoreIcon = () => (
 );
 
 const DeliveryIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <rect x="1" y="3" width="15" height="13" rx="1" />
     <path d="M16 8h4l3 4v5h-7V8z" />
     <circle cx="5.5" cy="18.5" r="2.5" />
@@ -31,7 +49,16 @@ const DeliveryIcon = () => (
 );
 
 const ChevronRightIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <polyline points="9 18 15 12 9 6" />
   </svg>
 );
@@ -119,11 +146,14 @@ export default function StickyPurchaseBar({
   // ── Wishlist toggle — used when isTba=true ────────────────────
   const { addToWishlist, isAdding } = useAddToWishlist();
   const { removeFromWishlist, isRemoving } = useRemoveFromWishlist();
-  const isAddingWishlist = isAdding(productId || "") || isRemoving(productId || "");
+  const isAddingWishlist =
+    isAdding(productId || "") || isRemoving(productId || "");
 
   const handleWishlistToggle = () => {
     if (isWishlisted) {
-      const wishListUuid = wishlistItems.find((i) => i.productUuid === productId)?.wishListUuid;
+      const wishListUuid = wishlistItems.find(
+        (i) => i.productUuid === productId,
+      )?.wishListUuid;
       removeFromWishlist({ productUuid: productId || "", wishListUuid });
       return;
     }
@@ -137,33 +167,35 @@ export default function StickyPurchaseBar({
   const [showLoginModal, setShowLoginModal] = useState(false);
 
   // ── Unique cart id = variantUuid + care plan id (if any) ──────
-  const planId          = selectedCareOptions[0]?.id ?? "";
-  const targetCartId    = `${variantUuid || productId || ""}${planId ? `__${planId}` : ""}`;
+  const planId = selectedCareOptions[0]?.id ?? "";
+  const targetCartId = `${variantUuid || productId || ""}${planId ? `__${planId}` : ""}`;
 
   // "Added" — only if THIS exact variant+plan combo is already in cart
   // (cart syncs client-side only — same `mounted` gate as isWishlisted above)
-  const addedToCart = mounted && cartItems.some((item) => item.id === targetCartId);
+  const addedToCart =
+    mounted && cartItems.some((item) => item.id === targetCartId);
 
   // ── Combined prices (product + selected care plan) ────────────
-  const combinedOfferPrice    = (productPrice ?? 0) + careTotalOffer;
-  const combinedRegularPrice  = (productOriginalPrice ?? 0) + careTotalRegular;
+  const combinedOfferPrice = (productPrice ?? 0) + careTotalOffer;
+  const combinedRegularPrice = (productOriginalPrice ?? 0) + careTotalRegular;
 
   // Price shown in the bar — whichever the user selected
-  const displayPrice = selectedPriceType === "regular" ? combinedRegularPrice : combinedOfferPrice;
+  const displayPrice =
+    selectedPriceType === "regular" ? combinedRegularPrice : combinedOfferPrice;
 
   // EMI always from regular price
   const emiMonthly = Math.round(combinedRegularPrice / 12);
 
   // ── Cart name — product name always prefixed ─────────────────
   const plan = selectedCareOptions[0] as CareOption | undefined;
-  const variantName  = productName ?? "";
+  const variantName = productName ?? "";
   const carePlanSuffix = plan
     ? `\nwith ${plan.title}${plan.description ? ` (${plan.description})` : ""} (${
         plan.price > 0 ? plan.price.toLocaleString() + " BDT" : "included"
       })`
     : "";
   const cartName = `${variantName}${carePlanSuffix}`;
-
+  const whatsappNumber = "01972999969";
   /**
    * ADD TO CART.
    *
@@ -211,14 +243,17 @@ export default function StickyPurchaseBar({
         // even for what they chose — surface it instead, same as the
         // unresolved case above.
         if (patch.replaced) {
-          toast.error("This exact option is currently unavailable. Please choose a different color, storage, or region.");
+          toast.error(
+            "This exact option is currently unavailable. Please choose a different color, storage, or region.",
+          );
           return false;
         }
 
         finalVariantUuid = patch.variantUuid;
         // patch.price is the bare product price — combinedOfferPrice's care-plan
         // addition must be re-applied, or a refreshed price silently drops it.
-        if (typeof patch.price === "number") finalPrice = patch.price + careTotalOffer;
+        if (typeof patch.price === "number")
+          finalPrice = patch.price + careTotalOffer;
         if (typeof patch.originalPrice === "number") {
           finalOriginalPrice = patch.originalPrice + careTotalRegular;
         }
@@ -247,9 +282,14 @@ export default function StickyPurchaseBar({
         slug: productSlug || "",
         minBookingPrice: minBookingPrice ?? 0,
         carePlanPrice: plan && plan.price > 0 ? plan.price : undefined,
-      })
+      }),
     );
-    trackAddToCart({ id: productId || finalVariantUuid, name: cartName, price: finalPrice, quantity: qty });
+    trackAddToCart({
+      id: productId || finalVariantUuid,
+      name: cartName,
+      price: finalPrice,
+      quantity: qty,
+    });
 
     if (!addedToCart) {
       // Only toast on first add — not on qty update
@@ -258,56 +298,66 @@ export default function StickyPurchaseBar({
     return true;
   };
 
- /**
-  * Same pre-checkout validation the cart page runs, for the single line this
-  * bar is about to buy: verify-order-product decides whether the variant is
-  * still orderable, and get-default-variant supplies a replacement when it is
-  * not, so the line is corrected in the cart before we navigate.
-  *
-  * The cart itself needs no login — it's local, persisted state — so the item
-  * is added FIRST regardless of auth, and only THEN do we branch on where to
-  * send the reader. Checking `isAuthenticated` before adding meant a logged-
-  * out Buy Now sent the reader straight to /auth/login without ever adding
-  * the product, so by the time login redirected them to /checkout the cart
-  * was still empty.
-  */
- const handleBuyNow = async () => {
-  if (isUnavailable || loadingBuyNow) return;
+  /**
+   * Same pre-checkout validation the cart page runs, for the single line this
+   * bar is about to buy: verify-order-product decides whether the variant is
+   * still orderable, and get-default-variant supplies a replacement when it is
+   * not, so the line is corrected in the cart before we navigate.
+   *
+   * The cart itself needs no login — it's local, persisted state — so the item
+   * is added FIRST regardless of auth, and only THEN do we branch on where to
+   * send the reader. Checking `isAuthenticated` before adding meant a logged-
+   * out Buy Now sent the reader straight to /auth/login without ever adding
+   * the product, so by the time login redirected them to /checkout the cart
+   * was still empty.
+   */
+  const handleBuyNow = async () => {
+    if (isUnavailable || loadingBuyNow) return;
 
-  setLoadingBuyNow(true);
-  try {
-    // handleAddToCart now verifies BEFORE adding, so a rejected variant never
-    // reaches the cart — success here means the item is already confirmed
-    // orderable, and any failure has already shown its own reason.
-    const success = await handleAddToCart();
-    if (!success) return;
+    setLoadingBuyNow(true);
+    try {
+      // handleAddToCart now verifies BEFORE adding, so a rejected variant never
+      // reaches the cart — success here means the item is already confirmed
+      // orderable, and any failure has already shown its own reason.
+      const success = await handleAddToCart();
+      if (!success) return;
 
-    if (!isAuthenticated) {
-      router.push("/auth/login?redirect=/checkout");
-      setShowLoginModal(true);
-      return;
+      if (!isAuthenticated) {
+        router.push("/auth/login?redirect=/checkout");
+        setShowLoginModal(true);
+        return;
+      }
+
+      router.push("/checkout");
+    } catch (err) {
+      console.error("[StickyPurchaseBar] Buy now error:", err);
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setLoadingBuyNow(false);
     }
+  };
 
-    router.push("/checkout");
-  } catch (err) {
-    console.error("[StickyPurchaseBar] Buy now error:", err);
-    toast.error("Something went wrong. Please try again.");
-  } finally {
-    setLoadingBuyNow(false);
-  }
-};
+  const handleWhatsApp = () => {
+    const message = encodeURIComponent("Hi, I'm interested in your product.");
+    window.open(
+      `https://wa.me/${whatsappNumber}?text=${message}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
+  };
 
   return (
     <div>
       <div className="fixed md:bottom-0 bottom-0 left-0 right-0 z-999 bg-[#f5f5f7] dark:bg-[#3e3329] border-t border-gray-200 dark:border-gray-700/60 shadow-[0_-2px_12px_rgba(0,0,0,0.08)]">
         <div className="max-w-350 mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-24 gap-4">
-
             {/* Store Pickup */}
             <div className="hidden md:flex items-start gap-2 shrink-0">
               <StoreIcon />
               <div>
-                <p className="text-sm font-semibold text-gray-800 dark:text-white leading-tight">Store Pickup</p>
+                <p className="text-sm font-semibold text-gray-800 dark:text-white leading-tight">
+                  Store Pickup
+                </p>
                 <button
                   type="button"
                   onClick={onStoreAvailability}
@@ -324,9 +374,15 @@ export default function StickyPurchaseBar({
             <div className="hidden md:flex items-start gap-2 shrink-0">
               <DeliveryIcon />
               <div>
-                <p className="text-sm font-semibold text-gray-800 dark:text-white leading-tight">Home Delivery</p>
-                <p className="text-xs text-orange-500 font-medium mt-0.5">{expressDeliveryText}</p>
-                <p className="text-xs text-gray-500 mt-0.5 dark:text-white/90">{standardDeliveryText}</p>
+                <p className="text-sm font-semibold text-gray-800 dark:text-white leading-tight">
+                  Home Delivery
+                </p>
+                <p className="text-xs text-orange-500 font-medium mt-0.5">
+                  {expressDeliveryText}
+                </p>
+                <p className="text-xs text-gray-500 mt-0.5 dark:text-white/90">
+                  {standardDeliveryText}
+                </p>
               </div>
             </div>
 
@@ -337,7 +393,7 @@ export default function StickyPurchaseBar({
               {showTbaFlag ? (
                 /* TBA — price & availability hide, show TBA badge */
                 <span className="bg-[#6D3F0E] text-white text-sm font-bold px-4 py-1.5 rounded-full shadow-md">
-                  To Be Announced 
+                  To Be Announced
                 </span>
               ) : isUnavailable ? (
                 <p className="text-xl sm:text-2xl font-bold leading-tight text-gray-400 dark:text-gray-500">
@@ -347,7 +403,9 @@ export default function StickyPurchaseBar({
                 <>
                   {/* Main price — offer or regular depending on selection */}
                   <p className="text-xl sm:text-2xl font-bold leading-tight text-gray-900 dark:text-white">
-                    {displayPrice > 0 ? `${displayPrice.toLocaleString()} BDT` : "0"}
+                    {displayPrice > 0
+                      ? `${displayPrice.toLocaleString()} BDT`
+                      : "0"}
                   </p>
 
                   {/* EMI line — always from regular price */}
@@ -372,7 +430,10 @@ export default function StickyPurchaseBar({
 
             {/* Quantity */}
             <div className="hidden md:block">
-              <QuantitySelector value={qty} onChange={(val) => onQtyChange?.(val)} />
+              <QuantitySelector
+                value={qty}
+                onChange={(val) => onQtyChange?.(val)}
+              />
             </div>
 
             {/* Add to Cart + Buy Now */}
@@ -383,8 +444,19 @@ export default function StickyPurchaseBar({
                   disabled
                   className="shrink-0 flex items-center gap-2 md:px-6 px-4 sm:px-8 md:py-3 py-3 text-sm sm:text-base font-semibold rounded-full whitespace-nowrap shadow-sm bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-60"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 shrink-0">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2}
+                    stroke="currentColor"
+                    className="w-4 h-4 shrink-0"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
+                    />
                   </svg>
                   Discontinued
                 </button>
@@ -399,11 +471,19 @@ export default function StickyPurchaseBar({
                       : "bg-[#E9CCAE] hover:bg-[#D4B89A] text-black"
                   }`}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
                     fill={isWishlisted ? "currentColor" : "none"}
-                    stroke="currentColor" strokeWidth={2} className="w-4 h-4 shrink-0">
-                    <path strokeLinecap="round" strokeLinejoin="round"
-                      d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                    stroke="currentColor"
+                    strokeWidth={2}
+                    className="w-4 h-4 shrink-0"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
+                    />
                   </svg>
                   {isWishlisted ? "Wishlisted" : "Add to Wishlist"}
                 </button>
@@ -413,42 +493,76 @@ export default function StickyPurchaseBar({
                     onClick={handleAddToCart}
                     disabled={isUnavailable}
                     className={`shrink-0 md:px-6 px-3 sm:px-8 md:py-3 py-3 text-sm sm:text-base font-semibold rounded-full transition-all duration-200 whitespace-nowrap shadow-sm
-                      ${isUnavailable
-                        ? "bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-60"
-                        : addedToCart
-                        ? "bg-green-500 text-white cursor-pointer"
-                        : "bg-[#E9CCAE] hover:bg-[#D4B89A] active:bg-[#C0A486] text-black cursor-pointer"
+                      ${
+                        isUnavailable
+                          ? "bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-60"
+                          : addedToCart
+                            ? "bg-green-500 text-white cursor-pointer"
+                            : "bg-[#E9CCAE] hover:bg-[#D4B89A] active:bg-[#C0A486] text-black cursor-pointer"
                       }`}
                   >
-                    {isUnavailable ? "Not Available" : addedToCart ? (
+                    {isUnavailable ? (
+                      "Not Available"
+                    ) : addedToCart ? (
                       <span className="flex items-center md:gap-2 gap-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={2.5}
+                          stroke="currentColor"
+                          className="w-4 h-4"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M4.5 12.75l6 6 9-13.5"
+                          />
                         </svg>
                         Added!
                       </span>
-                    ) : "Add to cart"}
+                    ) : (
+                      "Add to cart"
+                    )}
                   </button>
 
                   <button
                     onClick={handleBuyNow}
                     disabled={isUnavailable || loadingBuyNow}
                     className={`shrink-0 md:px-6 px-3 sm:px-8 md:py-3 py-3 text-sm sm:text-base font-semibold rounded-full transition-all duration-200 whitespace-nowrap shadow-sm cursor-pointer
-                      ${isUnavailable || loadingBuyNow
-                        ? "bg-gray-300 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-60"
-                        : "bg-[#222222] hover:bg-[#444444] active:bg-[#000000] text-white"
+                      ${
+                        isUnavailable || loadingBuyNow
+                          ? "bg-gray-300 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-60"
+                          : "bg-[#222222] hover:bg-[#444444] active:bg-[#000000] text-white"
                       }`}
                   >
-                {loadingBuyNow ? (
-                  <span className="flex items-center md:gap-2 gap-1">
-                    <svg className="w-4 h-4 animate-spin shrink-0" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                    </svg>
-                    Processing...
-                  </span>
-                ) : "Buy Now"}
-              </button>
+                    {loadingBuyNow ? (
+                      <span className="flex items-center md:gap-2 gap-1">
+                        <svg
+                          className="w-4 h-4 animate-spin shrink-0"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8v8H4z"
+                          />
+                        </svg>
+                        Processing...
+                      </span>
+                    ) : (
+                      "Buy Now"
+                    )}
+                  </button>
                 </>
               )}
             </div>
@@ -458,7 +572,7 @@ export default function StickyPurchaseBar({
 
       {/* WhatsApp FAB */}
       <button
-        onClick={onWhatsApp}
+        onClick={handleWhatsApp}
         aria-label="Contact via WhatsApp"
         className="fixed md:bottom-5 bottom-10 mb-24 md:mb-0 right-4 z-50 w-12 h-12 bg-green-500 hover:bg-green-600 active:bg-green-700 text-white rounded-full flex items-center justify-center shadow-lg transition-colors duration-150"
       >
@@ -467,4 +581,3 @@ export default function StickyPurchaseBar({
     </div>
   );
 }
-

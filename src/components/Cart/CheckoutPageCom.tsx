@@ -198,6 +198,7 @@ function PickupStoreCard({
   checked,
   onChange,
   name,
+  address,
   km,
   isNearest,
   stock,
@@ -207,6 +208,7 @@ function PickupStoreCard({
   checked: boolean;
   onChange: () => void;
   name: string;
+  address?: string;
   km?: number;
   isNearest: boolean;
   stock?: { label: string; outOfStock: boolean };
@@ -243,6 +245,11 @@ function PickupStoreCard({
               </span>
             )}
           </div>
+          {address && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 leading-snug">
+              {address}
+            </p>
+          )}
           {stock && !disabled && (
             <p
               className={`text-xs font-semibold ${
@@ -1267,9 +1274,10 @@ export default function CheckoutPageCom() {
                           setSelectedStoreUuid(store.uuid);
                         }}
                         name={store.branchName}
+                        address={store.address}
                         km={km}
                         isNearest={isNearest}
-                        stock={isLoadingStock ? undefined : stock}
+                        // stock={isLoadingStock ? undefined : stock}
                         stockLoading={isLoadingStock}
                         disabled={pickupDisabled}
                       />
