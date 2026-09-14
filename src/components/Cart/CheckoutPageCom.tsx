@@ -250,17 +250,17 @@ function PickupStoreCard({
               {address}
             </p>
           )}
-          {stock && !disabled && (
+          {/* {stock && !disabled && (
             <p
               className={`text-xs font-semibold ${
-                stock.outOfStock
+                stock.label === "Stock Out"
                   ? "text-red-500 dark:text-red-400"
                   : "text-emerald-600 dark:text-emerald-400"
               }`}
             >
               {stock.label}
             </p>
-          )}
+          )} */}
           {stockLoading && !disabled && !stock && (
             <p className="text-xs font-semibold text-gray-400 flex items-center gap-1">
               <Loader2 size={12} className="animate-spin" /> Checking availability...

@@ -41,7 +41,7 @@ export default function GlobalModal({
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-[600px] max-h-[calc(100vh-2rem)] rounded-2xl bg-white dark:bg-[#3e3329] shadow-2xl flex flex-col"
+        className="relative w-full max-w-[650px] max-h-[calc(100vh-2rem)] rounded-2xl bg-white dark:bg-[#3e3329] shadow-2xl flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

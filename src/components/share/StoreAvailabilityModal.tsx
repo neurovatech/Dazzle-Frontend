@@ -428,9 +428,9 @@ export default function StoreAvailabilityModal({
                       {!showPerItem && (
                         <p
                           className={`text-xs capitalize font-semibold flex items-center gap-1.5 ${
-                            allAvailable
-                              ? "text-emerald-600 dark:text-emerald-400"
-                              : "text-red-500 dark:text-red-400"
+                            `${branch.items[0]?.status}` ===  "Stock Out"
+                              ? " text-red-500 dark:text-red-400"
+                              : " text-emerald-600 dark:text-emerald-400 "
                           }`}
                         >
                           {isNearest && isNearestLoading ? (
@@ -438,8 +438,8 @@ export default function StoreAvailabilityModal({
                               Checking branch stock...
                             </span>
                           ) : (
-                            branch.items[0]?.status
-                          )}
+                            branch.items[0]?.status 
+                          )} 
                         </p>
                       )}
 
@@ -456,7 +456,7 @@ export default function StoreAvailabilityModal({
                     </div>
 
                     {distance !== undefined && (
-                      <span className="text-xs font-bold text-[#8a5a1e] dark:text-[#f0cd97] bg-[#E9CCAE] dark:bg-[#5a3d1f] py-1 px-2.5 rounded-lg">
+                      <span className="text-[11px] font-bold text-[#8a5a1e] dark:text-[#f0cd97] bg-[#E9CCAE] dark:bg-[#5a3d1f] py-1 px-2.5 rounded-lg">
                         {distance} km away
                       </span>
                     )}
