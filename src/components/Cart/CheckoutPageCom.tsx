@@ -240,10 +240,14 @@ function PickupStoreCard({
               </span>
             )}
             {stock && !disabled && (
-              <span className="text-[9px] bg-red-600 text-white font-extrabold px-2 py-0.5 rounded-full flex items-center gap-0.5">
-                {stock.label}
-              </span>
-            )}
+  <span
+    className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full flex items-center gap-0.5 text-white ${
+      stock.label === "Stock Out" ? "bg-red-600" : "bg-green-600"
+    }`}
+  >
+    {stock.label}
+  </span>
+)}
             {disabled && (
               <span className="text-[9px] bg-red-600 text-white font-extrabold px-2 py-0.5 rounded-full">
                 Pickup Unavailable
