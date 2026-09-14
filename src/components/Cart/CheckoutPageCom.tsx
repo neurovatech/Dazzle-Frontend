@@ -235,8 +235,13 @@ function PickupStoreCard({
               {name}
             </span>
             {isNearest && !disabled && (
-              <span className="text-[9px] bg-orange-600 text-white font-extrabold px-2 py-0.5 rounded-full flex items-center gap-0.5">
+              <span className="text-[9px] bg-[#E6A817] text-white font-extrabold px-2 py-0.5 rounded-full flex items-center gap-0.5">
                 <MapPin size={8} /> Nearest Store
+              </span>
+            )}
+            {stock && !disabled && (
+              <span className="text-[9px] bg-red-600 text-white font-extrabold px-2 py-0.5 rounded-full flex items-center gap-0.5">
+                {stock.label}
               </span>
             )}
             {disabled && (
@@ -1277,7 +1282,7 @@ export default function CheckoutPageCom() {
                         address={store.address}
                         km={km}
                         isNearest={isNearest}
-                        // stock={isLoadingStock ? undefined : stock}
+                        stock={isLoadingStock ? undefined : stock}
                         stockLoading={isLoadingStock}
                         disabled={pickupDisabled}
                       />
