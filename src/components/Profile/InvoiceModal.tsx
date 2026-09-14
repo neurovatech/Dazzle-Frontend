@@ -142,7 +142,7 @@ export default function InvoiceModal({
     doc.setTextColor(100, 100, 100);
     doc.text("Shop NO: 414 & 429, 4th Floor, Finlay Square, East Nasirabad", leftX, leftY);
     leftY += 9.5;
-    doc.text("Hotline: 01969991122 / Whatsapp: 01972999969", leftX, leftY);
+    doc.text("Hotline: 09638001122 / Whatsapp: 01972999969", leftX, leftY);
     leftY += 9.5;
     doc.text("BIN NO - 003313011-0505", leftX, leftY);
 
@@ -394,7 +394,7 @@ export default function InvoiceModal({
                   <p className="text-[10px] text-gray-600 mt-2 leading-relaxed max-w-[270px]">
                     <strong className="text-gray-800">Dazzle (Finlay Branch)</strong><br />
                     Shop NO: 414 &amp; 429, 4th Floor, Finlay Square, East Nasirabad<br />
-                    Hotline: 01969991122 / Whatsapp: 01972999969<br />
+                    Hotline: 09638001122 / Whatsapp: 01972999969<br />
                     BIN NO - 003313011-0505
                   </p>
                 </div>
