@@ -310,7 +310,7 @@ export default function ProductCompareDetails({ slug }: ProductCompareDetailsPro
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-black flex items-start justify-center px-4 py-8 sm:py-12">
-      <div className="w-full max-w-4xl">
+      <div className=" flex-col flex-1 items-center max-w-336 mx-auto lg:px-2 sm:px-0 flex">
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-white mb-5">Product Compare</h1>
 
         <div className="bg-white dark:bg-[#1A1A1A] rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
