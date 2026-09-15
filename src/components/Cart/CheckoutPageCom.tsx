@@ -58,6 +58,10 @@ interface ExecuteOrderResponse {
 interface SslPayResponse {
   statusCode: number;
   status: string;
+  /** Confirmed live (2026-09-16): our own backend's real field is
+   * lowercase-g `gatewayPageURL`, not SSLCommerz's own `GatewayPageURL` —
+   * a plain case mismatch was silently failing every SSLCommerz checkout. */
+  gatewayPageURL?: string;
   GatewayPageURL?: string;
   message?: string;
   /** SSLCommerz's own initiate-session API names its failure reason this,
@@ -1103,8 +1107,9 @@ export default function CheckoutPageCom() {
       if (paymentOption === "full_online" || paymentOption === "booking") {
         if (paymentGateway === "ssl") {
           const r = await api.post<SslPayResponse>("/api/tokenized/v1/sslcommerz-pay", { orderToken }, { headers: { Authorization: authHeader, "X-API-Key": apiKey || "" } });
-          if (r?.GatewayPageURL) { await saveNewAddressToBook(isPickup); dispatch(clearCart()); window.location.href = r.GatewayPageURL; return; }
-          console.error("[Checkout] sslcommerz-pay did not return a GatewayPageURL:", r);
+          const gatewayUrl = r?.gatewayPageURL || r?.GatewayPageURL;
+          if (gatewayUrl) { await saveNewAddressToBook(isPickup); dispatch(clearCart()); window.location.href = gatewayUrl; return; }
+          console.error("[Checkout] sslcommerz-pay did not return a gatewayPageURL:", r);
           toast.error(r?.message || r?.failedreason || "SSLCommerz failed.");
         } else {
           const r = await api.post<BkashPayResponse>("/api/tokenized/v1/bkash-pay", { orderToken }, { headers: { Authorization: authHeader, "X-API-Key": apiKey || "" } });
