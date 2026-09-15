@@ -65,7 +65,15 @@ function getAuthCredentials(): { apiKey: string | null; token: string | null } {
   return { apiKey, token };
 }
 
-function triggerSessionExpired() {
+/**
+ * `suppressEvent` skips only the "session-expired" DOM event (the one
+ * SessionExpiredModal listens for) — credentials are still cleared and the
+ * user is still logged out in Redux either way. Used by pages a guest can
+ * legitimately land on (payment-gateway returns) so an expired/missing
+ * session doesn't force the intrusive "log out and log in again" modal onto
+ * someone just checking whether their payment went through.
+ */
+function triggerSessionExpired(suppressEvent = false) {
   if (typeof window !== "undefined") {
     try {
       localStorage.removeItem("token");
@@ -76,11 +84,13 @@ function triggerSessionExpired() {
         });
       });
     } catch {}
-    window.dispatchEvent(new CustomEvent("session-expired"));
+    if (!suppressEvent) {
+      window.dispatchEvent(new CustomEvent("session-expired"));
+    }
   }
 }
 
-async function refreshJwtToken(): Promise<{ apiKey: string; token: string } | null> {
+async function refreshJwtToken(suppressEvent = false): Promise<{ apiKey: string; token: string } | null> {
   if (isRefreshing && refreshPromise) {
     return refreshPromise;
   }
@@ -90,7 +100,7 @@ async function refreshJwtToken(): Promise<{ apiKey: string; token: string } | nu
     try {
       const { apiKey, token } = getAuthCredentials();
       if (!apiKey || !token) {
-        triggerSessionExpired();
+        triggerSessionExpired(suppressEvent);
         return null;
       }
 
@@ -138,11 +148,11 @@ async function refreshJwtToken(): Promise<{ apiKey: string; token: string } | nu
 
         return { apiKey: newApiKey, token: newToken };
       } else {
-        triggerSessionExpired();
+        triggerSessionExpired(suppressEvent);
         return null;
       }
     } catch {
-      triggerSessionExpired();
+      triggerSessionExpired(suppressEvent);
       return null;
     } finally {
       isRefreshing = false;
@@ -239,10 +249,13 @@ export async function apiFetch<T = unknown>(
         response.status === 401 &&
         !isRetry &&
         !isAuthEndpoint &&
-        !suppressSessionExpired &&
         typeof window !== "undefined"
       ) {
-        const refreshed = await refreshJwtToken();
+        // Always attempt the silent refresh — even for calls that suppress
+        // the session-expired UI, a still-refreshable token should still be
+        // renewed and the request retried; suppression only controls whether
+        // a refresh that FAILS shows the modal (see refreshJwtToken).
+        const refreshed = await refreshJwtToken(suppressSessionExpired);
         if (refreshed) {
           return apiFetch<T>(endpoint, {
             ...options,
@@ -271,10 +284,9 @@ export async function apiFetch<T = unknown>(
           (response.status === 401 || msg.includes("jwt token has expired")) &&
           !isRetry &&
           !isAuthEndpoint &&
-          !suppressSessionExpired &&
           typeof window !== "undefined"
         ) {
-          const refreshed = await refreshJwtToken();
+          const refreshed = await refreshJwtToken(suppressSessionExpired);
           if (refreshed) {
             return apiFetch<T>(endpoint, {
               ...options,
