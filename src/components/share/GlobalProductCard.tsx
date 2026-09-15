@@ -55,7 +55,9 @@ const ProductCard: React.FC<ProductCardProps> = ({
 }) => {
   const itemId = productUuid || uuid || "";
   const showTbaFlag = isTba ?? !inStock;
-  const href = `/product/${slug || title?.toLowerCase().replace(/\s+/g, "-")}`;
+  const resolvedSlug = slug || title?.toLowerCase().replace(/\s+/g, "-");
+  const href = `/product/${resolvedSlug}`;
+  const compareHref = `/product-compare/${resolvedSlug}`;
 
   const isendOfLifeDisabled = allProduct ? allProduct.endOfLife === true : endOfLife === true;
   return (
@@ -142,7 +144,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
               disabled={isendOfLifeDisabled}
             />
             <Link
-              href={isendOfLifeDisabled ? "#" : "/product-compare"}
+              href={isendOfLifeDisabled ? "#" : compareHref}
               onClick={(e) => {
                 if (isendOfLifeDisabled) e.preventDefault();
               }}

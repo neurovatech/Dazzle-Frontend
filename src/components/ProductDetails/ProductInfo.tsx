@@ -473,14 +473,18 @@ export default function ProductInfo({
             />
           </button>
 
-          <button className="w-10 h-10 border border-[#EEEEEE] dark:border-gray-700 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-[#1A1A1A] transition-colors">
+          <Link
+            href={alldata?.productSlug ? `/product-compare/${alldata.productSlug}` : "#"}
+            aria-label="Compare"
+            className="w-10 h-10 border border-[#EEEEEE] dark:border-gray-700 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-[#1A1A1A] transition-colors"
+          >
             <SwapIcon
               key="2"
               color={theme === "dark" ? "#FFFFFF" : "#F0B342"}
               width={16}
               height={16}
             />
-          </button>
+          </Link>
           {/* <button
               className="w-10 h-10 border border-[#EEEEEE] dark:border-gray-700 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-[#1A1A1A] transition-colors"
             >

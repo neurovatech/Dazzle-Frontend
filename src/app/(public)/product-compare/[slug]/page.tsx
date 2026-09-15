@@ -1,9 +1,15 @@
 import React from 'react'
 import ProductCompareDetails from "@/components/ProductCompare/ProductCompareDetails"
-function ProductCompareDetailsPage() {
+
+interface PageProps {
+  params: Promise<{ slug: string }>;
+}
+
+async function ProductCompareDetailsPage({ params }: PageProps) {
+  const { slug } = await params;
   return (
     <div>
-      <ProductCompareDetails />
+      <ProductCompareDetails slug={slug} />
     </div>
   )
 }

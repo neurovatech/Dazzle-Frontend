@@ -1,224 +1,392 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { Search } from "lucide-react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { Search, X } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api";
 
-interface Spec {
-  label: string;
-  value: string;
+// ── Product lookup (/product/{slug}) — resolves a slug into uuid + display info ──
+interface ThumbnailItem {
+  mediaFileUrl?: string;
+  mediafileUrl?: string;
+  mediaFile?: string;
+}
+interface ProductLookupData {
+  productUuid: string;
+  productName: string;
+  productSlug: string;
+  thumbnails?: ThumbnailItem[];
+  thumbnailImg?: string;
+}
+interface ProductLookupResponse {
+  statusCode: number;
+  status: string;
+  found: boolean;
+  data: ProductLookupData;
 }
 
-interface Product {
-  id: number;
+// ── Grouped specification sheet (/product-specification/{productUuid}) ──
+interface ProductSpecification {
+  specUuid: string;
+  specification: string;
+  specificationValue: string;
+}
+interface SpecGroup {
+  specGroupUuid: string;
+  groupName: string;
+  groupSlug: string;
+  productSpecifications: ProductSpecification[];
+}
+interface SpecResponse {
+  statusCode: number;
+  status: string;
+  found: boolean;
+  count: number;
+  data: SpecGroup[];
+}
+
+// ── Keyword search (/product/search) — same endpoint used by the header search ──
+interface SearchDocument {
+  id: string;
+  productName: string;
+  productSlug: string;
+  thumbnailsUrl: string;
+}
+interface SearchHit {
+  document: SearchDocument;
+}
+interface SearchApiResponse {
+  found: number;
+  hits: SearchHit[];
+}
+
+function getThumbnail(data?: ProductLookupData): string {
+  if (!data) return "";
+  if (data.thumbnailImg) return data.thumbnailImg;
+  const first = data.thumbnails?.[0];
+  return first?.mediaFileUrl || first?.mediafileUrl || first?.mediaFile || "";
+}
+
+function useProductLookup(slug: string | null) {
+  return useQuery<ProductLookupResponse>({
+    queryKey: ["product-compare-lookup", slug],
+    queryFn: () => api.get<ProductLookupResponse>(`/product/${slug}`),
+    enabled: !!slug,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+function useProductSpecs(productUuid: string | null) {
+  return useQuery<SpecResponse>({
+    queryKey: ["product-compare-specs", productUuid],
+    queryFn: () => api.get<SpecResponse>(`/product-specification/${productUuid}`),
+    enabled: !!productUuid,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+interface PickedProduct {
+  slug: string;
   name: string;
   image: string;
-  specs: Spec[];
 }
 
-const PRODUCTS: Product[] = [
-  {
-    id: 1,
-    name: "AirPods Pro",
-    image: "https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/MQD83?wid=400&hei=400&fmt=jpeg&qlt=95",
-    specs: [
-      { label: "Dimensions", value: "163.4 × 78 × 8.8 mm (6.43 × 3.07 × 0.35 in)" },
-      { label: "Weight", value: "385 g (13.6 oz)" },
-      { label: "Chip", value: "Apple H2 chip" },
-      { label: "Battery Life", value: "Up to 6 hours listening time (ANC on)" },
-      { label: "Connectivity", value: "Bluetooth 5.3" },
-      { label: "Water Resistance", value: "IPX4 sweat and water resistant" },
-    ],
-  },
-  {
-    id: 2,
-    name: "AirPods Pro 2nd Gen",
-    image: "https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/MQDY3?wid=400&hei=400&fmt=jpeg&qlt=95",
-    specs: [
-      { label: "Dimensions", value: "163.4 × 78 × 8.8 mm (6.43 × 3.07 × 0.35 in)" },
-      { label: "Weight", value: "187 g (6.6 oz)" },
-      { label: "Chip", value: "Apple H2 chip" },
-      { label: "Battery Life", value: "Up to 6 hours listening time (ANC on)" },
-      { label: "Connectivity", value: "Bluetooth 5.3" },
-      { label: "Water Resistance", value: "IP54 dust and water resistant" },
-    ],
-  },
-  {
-    id: 3,
-    name: "AirPods Max",
-    image: "https://store.storeimages.cdn-apple.com/4982/as-images.apple.com/is/MGYN3?wid=400&hei=400&fmt=jpeg&qlt=95",
-    specs: [
-      { label: "Dimensions", value: "163.4 × 78 × 8.8 mm (6.43 × 3.07 × 0.35 in)" },
-      { label: "Weight", value: "385 g (13.6 oz)" },
-      { label: "Chip", value: "Apple H1 chip" },
-      { label: "Battery Life", value: "Up to 20 hours listening time (ANC on)" },
-      { label: "Connectivity", value: "Bluetooth 5.0" },
-      { label: "Water Resistance", value: "No official rating" },
-    ],
-  },
-];
+// ── Search-as-you-type input, shared by both slots ──────────────────────────
+function ProductSearchInput({
+  placeholder,
+  onSelect,
+  excludeSlug,
+}: {
+  placeholder: string;
+  onSelect: (product: PickedProduct) => void;
+  excludeSlug?: string | null;
+}) {
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
 
-export default function ProductCompareDetails() {
-  const primaryProduct = PRODUCTS[0];
-  const [compareProduct, setCompareProduct] = useState<Product | null>(PRODUCTS[1]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [showDropdown, setShowDropdown] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  const filteredOptions = PRODUCTS.filter(
-    (p) =>
-      p.id !== primaryProduct.id &&
-      p.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const searchQuery = useQuery<SearchApiResponse>({
+    queryKey: ["product-compare-search", query],
+    queryFn: () =>
+      api.get<SearchApiResponse>(
+        `/product/search?keyword=${encodeURIComponent(query)}&page=1&perPage=10`
+      ),
+    enabled: query.trim().length > 1,
+    staleTime: 60 * 1000,
+  });
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setShowDropdown(false);
-      }
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  const handleSelect = (product: Product) => {
-    setCompareProduct(product);
-    setSearchQuery(product.name);
-    setShowDropdown(false);
-  };
+  const results = (searchQuery.data?.hits ?? []).filter(
+    (h) => h.document.productSlug !== excludeSlug
+  );
+  const showDropdown = open && query.trim().length > 1;
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-start justify-center px-4 py-12">
-      <div className="w-full max-w-4xl">
+    <div ref={ref} className="relative w-full">
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+      <input
+        type="text"
+        placeholder={placeholder}
+        value={query}
+        onChange={(e) => {
+          setQuery(e.target.value);
+          setOpen(true);
+        }}
+        onFocus={() => setOpen(true)}
+        className="w-full pl-9 pr-3 py-2.5 text-sm rounded-lg border border-gray-200 bg-white placeholder-gray-400 text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#D4A97A] focus:border-transparent transition"
+      />
+      {showDropdown && (
+        <ul className="absolute z-30 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden max-h-72 overflow-y-auto">
+          {searchQuery.isLoading && (
+            <li className="px-4 py-3 text-sm text-gray-400">Searching...</li>
+          )}
+          {!searchQuery.isLoading && results.length === 0 && (
+            <li className="px-4 py-3 text-sm text-gray-400">No products found</li>
+          )}
+          {results.map((h) => (
+            <li
+              key={h.document.id}
+              onMouseDown={() => {
+                onSelect({
+                  slug: h.document.productSlug,
+                  name: h.document.productName,
+                  image: h.document.thumbnailsUrl,
+                });
+                setQuery("");
+                setOpen(false);
+              }}
+              className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-[#D4A97A]/10 hover:text-[#b8864e] cursor-pointer transition-colors"
+            >
+              <img
+                src={h.document.thumbnailsUrl || "/images/no_images.png"}
+                alt=""
+                className="w-8 h-8 object-contain rounded shrink-0"
+              />
+              <span className="truncate">{h.document.productName}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
 
-        {/* Page Title */}
+// ── One header slot: either a resolved product card, or a search box ────────
+function CompareSlot({
+  product,
+  loading,
+  notFound,
+  searchPlaceholder,
+  onSelect,
+  onClear,
+  excludeSlug,
+}: {
+  product?: ProductLookupData;
+  loading: boolean;
+  notFound: boolean;
+  searchPlaceholder: string;
+  onSelect: (p: PickedProduct) => void;
+  onClear: () => void;
+  excludeSlug?: string | null;
+}) {
+  if (loading) {
+    return (
+      <div className="p-4 sm:p-5 flex items-center gap-3">
+        <div className="w-16 h-16 rounded-lg bg-gray-100 animate-pulse shrink-0" />
+        <div className="flex-1 h-4 rounded bg-gray-100 animate-pulse" />
+      </div>
+    );
+  }
+
+  if (product) {
+    return (
+      <div className="p-4 sm:p-5 flex items-center gap-3">
+        <div className="w-16 h-16 shrink-0 rounded-lg border border-gray-100 bg-gray-50 flex items-center justify-center overflow-hidden">
+          <img
+            src={getThumbnail(product) || "/images/no_images.png"}
+            alt={product.productName}
+            className="w-full h-full object-contain"
+          />
+        </div>
+        <p className="min-w-0 flex-1 text-sm font-semibold text-gray-900 line-clamp-2">
+          {product.productName}
+        </p>
+        <button
+          type="button"
+          onClick={onClear}
+          aria-label="Change product"
+          className="shrink-0 w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 hover:text-gray-700 hover:border-gray-300 transition-colors"
+        >
+          <X size={14} />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-4 sm:p-5">
+      {notFound && <p className="text-xs text-red-500 mb-1.5">Product not found.</p>}
+      <ProductSearchInput
+        placeholder={searchPlaceholder}
+        onSelect={onSelect}
+        excludeSlug={excludeSlug}
+      />
+    </div>
+  );
+}
+
+interface ProductCompareDetailsProps {
+  /** Pre-fills the first slot — set when arriving from a product's Compare button (/product-compare/[slug]). */
+  slug?: string;
+}
+
+export default function ProductCompareDetails({ slug }: ProductCompareDetailsProps) {
+  const [primarySlug, setPrimarySlug] = useState<string | null>(slug ?? null);
+  const [compareSlug, setCompareSlug] = useState<string | null>(null);
+  // Resets the slots when navigating client-side between two /product-compare/[slug]
+  // routes, which reuses this component instance rather than remounting it.
+  const [prevSlugProp, setPrevSlugProp] = useState(slug);
+  if (slug !== prevSlugProp) {
+    setPrevSlugProp(slug);
+    setPrimarySlug(slug ?? null);
+    setCompareSlug(null);
+  }
+
+  const primaryLookup = useProductLookup(primarySlug);
+  const compareLookup = useProductLookup(compareSlug);
+
+  const primaryProduct = primaryLookup.data?.found ? primaryLookup.data.data : undefined;
+  const compareProduct = compareLookup.data?.found ? compareLookup.data.data : undefined;
+
+  const primarySpecs = useProductSpecs(primaryProduct?.productUuid ?? null);
+  const compareSpecs = useProductSpecs(compareProduct?.productUuid ?? null);
+
+  // Primary's groups/order drive the table; any group only the compare
+  // product has is appended so its specs still show up somewhere.
+  const groups = useMemo(() => {
+    const primaryGroups = primarySpecs.data?.data ?? [];
+    const compareGroups = compareSpecs.data?.data ?? [];
+    const compareByGroup = new Map(compareGroups.map((g) => [g.groupSlug, g]));
+
+    const merged = primaryGroups.map((pg) => {
+      const cg = compareByGroup.get(pg.groupSlug);
+      compareByGroup.delete(pg.groupSlug);
+      const compareValueByLabel = new Map(
+        (cg?.productSpecifications ?? []).map((s) => [s.specification, s.specificationValue])
+      );
+      return {
+        groupName: pg.groupName,
+        rows: pg.productSpecifications.map((s) => ({
+          label: s.specification,
+          primaryValue: s.specificationValue as string | null,
+          compareValue: compareValueByLabel.get(s.specification) ?? null,
+        })),
+      };
+    });
+
+    compareByGroup.forEach((cg) => {
+      merged.push({
+        groupName: cg.groupName,
+        rows: cg.productSpecifications.map((s) => ({
+          label: s.specification,
+          primaryValue: null as string | null,
+          compareValue: s.specificationValue as string | null,
+        })),
+      });
+    });
+
+    return merged;
+  }, [primarySpecs.data, compareSpecs.data]);
+
+  const specsLoading =
+    (!!primaryProduct && primarySpecs.isLoading) || (!!compareProduct && compareSpecs.isLoading);
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-start justify-center px-4 py-8 sm:py-12">
+      <div className="w-full max-w-4xl">
         <h1 className="text-2xl font-semibold text-gray-900 mb-5">Product Compare</h1>
 
-        {/* Main Card */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-gray-100 border-b border-gray-200 bg-gray-50/60">
+            <CompareSlot
+              product={primaryProduct}
+              loading={!!primarySlug && primaryLookup.isLoading}
+              notFound={!!primarySlug && primaryLookup.isFetched && !primaryLookup.data?.found}
+              searchPlaceholder="Search first product…"
+              onSelect={(p) => setPrimarySlug(p.slug)}
+              onClear={() => setPrimarySlug(null)}
+              excludeSlug={compareSlug}
+            />
+            <CompareSlot
+              product={compareProduct}
+              loading={!!compareSlug && compareLookup.isLoading}
+              notFound={!!compareSlug && compareLookup.isFetched && !compareLookup.data?.found}
+              searchPlaceholder="Search product to compare…"
+              onSelect={(p) => setCompareSlug(p.slug)}
+              onClear={() => setCompareSlug(null)}
+              excludeSlug={primarySlug}
+            />
+          </div>
 
-          {/* Header Row */}
-          <div className="bg-gray-50 border-b border-gray-200 px-6 py-3 flex flex-col sm:flex-row sm:items-center gap-3">
-            <p className="text-sm text-gray-600">
-              Product Name :{" "}
-              <span className="font-semibold text-gray-900">{primaryProduct.name}</span>
-            </p>
-
-            <div ref={dropdownRef} className="relative sm:ml-2 w-full sm:w-56">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-              <input
-                type="text"
-                placeholder="Compare With..."
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setShowDropdown(true);
-                }}
-                onFocus={() => setShowDropdown(true)}
-                className="w-full pl-9 pr-3 py-1.5 text-sm rounded-md border border-gray-300 bg-white placeholder-gray-400 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-              />
-              {showDropdown && filteredOptions.length > 0 && (
-                <ul className="absolute z-30 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
-                  {filteredOptions.map((p) => (
-                    <li
-                      key={p.id}
-                      onMouseDown={() => handleSelect(p)}
-                      className="px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 cursor-pointer transition-colors"
-                    >
-                      {p.name}
-                    </li>
-                  ))}
-                </ul>
-              )}
+          {!primaryProduct && !compareProduct ? (
+            <div className="py-16 px-6 text-center text-sm text-gray-400">
+              Search and select two products above to compare their specifications.
             </div>
-          </div>
-
-          {/* Table */}
-          <div className="w-full overflow-x-auto">
-            <table className="w-full min-w-[520px]">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  {/* Empty label header */}
-                  <th className="w-44 border-r border-gray-200" />
-
-                  {/* Primary product image */}
-                  <th className="border-r border-gray-200 py-6 px-4">
-                    <div className="flex flex-col items-center gap-2">
-                      <img
-                        src={primaryProduct.image}
-                        alt={primaryProduct.name}
-                        className="w-20 h-20 object-contain"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src =
-                            "https://placehold.co/80x80/f3f4f6/9ca3af?text=No+Image";
-                        }}
-                      />
-                    </div>
-                  </th>
-
-                  {/* Compare product image */}
-                  <th className="py-6 px-4">
-                    <div className="flex flex-col items-center gap-2">
-                      {compareProduct ? (
-                        <img
-                          src={compareProduct.image}
-                          alt={compareProduct.name}
-                          className="w-20 h-20 object-contain"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src =
-                              "https://placehold.co/80x80/f3f4f6/9ca3af?text=No+Image";
-                          }}
-                        />
-                      ) : (
-                        <div className="w-20 h-20 flex items-center justify-center rounded-lg border-2 border-dashed border-gray-200">
-                          <span className="text-xs text-gray-400 text-center leading-tight px-1">
-                            Select a product
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {primaryProduct.specs.map((spec, idx) => (
-                  <tr
-                    key={idx}
-                    className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50/60 transition-colors"
-                  >
-                    {/* Label */}
-                    <td className="py-4 px-6 border-r border-gray-200 w-44">
-                      <span className="text-sm font-medium text-gray-700 whitespace-nowrap">
-                        {spec.label}
-                      </span>
-                    </td>
-
-                    {/* Primary value */}
-                    <td className="py-4 px-6 border-r border-gray-100">
-                      <span className="text-sm text-gray-600 leading-relaxed">
-                        {spec.value}
-                      </span>
-                    </td>
-
-                    {/* Compare value */}
-                    <td className="py-4 px-6">
-                      <span className="text-sm text-gray-600 leading-relaxed">
-                        {compareProduct
-                          ? compareProduct.specs[idx]?.value
-                          : <span className="text-gray-300 select-none">—</span>}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Mobile product name labels */}
-        <div className="mt-3 grid grid-cols-2 gap-4 sm:hidden pl-44 text-xs text-center">
-          <p className="font-semibold text-gray-700">{primaryProduct.name}</p>
-          <p className="font-semibold text-gray-700">{compareProduct?.name ?? "—"}</p>
+          ) : specsLoading ? (
+            <div className="py-16 px-6 text-center text-sm text-gray-400">
+              Loading specifications…
+            </div>
+          ) : groups.length === 0 ? (
+            <div className="py-16 px-6 text-center text-sm text-gray-400">
+              No specification data available for this product.
+            </div>
+          ) : (
+            <div className="w-full overflow-x-auto">
+              <table className="w-full min-w-[560px]">
+                <tbody>
+                  {groups.map((group) => (
+                    <Fragment key={group.groupName}>
+                      <tr className="bg-gray-50">
+                        <td
+                          colSpan={3}
+                          className="px-6 py-2 text-xs font-bold uppercase tracking-wide text-[#b8864e]"
+                        >
+                          {group.groupName}
+                        </td>
+                      </tr>
+                      {group.rows.map((row, idx) => (
+                        <tr
+                          key={idx}
+                          className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50/60 transition-colors"
+                        >
+                          <td className="py-3 px-6 border-r border-gray-100 w-40 sm:w-56 align-top">
+                            <span className="text-sm font-medium text-gray-700">{row.label}</span>
+                          </td>
+                          <td className="py-3 px-4 border-r border-gray-100 w-1/2 align-top">
+                            <span className="text-sm text-gray-600 leading-relaxed">
+                              {row.primaryValue ?? <span className="text-gray-300 select-none">—</span>}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 w-1/2 align-top">
+                            <span className="text-sm text-gray-600 leading-relaxed">
+                              {row.compareValue ?? <span className="text-gray-300 select-none">—</span>}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </Fragment>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
     </div>

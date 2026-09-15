@@ -49,12 +49,16 @@ async function handleProxy(
         }
       } else if (contentType.includes("multipart/form-data")) {
         fetchOptions.body = await request.formData();
-        // The re-parsed FormData gets a brand-new boundary when fetch serializes
-        // it again — forwarding the browser's original content-type header would
-        // leave a stale boundary that doesn't match the actual body, so the
-        // backend can't parse any fields. Dropping it lets fetch set a fresh,
-        // correct Content-Type for the new body.
+        // The re-parsed FormData gets a brand-new boundary — and therefore a
+        // different byte length — when fetch serializes it again. Forwarding
+        // the browser's original content-type leaves a stale boundary the
+        // backend can't parse fields against, and forwarding the original
+        // content-length throws RequestContentLengthMismatchError the moment
+        // the new body's real length differs from it (verified live: it always
+        // does). Dropping both lets fetch compute correct fresh values for the
+        // new body.
         headers.delete("content-type");
+        headers.delete("content-length");
       } else {
         const bodyText = await request.text();
         if (bodyText) {
