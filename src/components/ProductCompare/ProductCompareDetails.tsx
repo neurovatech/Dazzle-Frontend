@@ -441,7 +441,7 @@ export default function ProductCompareDetails({ slug }: ProductCompareDetailsPro
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-black flex items-start justify-center px-3 sm:px-4 py-8 sm:py-12">
-      <div className="w-full max-w-5xl">
+      <div className=" flex-col flex-1 items-center max-w-336 mx-auto lg:px-2 sm:px-0 flex">
         <div className="flex items-center justify-between mb-5 gap-2 flex-wrap">
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Product Compare</h1>
           {slugs.length > 0 && (
