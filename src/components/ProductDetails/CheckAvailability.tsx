@@ -1240,7 +1240,7 @@ export default function CheckAvailability({
         </label>
         <input
           type="text"
-          value={amount}
+          value={Number(amount).toLocaleString('en-US')}
           readOnly
           className="flex-1 min-w-0 border border-gray-200 dark:border-gray-700 rounded-lg px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm focus:outline-none bg-white dark:bg-gray-900"
         />

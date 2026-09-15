@@ -718,11 +718,15 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
               </div>
             )}
 
+           
+
             <div>
               <CheckAvailability
                 product={product}
                 selectedVariant={selectedVariant}
-                currentPrice={selectedVariant?.mrp}
+                currentPrice={(selectedVariant && selectedVariant.price > 0
+                    ? selectedVariant.price
+                    : price ?? 0) + careTotalOffer}
                 externalEmiOpen={emiOpen}
                 onExternalEmiClose={() => setEmiOpen(false)}
                 externalAvailabilityOpen={storeAvailabilityOpen}

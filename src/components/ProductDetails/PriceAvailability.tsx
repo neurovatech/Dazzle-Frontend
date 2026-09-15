@@ -11,7 +11,7 @@ export default function PriceAvailability({
   selectedPriceType = "offer",
   onPriceTypeChange,
 }: any) {
-  const displayOfferPrice   = (offerPrice ?? 0) + careTotalOffer;
+  const displayOfferPrice = (offerPrice ?? 0) + careTotalOffer;
   const displayRegularPrice = (originalPrice ?? 0) + careTotalRegular;
 
   return (
@@ -37,10 +37,15 @@ export default function PriceAvailability({
           <span className="font-semibold text-sm">
             Offer Price:{" "}
             <span className="text-[#CB843B]">
-              {displayOfferPrice > 0 ? displayOfferPrice.toLocaleString() : "—"} ৳
+              {displayOfferPrice > 0 ? displayOfferPrice.toLocaleString() : "—"}{" "}
+              ৳
             </span>
           </span>
-          <span className="text-[#767676] text-xs">Cash/Card/MFS Payment</span>
+          <span className="text-[#767676] text-xs bg-gray-100 px-0.5">
+            EMI begin at BDT{" "}
+            {Math.round((displayOfferPrice ?? 0) / 12).toLocaleString()} per
+            month
+          </span>
         </div>
       </button>
 
@@ -65,11 +70,16 @@ export default function PriceAvailability({
           <span className="font-semibold text-sm">
             Regular Price:{" "}
             <span className="text-[#CB843B]">
-              {displayRegularPrice > 0 ? displayRegularPrice.toLocaleString() : "—"} ৳
+              {displayRegularPrice > 0
+                ? displayRegularPrice.toLocaleString()
+                : "—"}{" "}
+              ৳
             </span>
           </span>
           <span className="text-[#767676] text-xs bg-gray-100 px-0.5">
-            EMI begin at BDT {Math.round((displayRegularPrice ?? 0) / 12).toLocaleString()} per month
+            <span className="text-[#767676] text-xs">
+              Cash/Card/MFS Payment
+            </span>
           </span>
         </div>
       </button>

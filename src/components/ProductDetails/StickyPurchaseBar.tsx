@@ -184,7 +184,7 @@ export default function StickyPurchaseBar({
     selectedPriceType === "regular" ? combinedRegularPrice : combinedOfferPrice;
 
   // EMI always from regular price
-  const emiMonthly = Math.round(combinedRegularPrice / 12);
+  const emiMonthly = Math.round(displayPrice / 12);
 
   // ── Cart name — product name always prefixed ─────────────────
   const plan = selectedCareOptions[0] as CareOption | undefined;
