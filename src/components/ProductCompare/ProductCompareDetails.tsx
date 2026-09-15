@@ -17,6 +17,12 @@ interface ProductLookupData {
   productSlug: string;
   thumbnails?: ThumbnailItem[];
   thumbnailImg?: string;
+  regularPrice?: number;
+  discountedPrice?: number;
+}
+
+function formatPrice(value: number): string {
+  return `৳${value.toLocaleString("en-BD")}`;
 }
 interface ProductLookupResponse {
   statusCode: number;
@@ -221,8 +227,15 @@ function FilledSlot({ slot, onRemove }: { slot: ResolvedSlot; onRemove: () => vo
     );
   }
 
+  const { regularPrice, discountedPrice } = slot.product;
+  const hasSpecialPrice =
+    typeof discountedPrice === "number" &&
+    discountedPrice > 0 &&
+    typeof regularPrice === "number" &&
+    discountedPrice < regularPrice;
+
   return (
-    <div className="p-3 sm:p-4 flex items-center gap-2.5 sm:gap-3">
+    <div className="p-3 sm:p-4 flex items-start gap-2.5 sm:gap-3">
       <div className="w-12 h-12 sm:w-14 sm:h-14 shrink-0 rounded-lg border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-[#2D2A26] flex items-center justify-center overflow-hidden">
         <img
           src={getThumbnail(slot.product) || "/images/no_images.png"}
@@ -230,9 +243,24 @@ function FilledSlot({ slot, onRemove }: { slot: ResolvedSlot; onRemove: () => vo
           className="w-full h-full object-contain"
         />
       </div>
-      <p className="min-w-0 flex-1 text-xs sm:text-sm font-semibold text-gray-900 dark:text-white line-clamp-2">
-        {slot.product.productName}
-      </p>
+      <div className="min-w-0 flex-1">
+        <p className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white line-clamp-2">
+          {slot.product.productName}
+        </p>
+        {typeof regularPrice === "number" && regularPrice > 0 && (
+          <p className="mt-1 text-[11px] sm:text-xs text-gray-500 dark:text-gray-400">
+            Regular Price{" "}
+            <span className="font-semibold text-gray-700 dark:text-gray-200">
+              {formatPrice(regularPrice)}
+            </span>
+          </p>
+        )}
+        {hasSpecialPrice && (
+          <p className="text-[11px] sm:text-xs font-semibold text-[#B57908] dark:text-[#D4A97A]">
+            Special Price <span>{formatPrice(discountedPrice)}</span>
+          </p>
+        )}
+      </div>
       <button
         type="button"
         onClick={onRemove}
