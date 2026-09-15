@@ -9,7 +9,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { addToCart } from "@/store/slices/cartSlice";
 import { trackAddToCart } from "@/lib/analytics/pixelEvents";
 import { api } from "@/lib/api";
-import { verifyOrderProduct } from "@/lib/verify-order-product";
+import { verifyOrderProduct, friendlyUnresolvedMessage } from "@/lib/verify-order-product";
 import { isEmpty, formatPrice, type ClipProduct } from "./clipToCart.shared";
 
 interface DefaultVariantResponse {
@@ -107,7 +107,8 @@ export default function ClipToCartCard({
         });
 
         if (unresolved.length > 0) {
-          toast.error(`${product.title}: ${unresolved[0].reason}`);
+          console.error("[ClipToCartCard] verify-order-product rejected:", unresolved[0].reason);
+          toast.error(friendlyUnresolvedMessage(unresolved[0]));
           return;
         }
 

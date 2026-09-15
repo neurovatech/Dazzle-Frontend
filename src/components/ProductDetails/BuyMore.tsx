@@ -7,7 +7,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { addToCart, removeFromCart } from "@/store/slices/cartSlice";
 import { trackAddToCart } from "@/lib/analytics/pixelEvents";
 import { api } from "@/lib/api";
-import { verifyOrderProduct } from "@/lib/verify-order-product";
+import { verifyOrderProduct, friendlyUnresolvedMessage } from "@/lib/verify-order-product";
 import toast from "react-hot-toast";
 
 interface DefaultVariantResponse {
@@ -120,7 +120,8 @@ const BuyMore: React.FC<BuyMoreProps> = ({ items }: any) => {
         });
 
         if (unresolved.length > 0) {
-          toast.error(`${item.name}: ${unresolved[0].reason}`);
+          console.error("[BuyMore] verify-order-product rejected:", unresolved[0].reason);
+          toast.error(friendlyUnresolvedMessage(unresolved[0]));
           return;
         }
 

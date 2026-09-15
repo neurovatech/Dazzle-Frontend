@@ -10,7 +10,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { patchResolvedVariant } from "@/store/slices/cartSlice";
-import { verifyOrderProducts } from "@/lib/verify-order-product";
+import { verifyOrderProducts, friendlyUnresolvedMessage } from "@/lib/verify-order-product";
 import toast from "react-hot-toast";
 import { DeliveryOption } from "./CartSidebar";
 import { LogIn, X } from "lucide-react";
@@ -88,10 +88,17 @@ export default function CartPageCom() {
         // Block the redirect — a line the backend still rejects after the
         // get-default-variant recovery attempt will only fail again at order
         // creation, so checkout is not a valid next step for this cart.
-        const detail = unresolved
-          .map((u) => `${u.name || "An item"}: ${u.reason}`)
-          .join(" ");
-        toast.error(`Validation failed. ${detail}`);
+        // The backend's own reasons ("variantUuid is invalid.") go to the
+        // console for debugging; the toast stays in plain, actionable terms.
+        console.error(
+          "[CartPageCom] verify-order-product rejected:",
+          unresolved.map((u) => `${u.name || "An item"}: ${u.reason}`).join(" "),
+        );
+        toast.error(
+          unresolved.length === 1
+            ? friendlyUnresolvedMessage(unresolved[0])
+            : "Sorry, some items in your cart are currently unavailable. Please review your cart before checking out.",
+        );
         setIsLoading(false);
         return;
       }

@@ -17,7 +17,7 @@ import Image from "next/image";
 import AddCouponModal, { type Coupon, couponDiscountFor, COUPONS } from "./AddCouponModal";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { increaseQty, decreaseQty, clearCart, patchMinBookingPrice } from "@/store/slices/cartSlice";
-import { useQuery, useQueries } from "@tanstack/react-query";
+import { useQuery, useQueries, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { trackInitiateCheckout, trackPurchase, generateEventId } from "@/lib/analytics/pixelEvents";
 import { getClickIds, readTrackingCookie } from "@/lib/analytics/clickIds";
@@ -309,6 +309,7 @@ function Section({ step, title, children }: { step: number; title: string; child
 export default function CheckoutPageCom() {
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const cartItems = useAppSelector((s) => s.cart.items);
   /*
    * Store Pickup shows the branch list inline rather than in a modal: the list
@@ -1103,6 +1104,11 @@ export default function CheckoutPageCom() {
           purchaseEventId,
         );
         dispatch(clearCart());
+        // Profile → Orders caches order-list for 5 minutes (the app's default
+        // staleTime) — without this, landing there right after checkout still
+        // shows the pre-order list until that cache expires or the page is
+        // hard-reloaded, since a fresh mount alone doesn't force a refetch.
+        queryClient.invalidateQueries({ queryKey: ["order-list"] });
         setConfirmedOrder({ orderNo: purchaseOrderNo, total: purchaseTotal });
         setOrderConfirmed(true);
         toast.success("Order placed successfully!");

@@ -17,7 +17,7 @@ import { useAddToWishlist, useRemoveFromWishlist } from "@/hooks/useWishlist";
 import { trackAddToCart } from "@/lib/analytics/pixelEvents";
 import { api } from "@/lib/api";
 import toast from "react-hot-toast";
-import { verifyOrderProduct } from "@/lib/verify-order-product";
+import { verifyOrderProduct, friendlyUnresolvedMessage } from "@/lib/verify-order-product";
 import type { ProductApiData } from "@/app/(public)/product/[productSlug]/page";
 import {
   consolidateVariants,
@@ -417,7 +417,8 @@ function ProductQuicView({
       });
 
       if (unresolved.length > 0) {
-        toast.error(`Validation failed. ${unresolved[0].reason}`);
+        console.error("[QuickView] verify-order-product rejected:", unresolved[0].reason);
+        toast.error(friendlyUnresolvedMessage(unresolved[0]));
         return false;
       }
 

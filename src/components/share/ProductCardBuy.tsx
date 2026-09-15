@@ -10,7 +10,7 @@ import { trackAddToCart } from "@/lib/analytics/pixelEvents";
 import ProductQuicView from "@/components/ProductDetails/ProductQuicView";
 import toast from "react-hot-toast";
 import { api } from "@/lib/api";
-import { verifyOrderProduct } from "@/lib/verify-order-product";
+import { verifyOrderProduct, friendlyUnresolvedMessage } from "@/lib/verify-order-product";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -201,7 +201,8 @@ export default function ProductCardBuy({
         });
 
         if (unresolved.length > 0) {
-          toast.error(`Validation failed. ${unresolved[0].reason}`);
+          console.error("[GlobalProductCard] verify-order-product rejected:", unresolved[0].reason);
+          toast.error(friendlyUnresolvedMessage(unresolved[0]));
           return;
         }
 

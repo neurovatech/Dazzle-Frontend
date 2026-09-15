@@ -176,3 +176,16 @@ export async function verifyOrderProduct(
 ): Promise<VerifyResult> {
   return verifyOrderProducts([item]);
 }
+
+/**
+ * Turns a verify-order-product rejection into a message an end user can act
+ * on. `reason` is the backend's own words ("variantUuid is invalid.",
+ * "Missing product information.") — accurate for debugging, but it names
+ * internal fields a shopper has never heard of and gives no next step. This
+ * always frames the message around the product itself and what to do next;
+ * the raw `reason` is still there on the object for anyone logging it.
+ */
+export function friendlyUnresolvedMessage(item: UnresolvedItem): string {
+  const name = item.name?.trim() || "This item";
+  return `Sorry, "${name}" is currently unavailable and couldn't be added to your cart. Please try again in a moment or choose a different option.`;
+}

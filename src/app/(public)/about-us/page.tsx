@@ -154,7 +154,7 @@ export default async function AboutUs() {
       <div className=" px-4 sm:px-6 pb-14">
         <div className="w-full flex flex-col justify-center items-center">
           {/* Welcome Label */}
-          <p className="text-[#c9a230] dark:text-white font-semibold text-[13px] mt-5 mb-1 tracking-wide">
+          <p className="text-[#c9a230] dark:text-white font-semibold text-[14px] mt-5 mb-1 tracking-wide">
             Welcome to Dazzle
           </p>
 
@@ -164,7 +164,7 @@ export default async function AboutUs() {
           </h1>
 
           {/* Description */}
-          <p className="text-[13px] text-gray-500 dark:text-white leading-[1.8] mb-8 max-w-full md:w-[50%] w-full flex flex-col items-center text-center">
+          <p className="text-[14px] text-gray-500 dark:text-white leading-[1.8] mb-8 max-w-full md:w-[50%] w-full flex flex-col items-center text-center">
             <span className="pb-3">
               Dazzle is a name synonymous with excellence, innovation, and trust
               in the world of technology and gadgets. Over the past 9 years, we
@@ -221,7 +221,7 @@ export default async function AboutUs() {
         {/* Heading */}
         <div className="w-full flex flex-col justify-center items-center">
           {/* Welcome Label */}
-          <p className="text-[#c9a230] dark:text-white font-semibold text-[13px] mt-5 mb-1 tracking-wide">
+          <p className="text-[#c9a230] dark:text-white font-semibold text-[14px] mt-5 mb-1 tracking-wide">
             WHY CHOOSE US
           </p>
 

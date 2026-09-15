@@ -11,7 +11,7 @@ import type { CareOption } from "./DazzleCare";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { X, LogIn } from "lucide-react";
-import { verifyOrderProduct } from "@/lib/verify-order-product";
+import { verifyOrderProduct, friendlyUnresolvedMessage } from "@/lib/verify-order-product";
 
 const StoreIcon = () => (
   <svg
@@ -228,7 +228,8 @@ export default function StickyPurchaseBar({
       });
 
       if (unresolved.length > 0) {
-        toast.error(`Validation failed. ${unresolved[0].reason}`);
+        console.error("[StickyPurchaseBar] verify-order-product rejected:", unresolved[0].reason);
+        toast.error(friendlyUnresolvedMessage(unresolved[0]));
         return false;
       }
 
