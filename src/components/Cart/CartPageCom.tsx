@@ -13,7 +13,7 @@ import { patchResolvedVariant } from "@/store/slices/cartSlice";
 import { verifyOrderProducts, friendlyUnresolvedMessage } from "@/lib/verify-order-product";
 import toast from "react-hot-toast";
 import { DeliveryOption } from "./CartSidebar";
-import { LogIn, X } from "lucide-react";
+import { LogIn, X, XCircle } from "lucide-react";
 
 type AddressData = {
   name: string;
@@ -29,6 +29,21 @@ type ModalType =
   | "address_view"
   | "payment"
   | "coupon";
+
+/**
+ * No promo-code validation endpoint exists yet, so this always reports
+ * invalid — it's the seam to swap for a real API call (e.g.
+ * `api.post("/promo/validate", { code })`) once the backend has one, without
+ * touching the click handler that calls it.
+ */
+async function validatePromoCode(_code: string): Promise<{ valid: boolean }> {
+  return { valid: false };
+}
+
+/** Same stub for gift vouchers — swap in the real endpoint once it exists. */
+async function validateGiftVoucher(_code: string): Promise<{ valid: boolean }> {
+  return { valid: false };
+}
 
 export default function CartPageCom() {
   const router = useRouter();
@@ -115,6 +130,43 @@ export default function CartPageCom() {
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
   const [paymentLabel, setPaymentLabel] = useState("Cash on Delivery");
   const [modal, setModal] = useState<ModalType>("none");
+
+  const [promoCode, setPromoCode] = useState("");
+  const [voucherCode, setVoucherCode] = useState("");
+  const [applyingPromo, setApplyingPromo] = useState(false);
+  const [applyingVoucher, setApplyingVoucher] = useState(false);
+  // Title of the "not valid" modal — null means closed. Doubles as the
+  // message shown, since "Code Not Valid" / "Voucher Not Valid" is all it
+  // ever needs to say for either input.
+  const [invalidCodeMessage, setInvalidCodeMessage] = useState<string | null>(null);
+
+  const handleApplyPromo = async () => {
+    if (!promoCode.trim() || applyingPromo) return;
+    setApplyingPromo(true);
+    try {
+      const result = await validatePromoCode(promoCode.trim());
+      if (!result.valid) {
+        setInvalidCodeMessage("Code Not Valid");
+      } else {
+        setAppliedCoupon(promoCode.trim());
+      }
+    } finally {
+      setApplyingPromo(false);
+    }
+  };
+
+  const handleApplyVoucher = async () => {
+    if (!voucherCode.trim() || applyingVoucher) return;
+    setApplyingVoucher(true);
+    try {
+      const result = await validateGiftVoucher(voucherCode.trim());
+      if (!result.valid) {
+        setInvalidCodeMessage("Voucher Not Valid");
+      }
+    } finally {
+      setApplyingVoucher(false);
+    }
+  };
 
   const [selectedCurrency, setSelectedCurrency] = useState<string>("BDT");
   const [useWalletSplit, setUseWalletSplit] = useState<boolean>(false);
@@ -234,13 +286,18 @@ export default function CartPageCom() {
                 <input
                   type="text"
                   placeholder="Apply promo code"
+                  value={promoCode}
+                  onChange={(e) => setPromoCode(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleApplyPromo()}
                   className="flex-1 min-w-0 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#D4A97A] text-gray-800 dark:text-white"
                 />
                 <button
                   type="button"
-                  className="shrink-0 bg-[#E9DCCF] hover:bg-[#d8c7b8] text-gray-800 font-bold px-4 py-3 rounded-xl transition text-xs tracking-wider cursor-pointer"
+                  onClick={handleApplyPromo}
+                  disabled={applyingPromo || !promoCode.trim()}
+                  className="shrink-0 bg-[#E9DCCF] hover:bg-[#d8c7b8] text-gray-800 font-bold px-4 py-3 rounded-xl transition text-xs tracking-wider cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  APPLY
+                  {applyingPromo ? "..." : "APPLY"}
                 </button>
               </div>
 
@@ -248,13 +305,18 @@ export default function CartPageCom() {
                 <input
                   type="text"
                   placeholder="Gift Voucher"
+                  value={voucherCode}
+                  onChange={(e) => setVoucherCode(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleApplyVoucher()}
                   className="flex-1 min-w-0 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#D4A97A] text-gray-800 dark:text-white"
                 />
                 <button
                   type="button"
-                  className="shrink-0 bg-[#E9DCCF] hover:bg-[#d8c7b8] text-gray-800 font-bold px-4 py-3 rounded-xl transition text-xs tracking-wider cursor-pointer"
+                  onClick={handleApplyVoucher}
+                  disabled={applyingVoucher || !voucherCode.trim()}
+                  className="shrink-0 bg-[#E9DCCF] hover:bg-[#d8c7b8] text-gray-800 font-bold px-4 py-3 rounded-xl transition text-xs tracking-wider cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  APPLY
+                  {applyingVoucher ? "..." : "APPLY"}
                 </button>
               </div>
             </div>
@@ -435,6 +497,51 @@ export default function CartPageCom() {
                 Login Now
               </Link>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Invalid Promo/Voucher Code Modal ── */}
+      {invalidCodeMessage && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setInvalidCodeMessage(null)}
+          />
+
+          {/* Modal card */}
+          <div className="relative z-10 w-full max-w-sm bg-white dark:bg-[#1c1a17] rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-800 p-6 flex flex-col items-center gap-5">
+            {/* Close button */}
+            <button
+              onClick={() => setInvalidCodeMessage(null)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition cursor-pointer"
+            >
+              <X size={18} />
+            </button>
+
+            {/* Icon */}
+            <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-950/40 flex items-center justify-center">
+              <XCircle size={30} className="text-red-500" />
+            </div>
+
+            {/* Text */}
+            <div className="text-center">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
+                {invalidCodeMessage}
+              </h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Please double-check the code and try again.
+              </p>
+            </div>
+
+            {/* Action */}
+            <button
+              onClick={() => setInvalidCodeMessage(null)}
+              className="w-full py-2.5 rounded-xl bg-[#D4A97A] hover:bg-[#c89a6b] text-white text-sm font-bold transition cursor-pointer"
+            >
+              OK
+            </button>
           </div>
         </div>
       )}
