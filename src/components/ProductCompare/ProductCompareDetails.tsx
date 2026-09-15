@@ -130,7 +130,7 @@ function ProductSearchInput({
 
   return (
     <div ref={ref} className="relative w-full">
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none" />
       <input
         type="text"
         placeholder={placeholder}
@@ -140,15 +140,15 @@ function ProductSearchInput({
           setOpen(true);
         }}
         onFocus={() => setOpen(true)}
-        className="w-full pl-9 pr-3 py-2.5 text-sm rounded-lg border border-gray-200 bg-white placeholder-gray-400 text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#D4A97A] focus:border-transparent transition"
+        className="w-full pl-9 pr-3 py-2.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#25221F] placeholder-gray-400 dark:placeholder-gray-500 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#D4A97A] focus:border-transparent transition"
       />
       {showDropdown && (
-        <ul className="absolute z-30 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden max-h-72 overflow-y-auto">
+        <ul className="absolute z-30 left-0 right-0 mt-1 bg-white dark:bg-[#25221F] border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden max-h-72 overflow-y-auto">
           {searchQuery.isLoading && (
-            <li className="px-4 py-3 text-sm text-gray-400">Searching...</li>
+            <li className="px-4 py-3 text-sm text-gray-400 dark:text-gray-500">Searching...</li>
           )}
           {!searchQuery.isLoading && results.length === 0 && (
-            <li className="px-4 py-3 text-sm text-gray-400">No products found</li>
+            <li className="px-4 py-3 text-sm text-gray-400 dark:text-gray-500">No products found</li>
           )}
           {results.map((h) => (
             <li
@@ -162,12 +162,12 @@ function ProductSearchInput({
                 setQuery("");
                 setOpen(false);
               }}
-              className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 hover:bg-[#D4A97A]/10 hover:text-[#b8864e] cursor-pointer transition-colors"
+              className="flex items-center gap-2.5 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-[#D4A97A]/10 dark:hover:bg-[#D4A97A]/10 hover:text-[#b8864e] dark:hover:text-[#D4A97A] cursor-pointer transition-colors"
             >
               <img
                 src={h.document.thumbnailsUrl || "/images/no_images.png"}
                 alt=""
-                className="w-8 h-8 object-contain rounded shrink-0"
+                className="w-8 h-8 object-contain rounded shrink-0 bg-white"
               />
               <span className="truncate">{h.document.productName}</span>
             </li>
@@ -199,8 +199,8 @@ function CompareSlot({
   if (loading) {
     return (
       <div className="p-4 sm:p-5 flex items-center gap-3">
-        <div className="w-16 h-16 rounded-lg bg-gray-100 animate-pulse shrink-0" />
-        <div className="flex-1 h-4 rounded bg-gray-100 animate-pulse" />
+        <div className="w-16 h-16 rounded-lg bg-gray-100 dark:bg-gray-800 animate-pulse shrink-0" />
+        <div className="flex-1 h-4 rounded bg-gray-100 dark:bg-gray-800 animate-pulse" />
       </div>
     );
   }
@@ -208,21 +208,21 @@ function CompareSlot({
   if (product) {
     return (
       <div className="p-4 sm:p-5 flex items-center gap-3">
-        <div className="w-16 h-16 shrink-0 rounded-lg border border-gray-100 bg-gray-50 flex items-center justify-center overflow-hidden">
+        <div className="w-16 h-16 shrink-0 rounded-lg border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-[#2D2A26] flex items-center justify-center overflow-hidden">
           <img
             src={getThumbnail(product) || "/images/no_images.png"}
             alt={product.productName}
             className="w-full h-full object-contain"
           />
         </div>
-        <p className="min-w-0 flex-1 text-sm font-semibold text-gray-900 line-clamp-2">
+        <p className="min-w-0 flex-1 text-sm font-semibold text-gray-900 dark:text-white line-clamp-2">
           {product.productName}
         </p>
         <button
           type="button"
           onClick={onClear}
           aria-label="Change product"
-          className="shrink-0 w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 hover:text-gray-700 hover:border-gray-300 transition-colors"
+          className="shrink-0 w-7 h-7 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
         >
           <X size={14} />
         </button>
@@ -232,7 +232,7 @@ function CompareSlot({
 
   return (
     <div className="p-4 sm:p-5">
-      {notFound && <p className="text-xs text-red-500 mb-1.5">Product not found.</p>}
+      {notFound && <p className="text-xs text-red-500 dark:text-red-400 mb-1.5">Product not found.</p>}
       <ProductSearchInput
         placeholder={searchPlaceholder}
         onSelect={onSelect}
@@ -309,12 +309,12 @@ export default function ProductCompareDetails({ slug }: ProductCompareDetailsPro
     (!!primaryProduct && primarySpecs.isLoading) || (!!compareProduct && compareSpecs.isLoading);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-start justify-center px-4 py-8 sm:py-12">
+    <div className="min-h-screen bg-gray-50 dark:bg-black flex items-start justify-center px-4 py-8 sm:py-12">
       <div className="w-full max-w-4xl">
-        <h1 className="text-2xl font-semibold text-gray-900 mb-5">Product Compare</h1>
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white mb-5">Product Compare</h1>
 
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-gray-100 border-b border-gray-200 bg-gray-50/60">
+        <div className="bg-white dark:bg-[#1A1A1A] rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
+          <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-gray-100 dark:divide-gray-800 border-b border-gray-200 dark:border-gray-800 bg-gray-50/60 dark:bg-[#25221F]/60">
             <CompareSlot
               product={primaryProduct}
               loading={!!primarySlug && primaryLookup.isLoading}
@@ -336,15 +336,15 @@ export default function ProductCompareDetails({ slug }: ProductCompareDetailsPro
           </div>
 
           {!primaryProduct && !compareProduct ? (
-            <div className="py-16 px-6 text-center text-sm text-gray-400">
+            <div className="py-16 px-6 text-center text-sm text-gray-400 dark:text-gray-500">
               Search and select two products above to compare their specifications.
             </div>
           ) : specsLoading ? (
-            <div className="py-16 px-6 text-center text-sm text-gray-400">
+            <div className="py-16 px-6 text-center text-sm text-gray-400 dark:text-gray-500">
               Loading specifications…
             </div>
           ) : groups.length === 0 ? (
-            <div className="py-16 px-6 text-center text-sm text-gray-400">
+            <div className="py-16 px-6 text-center text-sm text-gray-400 dark:text-gray-500">
               No specification data available for this product.
             </div>
           ) : (
@@ -353,10 +353,10 @@ export default function ProductCompareDetails({ slug }: ProductCompareDetailsPro
                 <tbody>
                   {groups.map((group) => (
                     <Fragment key={group.groupName}>
-                      <tr className="bg-gray-50">
+                      <tr className="bg-gray-50 dark:bg-[#25221F]">
                         <td
                           colSpan={3}
-                          className="px-6 py-2 text-xs font-bold uppercase tracking-wide text-[#b8864e]"
+                          className="px-6 py-2 text-xs font-bold uppercase tracking-wide text-[#b8864e] dark:text-[#D4A97A]"
                         >
                           {group.groupName}
                         </td>
@@ -364,19 +364,19 @@ export default function ProductCompareDetails({ slug }: ProductCompareDetailsPro
                       {group.rows.map((row, idx) => (
                         <tr
                           key={idx}
-                          className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50/60 transition-colors"
+                          className="border-b border-gray-100 dark:border-gray-800 last:border-b-0 hover:bg-gray-50/60 dark:hover:bg-[#25221F]/40 transition-colors"
                         >
-                          <td className="py-3 px-6 border-r border-gray-100 w-40 sm:w-56 align-top">
-                            <span className="text-sm font-medium text-gray-700">{row.label}</span>
+                          <td className="py-3 px-6 border-r border-gray-100 dark:border-gray-800 w-40 sm:w-56 align-top">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{row.label}</span>
                           </td>
-                          <td className="py-3 px-4 border-r border-gray-100 w-1/2 align-top">
-                            <span className="text-sm text-gray-600 leading-relaxed">
-                              {row.primaryValue ?? <span className="text-gray-300 select-none">—</span>}
+                          <td className="py-3 px-4 border-r border-gray-100 dark:border-gray-800 w-1/2 align-top">
+                            <span className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                              {row.primaryValue ?? <span className="text-gray-300 dark:text-gray-700 select-none">—</span>}
                             </span>
                           </td>
                           <td className="py-3 px-4 w-1/2 align-top">
-                            <span className="text-sm text-gray-600 leading-relaxed">
-                              {row.compareValue ?? <span className="text-gray-300 select-none">—</span>}
+                            <span className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                              {row.compareValue ?? <span className="text-gray-300 dark:text-gray-700 select-none">—</span>}
                             </span>
                           </td>
                         </tr>
