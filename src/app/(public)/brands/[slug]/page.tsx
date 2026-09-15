@@ -10,6 +10,12 @@ import {
   DEFAULT_OG_IMAGE,
   absoluteUrl,
 } from "@/lib/seo-config";
+import JsonLd from "@/components/share/JsonLd";
+import {
+  buildJsonLd,
+  breadcrumbSchema,
+  itemListSchema,
+} from "@/lib/structured-data";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -278,8 +284,18 @@ export default async function BrandDetailsPage({
     { label: brandName, href: `/brands/${slug}` },
   ];
 
+  const jsonLd = buildJsonLd(
+    breadcrumbSchema([
+      { name: "Home", path: "/" },
+      { name: "Brands", path: "/brands" },
+      { name: brandName, path: `/brands/${slug}` },
+    ]),
+    itemListSchema(initialProductData.data, `${brandName} Products`),
+  );
+
   return (
     <div className=" bg-[#fffbf6] dark:bg-[#2e2b28]">
+      <JsonLd id="ld-brand" data={jsonLd} />
       <div className="flex flex-col flex-1 max-w-355 mx-auto">
         <div className="md:px-12.5 px-4">
           <Breadcrumb items={breadcrumbItems} />
