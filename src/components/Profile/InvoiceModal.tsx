@@ -78,11 +78,15 @@ export default function InvoiceModal({
     enabled: !!orderNo,
   });
   const d = res?.data;
-  const billAddressLine1 = d?.addressLine1 || d?.address;
-  const billAddressLine2 = d?.addressLine2 || d?.address2;
   // order-tracking's own isStorePickup/addressLabel are live and authoritative;
   // the order-list item (`order`) is only a fallback until tracking loads.
   const isPickupDelivery = d ? d.isStorePickup === true : !!(order.isStorePickup || order.isShopPickup);
+  // Store pickup has no customer address to bill to — it has the STORE's own
+  // address instead, which only order-list's `storeLocation` carries.
+  const billAddressLine1 = isPickupDelivery
+    ? order.storeLocation || "Store address not available"
+    : d?.addressLine1 || d?.address;
+  const billAddressLine2 = isPickupDelivery ? undefined : d?.addressLine2 || d?.address2;
   const addressLabel = d?.addressLabel || order.addressLabel;
   // Use two-step COD formula: e.g. Product 405244 + Delivery 110 = 405354 → COD 1% = 4094 → Grand 409449
   const _orderCalc = getOrderCorrectTotal(order);

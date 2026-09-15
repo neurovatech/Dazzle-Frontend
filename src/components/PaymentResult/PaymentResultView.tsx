@@ -11,7 +11,8 @@ export type PaymentOutcome = "success" | "error" | "cancel";
 
 interface OrderSummary {
   orderNo: string;
-  grandAmount: number;
+  /** The API's real field name — `grandAmount` never matched any response field. */
+  grandTotal: number;
   paidAmount: number;
   orderFullPaid: boolean;
   orderCancelled: boolean;
@@ -64,11 +65,21 @@ export default function PaymentResultView({
   orderNo,
   gatewayName,
   gatewayLogo,
+  verifiedAmount,
+  trxID,
 }: {
   outcome: PaymentOutcome;
   orderNo: string | null;
   gatewayName: string;
   gatewayLogo: StaticImageData;
+  /**
+   * Amount confirmed directly by the gateway's own verify endpoint —
+   * shown only as a fallback when `/order-tracking` has no matching order
+   * (e.g. bKash's redirect carries a raw orderToken UUID, not the
+   * DZL-XXXXX order number /order-tracking expects).
+   */
+  verifiedAmount?: string;
+  trxID?: string;
 }) {
   const [order, setOrder] = useState<OrderSummary | null>(null);
   const [loading, setLoading] = useState(!!orderNo);
@@ -84,6 +95,9 @@ export default function PaymentResultView({
       try {
         const res = await api.get<OrderTrackingResponse>(
           `/order-tracking/${encodeURIComponent(orderNo)}`,
+          // Public gateway-return page — a stale/missing session here is
+          // normal and shouldn't trigger the site-wide session-expired modal.
+          { suppressSessionExpired: true },
         );
         if (!cancelled && res?.data) setOrder(res.data);
       } catch (err) {
@@ -103,7 +117,7 @@ export default function PaymentResultView({
   useEffect(() => {
     if (outcome === "success" && order && !tracked.current) {
       tracked.current = true;
-      trackPurchase(order.orderNo, [], order.grandAmount);
+      trackPurchase(order.orderNo, [], order.grandTotal);
     }
   }, [outcome, order]);
 
@@ -125,7 +139,7 @@ export default function PaymentResultView({
 
         {loading && <Loader2 className="animate-spin mx-auto text-gray-400" size={20} />}
 
-        {order && (
+        {order ? (
           <div className="bg-gray-50 dark:bg-[#2E2A26] rounded-2xl p-4 text-left text-sm space-y-1.5 border border-gray-100 dark:border-gray-800">
             <div className="flex justify-between">
               <span className="text-gray-500 dark:text-gray-400">Order No</span>
@@ -134,10 +148,29 @@ export default function PaymentResultView({
             <div className="flex justify-between">
               <span className="text-gray-500 dark:text-gray-400">Amount</span>
               <span className="font-bold text-gray-900 dark:text-white">
-                ৳{order.grandAmount?.toLocaleString("en-BD")}
+                ৳{order.grandTotal?.toLocaleString("en-BD")}
               </span>
             </div>
           </div>
+        ) : (
+          // /order-tracking had no matching order (e.g. bKash's redirect
+          // carries a raw orderToken UUID, not a DZL-XXXXX order number) —
+          // fall back to whatever the gateway's own verify call confirmed.
+          !loading &&
+          verifiedAmount && (
+            <div className="bg-gray-50 dark:bg-[#2E2A26] rounded-2xl p-4 text-left text-sm space-y-1.5 border border-gray-100 dark:border-gray-800">
+              <div className="flex justify-between">
+                <span className="text-gray-500 dark:text-gray-400">Amount</span>
+                <span className="font-bold text-gray-900 dark:text-white">৳{verifiedAmount}</span>
+              </div>
+              {trxID && (
+                <div className="flex justify-between">
+                  <span className="text-gray-500 dark:text-gray-400">Transaction ID</span>
+                  <span className="font-bold text-gray-900 dark:text-white">{trxID}</span>
+                </div>
+              )}
+            </div>
+          )
         )}
 
         <div className="flex flex-col gap-2.5 pt-2">

@@ -636,7 +636,9 @@ const LoginForm: React.FC = () => {
           </Link>
         </p>
 
-        <SocialLogin />
+        {/* Social Login — temporarily hidden, not ready for launch yet.
+            Uncomment when Google/Facebook login should go live again. */}
+        {/* <SocialLogin /> */}
       </form>
     </>
   );

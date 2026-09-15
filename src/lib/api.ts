@@ -13,6 +13,15 @@ interface FetchOptions extends RequestInit {
   token?: string;
   apiKey?: string;
   isRetry?: boolean;
+  /**
+   * Skips the auto-refresh-then-"session expired" flow on a 401. For calls
+   * that are ALLOWED to run without a valid session (e.g. a payment-gateway
+   * return page visited by a guest) — without this, a plain "not logged in"
+   * 401 forces the site-wide SessionExpiredModal ("log out and log in
+   * again") onto a page that has nothing to do with an actual expired
+   * session, purely because it happens to call a tokenized endpoint.
+   */
+  suppressSessionExpired?: boolean;
 }
 
 /**
@@ -152,7 +161,15 @@ export async function apiFetch<T = unknown>(
   endpoint: string,
   options: FetchOptions = {}
 ): Promise<T> {
-  const { params, token: explicitToken, apiKey: explicitApiKey, isRetry, headers: customHeaders, ...customOptions } = options;
+  const {
+    params,
+    token: explicitToken,
+    apiKey: explicitApiKey,
+    isRetry,
+    suppressSessionExpired,
+    headers: customHeaders,
+    ...customOptions
+  } = options;
 
   // 1. Build URL with query params
   let url = resolveUrl(endpoint);
@@ -218,7 +235,13 @@ export async function apiFetch<T = unknown>(
         endpoint.includes("login-mobile-otp") ||
         endpoint.includes("user-login");
 
-      if (response.status === 401 && !isRetry && !isAuthEndpoint && typeof window !== "undefined") {
+      if (
+        response.status === 401 &&
+        !isRetry &&
+        !isAuthEndpoint &&
+        !suppressSessionExpired &&
+        typeof window !== "undefined"
+      ) {
         const refreshed = await refreshJwtToken();
         if (refreshed) {
           return apiFetch<T>(endpoint, {
@@ -248,6 +271,7 @@ export async function apiFetch<T = unknown>(
           (response.status === 401 || msg.includes("jwt token has expired")) &&
           !isRetry &&
           !isAuthEndpoint &&
+          !suppressSessionExpired &&
           typeof window !== "undefined"
         ) {
           const refreshed = await refreshJwtToken();

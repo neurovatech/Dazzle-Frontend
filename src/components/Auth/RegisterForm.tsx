@@ -136,7 +136,6 @@ const RegisterForm: React.FC = () => {
     handleSubmit,
     formState: { errors },
     reset,
-    watch,
     setError,
   } = useForm<RegisterSchema>({
     resolver: yupResolver(registerSchema) as never,
@@ -146,30 +145,7 @@ const RegisterForm: React.FC = () => {
     },
   });
 
-  // Live password strength indicator
-  const passwordValue = watch("password", "");
-
-  const getPasswordStrength = (
-    pwd: string,
-  ): { label: string; color: string; width: string } => {
-    if (!pwd) return { label: "", color: "", width: "w-0" };
-    let score = 0;
-    if (pwd.length >= 6) score++;
-    if (/[A-Z]/.test(pwd)) score++;
-    if (/[a-z]/.test(pwd)) score++;
-    if (/[0-9]/.test(pwd)) score++;
-    if (/[@$!%*?&#]/.test(pwd)) score++;
-
-    if (score <= 2)
-      return { label: "Weak", color: "bg-red-400", width: "w-1/3" };
-    if (score === 3 || score === 4)
-      return { label: "Fair", color: "bg-yellow-400", width: "w-2/3" };
-    return { label: "Strong", color: "bg-green-500", width: "w-full" };
-  };
-
   const dispatch = useAppDispatch();
-
-  const strength = getPasswordStrength(passwordValue);
 
   // ─── React Query Mutation ─────────────────────────────────────────────────
   const { mutate, isPending } = useMutation({
@@ -313,36 +289,12 @@ const RegisterForm: React.FC = () => {
         />
 
         {/* Password */}
-        <div className="flex flex-col gap-1.5">
-          <PasswordInput
-            label="Password"
-            placeholder="Enter your password"
-            error={errors.password?.message}
-            register={register("password")}
-          />
-
-          {/* Password strength bar */}
-          {passwordValue && (
-            <div className="flex items-center gap-3 px-1">
-              <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all duration-500 ${strength.color} ${strength.width}`}
-                />
-              </div>
-              <span
-                className={`text-xs font-semibold ${
-                  strength.label === "Weak"
-                    ? "text-red-400"
-                    : strength.label === "Fair"
-                      ? "text-yellow-500"
-                      : "text-green-500"
-                }`}
-              >
-                {strength.label}
-              </span>
-            </div>
-          )}
-        </div>
+        <PasswordInput
+          label="Password"
+          placeholder="Enter your password"
+          error={errors.password?.message}
+          register={register("password")}
+        />
 
         {/* Confirm Password */}
         <PasswordInput
@@ -396,8 +348,9 @@ const RegisterForm: React.FC = () => {
           </Link>
         </p>
 
-        {/* Social Login */}
-        <SocialLogin />
+        {/* Social Login — temporarily hidden, not ready for launch yet.
+            Uncomment when Google/Facebook login should go live again. */}
+        {/* <SocialLogin /> */}
       </form>
     </>
   );

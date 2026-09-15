@@ -25,10 +25,7 @@ export const registerSchema = yup.object({
     .required("Password is required")
     .min(6, "Password must be at least 6 characters")
     .max(64, "Password must be at most 64 characters")
-    .matches(/^\S+$/, "Password must not contain spaces")
-    .matches(/[A-Z]/, "Must contain at least one uppercase letter")
-    .matches(/[a-z]/, "Must contain at least one lowercase letter")
-    .matches(/[0-9]/, "Must contain at least one number"),
+    .matches(/^\S+$/, "Password must not contain spaces"),
 
   rePassword: yup
     .string()

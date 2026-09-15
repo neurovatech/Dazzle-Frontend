@@ -1032,7 +1032,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
                   {trackingData?.fullName || order?.rawApiData?.userFullName || "Customer"}
                 </p>
                 <p className="text-sm text-gray-500 dark:text-gray-300 mt-0.5">
-                  {deliveryAddressLine1 || "Store address not available"}
+                  {rawOrder?.storeLocation || "Store address not available"}
                 </p>
               </div>
             </div>

@@ -42,6 +42,8 @@ export interface OrderTrackingData {
   // Delivery type
   isHomeDelivery?: boolean;
   isStorePickup?: boolean;
+  /** Store's own address, e.g. "Dazzle Bashundhara City, Shop No: 023, ...". Only present for store-pickup orders. */
+  storeLocation?: string;
   // Notes
   deliveryIns?: string | null;
   customerNotes?: string | null;
@@ -270,7 +272,7 @@ function OrderTrackingContent() {
       {/* ── Order Details ── */}
       {order && !loading && (() => {
         const addr = buildAddress(order);
-        const isPickup = order.isStorePickup || (!order.isHomeDelivery && !order.isStorePickup ? false : false);
+        const isPickup = Boolean(order.isStorePickup);
         // The API's own grandTotal field agrees with this exactly (verified
         // live), so summing the two line items already shown below is at
         // least as reliable as trusting a third field, and needs no fallback.
@@ -345,19 +347,32 @@ function OrderTrackingContent() {
                       <MapPin size={12} className="text-[#7B4F1E]" />
                       {isPickup ? "Pickup Location" : "Delivery Address"}
                     </p>
-                    {addr.label && (
-                      <span className="inline-block text-[11px] bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full font-semibold">
-                        {isPickup ? <><Store size={10} className="inline mr-0.5" />{addr.label}</> : <><Home size={10} className="inline mr-0.5" />{addr.label}</>}
-                      </span>
-                    )}
-                    {addr.line1 && (
-                      <p className="font-semibold text-[13px] text-gray-800 dark:text-gray-200 leading-snug">{addr.line1}</p>
-                    )}
-                    {addr.line2 && (
-                      <p className="text-[12px] text-gray-500 dark:text-gray-400">{addr.line2}</p>
-                    )}
-                    {!addr.line1 && !addr.line2 && (
-                      <p className="text-[12px] text-gray-400 italic">Address not available</p>
+                    {isPickup ? (
+                      order.storeLocation ? (
+                        <p className="font-semibold text-[13px] text-gray-800 dark:text-gray-200 leading-snug">
+                          <Store size={10} className="inline mr-1 -mt-0.5" />
+                          {order.storeLocation}
+                        </p>
+                      ) : (
+                        <p className="text-[12px] text-gray-400 italic">Store address not available</p>
+                      )
+                    ) : (
+                      <>
+                        {addr.label && (
+                          <span className="inline-block text-[11px] bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full font-semibold">
+                            <Home size={10} className="inline mr-0.5" />{addr.label}
+                          </span>
+                        )}
+                        {addr.line1 && (
+                          <p className="font-semibold text-[13px] text-gray-800 dark:text-gray-200 leading-snug">{addr.line1}</p>
+                        )}
+                        {addr.line2 && (
+                          <p className="text-[12px] text-gray-500 dark:text-gray-400">{addr.line2}</p>
+                        )}
+                        {!addr.line1 && !addr.line2 && (
+                          <p className="text-[12px] text-gray-400 italic">Address not available</p>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
