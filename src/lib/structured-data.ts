@@ -204,24 +204,25 @@ export function productSchema(p: ProductSchemaInput) {
         })
       : undefined;
 
-  // aggregateRating is emitted ONLY when the API reports real reviews.
-  // totalReview is currently 0 across the catalog, so this stays absent —
-  // emitting a fake rating would be a policy violation.
-  const reviewCount = Number(p.metaTags?.totalReview) || 0;
-
   return clean({
     "@type": "Product",
     name: p.productName,
     description: toPlainText(p.metaTags?.description) || toPlainText(p.shortDesc) || toPlainText(p.description),
     sku: p.productCode || undefined,
+    // No distinct manufacturer part number exists in the catalogue API, so
+    // this reuses the same real productCode already used as `sku` — the same
+    // real value under both recognised property names, never a made-up one.
+    mpn: p.productCode || undefined,
     image: images.length ? Array.from(new Set(images)) : undefined,
     url,
     brand: p.brandName ? { "@type": "Brand", name: p.brandName } : undefined,
     offers,
-    aggregateRating:
-      reviewCount > 0
-        ? { "@type": "AggregateRating", reviewCount, ratingValue: undefined }
-        : undefined,
+    // aggregateRating/review are deliberately NOT emitted: the catalogue API
+    // has no real rating or review data (verified — /product/{slug} returns
+    // no rating/review field at all). Fabricating one — as an older build of
+    // this site briefly did — violates Google's structured-data policy and
+    // risks a manual action. Wire this back in only once a genuine per-product
+    // review system exists, sourced from real customer data.
   });
 }
 

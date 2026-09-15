@@ -247,7 +247,7 @@ export default function Footer() {
         <Image src={FooterEf} alt="Footer Shadow" className="absolute bottom-0 lg:block hidden" />
 
         <div className="-mt-20 sm:-mt-30 rounded-t-4xl bg-[#101518] px-4 pb-8 pt-28 sm:pt-40 text-white sm:px-6 md:px-10 lg:px-16">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 sm:gap-10 lg:gap-15">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 sm:gap-10 lg:gap-15 relative z-9999">
             {/* FIX: was "lg:col-span-3" only — missing md:col-span made this
               collapse to a single 1/12 track on iPad, squeezing every word
               onto its own line. Added md:col-span-4 so it gets proper width
