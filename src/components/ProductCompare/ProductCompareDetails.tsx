@@ -1,8 +1,8 @@
 "use client";
 
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Search, X } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 
 // ── Product lookup (/product/{slug}) — resolves a slug into uuid + display info ──
@@ -60,29 +60,36 @@ interface SearchApiResponse {
   hits: SearchHit[];
 }
 
+const STORAGE_KEY = "dazzle-product-compare-slugs";
+const MAX_PRODUCTS = 6;
+
+function loadStoredSlugs(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((s): s is string => typeof s === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveStoredSlugs(slugs: string[]) {
+  try {
+    if (slugs.length > 0) {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(slugs));
+    } else {
+      window.localStorage.removeItem(STORAGE_KEY);
+    }
+  } catch {}
+}
+
 function getThumbnail(data?: ProductLookupData): string {
   if (!data) return "";
   if (data.thumbnailImg) return data.thumbnailImg;
   const first = data.thumbnails?.[0];
   return first?.mediaFileUrl || first?.mediafileUrl || first?.mediaFile || "";
-}
-
-function useProductLookup(slug: string | null) {
-  return useQuery<ProductLookupResponse>({
-    queryKey: ["product-compare-lookup", slug],
-    queryFn: () => api.get<ProductLookupResponse>(`/product/${slug}`),
-    enabled: !!slug,
-    staleTime: 5 * 60 * 1000,
-  });
-}
-
-function useProductSpecs(productUuid: string | null) {
-  return useQuery<SpecResponse>({
-    queryKey: ["product-compare-specs", productUuid],
-    queryFn: () => api.get<SpecResponse>(`/product-specification/${productUuid}`),
-    enabled: !!productUuid,
-    staleTime: 5 * 60 * 1000,
-  });
 }
 
 interface PickedProduct {
@@ -91,15 +98,15 @@ interface PickedProduct {
   image: string;
 }
 
-// ── Search-as-you-type input, shared by both slots ──────────────────────────
+// ── Search-as-you-type input for the trailing "add product" slot ────────────
 function ProductSearchInput({
   placeholder,
   onSelect,
-  excludeSlug,
+  excludeSlugs,
 }: {
   placeholder: string;
   onSelect: (product: PickedProduct) => void;
-  excludeSlug?: string | null;
+  excludeSlugs: string[];
 }) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -124,7 +131,7 @@ function ProductSearchInput({
   }, []);
 
   const results = (searchQuery.data?.hits ?? []).filter(
-    (h) => h.document.productSlug !== excludeSlug
+    (h) => !excludeSlugs.includes(h.document.productSlug)
   );
   const showDropdown = open && query.trim().length > 1;
 
@@ -178,50 +185,34 @@ function ProductSearchInput({
   );
 }
 
-// ── One header slot: either a resolved product card, or a search box ────────
-function CompareSlot({
-  product,
-  loading,
-  notFound,
-  searchPlaceholder,
-  onSelect,
-  onClear,
-  excludeSlug,
-}: {
-  product?: ProductLookupData;
+interface ResolvedSlot {
+  slug: string;
   loading: boolean;
   notFound: boolean;
-  searchPlaceholder: string;
-  onSelect: (p: PickedProduct) => void;
-  onClear: () => void;
-  excludeSlug?: string | null;
-}) {
-  if (loading) {
+  product?: ProductLookupData;
+}
+
+// ── One filled header column: product card with a remove (×) button ─────────
+// Closing this is the only thing that drops the product from the (persisted)
+// comparison — a reload alone keeps it.
+function FilledSlot({ slot, onRemove }: { slot: ResolvedSlot; onRemove: () => void }) {
+  if (slot.loading) {
     return (
-      <div className="p-4 sm:p-5 flex items-center gap-3">
-        <div className="w-16 h-16 rounded-lg bg-gray-100 dark:bg-gray-800 animate-pulse shrink-0" />
+      <div className="p-3 sm:p-4 flex items-center gap-3">
+        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg bg-gray-100 dark:bg-gray-800 animate-pulse shrink-0" />
         <div className="flex-1 h-4 rounded bg-gray-100 dark:bg-gray-800 animate-pulse" />
       </div>
     );
   }
 
-  if (product) {
+  if (slot.notFound || !slot.product) {
     return (
-      <div className="p-4 sm:p-5 flex items-center gap-3">
-        <div className="w-16 h-16 shrink-0 rounded-lg border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-[#2D2A26] flex items-center justify-center overflow-hidden">
-          <img
-            src={getThumbnail(product) || "/images/no_images.png"}
-            alt={product.productName}
-            className="w-full h-full object-contain"
-          />
-        </div>
-        <p className="min-w-0 flex-1 text-sm font-semibold text-gray-900 dark:text-white line-clamp-2">
-          {product.productName}
-        </p>
+      <div className="p-3 sm:p-4 flex items-center gap-3">
+        <p className="flex-1 text-xs text-red-500 dark:text-red-400">Product not found.</p>
         <button
           type="button"
-          onClick={onClear}
-          aria-label="Change product"
+          onClick={onRemove}
+          aria-label="Remove"
           className="shrink-0 w-7 h-7 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
         >
           <X size={14} />
@@ -231,162 +222,263 @@ function CompareSlot({
   }
 
   return (
-    <div className="p-4 sm:p-5">
-      {notFound && <p className="text-xs text-red-500 dark:text-red-400 mb-1.5">Product not found.</p>}
-      <ProductSearchInput
-        placeholder={searchPlaceholder}
-        onSelect={onSelect}
-        excludeSlug={excludeSlug}
-      />
+    <div className="p-3 sm:p-4 flex items-center gap-2.5 sm:gap-3">
+      <div className="w-12 h-12 sm:w-14 sm:h-14 shrink-0 rounded-lg border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-[#2D2A26] flex items-center justify-center overflow-hidden">
+        <img
+          src={getThumbnail(slot.product) || "/images/no_images.png"}
+          alt={slot.product.productName}
+          className="w-full h-full object-contain"
+        />
+      </div>
+      <p className="min-w-0 flex-1 text-xs sm:text-sm font-semibold text-gray-900 dark:text-white line-clamp-2">
+        {slot.product.productName}
+      </p>
+      <button
+        type="button"
+        onClick={onRemove}
+        aria-label="Remove from comparison"
+        className="shrink-0 w-7 h-7 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
+      >
+        <X size={14} />
+      </button>
     </div>
   );
 }
 
 interface ProductCompareDetailsProps {
-  /** Pre-fills the first slot — set when arriving from a product's Compare button (/product-compare/[slug]). */
+  /** Adds/pre-fills a product — set when arriving from a product's Compare button (/product-compare/[slug]). */
   slug?: string;
 }
 
 export default function ProductCompareDetails({ slug }: ProductCompareDetailsProps) {
-  const [primarySlug, setPrimarySlug] = useState<string | null>(slug ?? null);
-  const [compareSlug, setCompareSlug] = useState<string | null>(null);
-  // Resets the slots when navigating client-side between two /product-compare/[slug]
-  // routes, which reuses this component instance rather than remounting it.
+  const [slugs, setSlugs] = useState<string[]>(() => (slug ? [slug] : []));
+  const [hydrated, setHydrated] = useState(false);
+
+  // localStorage isn't reachable during the first client render, so whatever
+  // the user had already added is merged in right after mount — this is what
+  // makes the comparison survive a reload.
+  useEffect(() => {
+    const stored = loadStoredSlugs();
+    setSlugs((prev) => {
+      const merged = [...stored];
+      if (slug && !merged.includes(slug)) merged.push(slug);
+      return merged.length > 0 ? merged.slice(0, MAX_PRODUCTS) : prev;
+    });
+    setHydrated(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Adds the route's product when navigating client-side between two
+  // /product-compare/[slug] pages, which reuses this component instance
+  // instead of remounting it.
   const [prevSlugProp, setPrevSlugProp] = useState(slug);
-  if (slug !== prevSlugProp) {
+  if (hydrated && slug !== prevSlugProp) {
     setPrevSlugProp(slug);
-    setPrimarySlug(slug ?? null);
-    setCompareSlug(null);
+    if (slug) {
+      setSlugs((prev) => (prev.includes(slug) ? prev : [...prev, slug].slice(0, MAX_PRODUCTS)));
+    }
   }
 
-  const primaryLookup = useProductLookup(primarySlug);
-  const compareLookup = useProductLookup(compareSlug);
+  // Persisted after every change — closing a slot (×) is the only action that
+  // removes a product; a reload alone keeps the list exactly as it was.
+  useEffect(() => {
+    if (!hydrated) return;
+    saveStoredSlugs(slugs);
+  }, [slugs, hydrated]);
 
-  const primaryProduct = primaryLookup.data?.found ? primaryLookup.data.data : undefined;
-  const compareProduct = compareLookup.data?.found ? compareLookup.data.data : undefined;
+  const addSlug = (s: string) =>
+    setSlugs((prev) => (prev.includes(s) ? prev : [...prev, s].slice(0, MAX_PRODUCTS)));
+  const removeSlug = (s: string) => setSlugs((prev) => prev.filter((x) => x !== s));
 
-  const primarySpecs = useProductSpecs(primaryProduct?.productUuid ?? null);
-  const compareSpecs = useProductSpecs(compareProduct?.productUuid ?? null);
+  const lookupQueries = useQueries({
+    queries: slugs.map((s) => ({
+      queryKey: ["product-compare-lookup", s],
+      queryFn: () => api.get<ProductLookupResponse>(`/product/${s}`),
+      staleTime: 5 * 60 * 1000,
+    })),
+  });
 
-  // Primary's groups/order drive the table; any group only the compare
-  // product has is appended so its specs still show up somewhere.
+  const slots: ResolvedSlot[] = slugs.map((s, i) => {
+    const q = lookupQueries[i];
+    return {
+      slug: s,
+      loading: q.isLoading,
+      notFound: q.isFetched && !q.data?.found,
+      product: q.data?.found ? q.data.data : undefined,
+    };
+  });
+
+  const specQueries = useQueries({
+    queries: slots.map((slot) => ({
+      queryKey: ["product-compare-specs", slot.product?.productUuid ?? null],
+      queryFn: () => api.get<SpecResponse>(`/product-specification/${slot.product?.productUuid}`),
+      enabled: !!slot.product?.productUuid,
+      staleTime: 5 * 60 * 1000,
+    })),
+  });
+
+  const anyLoadingProducts = slots.some((s) => s.loading);
+  const anyResolved = slots.some((s) => !!s.product);
+  const specsLoading = anyResolved && specQueries.some((q) => !!q.isLoading);
+  const specsUpdatedKey = specQueries.map((q) => q.dataUpdatedAt).join(",");
+
+  // Groups/rows are the union across every resolved product, in the order
+  // each group/spec label first appears — a product missing a group, or
+  // using differently-worded spec labels, just shows "—" in its column
+  // rather than the row disappearing for everyone else.
   const groups = useMemo(() => {
-    const primaryGroups = primarySpecs.data?.data ?? [];
-    const compareGroups = compareSpecs.data?.data ?? [];
-    const compareByGroup = new Map(compareGroups.map((g) => [g.groupSlug, g]));
+    type Row = { label: string; values: (string | null)[] };
+    type Group = { groupSlug: string; groupName: string; rows: Row[] };
+    const order: string[] = [];
+    const map = new Map<string, Group>();
 
-    const merged = primaryGroups.map((pg) => {
-      const cg = compareByGroup.get(pg.groupSlug);
-      compareByGroup.delete(pg.groupSlug);
-      const compareValueByLabel = new Map(
-        (cg?.productSpecifications ?? []).map((s) => [s.specification, s.specificationValue])
-      );
-      return {
-        groupName: pg.groupName,
-        rows: pg.productSpecifications.map((s) => ({
-          label: s.specification,
-          primaryValue: s.specificationValue as string | null,
-          compareValue: compareValueByLabel.get(s.specification) ?? null,
-        })),
-      };
-    });
-
-    compareByGroup.forEach((cg) => {
-      merged.push({
-        groupName: cg.groupName,
-        rows: cg.productSpecifications.map((s) => ({
-          label: s.specification,
-          primaryValue: null as string | null,
-          compareValue: s.specificationValue as string | null,
-        })),
+    specQueries.forEach((q, colIdx) => {
+      (q.data?.data ?? []).forEach((g) => {
+        let group = map.get(g.groupSlug);
+        if (!group) {
+          group = { groupSlug: g.groupSlug, groupName: g.groupName, rows: [] };
+          map.set(g.groupSlug, group);
+          order.push(g.groupSlug);
+        }
+        g.productSpecifications.forEach((s) => {
+          let row = group!.rows.find((r) => r.label === s.specification);
+          if (!row) {
+            row = { label: s.specification, values: new Array(slugs.length).fill(null) };
+            group!.rows.push(row);
+          }
+          row.values[colIdx] = s.specificationValue;
+        });
       });
     });
 
-    return merged;
-  }, [primarySpecs.data, compareSpecs.data]);
+    return order.map((key) => map.get(key)!);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [specsUpdatedKey, slugs.length]);
 
-  const specsLoading =
-    (!!primaryProduct && primarySpecs.isLoading) || (!!compareProduct && compareSpecs.isLoading);
+  const canAddMore = slugs.length < MAX_PRODUCTS;
+  const dataCols = Math.max(slugs.length + (canAddMore ? 1 : 0), 1);
+  // 1fr lets columns stretch to fill the card when there's room for all of
+  // them; once their 180px minimums no longer fit, the wrapper's
+  // overflow-x-auto kicks in instead of squeezing them.
+  const gridTemplateColumns = `160px repeat(${dataCols}, minmax(180px, 1fr))`;
+
+  let body: ReactNode;
+  if (slugs.length === 0) {
+    body = (
+      <div
+        style={{ gridColumn: "1 / -1" }}
+        className="py-16 px-6 text-center text-sm text-gray-400 dark:text-gray-500"
+      >
+        Search and add products above to compare their specifications.
+      </div>
+    );
+  } else if (anyLoadingProducts && !anyResolved) {
+    body = (
+      <div
+        style={{ gridColumn: "1 / -1" }}
+        className="py-16 px-6 text-center text-sm text-gray-400 dark:text-gray-500"
+      >
+        Loading products…
+      </div>
+    );
+  } else if (specsLoading) {
+    body = (
+      <div
+        style={{ gridColumn: "1 / -1" }}
+        className="py-16 px-6 text-center text-sm text-gray-400 dark:text-gray-500"
+      >
+        Loading specifications…
+      </div>
+    );
+  } else if (groups.length === 0) {
+    body = (
+      <div
+        style={{ gridColumn: "1 / -1" }}
+        className="py-16 px-6 text-center text-sm text-gray-400 dark:text-gray-500"
+      >
+        No specification data available for {slugs.length === 1 ? "this product" : "these products"}.
+      </div>
+    );
+  } else {
+    body = (
+      <>
+        {groups.map((group) => (
+          <Fragment key={group.groupSlug}>
+            <div
+              style={{ gridColumn: "1 / -1" }}
+              className="px-4 sm:px-6 py-2 text-xs font-bold uppercase tracking-wide text-[#b8864e] dark:text-[#D4A97A] bg-gray-50 dark:bg-[#25221F] whitespace-nowrap"
+            >
+              {group.groupName}
+            </div>
+            {group.rows.map((row) => (
+              <div key={row.label} className="contents group">
+                <div className="py-3 px-4 sm:px-6 border-r border-b border-gray-100 dark:border-gray-800 group-hover:bg-gray-50/60 dark:group-hover:bg-[#25221F]/40 transition-colors">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {row.label}
+                  </span>
+                </div>
+                {Array.from({ length: dataCols }).map((_, i) => (
+                  <div
+                    key={i}
+                    className={`py-3 px-4 border-b border-gray-100 dark:border-gray-800 group-hover:bg-gray-50/60 dark:group-hover:bg-[#25221F]/40 transition-colors ${
+                      i < dataCols - 1 ? "border-r" : ""
+                    }`}
+                  >
+                    <span className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                      {i < slugs.length ? (
+                        row.values[i] ?? <span className="text-gray-300 dark:text-gray-700 select-none">—</span>
+                      ) : null}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </Fragment>
+        ))}
+      </>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-black flex items-start justify-center px-4 py-8 sm:py-12">
-      <div className=" flex-col flex-1 items-center max-w-336 mx-auto lg:px-2 sm:px-0 flex">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white mb-5">Product Compare</h1>
+    <div className="min-h-screen bg-gray-50 dark:bg-black flex items-start justify-center px-3 sm:px-4 py-8 sm:py-12">
+      <div className="w-full max-w-5xl">
+        <div className="flex items-center justify-between mb-5 gap-2 flex-wrap">
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Product Compare</h1>
+          {slugs.length > 0 && (
+            <span className="text-xs text-gray-400 dark:text-gray-500">
+              {slugs.length}/{MAX_PRODUCTS} products
+            </span>
+          )}
+        </div>
 
         <div className="bg-white dark:bg-[#1A1A1A] rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
-          <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-gray-100 dark:divide-gray-800 border-b border-gray-200 dark:border-gray-800 bg-gray-50/60 dark:bg-[#25221F]/60">
-            <CompareSlot
-              product={primaryProduct}
-              loading={!!primarySlug && primaryLookup.isLoading}
-              notFound={!!primarySlug && primaryLookup.isFetched && !primaryLookup.data?.found}
-              searchPlaceholder="Search first product…"
-              onSelect={(p) => setPrimarySlug(p.slug)}
-              onClear={() => setPrimarySlug(null)}
-              excludeSlug={compareSlug}
-            />
-            <CompareSlot
-              product={compareProduct}
-              loading={!!compareSlug && compareLookup.isLoading}
-              notFound={!!compareSlug && compareLookup.isFetched && !compareLookup.data?.found}
-              searchPlaceholder="Search product to compare…"
-              onSelect={(p) => setCompareSlug(p.slug)}
-              onClear={() => setCompareSlug(null)}
-              excludeSlug={primarySlug}
-            />
-          </div>
+          <div className="w-full overflow-x-auto">
+            <div className="grid w-full" style={{ gridTemplateColumns }}>
+              {/* Header row — empty label cell, then one card per product, then the add slot */}
+              <div className="border-b border-gray-100 dark:border-gray-800 bg-gray-50/60 dark:bg-[#25221F]/60" />
+              {slots.map((slot, i) => (
+                <div
+                  key={slot.slug}
+                  className={`border-b border-gray-100 dark:border-gray-800 bg-gray-50/60 dark:bg-[#25221F]/60 ${
+                    i < dataCols - 1 ? "border-r" : ""
+                  }`}
+                >
+                  <FilledSlot slot={slot} onRemove={() => removeSlug(slot.slug)} />
+                </div>
+              ))}
+              {canAddMore && (
+                <div className="border-b border-gray-100 dark:border-gray-800 bg-gray-50/60 dark:bg-[#25221F]/60 p-3 sm:p-4 flex items-center">
+                  <ProductSearchInput
+                    placeholder={slugs.length === 0 ? "Search first product…" : "Add product…"}
+                    onSelect={(p) => addSlug(p.slug)}
+                    excludeSlugs={slugs}
+                  />
+                </div>
+              )}
 
-          {!primaryProduct && !compareProduct ? (
-            <div className="py-16 px-6 text-center text-sm text-gray-400 dark:text-gray-500">
-              Search and select two products above to compare their specifications.
+              {body}
             </div>
-          ) : specsLoading ? (
-            <div className="py-16 px-6 text-center text-sm text-gray-400 dark:text-gray-500">
-              Loading specifications…
-            </div>
-          ) : groups.length === 0 ? (
-            <div className="py-16 px-6 text-center text-sm text-gray-400 dark:text-gray-500">
-              No specification data available for this product.
-            </div>
-          ) : (
-            <div className="w-full overflow-x-auto">
-              <table className="w-full min-w-[560px]">
-                <tbody>
-                  {groups.map((group) => (
-                    <Fragment key={group.groupName}>
-                      <tr className="bg-gray-50 dark:bg-[#25221F]">
-                        <td
-                          colSpan={3}
-                          className="px-6 py-2 text-xs font-bold uppercase tracking-wide text-[#b8864e] dark:text-[#D4A97A]"
-                        >
-                          {group.groupName}
-                        </td>
-                      </tr>
-                      {group.rows.map((row, idx) => (
-                        <tr
-                          key={idx}
-                          className="border-b border-gray-100 dark:border-gray-800 last:border-b-0 hover:bg-gray-50/60 dark:hover:bg-[#25221F]/40 transition-colors"
-                        >
-                          <td className="py-3 px-6 border-r border-gray-100 dark:border-gray-800 w-40 sm:w-56 align-top">
-                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{row.label}</span>
-                          </td>
-                          <td className="py-3 px-4 border-r border-gray-100 dark:border-gray-800 w-1/2 align-top">
-                            <span className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                              {row.primaryValue ?? <span className="text-gray-300 dark:text-gray-700 select-none">—</span>}
-                            </span>
-                          </td>
-                          <td className="py-3 px-4 w-1/2 align-top">
-                            <span className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                              {row.compareValue ?? <span className="text-gray-300 dark:text-gray-700 select-none">—</span>}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </Fragment>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+          </div>
         </div>
       </div>
     </div>
