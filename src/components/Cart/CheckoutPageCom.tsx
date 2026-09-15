@@ -55,8 +55,25 @@ interface ExecuteOrderResponse {
   };
   errors?: string[];
 }
-interface SslPayResponse { statusCode: number; status: string; GatewayPageURL?: string; message?: string; }
-interface BkashPayResponse { statusCode: number; status: string; bkashURL?: string; message?: string; }
+interface SslPayResponse {
+  statusCode: number;
+  status: string;
+  GatewayPageURL?: string;
+  message?: string;
+  /** SSLCommerz's own initiate-session API names its failure reason this,
+   * not `message` — when their side rejects the session (bad credentials,
+   * validation, sandbox down), this is where the real reason actually is. */
+  failedreason?: string;
+}
+interface BkashPayResponse {
+  statusCode: number;
+  status: string;
+  bkashURL?: string;
+  message?: string;
+  /** bKash's own API names its failure text this, not `message` (see the
+   * /bkash-verify response shape, which uses the same convention). */
+  statusMessage?: string;
+}
 interface AddressBookItem { addressUuid: string; fullName: string; mobileNo: string; addressLabel?: string; addressLine1: string; addressLine2?: string; isDefault: boolean; isActive: boolean; districtID: number; policeStationID: number; }
 interface AddressListResponse { statusCode: number; status: string; message: string; count: number; data: AddressBookItem[]; }
 interface AreaItem {
@@ -1087,11 +1104,13 @@ export default function CheckoutPageCom() {
         if (paymentGateway === "ssl") {
           const r = await api.post<SslPayResponse>("/api/tokenized/v1/sslcommerz-pay", { orderToken }, { headers: { Authorization: authHeader, "X-API-Key": apiKey || "" } });
           if (r?.GatewayPageURL) { await saveNewAddressToBook(isPickup); dispatch(clearCart()); window.location.href = r.GatewayPageURL; return; }
-          toast.error(r?.message || "SSLCommerz failed.");
+          console.error("[Checkout] sslcommerz-pay did not return a GatewayPageURL:", r);
+          toast.error(r?.message || r?.failedreason || "SSLCommerz failed.");
         } else {
           const r = await api.post<BkashPayResponse>("/api/tokenized/v1/bkash-pay", { orderToken }, { headers: { Authorization: authHeader, "X-API-Key": apiKey || "" } });
           if (r?.bkashURL) { await saveNewAddressToBook(isPickup); dispatch(clearCart()); window.location.href = r.bkashURL; return; }
-          toast.error(r?.message || "bKash failed.");
+          console.error("[Checkout] bkash-pay did not return a bkashURL:", r);
+          toast.error(r?.message || r?.statusMessage || "bKash failed.");
         }
       } else {
         await saveNewAddressToBook(isPickup);
