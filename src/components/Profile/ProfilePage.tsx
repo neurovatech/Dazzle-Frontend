@@ -153,7 +153,7 @@ const Profile: React.FC = () => {
             </div>
 
             <div className="md:p-4 px-0 py-4">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 hidden md:block">
                 {pageTitle}
               </h1>
               {renderContent()}
