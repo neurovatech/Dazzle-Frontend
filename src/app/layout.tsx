@@ -17,6 +17,7 @@ import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
 import TikTokPixel from "@/components/analytics/TikTokPixel";
 import RouteChangeTracker from "@/components/analytics/RouteChangeTracker";
 import WishlistSync from "@/components/WishlistSync";
+import ConsoleBanner from "@/components/ConsoleBanner";
 import { getSiteSettings, stripHtml, stripHeavyFields } from "@/lib/getSiteSettings";
 import { getQueryClient } from "@/lib/query-client";
 import type { SiteSettingsData } from "@/store/slices/siteSettingsSlice";
@@ -55,8 +56,6 @@ export async function generateMetadata(): Promise<Metadata> {
   const description = stripHtml(settings.metaDescription) || FALLBACK_DESCRIPTION;
   // const siteName = settings.siteTitle || SITE_NAME;
   const siteName = "";
-
-// console.log("generateMetadata settings:", settings);
 
   const iconUrl = settings.favicon || FALLBACK_ICON;
 
@@ -156,6 +155,7 @@ export default async function RootLayout({
       </head>
       <body>
         <GoogleTagManagerNoScript />
+        <ConsoleBanner />
         <Suspense fallback={null}>
           <RouteChangeTracker />
         </Suspense>

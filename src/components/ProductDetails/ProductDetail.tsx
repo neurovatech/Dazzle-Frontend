@@ -137,8 +137,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
     );
   }, [groups, variants, selectedAttrs]);
 
-  console.log(selectedVariant, "selectedVariant");
-
   const isOptionAvailable = (group: string, option: string) =>
     variants.some(
       (v) =>
@@ -528,8 +526,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
     galleryImages[0]?.url ||
     product?.thumbnailImg ||
     "";
-
-  console.log(product, "product?.description");
 
   return (
     <div className="min-h-screen font-sans bg-[#fffbf6] dark:bg-[#2e2b28]">

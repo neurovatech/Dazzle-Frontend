@@ -99,8 +99,6 @@ function ProductSkeleton() {
 
 // ── Product card (shared between both screens) ──────────────────────
 function ProductRow({ product, onClose }: { product: NormalizedProduct; onClose?: () => void }) {
-
-  console.log(product, "productproductproduct")
   const formatPrice = (p: number) => `৳${p.toLocaleString("en-BD")}`;
   return (
     <Link
