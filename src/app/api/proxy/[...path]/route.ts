@@ -86,9 +86,13 @@ async function handleProxy(
       responseHeaders.set("location", `/api/proxy${location.slice(BASE_URL.length)}`);
     }
 
-    const data = await response.arrayBuffer();
-
-    return new NextResponse(data, {
+    // Streamed straight through instead of buffered with arrayBuffer() —
+    // every request from every visitor passes through this one route, so
+    // holding each full response body in memory before forwarding it adds
+    // needless per-request memory/GC pressure at real concurrency. Streaming
+    // also lets the browser start receiving bytes immediately instead of
+    // waiting for the whole backend response first.
+    return new NextResponse(response.body, {
       status: response.status,
       statusText: response.statusText,
       headers: responseHeaders,

@@ -15,6 +15,7 @@ import GoogleTagManager, { GoogleTagManagerNoScript } from "@/components/analyti
 import FacebookPixel from "@/components/analytics/FacebookPixel";
 import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
 import TikTokPixel from "@/components/analytics/TikTokPixel";
+import TawkToChat from "@/components/analytics/TawkToChat";
 import RouteChangeTracker from "@/components/analytics/RouteChangeTracker";
 import WishlistSync from "@/components/WishlistSync";
 import ConsoleBanner from "@/components/ConsoleBanner";
@@ -152,6 +153,7 @@ export default async function RootLayout({
         <FacebookPixel />
         <GoogleAnalytics />
         <TikTokPixel />
+        <TawkToChat />
       </head>
       <body>
         <GoogleTagManagerNoScript />
