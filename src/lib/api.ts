@@ -28,14 +28,16 @@ interface FetchOptions extends RequestInit {
    * "TypeError: fetch failed" / ETIMEDOUT hangs seen in production — an
    * unbounded fetch ties up memory/connections for as long as the backend
    * stays silent). Ignored if `signal` is already set explicitly.
-   * Default: 30s. Bump this per-call for known-slow, known-necessary
-   * requests (e.g. the sitemap route's full-catalog page fetches) rather
-   * than raising the default and weakening the guard everywhere else.
+   * Default: 10s — every ordinary JSON GET/POST in this app should finish
+   * well inside that. Bump this per-call for known-slow, known-necessary
+   * requests (e.g. the sitemap route's full-catalog page fetches, or a
+   * multipart file upload) rather than raising the default and weakening
+   * the guard for every other call.
    */
   timeoutMs?: number;
 }
 
-const DEFAULT_TIMEOUT_MS = 30_000;
+const DEFAULT_TIMEOUT_MS = 10_000;
 
 /**
  * Resolves the URL a request should actually hit.

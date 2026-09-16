@@ -38,7 +38,9 @@ const PreOrderPage: React.FC = () => {
   // TanStack React Query mutation
   const mutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      return api.post<unknown>("/feedback", formData);
+      // Product photo attachments over a slow connection can exceed api.ts's
+      // 10s default (sized for plain JSON calls).
+      return api.post<unknown>("/feedback", formData, { timeoutMs: 30_000 });
     },
     onSuccess: () => {
       toast.success("Your pre-order has been submitted successfully!");

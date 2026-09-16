@@ -111,6 +111,10 @@ export function useUpdateUserInfo() {
           "X-API-Key": apiKey || "",
           Authorization: authHeader,
         },
+        // A profile photo upload over a slow mobile connection can easily
+        // exceed api.ts's 10s default (sized for plain JSON calls) — give
+        // it real room instead of aborting a genuinely-in-progress upload.
+        timeoutMs: 30_000,
       });
     },
     onSuccess: (res) => {

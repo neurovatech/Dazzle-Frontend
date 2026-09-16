@@ -41,7 +41,9 @@ const Feedback = () => {
   // TanStack React Query mutation
   const mutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      return api.post<unknown>("/feedback", formData);
+      // File attachments over a slow connection can exceed api.ts's 10s
+      // default (sized for plain JSON calls).
+      return api.post<unknown>("/feedback", formData, { timeoutMs: 30_000 });
     },
     onSuccess: () => {
       toast.success("Your feedback has been submitted successfully!");
