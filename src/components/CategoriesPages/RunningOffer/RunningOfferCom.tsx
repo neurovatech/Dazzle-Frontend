@@ -43,8 +43,7 @@ export default function RunningOfferCom() {
     refetchOnReconnect: false,
     queryFn: async () => {
       const res = await api.get<ShowcaseItemsResponse>(
-        "/showcase-items?showcaseSlug=running-offer",
-        { cache: "no-store" }
+        "/showcase-items?showcaseSlug=running-offer"
       );
       return mapItems(Array.isArray(res?.data) ? res.data : []);
     },

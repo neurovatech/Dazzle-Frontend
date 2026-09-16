@@ -129,7 +129,6 @@ export default function BrandShowcaseSections({ brandSlug, activeCategory, topCa
     queryFn: () =>
       api.get<BrandShowcaseResponse>(
         `/showcase-escalate/${showcaseSlug}?${showcaseParam}=1`,
-        { cache: "no-store" },
       ),
     staleTime: 10 * 60 * 1000,
     gcTime:    60 * 60 * 1000,

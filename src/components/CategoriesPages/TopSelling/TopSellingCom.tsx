@@ -43,8 +43,7 @@ export default function TopSellingCom() {
     refetchOnReconnect: false,
     queryFn: async () => {
       const res = await api.get<ShowcaseItemsResponse>(
-        "/showcase-items?showcaseSlug=top-selling",
-        { cache: "no-store" }
+        "/showcase-items?showcaseSlug=top-selling"
       );
       return mapItems(Array.isArray(res?.data) ? res.data : []);
     },

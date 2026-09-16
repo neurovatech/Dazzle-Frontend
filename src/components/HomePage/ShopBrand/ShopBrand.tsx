@@ -64,7 +64,6 @@ export default function ShopBrand({ brands }: Props) {
     queryFn: () =>
       api.get<ProductListResponse>(
         `/products?brandSlug=${activeBrandSlug}&limit=12&page=1`,
-        { cache: "no-store" },
       ),
     enabled: !!activeBrandSlug,
   });

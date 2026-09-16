@@ -95,8 +95,7 @@ export default function TrendingNowSectionCom() {
     queryKey: ["trending-now", activeSlug],
     queryFn: async () => {
       const res = await api.get<ShowcaseItemsResponse>(
-        `/showcase-items?showcaseSlug=${activeSlug}`,
-        { cache: "no-store" }
+        `/showcase-items?showcaseSlug=${activeSlug}`
       );
       return mapItems(sortInStockFirst(Array.isArray(res?.data) ? res.data : []));
     },

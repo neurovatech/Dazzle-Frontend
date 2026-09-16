@@ -66,7 +66,6 @@ export default function BannerEscalate({
     queryFn: () =>
       api.get<BannerEscalateResponse>(
         `/banner-escalate/${showcaseSlug}?${showcaseParam}=1`,
-        { cache: "no-store" },
       ),
     staleTime: 5 * 60 * 1000,
     gcTime:    30 * 60 * 1000,

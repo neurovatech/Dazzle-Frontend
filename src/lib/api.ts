@@ -310,9 +310,18 @@ export async function apiFetch<T = unknown>(
     } catch (err) {
       lastError = err;
 
-      // A real HTTP response came back — retrying would just repeat the same failure.
-      if (err instanceof ApiError && !err.isNetworkError) {
-        throw err;
+      if (err instanceof ApiError) {
+        // A definitive client error (404, 400, 422, ...) — retrying would
+        // just repeat the same failure. Fail immediately so the caller's own
+        // try/catch can fall back to empty/default data right away instead
+        // of wasting extra round trips on a request that can never succeed.
+        if (!err.isRetryable || attempt === MAX_RETRIES) {
+          throw err;
+        }
+        // Retryable HTTP response (408 timeout, 429 rate-limited, 5xx server
+        // error) — treat like a transient network error and retry.
+        await new Promise((r) => setTimeout(r, 300));
+        continue;
       }
 
       const isConnReset =
