@@ -125,7 +125,7 @@ const features = [
   { icon: Rocket, title: "Super fast", subtitle: "Delivery" },
   { icon: CreditCard, title: "36 Months", subtitle: "Installments" },
   { icon: RefreshCw, title: "2 Years", subtitle: "Replacement" },
-  { icon: ShoppingBag, title: "Best Price in BD", subtitle: "Replacement" },
+  { icon: ShoppingBag, title: "Best Price in ", subtitle: "Bangladesh" },
   // { icon: RefreshCw, title: "2 Years", subtitle: "Replacement" },
 ];
 

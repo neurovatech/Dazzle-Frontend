@@ -19,6 +19,11 @@ async function getAllProductSlugs(): Promise<string[]> {
   try {
     const first = await api.get<any>(`/products?page=1&limit=${LIMIT}`, {
       next: { revalidate },
+      // Verified live: the backend takes ~24s to return one 2000-item page —
+      // well past api.ts's normal 30s default. This route runs at most every
+      // 6h (see `revalidate` above) and already falls back to an empty (but
+      // valid) sitemap on any failure, so a longer budget here is safe.
+      timeoutMs: 60_000,
     });
     const total: number = Number(first?.totalCount) || 0;
     const slugs: string[] = (first?.data ?? [])
@@ -31,6 +36,7 @@ async function getAllProductSlugs(): Promise<string[]> {
         Array.from({ length: totalPages - 1 }, (_, i) =>
           api.get<any>(`/products?page=${i + 2}&limit=${LIMIT}`, {
             next: { revalidate },
+            timeoutMs: 60_000,
           }),
         ),
       );

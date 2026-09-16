@@ -37,7 +37,7 @@ export default function GlobalModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-9999 flex items-center justify-center bg-black/50 px-4 py-4"
+      className="fixed inset-0 z-9999999999 flex items-center justify-center bg-black/50 px-4 py-4"
       onClick={onClose}
     >
       <div

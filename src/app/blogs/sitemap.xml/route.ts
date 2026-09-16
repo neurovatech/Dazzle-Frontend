@@ -24,7 +24,7 @@ async function getPostUrls(
   priority: number,
 ): Promise<UrlEntry[]> {
   try {
-    const res = await api.get<any>(endpoint, { next: { revalidate } });
+    const res = await api.get<any>(endpoint, { next: { revalidate }, timeoutMs: 60_000 });
     const list: any[] = Array.isArray(res?.data) ? res.data : [];
     return list
       .filter((p) => p?.post_slug)

@@ -37,6 +37,11 @@ async function handleProxy(
     const fetchOptions: RequestInit = {
       method: request.method,
       headers,
+      // Bounds how long any proxied request can hang on a stalled backend
+      // connection — without this, a silent backend (ETIMEDOUT) left the
+      // request (and its memory) pending indefinitely instead of failing
+      // and freeing up.
+      signal: AbortSignal.timeout(30_000),
     };
 
     // Forward request body if applicable

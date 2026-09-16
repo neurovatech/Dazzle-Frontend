@@ -21,6 +21,7 @@ async function getBrandUrls(): Promise<UrlEntry[]> {
   try {
     const res = await api.get<any>("/brands?order=1&page=1&limit=1000", {
       next: { revalidate },
+      timeoutMs: 60_000,
     });
     const list: any[] = Array.isArray(res?.data) ? res.data : [];
     const entries: UrlEntry[] = [

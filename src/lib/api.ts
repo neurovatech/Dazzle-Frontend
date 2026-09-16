@@ -22,7 +22,20 @@ interface FetchOptions extends RequestInit {
    * session, purely because it happens to call a tokenized endpoint.
    */
   suppressSessionExpired?: boolean;
+  /**
+   * Aborts the request after this many milliseconds instead of letting it
+   * hang forever on a stalled connection (the real cause behind the
+   * "TypeError: fetch failed" / ETIMEDOUT hangs seen in production — an
+   * unbounded fetch ties up memory/connections for as long as the backend
+   * stays silent). Ignored if `signal` is already set explicitly.
+   * Default: 30s. Bump this per-call for known-slow, known-necessary
+   * requests (e.g. the sitemap route's full-catalog page fetches) rather
+   * than raising the default and weakening the guard everywhere else.
+   */
+  timeoutMs?: number;
 }
+
+const DEFAULT_TIMEOUT_MS = 30_000;
 
 /**
  * Resolves the URL a request should actually hit.
@@ -177,6 +190,7 @@ export async function apiFetch<T = unknown>(
     apiKey: explicitApiKey,
     isRetry,
     suppressSessionExpired,
+    timeoutMs,
     headers: customHeaders,
     ...customOptions
   } = options;
@@ -236,7 +250,15 @@ export async function apiFetch<T = unknown>(
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
-      const response = await fetch(url, fetchConfig);
+      // A fresh timeout budget per attempt — bounds how long any single
+      // attempt can hang on a stalled connection, instead of waiting
+      // forever (the actual cause behind ETIMEDOUT / "fetch failed" tying up
+      // memory on a request the backend never answers). Only applied when
+      // the caller hasn't already supplied their own `signal`.
+      const response = await fetch(url, {
+        ...fetchConfig,
+        signal: fetchConfig.signal ?? AbortSignal.timeout(timeoutMs ?? DEFAULT_TIMEOUT_MS),
+      });
 
       // 5. Handle 401 Unauthorized / Token Expiration for client requests
       const isAuthEndpoint =
@@ -324,15 +346,19 @@ export async function apiFetch<T = unknown>(
         continue;
       }
 
+      // "TimeoutError" is what our own AbortSignal.timeout() above throws
+      // when the backend never answers in time — treated the same as a
+      // dropped connection, since neither reached a real HTTP response.
       const isConnReset =
         err instanceof Error &&
-        (err.message.includes("ECONNRESET") ||
+        (err.name === "TimeoutError" ||
+          err.message.includes("ECONNRESET") ||
           err.message.includes("fetch failed"));
 
       if (!isConnReset || attempt === MAX_RETRIES) {
         throw new ApiError(
           NETWORK_ERROR_STATUS,
-          { message: err instanceof Error ? err.message : String(err) },
+          { message: err instanceof Error ? (err.name === "TimeoutError" ? "Request timed out." : err.message) : String(err) },
           endpoint
         );
       }
