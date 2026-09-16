@@ -536,6 +536,12 @@ function PayDueModal({
 // ─── Main OrderDetails Component ──────────────────────────────────────────────
 interface OrderDetailsProps {
   order?: Order;
+  /** Returns to the Orders list — used after a successful cancel so the
+   * fresh (already-updated-in-cache) list renders immediately instead of
+   * leaving the user stranded on this detail view with router.push doing
+   * nothing (ProfilePage keeps rendering OrderDetails as long as its own
+   * selectedOrder state is set, regardless of the URL). */
+  onBack?: () => void;
 }
 
 // ─── 4-Step Tracking Flow ─────────────────────────────────────────────────────
@@ -606,7 +612,7 @@ function findTimelineMatch(
   return timeline.find((t) => (t.orderStatus || "").toLowerCase().replace(/\s+/g, "").includes(key));
 }
 
-const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
+const OrderDetails: React.FC<OrderDetailsProps> = ({ order, onBack }) => {
   const orderNo = order?.comerzOrderNo || order?.id || "";
   const rawOrder = order?.rawApiData;
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -641,9 +647,22 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
     }
   };
 
-  const statusText = trackingData
-    ? trackingData.orderCancelled ? "Cancelled" : trackingData.orderDelivered ? "Delivered" : "In Progress"
-    : order?.status || "In Progress";
+  // Single source of truth for cancelled/delivered — order-tracking's own
+  // fields and order-list's are combined with OR everywhere below, so the
+  // header badge, due-amount banner, and tracking timeline can never
+  // disagree about whether this order is cancelled (previously each checked
+  // a different subset of these two fields and could show "In Progress" at
+  // the top while the timeline below said "Cancelled").
+  const isOrderCancelled = Boolean(trackingData?.orderCancelled || rawOrder?.isCancelled);
+  const isOrderDelivered = Boolean(trackingData?.orderDelivered || rawOrder?.isDelivered);
+
+  const statusText = isOrderCancelled
+    ? "Cancelled"
+    : isOrderDelivered
+      ? "Delivered"
+      : trackingData
+        ? "In Progress"
+        : order?.status || "In Progress";
 
   const timeline = trackingData?.statusTimeline ?? [];
 
@@ -651,11 +670,9 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
   // 1. order-list এর isCancelled=true থাকলে already cancelled
   // 2. trackingData থেকে orderCancelled/orderDelivered check
   // 3. Shipping started হলে cancel করা যাবে না
-  const isTerminal = rawOrder?.isCancelled
-    || rawOrder?.isDelivered
-    || (trackingData
-      ? trackingData.orderCancelled || trackingData.orderDelivered
-      : order?.status === "Cancelled" || order?.status === "Delivered");
+  const isTerminal = isOrderCancelled
+    || isOrderDelivered
+    || (!trackingData && (order?.status === "Cancelled" || order?.status === "Delivered"));
 
   const hasShipped = timeline.some((t) =>
     /shipping|transit|sentout|sent out|out for delivery/i.test((t.orderStatus || "").replace(/\s+/g, " ")),
@@ -706,7 +723,13 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
               : old,
         );
         queryClient.invalidateQueries({ queryKey: ["order-list"] });
-        // Redirect to profile Orders tab
+        // Back to the Orders list. router.push alone never actually left
+        // this view — ProfilePage renders OrderDetails as long as its own
+        // selectedOrder state is set, regardless of the URL — so this view
+        // itself was what was going stale, requiring a manual reload. This
+        // clears that state (via the parent), which also means the list the
+        // user lands on reads the already-updated cache above, live.
+        onBack?.();
         router.push("/profile?tab=Orders");
       } else {
         const msg = res?.errors?.join(", ") || res?.message || "Failed to cancel order.";
@@ -739,14 +762,14 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
   const paymentType = rawOrder?.paymentType; // "COD" | "OP" | "Partial" | undefined
   const isCOD = paymentType === "COD" || !!rawOrder?.isFullPaymentAtStore;
   const isBookingMoney = paymentType === "Partial";
-  const showDueBanner = dueAmount > 0 && !trackingData?.orderCancelled;
+  const showDueBanner = dueAmount > 0 && !isOrderCancelled;
 
   // ── Active tracking step ──────────────────────────────────────────────────
   const currentOrderStatus = rawOrder?.orderStatus || order?.status || "";
   const activeStep = getActiveStep(
     currentOrderStatus,
-    trackingData?.orderCancelled || rawOrder?.isCancelled,
-    trackingData?.orderDelivered || rawOrder?.isDelivered,
+    isOrderCancelled,
+    isOrderDelivered,
   );
   // Payment allowed only in steps 0 (Placed) and 1 (Confirmed), not when cancelled
   const canPayDue = activeStep >= 0 && activeStep <= 1 && dueAmount > 0;
@@ -874,7 +897,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
                   </p>
                 )}
               </div>
-              <button
+              {/* <button
                 onClick={handlePayDue}
                 disabled={!canPayDue}
                 className={`shrink-0 px-4 py-2 rounded-xl text-sm font-bold transition ${
@@ -884,7 +907,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
                 }`}
               >
                 Pay Due Amount
-              </button>
+              </button> */}
             </div>
           </div>
         </div>
@@ -1249,15 +1272,20 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order }) => {
               <div className="pt-1 flex items-center justify-between text-[13px]">
                 <span className="text-gray-400">Order Status:</span>
                 <span className={`font-semibold px-2 py-0.5 rounded-full ${
-                  rawOrder?.orderStatus === "Pending"
-                    ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-950/40 dark:text-yellow-400"
-                    : rawOrder?.orderStatus === "Delivered"
-                    ? "bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400"
-                    : rawOrder?.orderStatus === "Cancelled"
+                  isOrderCancelled
                     ? "bg-red-100 text-red-600 dark:bg-red-950/40 dark:text-red-400"
+                    : isOrderDelivered
+                    ? "bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400"
+                    : rawOrder?.orderStatus === "Pending"
+                    ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-950/40 dark:text-yellow-400"
                     : "bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400"
                 }`}>
-                  {rawOrder?.orderStatus || statusText}
+                  {/* isOrderCancelled/isOrderDelivered combine trackingData
+                      AND order-list's own flags — rawOrder.orderStatus alone
+                      can lag behind a cancellation, which previously showed
+                      "Pending" in yellow on an order this same page's header
+                      badge and tracking timeline both call Cancelled. */}
+                  {isOrderCancelled ? "Cancelled" : isOrderDelivered ? "Delivered" : rawOrder?.orderStatus || statusText}
                 </span>
               </div>
               <div className="pt-1 flex items-center justify-between text-[13px]">
