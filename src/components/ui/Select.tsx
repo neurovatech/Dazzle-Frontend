@@ -22,23 +22,14 @@ export interface SelectGroup {
 
 export interface GlobalSelectProps
   extends Omit<SelectHTMLAttributes<HTMLSelectElement>, "size"> {
-  /** Field label shown above the select */
   label?: string;
-  /** Helper / hint text shown below */
   hint?: string;
-  /** Options array (flat) */
   options?: SelectOption[];
-  /** Option groups */
   groups?: SelectGroup[];
-  /** Visual size */
   size?: SelectSize;
-  /** Visual variant */
   variant?: SelectVariant;
-  /** Validation state */
   state?: SelectState;
-  /** Optional icon rendered on the left (any React node) */
   prefixIcon?: React.ReactNode;
-  /** Full-width (default: true) */
   fullWidth?: boolean;
 }
 

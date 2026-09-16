@@ -5,7 +5,6 @@ import { Search, X } from "lucide-react";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 
-// ── Product lookup (/product/{slug}) — resolves a slug into uuid + display info ──
 interface ThumbnailItem {
   mediaFileUrl?: string;
   mediafileUrl?: string;
