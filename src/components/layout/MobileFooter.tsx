@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import Link from "next/link";
@@ -246,7 +247,7 @@ export default function MobileFooter() {
   };
 
   return (
-    <div className="fixed bottom-2 z-100 w-full flex justify-center px-3 pt-3">
+    <div className="fixed bottom-2 z-9999 w-full flex justify-center px-3 pt-3">
       <nav
         className={`grid grid-cols-5 gap-1 px-2 rounded-[28px] transition-all duration-500 ease-in-out ${
           isCompact ? "py-1.5 w-[90%]" : "py-2 w-full"

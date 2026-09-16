@@ -82,7 +82,7 @@ export default function ShopBrand({ brands }: Props) {
   return (
     <div className="">
       {/* ── Outer Container ── */}
-      <div className="bg-[#FFFBF7] dark:bg-[#1a1816] rounded-3xl lg:px-4 dark:border-zinc-800 lg:py-6">
+      <div className="bg-[#FFFBF7] lg:dark:bg-[#1a1816] dark:bg-[#2e2b28] rounded-3xl lg:px-4 dark:border-zinc-800 lg:py-6">
         
 
         {/* ── Brand Slider / Grid ── */}

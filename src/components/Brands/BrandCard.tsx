@@ -70,7 +70,7 @@ function BrandCard({ brands }: { brands: Brand[] }) {
       </div>
 
       {/* Brand Grid */}
-      <div className="grid md:grid-cols-6 grid-cols-2 lg:gap-4 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 lg:gap-4 gap-2">
         {filteredBrands.length > 0 ? (
           filteredBrands.map((brand, i) => (
             <Link
