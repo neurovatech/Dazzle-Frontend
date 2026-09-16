@@ -2,9 +2,9 @@ import React from "react";
 import { MessageCircle, Phone } from "lucide-react";
 
 interface ContactOptionsProps {
-  whatsappNumber?: string; // e.g. "8801XXXXXXXXX" (no + or spaces)
-  messengerUsername?: string; // e.g. "yourpageusername" or numeric page id
-  phoneNumber?: string; // e.g. "+8801XXXXXXXXX"
+  whatsappNumber?: string; 
+  messengerUsername?: string; 
+  phoneNumber?: string; 
 }
 
 const ContactOptions: React.FC<ContactOptionsProps> = ({

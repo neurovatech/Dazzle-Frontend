@@ -10,7 +10,6 @@ import toast from "react-hot-toast";
 import type { CareOption } from "./DazzleCare";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { X, LogIn } from "lucide-react";
 import { verifyOrderProduct, friendlyUnresolvedMessage } from "@/lib/verify-order-product";
 
 const StoreIcon = () => (
