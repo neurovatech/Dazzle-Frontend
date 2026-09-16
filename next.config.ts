@@ -2,14 +2,6 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
-  // /products/sitemap.xml fetches the full product catalog (4000+ products,
-  // 3 pages of 2000) to list every product URL. The backend takes ~24s to
-  // return just one such page (verified live), so the default 60s static
-  // generation timeout was failing the ENTIRE production build on this one
-  // route. This doesn't speed up the backend — it just gives this
-  // legitimately slow, catalog-wide route (revalidated at most every 6h
-  // anyway, per its own `revalidate` export) enough room to finish instead
-  // of aborting the whole build.
   staticPageGenerationTimeout: 180,
   experimental: {
     optimizePackageImports: [
