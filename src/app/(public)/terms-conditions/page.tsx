@@ -19,7 +19,7 @@ export default async function TermsConditions() {
   try {
     const res = await api.get<{ data: Record<string, unknown>[] }>(
       "/pages/terms-condition",
-      { next: { revalidate: 5 } },
+      { next: { revalidate: 60 } },
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

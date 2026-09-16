@@ -78,7 +78,7 @@ function cleanSlug(slug: string): string {
 async function getCampaignDetail(slug: string): Promise<CampaignDetailResponse | null> {
   try {
     const res = await api.get<CampaignDetailResponse>(`campaign/${slug}`, {
-      next: { revalidate: 5 },
+      next: { revalidate: 60 },
     });
     // `found` reflects whether any products matched (it's 0/false for a real,
     // currently-empty campaign) — not whether the campaign itself exists. A
@@ -94,7 +94,7 @@ async function getCampaignDetail(slug: string): Promise<CampaignDetailResponse |
   }
   try {
     const campaignsList = await api.get<CampaignsResponse>("campaigns", {
-      next: { revalidate: 5 },
+      next: { revalidate: 60 },
     });
     const foundCampaign = campaignsList.data?.find(
       (c) => c.slug === slug || c.campaign_uuid === slug
@@ -103,7 +103,7 @@ async function getCampaignDetail(slug: string): Promise<CampaignDetailResponse |
     if (foundCampaign) {
       try {
         const res = await api.get<CampaignDetailResponse>(`campaign/${foundCampaign.campaign_uuid}`, {
-          next: { revalidate: 5 },
+          next: { revalidate: 60 },
         });
         if (res && res.found && res.statusCode !== 404) {
           return res;
@@ -113,7 +113,7 @@ async function getCampaignDetail(slug: string): Promise<CampaignDetailResponse |
       }
       try {
         const res = await api.get<CampaignDetailResponse>(`campaign/${foundCampaign.campaign_id}`, {
-          next: { revalidate: 5 },
+          next: { revalidate: 60 },
         });
         if (res && res.found && res.statusCode !== 404) {
           return res;

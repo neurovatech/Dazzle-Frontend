@@ -147,7 +147,7 @@ export async function generateMetadata(): Promise<Metadata> {
 async function getHeroBanners(): Promise<SlideItem[]> {
   try {
     const res = await api.get<unknown>("/web-banner/home-banner", {
-      next: { revalidate: 5 },
+      next: { revalidate: 60 },
     });
 
     let list: unknown[] = [];

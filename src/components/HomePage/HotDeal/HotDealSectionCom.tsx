@@ -54,7 +54,7 @@ export default async function HotDealSectionCom() {
   try {
     const res = await api.get<ShowcaseItemsResponse>(
       "/showcase-items?showcaseSlug=hot-deal",
-      { next: { revalidate: 5 } }
+      { next: { revalidate: 60 } }
     );
 
     const list = Array.isArray(res?.data) ? res.data : [];

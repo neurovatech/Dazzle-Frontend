@@ -127,7 +127,7 @@ function truncate(input: string, max = 160): string {
 const getProduct = cache((productSlug: string) =>
   api.get<ProductApiResponse>(`/product/${productSlug}`, {
     next: {
-      revalidate: 5,
+      revalidate: 60,
       tags: ['product', `product:${productSlug}`],
     },
   } as RequestInit),

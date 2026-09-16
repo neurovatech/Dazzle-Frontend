@@ -66,7 +66,7 @@ export default async function OffersPage() {
 
   try {
     const res = await api.get<CampaignsResponse>("campaigns", {
-      next: { revalidate: 5 },
+      next: { revalidate: 60 },
     });
     if (res.found && res.data?.length) {
       campaigns = res.data;

@@ -71,7 +71,7 @@ function mapToProductCard(list: ShowcaseItem[]): ProductCardItem[] {
 async function fetchShowcase(endpoint: string): Promise<ProductCardItem[]> {
   try {
     const res = await api.get<ShowcaseItemsResponse>(endpoint, {
-      next: { revalidate: 5 },
+      next: { revalidate: 60 },
     });
     const list = Array.isArray(res?.data) ? res.data : [];
     return mapToProductCard(sortInStockFirst(list));
