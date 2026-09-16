@@ -59,7 +59,9 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const href = `/product/${resolvedSlug}`;
   const compareHref = `/product-compare/${resolvedSlug}`;
 
-  const isendOfLifeDisabled = allProduct ? allProduct.endOfLife === true : endOfLife === true;
+  const isendOfLifeDisabled = allProduct
+    ? allProduct.endOfLife === true
+    : endOfLife === true;
   return (
     <div
       data-product-uuid={itemId}
@@ -119,10 +121,12 @@ const ProductCard: React.FC<ProductCardProps> = ({
         <div className="flex items-center justify-between relative z-40">
           {allProduct?.recognitionBadge && (
             <button className="ml-auto bg-[#087400] text-white text-[8px] sm:text-xs font-bold px-1 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-md lg:w-[50%]! w-[80%] flex justify-center items-center gap-1">
-          
-              <span className="pt-.5 lg:pt-0"> {allProduct?.recognitionBadge} </span>
+              <span className="pt-.5 lg:pt-0">
+                {" "}
+                {allProduct?.recognitionBadge}{" "}
+              </span>
             </button>
-           )} 
+          )}
 
           <div
             className="flex gap-1 sm:gap-2 ml-auto p-1 -mr-2 sm:-mr-2 lg:-mr-4 bg-[#F5F5F5] pl-2 [--r:20px] sm:[--r:26px] w-[110px]"
@@ -198,51 +202,55 @@ const ProductCard: React.FC<ProductCardProps> = ({
         </div>
 
         {/* Price */}
-        <Link
-          href={href}
-          className="flex items-baseline gap-2 sm:gap-2 mb-2 sm:mb-4"
-        >
-          {showTbaFlag && !endOfLife ? (
-            <div className="bg-[#6D3F0E] text-white text-[9px] sm:text-xs font-bold px-1.5 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-md">
-              To Be Announced
-            </div>
-          ) : (
-            <>
-              <span className="items-center flex gap-1 font-bold text-[20px] leading-[1.6] tracking-[0%] text-gray-900">
-                <svg
-                  width="12"
-                  height="14"
-                  viewBox="0 0 12 14"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M1.05292 0.00767491C0.539583 -0.0591029 0.0729167 0.317281 0.0116667 0.848469C-0.0495833 1.37966 0.309167 1.86835 0.819583 1.93513L1.05 1.96548C1.51667 2.02619 1.86667 2.439 1.86667 2.93072V3.88686H0.7C0.312083 3.88686 0 4.21164 0 4.61535C0 5.01905 0.312083 5.34383 0.7 5.34383H1.86667V10.6861C1.86667 12.2948 3.12083 13.6 4.66667 13.6H5.6C8.69167 13.6 11.2 10.9896 11.2 7.77212V6.8008C11.2 5.19206 9.94583 3.88686 8.4 3.88686H7.93333C7.41708 3.88686 7 4.32092 7 4.85817C7 5.39543 7.41708 5.82949 7.93333 5.82949H8.4C8.91625 5.82949 9.33333 6.26354 9.33333 6.8008V7.77212C9.33333 9.91811 7.66208 11.6574 5.6 11.6574H4.66667C4.15042 11.6574 3.73333 11.2233 3.73333 10.6861V5.34383H4.9C5.28792 5.34383 5.6 5.01905 5.6 4.61535C5.6 4.21164 5.28792 3.88686 4.9 3.88686H3.73333V2.93072C3.73625 1.45858 2.68625 0.217114 1.28333 0.0349929L1.05292 0.00463937V0.00767491Z"
-                    fill="#101518"
-                  />
-                </svg>
-                {formatPrice(price)}
-              </span>
-              {originalPrice > 0 && originalPrice !== price && (
-                <span className="text-gray-400 text-[14px] font-normal leading-[1.6] line-through flex items-center gap-1 pl-1">
+      
+          <Link
+            href={href}
+            className="flex items-baseline gap-2 sm:gap-2 mb-2 sm:mb-4"
+          >
+            {showTbaFlag && !endOfLife ? (
+                <div className="h-7.5">
+              <div className="bg-[#6D3F0E] text-white text-[9px] sm:text-xs font-bold px-1.5 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-md">
+                To Be Announced
+              </div>
+              </div>
+            ) : (
+              <>
+                <span className="items-center flex gap-1 font-bold text-[20px] leading-[1.6] tracking-[0%] text-gray-900">
                   <svg
-                    width="9"
-                    height="10"
-                    viewBox="0 0 9 10"
+                    width="12"
+                    height="14"
+                    viewBox="0 0 12 14"
                     fill="none"
                     xmlns="http://www.w3.org/2000/svg"
                   >
                     <path
-                      d="M0.789687 0.0055311C0.404687 -0.0425939 0.0546875 0.228656 0.00875003 0.611468C-0.0371875 0.994281 0.231875 1.34647 0.614687 1.39459L0.7875 1.41647C1.1375 1.46022 1.4 1.75772 1.4 2.11209V2.80116H0.525C0.234062 2.80116 0 3.03522 0 3.32616C0 3.61709 0.234062 3.85116 0.525 3.85116H1.4V7.70116C1.4 8.86053 2.34063 9.80116 3.5 9.80116H4.2C6.51875 9.80116 8.4 7.91991 8.4 5.60116V4.90116C8.4 3.74178 7.45937 2.80116 6.3 2.80116H5.95C5.56281 2.80116 5.25 3.11397 5.25 3.50116C5.25 3.88834 5.56281 4.20116 5.95 4.20116H6.3C6.68719 4.20116 7 4.51397 7 4.90116V5.60116C7 7.14772 5.74656 8.40116 4.2 8.40116H3.5C3.11281 8.40116 2.8 8.08834 2.8 7.70116V3.85116H3.675C3.96594 3.85116 4.2 3.61709 4.2 3.32616C4.2 3.03522 3.96594 2.80116 3.675 2.80116H2.8V2.11209C2.80219 1.05116 2.01469 0.156468 0.9625 0.0252185L0.789687 0.00334347V0.0055311Z"
-                      fill="#747474"
+                      d="M1.05292 0.00767491C0.539583 -0.0591029 0.0729167 0.317281 0.0116667 0.848469C-0.0495833 1.37966 0.309167 1.86835 0.819583 1.93513L1.05 1.96548C1.51667 2.02619 1.86667 2.439 1.86667 2.93072V3.88686H0.7C0.312083 3.88686 0 4.21164 0 4.61535C0 5.01905 0.312083 5.34383 0.7 5.34383H1.86667V10.6861C1.86667 12.2948 3.12083 13.6 4.66667 13.6H5.6C8.69167 13.6 11.2 10.9896 11.2 7.77212V6.8008C11.2 5.19206 9.94583 3.88686 8.4 3.88686H7.93333C7.41708 3.88686 7 4.32092 7 4.85817C7 5.39543 7.41708 5.82949 7.93333 5.82949H8.4C8.91625 5.82949 9.33333 6.26354 9.33333 6.8008V7.77212C9.33333 9.91811 7.66208 11.6574 5.6 11.6574H4.66667C4.15042 11.6574 3.73333 11.2233 3.73333 10.6861V5.34383H4.9C5.28792 5.34383 5.6 5.01905 5.6 4.61535C5.6 4.21164 5.28792 3.88686 4.9 3.88686H3.73333V2.93072C3.73625 1.45858 2.68625 0.217114 1.28333 0.0349929L1.05292 0.00463937V0.00767491Z"
+                      fill="#101518"
                     />
                   </svg>
-                  {formatPrice(originalPrice)}
+                  {formatPrice(price)}
                 </span>
-              )}
-            </>
-          )}
-        </Link>
+                {originalPrice > 0 && originalPrice !== price && (
+                  <span className="text-gray-400 text-[14px] font-normal leading-[1.6] line-through flex items-center gap-1 pl-1">
+                    <svg
+                      width="9"
+                      height="10"
+                      viewBox="0 0 9 10"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M0.789687 0.0055311C0.404687 -0.0425939 0.0546875 0.228656 0.00875003 0.611468C-0.0371875 0.994281 0.231875 1.34647 0.614687 1.39459L0.7875 1.41647C1.1375 1.46022 1.4 1.75772 1.4 2.11209V2.80116H0.525C0.234062 2.80116 0 3.03522 0 3.32616C0 3.61709 0.234062 3.85116 0.525 3.85116H1.4V7.70116C1.4 8.86053 2.34063 9.80116 3.5 9.80116H4.2C6.51875 9.80116 8.4 7.91991 8.4 5.60116V4.90116C8.4 3.74178 7.45937 2.80116 6.3 2.80116H5.95C5.56281 2.80116 5.25 3.11397 5.25 3.50116C5.25 3.88834 5.56281 4.20116 5.95 4.20116H6.3C6.68719 4.20116 7 4.51397 7 4.90116V5.60116C7 7.14772 5.74656 8.40116 4.2 8.40116H3.5C3.11281 8.40116 2.8 8.08834 2.8 7.70116V3.85116H3.675C3.96594 3.85116 4.2 3.61709 4.2 3.32616C4.2 3.03522 3.96594 2.80116 3.675 2.80116H2.8V2.11209C2.80219 1.05116 2.01469 0.156468 0.9625 0.0252185L0.789687 0.00334347V0.0055311Z"
+                        fill="#747474"
+                      />
+                    </svg>
+                    {formatPrice(originalPrice)}
+                  </span>
+                )}
+              </>
+            )}
+          </Link>
+   
 
         {/* Bottom Actions — all disabled when endOfLife=true */}
         <ProductCardBuy
