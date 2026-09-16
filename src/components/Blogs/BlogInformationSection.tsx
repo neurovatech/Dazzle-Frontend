@@ -126,7 +126,6 @@ const features = [
   { icon: CreditCard, title: "36 Months", subtitle: "Installments" },
   { icon: RefreshCw, title: "2 Years", subtitle: "Replacement" },
   { icon: ShoppingBag, title: "Best Price in ", subtitle: "Bangladesh" },
-  // { icon: RefreshCw, title: "2 Years", subtitle: "Replacement" },
 ];
 
 function BlogInformationSection() {

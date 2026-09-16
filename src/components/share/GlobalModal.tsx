@@ -61,7 +61,6 @@ export default function GlobalModal({
           </button>
         </div>
 
-        {/* Content grows with content, scrolls if it exceeds viewport */}
         <div className="overflow-y-auto">{children}</div>
       </div>
     </div>,
