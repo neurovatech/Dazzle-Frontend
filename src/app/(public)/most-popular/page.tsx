@@ -27,8 +27,11 @@ export default async function FeatureProductsPages() {
     { label: "Home", href: "/" },
     { label: "Most Popular", href: "#" },
   ];
-  //  const products = await showcaseProducts("most-popular");
-   const { products, totalPages } = await fetchShowcaseProducts("most-popular", 1, 300);
+  // ShowcaseProductGrid already loads more pages itself via infinite scroll
+  // as the user scrolls (50/page) — fetching 300 products up front on every
+  // SSR render was pure waste (bigger response, more memory, slower TTFB)
+  // for content most visitors never scroll to.
+  const { products, totalPages } = await fetchShowcaseProducts("most-popular", 1, 30);
 
   return (
     <div className="flex flex-col flex-1 max-w-355 mx-auto">
