@@ -8,7 +8,10 @@ import CountdownBadges from "./CountdownBadges";
 import NoImg from "@/images/no_images.png";
 import type { CampaignDetailResponse, CampaignProduct } from "@/app/(public)/offer/[slug]/page";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE || "https://apix.bigpoint.com.bd";
+// Same-origin proxy (see src/app/api/proxy) — a relative campaignImage path
+// must resolve through this, never the real backend host, so the browser
+// never sees apix.bigpoint.com.bd in a Network tab request.
+const IMAGE_PROXY_PREFIX = "/api/proxy";
 const LIMIT = 10;
 
 // ─── Pagination ───────────────────────────────────────────────────────────────
@@ -181,7 +184,7 @@ export default function CampaignDetailClient({
     if (!campaignImage) return null;
     return campaignImage.startsWith("http")
       ? campaignImage
-      : `${BASE_URL}${campaignImage.startsWith("/") ? "" : "/"}${campaignImage}`;
+      : `${IMAGE_PROXY_PREFIX}${campaignImage.startsWith("/") ? "" : "/"}${campaignImage}`;
   })();
 
   return (

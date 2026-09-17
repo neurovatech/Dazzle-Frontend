@@ -1,5 +1,7 @@
 "use client";
 
+import { readTrackingCookie } from "./clickIds";
+
 /**
  * Thin, safe wrappers around window.fbq (Facebook Pixel) and window.dataLayer
  * (Google Tag Manager / GA4), plus the ecommerce event helpers used at every
@@ -186,15 +188,9 @@ export function trackInitiateCheckout(products: TrackedProduct[], totalValue: nu
 }
 
 /**
- * Fires the client-side Purchase pixel + GA4 `purchase` event for orders
- * that confirm immediately in this tab (cash-on-delivery, pay-at-store).
- *
- * Orders paid through an external gateway (bKash/SSLCommerz) redirect the
- * browser away before we know the payment actually succeeded, so THIS call
- * never fires for them — see `docs/tracking-backend-requirements.txt` for
- * why those must be tracked server-side, from the gateway's own webhook,
- * with this same event_id so Conversions API can still dedupe against
- * whatever residual client-side signal (if any) reaches Meta.
+ * Fires the client-side Purchase pixel + GA4 `purchase` event. Call
+ * `sendServerPurchaseEvent` alongside this with the SAME `eventId` so Meta
+ * can dedupe the browser pixel against the server-side Conversions API copy.
  */
 export function trackPurchase(
   orderId: string,
@@ -222,4 +218,40 @@ export function trackPurchase(
     eventId,
   );
   return eventId;
+}
+
+export interface ServerPurchaseInput {
+  eventId: string;
+  orderId: string;
+  value: number;
+  products?: { id: string; quantity?: number }[];
+  currency?: string;
+}
+
+/**
+ * Reports a confirmed Purchase to our OWN backend (/api/analytics/purchase),
+ * which relays it to Meta's Conversions API server-side — the access token
+ * never reaches the browser. Covers the two cases this frontend can observe:
+ * COD/pay-at-store confirmation, and a gateway (bKash/SSLCommerz) customer
+ * who returns to our payment-result page after a successful verify.
+ *
+ * It does NOT cover a gateway customer who never returns to the site —
+ * only the payment gateway's own webhook to the real backend can see that;
+ * see docs/tracking-backend-requirements.txt for that remaining piece.
+ *
+ * Fire-and-forget: a tracking failure must never affect checkout/order UI.
+ */
+export function sendServerPurchaseEvent(input: ServerPurchaseInput): void {
+  if (typeof window === "undefined") return;
+  fetch("/api/analytics/purchase", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      ...input,
+      eventSourceUrl: window.location.href,
+      fbp: readTrackingCookie("_fbp") || undefined,
+      fbc: readTrackingCookie("_fbc") || undefined,
+    }),
+    keepalive: true,
+  }).catch(() => {});
 }

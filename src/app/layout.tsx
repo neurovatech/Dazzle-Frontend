@@ -12,7 +12,7 @@ import QueryProvider from "@/app/providers/QueryProvider";
 import ReduxProvider from "@/app/providers/ReduxProvider";
 import { Toaster } from "react-hot-toast";
 import GoogleTagManager, { GoogleTagManagerNoScript } from "@/components/analytics/GoogleTagManager";
-import FacebookPixel from "@/components/analytics/FacebookPixel";
+import FacebookPixel, { FacebookPixelNoScript } from "@/components/analytics/FacebookPixel";
 import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
 import TikTokPixel from "@/components/analytics/TikTokPixel";
 import TawkToChat from "@/components/analytics/TawkToChat";
@@ -142,13 +142,14 @@ export default async function RootLayout({
       className={`${urbanist.variable}  h-full antialiased`}
     >
       <head>
-        {/* Preconnect to CDN and API host for faster image & data fetching */}
+        {/* Preconnect to CDN hosts the browser actually fetches images from.
+            The real API host is deliberately NOT preconnected here — all
+            client requests go through the same-origin /api/proxy route,
+            which is what keeps the backend host out of page source. */}
         <link rel="preconnect" href="https://dazzle.sgp1.cdn.digitaloceanspaces.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://dazzle.sgp1.cdn.digitaloceanspaces.com" />
         <link rel="preconnect" href="https://dzl.sgp1.cdn.digitaloceanspaces.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://dzl.sgp1.cdn.digitaloceanspaces.com" />
-        <link rel="preconnect" href="https://apix.bigpoint.com.bd" />
-        <link rel="dns-prefetch" href="https://apix.bigpoint.com.bd" />
         <GoogleTagManager />
         <FacebookPixel />
         <GoogleAnalytics />
@@ -157,6 +158,7 @@ export default async function RootLayout({
       </head>
       <body>
         <GoogleTagManagerNoScript />
+        <FacebookPixelNoScript />
         <ConsoleBanner />
         <Suspense fallback={null}>
           <RouteChangeTracker />

@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image, { type StaticImageData } from "next/image";
 import { CheckCircle2, XCircle, AlertTriangle, Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
-import { trackPurchase } from "@/lib/analytics/pixelEvents";
+import { trackPurchase, sendServerPurchaseEvent } from "@/lib/analytics/pixelEvents";
 
 export type PaymentOutcome = "success" | "error" | "cancel";
 
@@ -111,13 +111,18 @@ export default function PaymentResultView({
     };
   }, [orderNo]);
 
-  // Fires the client-side Purchase pixel for the one case it CAN fire for:
-  // the browser is actually back on our site with a confirmed order. Fires
-  // once per mount, only once the real order amount is known.
+  // Fires the Purchase pixel + server-side Conversions API event for the
+  // one case a bKash/SSLCommerz order can be tracked from THIS app: the
+  // browser is actually back on our site with a confirmed order. Fires
+  // once per mount, only once the real order amount is known. A customer
+  // who pays and never returns to this page is not covered here — that
+  // requires the payment gateway's own webhook on the real backend, see
+  // docs/tracking-backend-requirements.txt.
   useEffect(() => {
     if (outcome === "success" && order && !tracked.current) {
       tracked.current = true;
-      trackPurchase(order.orderNo, [], order.grandTotal);
+      const eventId = trackPurchase(order.orderNo, [], order.grandTotal);
+      sendServerPurchaseEvent({ eventId, orderId: order.orderNo, value: order.grandTotal });
     }
   }, [outcome, order]);
 

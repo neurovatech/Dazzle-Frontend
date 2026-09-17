@@ -2,10 +2,28 @@ import Script from "next/script";
 import { getSiteSettings } from "@/lib/getSiteSettings";
 
 /**
+ * The admin panel's "Google GTM Code" field currently stores a bare
+ * container ID (e.g. "GTM-NM9TVHT3"), not the full snippet the field name
+ * implies. Running that bare ID as if it were JavaScript (the old behavior)
+ * evaluates it as `GTM - NM9TVHT3`, throwing "ReferenceError: GTM is not
+ * defined" — confirmed live via the CMS API response and browser console.
+ * Detect that shape and build the snippet ourselves instead.
+ */
+function resolveGtmId(cmsCode: string | undefined, fallbackId: string | undefined) {
+  if (cmsCode) {
+    if (/^GTM-[A-Z0-9]+$/i.test(cmsCode)) return cmsCode;
+    const idMatch = cmsCode.match(/GTM-[A-Z0-9]+/i);
+    if (idMatch) return idMatch[0];
+  }
+  return fallbackId;
+}
+
+/**
  * Google Tag Manager — API-driven.
  *
  * Priority order:
- *   1. `googleGTMCode` from site-settings API (full GTM snippet from CMS)
+ *   1. `googleGTMCode` from site-settings API (bare container ID today, or a
+ *      full GTM snippet if the CMS field is ever upgraded)
  *   2. `NEXT_PUBLIC_GTM_ID` env variable (legacy / fallback)
  */
 export default async function GoogleTagManager() {
@@ -13,41 +31,26 @@ export default async function GoogleTagManager() {
 
   const cmsCode = settings.googleGTMCode?.trim();
   const envGtmId = process.env.NEXT_PUBLIC_GTM_ID;
+  const gtmId = resolveGtmId(cmsCode, envGtmId);
 
-  if (cmsCode) {
-    const scriptMatch = cmsCode.match(/<script[^>]*>([\s\S]*?)<\/script>/i);
-    const jsCode = scriptMatch ? scriptMatch[1].trim() : cmsCode;
-    return (
-      <Script id="gtm-base" strategy="afterInteractive">
-        {jsCode}
-      </Script>
-    );
-  }
-
-  if (!envGtmId) return null;
+  if (!gtmId) return null;
 
   return (
     <Script id="gtm-base" strategy="afterInteractive">
-      {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${envGtmId}');`}
+      {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtmId}');`}
     </Script>
   );
 }
 
 /**
  * GTM <noscript> fallback — must be first element inside <body>.
- * Also reads from CMS first, then env fallback.
+ * Resolves the container ID the same way as the main component above.
  */
 export async function GoogleTagManagerNoScript() {
   const settings = await getSiteSettings();
-  const envGtmId = process.env.NEXT_PUBLIC_GTM_ID;
-
-  // Extract GTM container ID from CMS code if possible, else use env
-  let gtmId = envGtmId;
   const cmsCode = settings.googleGTMCode?.trim();
-  if (cmsCode) {
-    const idMatch = cmsCode.match(/GTM-[A-Z0-9]+/);
-    if (idMatch) gtmId = idMatch[0];
-  }
+  const envGtmId = process.env.NEXT_PUBLIC_GTM_ID;
+  const gtmId = resolveGtmId(cmsCode, envGtmId);
 
   if (!gtmId) return null;
 

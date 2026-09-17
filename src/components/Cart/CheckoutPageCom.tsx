@@ -19,7 +19,7 @@ import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { increaseQty, decreaseQty, clearCart, patchMinBookingPrice } from "@/store/slices/cartSlice";
 import { useQuery, useQueries, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { trackInitiateCheckout, trackPurchase, generateEventId } from "@/lib/analytics/pixelEvents";
+import { trackInitiateCheckout, trackPurchase, generateEventId, sendServerPurchaseEvent } from "@/lib/analytics/pixelEvents";
 import { getClickIds, readTrackingCookie } from "@/lib/analytics/clickIds";
 import { calculateCodDetails } from "@/lib/cod-calculator";
 
@@ -1127,6 +1127,12 @@ export default function CheckoutPageCom() {
           purchaseTotal,
           purchaseEventId,
         );
+        sendServerPurchaseEvent({
+          eventId: purchaseEventId,
+          orderId: purchaseOrderNo,
+          value: purchaseTotal,
+          products: cartItems.map((i) => ({ id: i.productUuid || i.id, quantity: i.quantity })),
+        });
         dispatch(clearCart());
         // Profile → Orders caches order-list for 5 minutes (the app's default
         // staleTime) — without this, landing there right after checkout still
