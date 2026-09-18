@@ -94,24 +94,10 @@ function EmiPolicyCom() {
       {!isLoading && pageContent && (
         <Card>
           <article
-            className="
-              prose prose-sm lg:prose-base dark:prose-invert max-w-none
-              [&_table]:w-full [&_table]:border-collapse [&_table]:text-sm
-              [&_th]:border [&_th]:border-gray-200 dark:[&_th]:border-gray-600
-              [&_th]:p-3 [&_th]:bg-gray-100 dark:[&_th]:bg-[#4a453f]
-              [&_th]:text-left [&_th]:text-gray-900 dark:[&_th]:!text-white
-              [&_td]:border [&_td]:border-gray-200 dark:[&_td]:border-gray-600
-              [&_td]:p-3 [&_td]:text-center
-              [&_td]:text-gray-700 dark:[&_td]:!text-gray-200
-              [&_tr:nth-child(even)_td]:bg-gray-50 dark:[&_tr:nth-child(even)_td]:bg-[#403b36]
-              [&_h1]:text-gray-900 dark:[&_h1]:text-white
-              [&_h2]:text-gray-900 dark:[&_h2]:text-white
-              [&_h3]:text-gray-800 dark:[&_h3]:text-gray-200
-              [&_p]:text-gray-700 dark:[&_p]:text-gray-300
-              [&_li]:text-gray-700 dark:[&_li]:text-gray-300
-              [&_strong]:text-gray-900 dark:[&_strong]:text-white
-              [&_table]:block [&_table]:overflow-x-auto
-            "
+            // Single-line on purpose — see ProductInfo.tsx's identical fix
+            // for why a multi-line className string here caused an SSR/CSR
+            // hydration mismatch.
+            className="prose prose-sm lg:prose-base dark:prose-invert max-w-none [&_table]:w-full [&_table]:border-collapse [&_table]:text-sm [&_th]:border [&_th]:border-gray-200 dark:[&_th]:border-gray-600 [&_th]:p-3 [&_th]:bg-gray-100 dark:[&_th]:bg-[#4a453f] [&_th]:text-left [&_th]:text-gray-900 dark:[&_th]:!text-white [&_td]:border [&_td]:border-gray-200 dark:[&_td]:border-gray-600 [&_td]:p-3 [&_td]:text-center [&_td]:text-gray-700 dark:[&_td]:!text-gray-200 [&_tr:nth-child(even)_td]:bg-gray-50 dark:[&_tr:nth-child(even)_td]:bg-[#403b36] [&_h1]:text-gray-900 dark:[&_h1]:text-white [&_h2]:text-gray-900 dark:[&_h2]:text-white [&_h3]:text-gray-800 dark:[&_h3]:text-gray-200 [&_p]:text-gray-700 dark:[&_p]:text-gray-300 [&_li]:text-gray-700 dark:[&_li]:text-gray-300 [&_strong]:text-gray-900 dark:[&_strong]:text-white [&_table]:block [&_table]:overflow-x-auto"
             dangerouslySetInnerHTML={{ __html: pageContent }}
           />
         </Card>

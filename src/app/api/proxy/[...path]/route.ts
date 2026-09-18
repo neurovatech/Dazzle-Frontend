@@ -5,6 +5,30 @@ const BASE_URL = process.env.API_BASE_URL || "https://apix.bigpoint.com.bd";
 // Auth tokens and per-user data flow through here — never cache or statically optimise it.
 export const dynamic = "force-dynamic";
 
+/**
+ * Public catalog reads only — never anything that can carry per-user data.
+ * Combined with the "no Authorization header" check below (belt-and-braces:
+ * even a request to one of these prefixes that DOES carry a token skips
+ * caching), this lets the browser's own HTTP cache absorb repeat requests
+ * from client components that call these endpoints on every page-view/scroll
+ * (categories list, new-arrivals/showcase pagination, quick-view, testimonials)
+ * — confirmed live that the real backend sends no Cache-Control of its own,
+ * so without this those requests always hit the backend fresh.
+ */
+const PUBLIC_CACHEABLE_PREFIXES = [
+  "categories",
+  "products",
+  "showcase-items",
+  "product/",
+  "product-variants/",
+  "testimonials/",
+];
+
+function isPublicCacheableGet(subPath: string, method: string, hasAuth: boolean): boolean {
+  if (method !== "GET" || hasAuth) return false;
+  return PUBLIC_CACHEABLE_PREFIXES.some((prefix) => subPath.startsWith(prefix));
+}
+
 async function handleProxy(
   request: NextRequest,
   context: { params: Promise<{ path: string[] }> }
@@ -89,6 +113,18 @@ async function handleProxy(
     const location = responseHeaders.get("location");
     if (location && location.startsWith(BASE_URL)) {
       responseHeaders.set("location", `/api/proxy${location.slice(BASE_URL.length)}`);
+    }
+
+    // Let the browser's own HTTP cache absorb repeat public-catalog reads —
+    // see isPublicCacheableGet's comment. Only for a genuinely anonymous GET
+    // to a known-public prefix, and only on success; never overrides a
+    // Cache-Control the backend itself already set.
+    if (
+      response.ok &&
+      !responseHeaders.has("cache-control") &&
+      isPublicCacheableGet(subPath, request.method, headers.has("authorization"))
+    ) {
+      responseHeaders.set("cache-control", "public, max-age=60, stale-while-revalidate=300");
     }
 
     // Streamed straight through instead of buffered with arrayBuffer() —

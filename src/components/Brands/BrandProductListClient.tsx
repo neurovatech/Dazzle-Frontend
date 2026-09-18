@@ -232,6 +232,10 @@ export default function BrandProductListClient({
   ].join("|");
 
   useEffect(() => {
+    // Guards against a stale response overwriting a newer one when two
+    // filter changes fire in quick succession and resolve out of order.
+    let cancelled = false;
+
     const fetchPage1 = async () => {
       setIsFirstLoad(true);
       setAllProducts([]);
@@ -239,6 +243,7 @@ export default function BrandProductListClient({
       setHasMore(false);
       try {
         const res = await api.get<ProductListResponse>(`/products?${buildParams(1)}`);
+        if (cancelled) return;
         const items = res?.data ?? [];
 
         // The brand may stock nothing in the category the visitor arrived from
@@ -254,9 +259,9 @@ export default function BrandProductListClient({
         setPage(1);
         setHasMore(1 < (res?.totalPages ?? 1));
       } catch (err) {
-        console.error("[BrandProductListClient] page 1 fetch failed:", err);
+        if (!cancelled) console.error("[BrandProductListClient] page 1 fetch failed:", err);
       } finally {
-        setIsFirstLoad(false);
+        if (!cancelled) setIsFirstLoad(false);
       }
     };
 
@@ -296,6 +301,9 @@ export default function BrandProductListClient({
     } else {
       fetchPage1();
     }
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterKey]);
 

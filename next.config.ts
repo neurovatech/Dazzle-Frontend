@@ -14,7 +14,16 @@ const nextConfig: NextConfig = {
     ],
   },
   images: {
-    formats: ["image/avif", "image/webp"],
+    // AVIF dropped: confirmed live that self-hosted next/image was encoding
+    // every product image variant to AVIF via sharp/libvips on the server —
+    // AVIF costs ~5-10x the CPU/memory of WebP per encode, and that cost is
+    // NATIVE (off the V8 heap), so a JS heap profiler never sees it. Under
+    // real product-catalog traffic (many images x many device-size variants
+    // x 2 qualities, all encoded on first request), this is the most likely
+    // driver of the reported hourly OOM crashes / 502s / 48GB+ RSS growth.
+    // WebP alone still gives modern-format compression with a much cheaper
+    // encode, no visible quality change for visitors.
+    formats: ["image/webp"],
     qualities: [70, 75],
     minimumCacheTTL: 2592000,
     remotePatterns: [

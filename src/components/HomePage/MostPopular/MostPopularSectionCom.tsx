@@ -65,10 +65,7 @@ interface WebBannerResponse {
   data: WebBanner[];
 }
 
-export default async function MostPopularSectionCom() {
-  let products: ProductCardItem[] = [];
-  let banners: WebBanner[] = [];
-
+async function fetchProducts(): Promise<ProductCardItem[]> {
   try {
     const res = await api.get<ShowcaseItemsResponse>(
       "/showcase-items?showcaseSlug=most-popular&limit=5",
@@ -77,7 +74,7 @@ export default async function MostPopularSectionCom() {
 
     const list = Array.isArray(res?.data) ? res.data : [];
 
-    products = sortInStockFirst(list).map((item) => ({
+    return sortInStockFirst(list).map((item) => ({
       uuid: item.productUuid,
       title: item.productName,
       slug: item.productSlug,
@@ -95,18 +92,31 @@ export default async function MostPopularSectionCom() {
     }));
   } catch (error) {
     console.error("Error fetching feature products SSR:", error);
+    return [];
   }
+}
 
+async function fetchBanners(): Promise<WebBanner[]> {
   try {
     const bannerRes = await api.get<WebBannerResponse>(
       "/web-banner/most-popular-below",
       { next: { revalidate: 60 } },
     );
 
-    banners = Array.isArray(bannerRes?.data) ? bannerRes.data : [];
+    return Array.isArray(bannerRes?.data) ? bannerRes.data : [];
   } catch (error) {
     console.error("Error fetching most-popular-below banners SSR:", error);
+    return [];
   }
+}
+
+export default async function MostPopularSectionCom() {
+  // Independent requests — run concurrently instead of paying their
+  // latencies back to back, same as FlashSale/NewArrivals below on this page.
+  const [products, banners] = await Promise.all([
+    fetchProducts(),
+    fetchBanners(),
+  ]);
 
   return (
     <div>

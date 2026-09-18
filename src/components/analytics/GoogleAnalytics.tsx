@@ -39,13 +39,18 @@ export default async function GoogleAnalytics() {
   if (!gaId) return null;
 
   return (
+    // lazyOnload: confirmed live via PageSpeed Insights that gtag/js alone
+    // costs ~184ms of main-thread time competing with the LCP paint under
+    // afterInteractive. Deferring to browser idle time doesn't change what
+    // fires or when a real user's session sees it — only removes it from
+    // the critical rendering path.
     <>
       <Script
         id="ga4-script"
         src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
-        strategy="afterInteractive"
+        strategy="lazyOnload"
       />
-      <Script id="ga4-base" strategy="afterInteractive">
+      <Script id="ga4-base" strategy="lazyOnload">
         {`window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());

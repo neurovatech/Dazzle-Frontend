@@ -59,8 +59,12 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
   const [showDescription, setShowDescription] = useState(false);
   const descriptionRef = useRef<HTMLDivElement>(null);
 
-  const { data: variantApiData, isLoading: isVariantLoading } =
-    useQuery<VariantApiResponse>({
+  const {
+    data: variantApiData,
+    isLoading: isVariantLoading,
+    isError: isVariantError,
+    refetch: refetchVariants,
+  } = useQuery<VariantApiResponse>({
       queryKey: ["product-variants", product?.productUuid],
       queryFn: () =>
         api.get<VariantApiResponse>(
@@ -273,6 +277,28 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
       ? selectedVariant.mrp
       : (product?.regularPrice ?? 0);
 
+  // Shared by StickyPurchaseBar and the variant-selector banner — one
+  // definition of "this exact selection doesn't exist as a real variant".
+  const isSelectionUnavailable =
+    price === 0 ||
+    (!isVariantLoading && variants.length > 0 && selectedVariant === null);
+
+  // Toast fires once per transition into "unavailable" (keyed on selectedAttrs
+  // so re-selecting the same bad combination — e.g. toggling Color back and
+  // forth — doesn't spam a toast on every render, only on an actual change).
+  const lastToastedAttrsRef = useRef<string | null>(null);
+  useEffect(() => {
+    const attrsKey = JSON.stringify(selectedAttrs);
+    if (isSelectionUnavailable) {
+      if (lastToastedAttrsRef.current !== attrsKey) {
+        lastToastedAttrsRef.current = attrsKey;
+        toast.error("Sorry! This variant is not available", { position: "bottom-right" });
+      }
+    } else {
+      lastToastedAttrsRef.current = null;
+    }
+  }, [isSelectionUnavailable, selectedAttrs]);
+
   // Fires once per product viewed — deliberately keyed on productUuid only,
   // not on price/variant, so switching a colour/variant doesn't re-fire
   // ViewContent as if the visitor loaded a new page.
@@ -482,8 +508,13 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
   ];
 
   // ── Variant change handler ─────────────────────────────────────
+  // Selecting an option this product doesn't actually sell in that
+  // combination is allowed on purpose: selectedVariant then resolves to
+  // null below, which is exactly what drives the "not available" message
+  // and disables Buy Now/Add to Cart — silently refusing the click here
+  // instead just left the user stuck on the last valid selection with no
+  // feedback that their tap did nothing.
   const handleVariantChange = (group: string, value: string) => {
-    if (!isOptionAvailable(group, value)) return;
     setSelectedAttrs((prev) => ({ ...prev, [group]: value }));
   };
 
@@ -552,11 +583,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
         price={price > 0 ? price : "0"}
         qty={qty}
         onQtyChange={setQty}
-        isUnavailable={
-          price === 0 ||
-          // Variant API loaded + has variants but none selected yet → block add to cart
-          (!isVariantLoading && variants.length > 0 && selectedVariant === null)
-        }
+        isUnavailable={isSelectionUnavailable}
         isTba={product?.isTba ?? false}
         endOfLife={product?.endOfLife ?? false}
         onExploreFinancing={() => setEmiOpen(true)}
@@ -646,10 +673,37 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
               hasVariants={variants.length > 0}
             />
 
+            {/* Variant selector fetch failed — previously silently vanished
+                with no distinction from "this product genuinely has no
+                variants", leaving the buyer stuck with no price/options and
+                no way to know it was a network error, not a data fact. */}
+            {isVariantError && (
+              <div className="flex items-center justify-between gap-3 border border-red-200 dark:border-red-800/40 bg-red-50 dark:bg-red-950/30 rounded-2xl p-4 mt-4">
+                <p className="text-sm font-semibold text-red-600 dark:text-red-400">
+                  😔 Couldn&apos;t load pricing/options for this product.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => refetchVariants()}
+                  className="shrink-0 text-sm font-bold text-white bg-red-500 hover:bg-red-600 px-4 py-2 rounded-xl transition-colors"
+                >
+                  Retry
+                </button>
+              </div>
+            )}
+
             {/* Variant selector */}
             {(colorVariantGroups.length > 0 ||
               otherVariantGroups.length > 0) && (
               <div className="border border-[#e7e7e7] dark:border-[#4a3f36] bg-[#f7f7f7] dark:bg-[#3e3329] text-black dark:text-white rounded-2xl p-4 mt-4">
+                {isSelectionUnavailable && (
+                  <div className="flex items-center gap-2 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/40 rounded-xl px-4 py-3 mb-4">
+                    <span className="text-red-500 text-lg">😔</span>
+                    <p className="text-sm font-semibold text-red-600 dark:text-red-400">
+                      Sorry! This variant is not available
+                    </p>
+                  </div>
+                )}
                 {colorVariantGroups.length > 0 && (
                   <ProductColorVariants
                     groups={colorVariantGroups}
@@ -718,7 +772,9 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
               <CheckAvailability
                 product={product}
                 selectedVariant={selectedVariant}
-                currentPrice={selectedVariant?.mrp}
+                currentPrice={(selectedVariant && selectedVariant.price > 0
+                    ? selectedVariant.price
+                    : price ?? 0) + careTotalOffer}
                 externalEmiOpen={emiOpen}
                 onExternalEmiClose={() => setEmiOpen(false)}
                 externalAvailabilityOpen={storeAvailabilityOpen}

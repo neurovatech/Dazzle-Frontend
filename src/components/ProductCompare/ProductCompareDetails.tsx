@@ -468,7 +468,13 @@ export default function ProductCompareDetails({ slug }: ProductCompareDetailsPro
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-black flex items-start justify-center px-3 sm:px-4 py-8 sm:py-12">
-      <div className=" flex-col flex-1 items-center max-w-336 mx-auto lg:px-2 sm:px-0 flex">
+      {/* min-w-0 is required on both this flex item and the card below it:
+          without it, a flex child defaults to min-width:auto (its content's
+          natural width) instead of shrinking to fit the viewport, so the
+          wide comparison grid pushed the WHOLE PAGE into horizontal scroll
+          on mobile instead of scrolling only inside the card's own
+          overflow-x-auto wrapper — confirmed live on a 414px viewport. */}
+      <div className="flex-col flex-1 items-center max-w-336 mx-auto lg:px-2 sm:px-0 flex min-w-0 w-full">
         <div className="flex items-center justify-between mb-5 gap-2 flex-wrap">
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Product Compare</h1>
           {slugs.length > 0 && (
@@ -478,7 +484,7 @@ export default function ProductCompareDetails({ slug }: ProductCompareDetailsPro
           )}
         </div>
 
-        <div className="bg-white dark:bg-[#1A1A1A] rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-[#1A1A1A] rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden min-w-0 w-full">
           <div className="w-full overflow-x-auto">
             <div className="grid w-full" style={{ gridTemplateColumns }}>
               {/* Header row — empty label cell, then one card per product, then the add slot */}

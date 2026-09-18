@@ -59,9 +59,10 @@ function CategoriesCard({
 
   // ── Fetch a single page of categories ────────────────────────────────────
   const fetchPage = useCallback(async (pageNum: number): Promise<{ items: CategoryItem[]; totalPages: number }> => {
+    // No cache option: public catalog read, now cacheable via the proxy's
+    // Cache-Control (see src/app/api/proxy/[...path]/route.ts).
     const res = await api.get<CategoriesApiResponse>(
       `/categories?page=${pageNum}&limit=${LIMIT}`,
-      { cache: "no-store" }
     );
     const list = Array.isArray(res) ? res : (res?.data ?? []);
     const items: CategoryItem[] = list.map((c: any) => ({

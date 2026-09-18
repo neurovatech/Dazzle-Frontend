@@ -96,6 +96,9 @@ export default function CampaignDetailClient({
   const [appliedMin, setAppliedMin]     = useState("");
   const [appliedMax, setAppliedMax]     = useState("");
   const [appliedStock, setAppliedStock] = useState<"" | "0" | "1">("");
+  // Bumped by every filter-changing action (Apply/Clear) so a slower, now-stale
+  // Apply response can't land after a later action and overwrite it.
+  const filterRequestRef = useRef(0);
 
   const hasActiveFilter = !!(appliedMin || appliedMax || appliedStock);
   const totalCount = initialData?.totalCount ?? allProducts.length;
@@ -149,6 +152,7 @@ export default function CampaignDetailClient({
 
   // Apply filters — refetch from page 1
   const handleApply = async () => {
+    const requestId = ++filterRequestRef.current;
     setAppliedMin(minPrice);
     setAppliedMax(maxPrice);
     setAppliedStock(stockStatus);
@@ -161,17 +165,21 @@ export default function CampaignDetailClient({
       if (maxPrice)   params.set("maxDiscountedPrice", maxPrice);
       if (stockStatus) params.set("stockStatus", stockStatus);
       const res = await api.get<CampaignDetailResponse>(`campaign/${slug}?${params.toString()}`);
+      if (requestId !== filterRequestRef.current) return;
       setAllProducts(res?.data ?? []);
       setPage(1);
       setHasMore((res?.totalPages ?? 1) > 1);
     } catch (err) {
-      console.error("[CampaignDetailClient] filter fetch error:", err);
+      if (requestId === filterRequestRef.current) {
+        console.error("[CampaignDetailClient] filter fetch error:", err);
+      }
     } finally {
-      setIsFetchingMore(false);
+      if (requestId === filterRequestRef.current) setIsFetchingMore(false);
     }
   };
 
   const handleClear = () => {
+    filterRequestRef.current++;
     setMinPrice(""); setMaxPrice(""); setStockStatus("");
     setAppliedMin(""); setAppliedMax(""); setAppliedStock("");
     setAllProducts(initialData?.data ?? []);

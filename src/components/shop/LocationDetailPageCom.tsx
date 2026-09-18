@@ -38,9 +38,10 @@ const LocationDetailPageCom: React.FC<Props> = ({ store }) => {
     const fetchReviews = async () => {
       setReviewsLoading(true);
       try {
+        // No cache option: public catalog read, now cacheable via the
+        // proxy's Cache-Control (see src/app/api/proxy/[...path]/route.ts).
         const res = await api.get<TestimonialsResponse>(
           `/testimonials/${store.slug}?order=old&page=1&limit=50`,
-          { cache: "no-store" },
         );
 
         setReviews(Array.isArray(res?.data) ? res.data : []);

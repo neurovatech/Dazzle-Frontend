@@ -56,9 +56,10 @@ export default function NewArrivalsClient({
     const nextPage = page + 1;
     setIsFetchingMore(true);
     try {
+      // No cache option: public catalog read, now cacheable via the proxy's
+      // Cache-Control (see src/app/api/proxy/[...path]/route.ts).
       const res = await api.get<ShowcaseItemsResponse>(
         `/products?latest=1&page=${nextPage}&limit=${LIMIT}`,
-        { cache: "no-store" }
       );
       const newItems = res?.data ?? [];
       if (newItems.length > 0) {

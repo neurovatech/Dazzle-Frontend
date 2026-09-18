@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { cache } from 'react';
 import ProductDetails from '@/components/ProductDetails/ProductDetail';
+import ProductLoadFailedBanner from '@/components/ProductDetails/ProductLoadFailedBanner';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { api } from '@/lib/api';
@@ -258,6 +259,7 @@ export default async function ProductDetailsPage({ params }: PageProps) {
           }}
         />
       )}
+      {requestFailed && <ProductLoadFailedBanner />}
       <ProductDetails product={product} />
     </div>
   );

@@ -61,7 +61,13 @@ export default async function FacebookPixel() {
   const jsCode = rawScript ?? buildPixelScript(pixelId);
 
   return (
-    <Script id="fb-pixel-base" strategy="afterInteractive">
+    // lazyOnload: confirmed live via PageSpeed Insights that fbevents.js
+    // alone costs ~117ms of main-thread time competing with the LCP paint
+    // under afterInteractive. Deferring to browser idle time doesn't change
+    // what fires or when a real user's session sees it (idle happens well
+    // before any purchase completes) — only removes it from the critical
+    // rendering path.
+    <Script id="fb-pixel-base" strategy="lazyOnload">
       {jsCode}
     </Script>
   );

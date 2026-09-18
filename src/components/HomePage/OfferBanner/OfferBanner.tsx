@@ -48,7 +48,23 @@ export default async function OfferBanner({ apiEndpoint }: OfferBannerProps) {
             height={200}
             alt={banner?.bannerUUID}
             loading="lazy"
-            className="w-full transition-all duration-500 hover:scale-105 hover:shadow-lg"
+            // Always a 2-column grid at every breakpoint (grid-cols-2 /
+            // md:grid-cols-2), so each banner never renders wider than half
+            // the viewport. Without this, Next.js assumes 100vw and serves
+            // an oversized candidate from its srcset — confirmed live via
+            // PageSpeed Insights (this image alone: 37.5 KiB fetched for a
+            // ~186px-wide slot, ~36 KiB of avoidable transfer).
+            sizes="50vw"
+            // h-auto is required alongside w-full here: without it the
+            // browser has no way to reserve this image's box before the
+            // real file loads (width comes from CSS, height stays at the
+            // fixed 200 attribute), which is exactly what Lighthouse flags
+            // as an "unsized image element" — confirmed live via PageSpeed
+            // Insights as ~99% of this page's entire CLS score (0.271 of
+            // 0.273). w-full + h-auto lets the browser compute the correct
+            // reserved height from the declared 500x200 ratio immediately,
+            // with no visual change once the image has loaded.
+            className="w-full h-auto transition-all duration-500 hover:scale-105 hover:shadow-lg"
           />
         </div>
       ))}

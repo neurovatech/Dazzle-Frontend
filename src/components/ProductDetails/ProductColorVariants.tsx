@@ -59,8 +59,13 @@ const ProductColorVariants: React.FC<ProductColorVariantsProps> = ({
                 return (
                   <button
                     key={opt.value}
-                    onClick={() => !isDisabled && handleSelect(group.label, opt.value)}
-                    disabled={isDisabled}
+                    // Clickable even when "unavailable": selecting it
+                    // surfaces the real "not available" state (via
+                    // selectedVariant resolving to null) instead of silently
+                    // blocking the tap, so Buy Now/Add to Cart correctly
+                    // disable themselves.
+                    onClick={() => handleSelect(group.label, opt.value)}
+                    aria-disabled={isDisabled}
                     title={opt.label}
                     className={`flex flex-col items-center gap-1 transition-all duration-150 rounded-xl border-2 font-medium
                       ${hasImage ? "p-1.5" : "px-3 py-2"}
@@ -68,7 +73,7 @@ const ProductColorVariants: React.FC<ProductColorVariantsProps> = ({
                         isActive
                           ? "border-orange-500 bg-orange-50 shadow-sm"
                           : isDisabled
-                            ? "border-gray-100 bg-gray-50 opacity-40 cursor-not-allowed"
+                            ? "border-gray-100 bg-gray-50 opacity-40"
                             : "border-gray-200 dark:border-[#4a3f36] bg-white dark:bg-[#2a2420] hover:border-gray-400"
                       }
                     `}

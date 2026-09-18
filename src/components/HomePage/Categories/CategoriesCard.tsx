@@ -155,9 +155,12 @@ function CategoriesCard({
     const nextPage = page + 1;
     setIsFetchingMore(true);
     try {
+      // No cache option: this is a public catalog read the proxy now marks
+      // cacheable (Cache-Control: public, max-age=60) — see
+      // src/app/api/proxy/[...path]/route.ts. "no-store" here would have
+      // forced the browser to bypass that cache on every scroll.
       const res = await api.get<CategoriesApiResponse>(
         `/categories?page=${nextPage}&limit=${LIMIT}`,
-        { cache: "no-store" },
       );
       const list = Array.isArray(res) ? res : (res?.data ?? []);
       const newItems: CategoryItem[] = list.map((c: any) => ({

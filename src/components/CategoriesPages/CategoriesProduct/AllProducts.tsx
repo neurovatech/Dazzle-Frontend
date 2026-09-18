@@ -246,24 +246,32 @@ function AllProducts({
     if (prevFilterKeyRef.current !== filterKey) {
       prevFilterKeyRef.current = filterKey;
 
+      // Guards against a stale response overwriting a newer one when two
+      // filter changes fire in quick succession and resolve out of order.
+      let cancelled = false;
+
       const fetchPage1 = async () => {
         setIsFetchingMore(true);
         try {
           const res = await api.get<ProductListResponse>(
             `/products?${buildParams(1)}`
           );
+          if (cancelled) return;
           const items = res?.data ?? [];
           setAllProducts(sortInStockFirst(items));
           setPage(1);
           setHasMore(1 < (res?.totalPages ?? 1));
         } catch (err) {
-          console.error("[AllProducts] client-side page 1 fetch failed:", err);
+          if (!cancelled) console.error("[AllProducts] client-side page 1 fetch failed:", err);
         } finally {
-          setIsFetchingMore(false);
+          if (!cancelled) setIsFetchingMore(false);
         }
       };
 
       fetchPage1();
+      return () => {
+        cancelled = true;
+      };
     }
   }, [filterKey, ssrProducts, ssrTotalPages]);
 

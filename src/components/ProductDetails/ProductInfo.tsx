@@ -82,9 +82,14 @@ export default function ProductInfo({
   const isVariantUnavailable =
     effectivePrice === 0 ||
     (!isVariantLoading && hasVariants && selectedVariant === null);
-  const [viewers, setViewers] = useState(
-    () => Math.floor(Math.random() * 100) + 1,
-  );
+  // Fixed placeholder on first render (server AND client must agree here —
+  // Math.random() in the initializer picked a different number on each side
+  // every time, guaranteeing a hydration mismatch). The real random value is
+  // set client-only, after hydration, in the effect below.
+  const [viewers, setViewers] = useState(50);
+  useEffect(() => {
+    setViewers(Math.floor(Math.random() * 100) + 1);
+  }, []);
   // ── Care plan totals ──────────────────────────────────────────
   const carePlans: CareOption[] = selectedCareOptions ?? [];
   const careTotalOffer = carePlans.reduce(
@@ -610,31 +615,19 @@ export default function ProductInfo({
       {/* Main Pricing block */}
       <div className="lg:flex items-center justify-between gap-4 text-sm bg-[#FAF9F6] dark:bg-[#25221F] p-4 rounded-2xl border border-[#7B4F1E]/20 dark:border-gray-800/80">
         <div className="space-y-1 w-full">
-          {/* ── Variant unavailable message ── */}
+          {/* ── Variant unavailable — message itself now shown above the
+                Color/RAM/Region selector box (see ProductDetail.tsx),
+                right next to the controls that caused it. Quantity still
+                needs to render here so the layout doesn't collapse. ── */}
           {isVariantUnavailable ? (
-            <div className="flex flex-col gap-3">
-              {/* <div className="flex items-center gap-2 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/40 rounded-xl px-4 py-3">
-                <span className="text-red-500 text-lg">😔</span>
-                <p className="text-sm font-semibold text-red-600 dark:text-red-400">
-                  Sorry! This variant is not in stock
-                </p>
-              </div> */}
-              <div className="flex items-center gap-3">
-                <span className="font-bold text-gray-700 dark:text-gray-300">
-                  Quantity:
-                </span>
-                <QuantitySelector
-                  value={qty ?? 1}
-                  onChange={(val) => onQtyChange?.(val)}
-                />
-              </div>
-              {/* <button
-                disabled
-                className="w-full flex items-center justify-center gap-2 bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 font-bold px-6 py-3 rounded-xl cursor-not-allowed opacity-60"
-              >
-                <ShoppingCart size={18} />
-                Add to Cart
-              </button> */}
+            <div className="flex items-center gap-3">
+              <span className="font-bold text-gray-700 dark:text-gray-300">
+                Quantity:
+              </span>
+              <QuantitySelector
+                value={qty ?? 1}
+                onChange={(val) => onQtyChange?.(val)}
+              />
             </div>
           ) : (
             <>
@@ -708,23 +701,14 @@ export default function ProductInfo({
           )}
 
           <article
-            className="
-              prose prose-sm lg:prose-base dark:prose-invert max-w-none
-              text-gray-700 dark:text-white mt-3
-              [&_table]:w-full [&_table]:border-collapse [&_table]:text-sm
-              [&_th]:border [&_th]:border-gray-200 dark:[&_th]:border-gray-600 [&_th]:p-3 [&_th]:bg-gray-100 dark:[&_th]:bg-gray-700 [&_th]:text-left
-              [&_td]:border [&_td]:border-gray-200 dark:[&_td]:border-gray-600 [&_td]:p-3 [&_td]:text-center
-              [&_h1]:text-gray-900 dark:[&_h1]:!text-white
-              [&_h2]:text-gray-900 dark:[&_h2]:!text-white
-              [&_h3]:text-gray-800 dark:[&_h3]:!text-white
-              [&_p]:text-gray-700 dark:[&_p]:!text-white
-              [&_span]:dark:!text-white
-              [&_li]:text-gray-700 dark:[&_li]:!text-white
-              [&_strong]:text-gray-900 dark:[&_strong]:!text-white
-              [&_a]:text-blue-600 dark:[&_a]:!text-white dark:[&_a]:underline
-              dark:[&_*]:!text-white
-              overflow-x-auto
-            "
+            // A multi-line JSX string attribute here previously embedded
+            // whatever literal line-ending bytes were in the source file
+            // (CRLF on this Windows checkout) straight into the className.
+            // When an SSR-rendered chunk and a freshly-recompiled client
+            // chunk disagreed on those bytes, React saw two different
+            // strings and threw a hydration mismatch. A single-line
+            // template literal has no embedded line endings to disagree on.
+            className="prose prose-sm lg:prose-base dark:prose-invert max-w-none text-gray-700 dark:text-white mt-3 [&_table]:w-full [&_table]:border-collapse [&_table]:text-sm [&_th]:border [&_th]:border-gray-200 dark:[&_th]:border-gray-600 [&_th]:p-3 [&_th]:bg-gray-100 dark:[&_th]:bg-gray-700 [&_th]:text-left [&_td]:border [&_td]:border-gray-200 dark:[&_td]:border-gray-600 [&_td]:p-3 [&_td]:text-center [&_h1]:text-gray-900 dark:[&_h1]:!text-white [&_h2]:text-gray-900 dark:[&_h2]:!text-white [&_h3]:text-gray-800 dark:[&_h3]:!text-white [&_p]:text-gray-700 dark:[&_p]:!text-white [&_span]:dark:!text-white [&_li]:text-gray-700 dark:[&_li]:!text-white [&_strong]:text-gray-900 dark:[&_strong]:!text-white [&_a]:text-blue-600 dark:[&_a]:!text-white dark:[&_a]:underline dark:[&_*]:!text-white overflow-x-auto"
             dangerouslySetInnerHTML={{ __html: alldata?.shortDesc ?? "" }}
           />
         </div>
