@@ -286,8 +286,18 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
   // Toast fires once per transition into "unavailable" (keyed on selectedAttrs
   // so re-selecting the same bad combination — e.g. toggling Color back and
   // forth — doesn't spam a toast on every render, only on an actual change).
+  //
+  // Gated on userInteractedRef (set only inside handleVariantChange, i.e. an
+  // actual click): on page load, selectedAttrs starts at {} and only gets
+  // populated by a separate effect once the variant list has loaded — for
+  // one render in between, selectedVariant is transiently null (attrs
+  // incomplete, not genuinely unavailable), which made isSelectionUnavailable
+  // flip true→false within the same tick on every reload and fire a toast
+  // for a "problem" that self-corrected before the user ever saw it.
+  const userInteractedRef = useRef(false);
   const lastToastedAttrsRef = useRef<string | null>(null);
   useEffect(() => {
+    if (!userInteractedRef.current) return;
     const attrsKey = JSON.stringify(selectedAttrs);
     if (isSelectionUnavailable) {
       if (lastToastedAttrsRef.current !== attrsKey) {
@@ -515,6 +525,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
   // instead just left the user stuck on the last valid selection with no
   // feedback that their tap did nothing.
   const handleVariantChange = (group: string, value: string) => {
+    userInteractedRef.current = true;
     setSelectedAttrs((prev) => ({ ...prev, [group]: value }));
   };
 
