@@ -7,9 +7,10 @@ import { readTrackingCookie } from "./clickIds";
  * (Google Tag Manager / GA4), plus the ecommerce event helpers used at every
  * add-to-cart / checkout / purchase call site across the app.
  *
- * Every helper no-ops when the underlying script hasn't loaded (pixel not
- * configured, ad-blocker, or still mid-load) instead of throwing — tracking
- * must never be able to break a real user action like adding to cart.
+ * Every helper is safe when the underlying script is missing (pixel not
+ * configured, ad-blocker) — it never throws, tracking must never break a real
+ * user action like adding to cart. fbTrack additionally queues events raised
+ * while the Pixel is still loading and flushes them once it's ready.
  */
 
 declare global {
@@ -36,17 +37,64 @@ export function pushDataLayer(event: string, params: Record<string, unknown> = {
   window.dataLayer.push({ event, ...params });
 }
 
+interface PendingFbCall {
+  eventName: string;
+  params: Record<string, unknown>;
+  eventId?: string;
+}
+
+// The Pixel base script is injected by next/script AFTER hydration (and, since
+// the performance pass, at browser idle time), while page-level effects such
+// as ViewContent fire DURING hydration — so on a real page load fbq usually
+// doesn't exist yet at the moment the first events are raised. Dropping them
+// (the old behaviour) silently lost ViewContent/AddToCart-on-load events.
+// They're held here and flushed the moment fbq appears.
+const pendingFbCalls: PendingFbCall[] = [];
+const FB_QUEUE_MAX = 50;
+const FB_WAIT_MS = 20_000;
+let fbFlushTimer: ReturnType<typeof setInterval> | null = null;
+
+function sendFbCall(call: PendingFbCall): void {
+  if (call.eventId) {
+    window.fbq?.("track", call.eventName, call.params, { eventID: call.eventId });
+  } else {
+    window.fbq?.("track", call.eventName);
+  }
+}
+
+function startFbFlush(): void {
+  if (fbFlushTimer) return;
+  const startedAt = Date.now();
+  fbFlushTimer = setInterval(() => {
+    const ready = typeof window.fbq === "function";
+    if (ready) pendingFbCalls.splice(0).forEach(sendFbCall);
+    // Stop once delivered, or give up if the Pixel never shows up (not
+    // configured / blocked by an ad-blocker) so the timer can't run forever.
+    if (ready || Date.now() - startedAt > FB_WAIT_MS) {
+      if (!ready) pendingFbCalls.length = 0;
+      if (fbFlushTimer) clearInterval(fbFlushTimer);
+      fbFlushTimer = null;
+    }
+  }, 250);
+}
+
 export function fbTrack(
   eventName: string,
   params: Record<string, unknown> = {},
   eventId?: string,
 ): void {
-  if (typeof window === "undefined" || typeof window.fbq !== "function") return;
-  if (eventId) {
-    window.fbq("track", eventName, params, { eventID: eventId });
-  } else {
-    window.fbq("track", eventName);
+  if (typeof window === "undefined") return;
+  const call: PendingFbCall = { eventName, params, eventId };
+
+  if (typeof window.fbq === "function") {
+    // Anything queued earlier goes out first so events keep their order.
+    if (pendingFbCalls.length > 0) pendingFbCalls.splice(0).forEach(sendFbCall);
+    sendFbCall(call);
+    return;
   }
+
+  if (pendingFbCalls.length < FB_QUEUE_MAX) pendingFbCalls.push(call);
+  startFbFlush();
 }
 
 // ─── Ecommerce event shapes ─────────────────────────────────────────────────
