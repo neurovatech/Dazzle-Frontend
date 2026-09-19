@@ -16,18 +16,25 @@ import { captureClickIds } from "@/lib/analytics/clickIds";
 export default function RouteChangeTracker() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const isFirstRender = useRef(true);
+  // The URL last reported. The old "skip the first run" boolean flipped on
+  // the first effect run, so React StrictMode's dev-only second run of the
+  // same effect looked like a navigation and fired an extra PageView on every
+  // hard load. Comparing URLs instead makes that re-run (same URL) a no-op,
+  // while a genuine navigation (different URL) still fires.
+  const lastPathRef = useRef<string | null>(null);
 
   useEffect(() => {
     captureClickIds();
 
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
-
     const query = searchParams.toString();
     const fullPath = query ? `${pathname}?${query}` : pathname;
+
+    if (lastPathRef.current === null) {
+      lastPathRef.current = fullPath; // initial load — the Pixel base code already sent this PageView
+      return;
+    }
+    if (lastPathRef.current === fullPath) return;
+    lastPathRef.current = fullPath;
 
     fbTrack("PageView");
     pushDataLayer("page_view", { page_path: fullPath });

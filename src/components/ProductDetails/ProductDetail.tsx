@@ -312,8 +312,15 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
   // Fires once per product viewed — deliberately keyed on productUuid only,
   // not on price/variant, so switching a colour/variant doesn't re-fire
   // ViewContent as if the visitor loaded a new page.
+  //
+  // viewedProductRef makes it once even under React StrictMode (dev), which
+  // runs every mount effect twice: a ref survives that simulated remount, so
+  // the second run sees the product was already reported and skips.
+  const viewedProductRef = useRef<string | null>(null);
   useEffect(() => {
     if (!product?.productUuid) return;
+    if (viewedProductRef.current === product.productUuid) return;
+    viewedProductRef.current = product.productUuid;
     trackViewContent({
       id: product.productUuid,
       name: product.productName || "",

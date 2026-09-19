@@ -150,8 +150,12 @@ export default async function RootLayout({
         <link rel="dns-prefetch" href="https://dazzle.sgp1.cdn.digitaloceanspaces.com" />
         <link rel="preconnect" href="https://dzl.sgp1.cdn.digitaloceanspaces.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://dzl.sgp1.cdn.digitaloceanspaces.com" />
-        <GoogleTagManager />
+        {/* FacebookPixel must come BEFORE GoogleTagManager: the GTM container's
+            own Meta tag creates its own (unfiltered) fbq stub if none exists
+            yet, which would bypass the duplicate-event filter in the Pixel
+            snippet. */}
         <FacebookPixel />
+        <GoogleTagManager />
         <GoogleAnalytics />
         <TikTokPixel />
         <TawkToChat />

@@ -372,8 +372,12 @@ export default function CheckoutPageCom() {
 
   // Reaching this page IS the "began checkout" signal — fired once per visit,
   // not re-fired as the reader edits delivery/payment options below.
+  // checkoutTrackedRef keeps it to one event even under React StrictMode (dev),
+  // which runs mount effects twice.
+  const checkoutTrackedRef = useRef(false);
   useEffect(() => {
-    if (cartItems.length === 0) return;
+    if (cartItems.length === 0 || checkoutTrackedRef.current) return;
+    checkoutTrackedRef.current = true;
     trackInitiateCheckout(
       cartItems.map((i) => ({ id: i.productUuid || i.id, name: i.name, price: i.price, quantity: i.quantity, brand: i.brand || undefined })),
       cartItems.reduce((s, i) => s + i.price * i.quantity, 0),

@@ -3,10 +3,55 @@ import { getSiteSettings } from "@/lib/getSiteSettings";
 
 const DEFAULT_PIXEL_ID = "1665562014226088";
 
+/**
+ * Standard events this site already sends itself, directly, with full
+ * parameters and a shared event_id (src/lib/analytics/pixelEvents.ts).
+ *
+ * The GTM container ships its own Meta Pixel tag that ALSO converts every
+ * GA4 dataLayer event (gtm.dom, page_view, view_item, add_to_cart,
+ * begin_checkout, add_payment_info, purchase, search, add_to_wishlist) into a
+ * Meta event — via fbq('trackSingle', ...), with EMPTY custom data and a
+ * different event id, so Meta counts each one twice and can't dedupe them.
+ * The stub below drops only those GTM copies (method "trackSingle", one of
+ * these event names); the site's own fbq('track', ...) calls, and any Meta
+ * event the site does NOT send itself (Lead, CompleteRegistration, custom
+ * events ...), pass through untouched.
+ */
+const SITE_OWNED_EVENTS = [
+  "PageView",
+  "ViewContent",
+  "AddToCart",
+  "AddToWishlist",
+  "InitiateCheckout",
+  "AddPaymentInfo",
+  "Purchase",
+  "Search",
+];
+
+const OWNED_MAP = `{${SITE_OWNED_EVENTS.map((e) => `${e}:1`).join(",")}}`;
+
+// Meta's standard stub, plus one line that drops the GTM duplicates.
+const FILTERED_STUB = `function(){var a=arguments;if(a[0]==='trackSingle'&&(${OWNED_MAP})[a[2]])return;n.callMethod?n.callMethod.apply(n,a):n.queue.push(a)}`;
+
+// Meta's UNMODIFIED stub, exactly as it appears in the snippet Meta hands out.
+const STANDARD_STUB =
+  /function\(\)\{n\.callMethod\?\s*n\.callMethod\.apply\(n,arguments\):n\.queue\.push\(arguments\)\}/;
+
+/**
+ * The CMS "Facebook Base Code" field now holds Meta's full, unmodified
+ * snippet, so building our own script isn't enough — that snippet is what
+ * actually runs. Swap its stub for the filtered one; every other line
+ * (init, PageView, any custom calls marketing adds) is left as-is. If the
+ * stub isn't recognisable (Meta changed the snippet), it runs unmodified
+ * rather than risk breaking the Pixel.
+ */
+function withDuplicateFilter(rawScript: string): string {
+  return STANDARD_STUB.test(rawScript) ? rawScript.replace(STANDARD_STUB, FILTERED_STUB) : rawScript;
+}
+
 function buildPixelScript(pixelId: string): string {
   return `!function(f,b,e,v,n,t,s)
-{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+{if(f.fbq)return;n=f.fbq=${FILTERED_STUB};
 if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
 n.queue=[];t=b.createElement(e);t.async=!0;
 t.src=v;s=b.getElementsByTagName(e)[0];
@@ -58,7 +103,7 @@ export default async function FacebookPixel() {
   const fallbackId = process.env.NEXT_PUBLIC_FB_PIXEL_ID || DEFAULT_PIXEL_ID;
 
   const { pixelId, rawScript } = resolvePixel(cmsCode, fallbackId);
-  const jsCode = rawScript ?? buildPixelScript(pixelId);
+  const jsCode = rawScript ? withDuplicateFilter(rawScript) : buildPixelScript(pixelId);
 
   return (
     // lazyOnload: confirmed live via PageSpeed Insights that fbevents.js
