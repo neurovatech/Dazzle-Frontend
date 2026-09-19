@@ -19,7 +19,15 @@ import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { increaseQty, decreaseQty, clearCart, patchMinBookingPrice } from "@/store/slices/cartSlice";
 import { useQuery, useQueries, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { trackInitiateCheckout, trackPurchase, generateEventId, sendServerPurchaseEvent } from "@/lib/analytics/pixelEvents";
+import {
+  trackInitiateCheckout,
+  trackAddPaymentInfo,
+  trackPurchase,
+  generateEventId,
+  sendServerPurchaseEvent,
+  savePendingPurchase,
+  type TrackedProduct,
+} from "@/lib/analytics/pixelEvents";
 import { getClickIds, readTrackingCookie } from "@/lib/analytics/clickIds";
 import { calculateCodDetails } from "@/lib/cod-calculator";
 
@@ -367,7 +375,7 @@ export default function CheckoutPageCom() {
   useEffect(() => {
     if (cartItems.length === 0) return;
     trackInitiateCheckout(
-      cartItems.map((i) => ({ id: i.productUuid || i.id, name: i.name, price: i.price, quantity: i.quantity })),
+      cartItems.map((i) => ({ id: i.productUuid || i.id, name: i.name, price: i.price, quantity: i.quantity, brand: i.brand || undefined })),
       cartItems.reduce((s, i) => s + i.price * i.quantity, 0),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1008,6 +1016,22 @@ export default function CheckoutPageCom() {
         ...clickIds,
       };
 
+      // One full product list reused by every tracking call below
+      // (AddPaymentInfo now, Purchase later — inline for COD, or parked in
+      // localStorage across the gateway round-trip for bKash/SSLCommerz).
+      const trackedProducts: TrackedProduct[] = cartItems.map((i) => ({
+        id: i.productUuid || i.id,
+        name: i.name,
+        price: i.price,
+        quantity: i.quantity,
+        brand: i.brand || undefined,
+      }));
+      const paymentType =
+        paymentOption === "full_online" || paymentOption === "booking"
+          ? paymentGateway === "ssl" ? "sslcommerz" : "bkash"
+          : paymentOption === "cod" ? "cash_on_delivery" : "pay_at_store";
+      trackAddPaymentInfo(trackedProducts, total, paymentType);
+
       // ── New API: all boolean flags ────────────────────────────────────────
       const invoicePayload: any = {
         usersCommUuid: apiKey,
@@ -1108,12 +1132,24 @@ export default function CheckoutPageCom() {
         if (paymentGateway === "ssl") {
           const r = await api.post<SslPayResponse>("/api/tokenized/v1/sslcommerz-pay", { orderToken }, { headers: { Authorization: authHeader, "X-API-Key": apiKey || "" } });
           const gatewayUrl = r?.gatewayPageURL || r?.GatewayPageURL;
-          if (gatewayUrl) { await saveNewAddressToBook(isPickup); dispatch(clearCart()); window.location.href = gatewayUrl; return; }
+          if (gatewayUrl) {
+            await saveNewAddressToBook(isPickup);
+            savePendingPurchase({ eventId: purchaseEventId, orderNo: resInvoice.data.orderNo, value: resEx.data?.total || total, products: trackedProducts });
+            dispatch(clearCart());
+            window.location.href = gatewayUrl;
+            return;
+          }
           console.error("[Checkout] sslcommerz-pay did not return a gatewayPageURL:", r);
           toast.error(r?.message || r?.failedreason || "SSLCommerz failed.");
         } else {
           const r = await api.post<BkashPayResponse>("/api/tokenized/v1/bkash-pay", { orderToken }, { headers: { Authorization: authHeader, "X-API-Key": apiKey || "" } });
-          if (r?.bkashURL) { await saveNewAddressToBook(isPickup); dispatch(clearCart()); window.location.href = r.bkashURL; return; }
+          if (r?.bkashURL) {
+            await saveNewAddressToBook(isPickup);
+            savePendingPurchase({ eventId: purchaseEventId, orderNo: resInvoice.data.orderNo, value: resEx.data?.total || total, products: trackedProducts });
+            dispatch(clearCart());
+            window.location.href = r.bkashURL;
+            return;
+          }
           console.error("[Checkout] bkash-pay did not return a bkashURL:", r);
           toast.error(r?.message || r?.statusMessage || "bKash failed.");
         }
@@ -1121,12 +1157,7 @@ export default function CheckoutPageCom() {
         await saveNewAddressToBook(isPickup);
         const purchaseTotal = resEx.data?.total || total;
         const purchaseOrderNo = resInvoice.data.orderNo || `DZL-${Date.now()}`;
-        trackPurchase(
-          purchaseOrderNo,
-          cartItems.map((i) => ({ id: i.productUuid || i.id, name: i.name, price: i.price, quantity: i.quantity })),
-          purchaseTotal,
-          purchaseEventId,
-        );
+        trackPurchase(purchaseOrderNo, trackedProducts, purchaseTotal, purchaseEventId);
         sendServerPurchaseEvent({
           eventId: purchaseEventId,
           orderId: purchaseOrderNo,

@@ -211,28 +211,116 @@ export function trackAddToCart(product: TrackedProduct): string {
   return eventId;
 }
 
+/**
+ * Full product detail for the multi-product checkout-funnel events
+ * (InitiateCheckout / AddPaymentInfo / Purchase), so every one of them carries
+ * the same complete picture of the order: ids, per-line quantity AND price,
+ * names, brand, item count and total value.
+ */
+function checkoutFbParams(products: TrackedProduct[], totalValue: number): Record<string, unknown> {
+  const names = products.map((p) => p.name).filter(Boolean).join(", ");
+  return {
+    content_ids: products.map((p) => p.id),
+    contents: products.map((p) => ({ id: p.id, quantity: p.quantity ?? 1, item_price: p.price })),
+    content_type: "product",
+    ...(names ? { content_name: names.slice(0, 250) } : {}),
+    num_items: products.reduce((n, p) => n + (p.quantity ?? 1), 0),
+    value: totalValue,
+    currency: "BDT",
+  };
+}
+
+function checkoutGaItems(products: TrackedProduct[]): Record<string, unknown>[] {
+  return products.map((p) => ({
+    item_id: p.id,
+    item_name: p.name,
+    price: p.price,
+    quantity: p.quantity ?? 1,
+    ...(p.brand ? { item_brand: p.brand } : {}),
+    ...(p.category ? { item_category: p.category } : {}),
+  }));
+}
+
 export function trackInitiateCheckout(products: TrackedProduct[], totalValue: number): string {
   const eventId = generateEventId();
   trackBoth(
     "InitiateCheckout",
     "begin_checkout",
-    {
-      content_ids: products.map((p) => p.id),
-      contents: products.map((p) => ({ id: p.id, quantity: p.quantity ?? 1 })),
-      num_items: products.reduce((n, p) => n + (p.quantity ?? 1), 0),
-      value: totalValue,
-      currency: "BDT",
-    },
+    checkoutFbParams(products, totalValue),
+    { ecommerce: { currency: "BDT", value: totalValue, items: checkoutGaItems(products) } },
+    eventId,
+  );
+  return eventId;
+}
+
+/**
+ * Fired when the buyer commits to a payment method (the moment they confirm
+ * the order), not on every radio toggle. `paymentType` is a readable name such
+ * as "bkash", "sslcommerz", "cash_on_delivery" or "pay_at_store".
+ */
+export function trackAddPaymentInfo(
+  products: TrackedProduct[],
+  totalValue: number,
+  paymentType: string,
+): string {
+  const eventId = generateEventId();
+  trackBoth(
+    "AddPaymentInfo",
+    "add_payment_info",
+    { ...checkoutFbParams(products, totalValue), payment_type: paymentType },
     {
       ecommerce: {
         currency: "BDT",
         value: totalValue,
-        items: products.map((p) => ({ item_id: p.id, item_name: p.name, price: p.price, quantity: p.quantity ?? 1 })),
+        payment_type: paymentType,
+        items: checkoutGaItems(products),
       },
     },
     eventId,
   );
   return eventId;
+}
+
+// ─── Order handed to an external payment gateway ───────────────────────────
+// bKash/SSLCommerz take the browser to another site and back, so by the time
+// the payment-result page loads, the cart is already cleared and the page has
+// no idea what was bought. The order is parked here just before the redirect
+// and read back on return, so the gateway Purchase event carries the same
+// full product detail — and the same event_id sent to the backend — as a COD
+// Purchase does.
+
+const PENDING_PURCHASE_KEY = "dazzle-pending-purchase";
+const PENDING_PURCHASE_TTL_MS = 6 * 60 * 60 * 1000;
+
+export interface PendingPurchase {
+  eventId: string;
+  orderNo?: string;
+  value: number;
+  products: TrackedProduct[];
+}
+
+export function savePendingPurchase(purchase: PendingPurchase): void {
+  try {
+    window.localStorage.setItem(
+      PENDING_PURCHASE_KEY,
+      JSON.stringify({ ...purchase, savedAt: Date.now() }),
+    );
+  } catch {}
+}
+
+/** Returns the parked order (if recent) and clears it so it can only fire once. */
+export function takePendingPurchase(): PendingPurchase | null {
+  try {
+    const raw = window.localStorage.getItem(PENDING_PURCHASE_KEY);
+    if (!raw) return null;
+    window.localStorage.removeItem(PENDING_PURCHASE_KEY);
+    const parsed = JSON.parse(raw) as PendingPurchase & { savedAt?: number };
+    if (!parsed.savedAt || Date.now() - parsed.savedAt > PENDING_PURCHASE_TTL_MS) return null;
+    if (!Array.isArray(parsed.products)) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -249,18 +337,13 @@ export function trackPurchase(
   trackBoth(
     "Purchase",
     "purchase",
-    {
-      content_ids: products.map((p) => p.id),
-      contents: products.map((p) => ({ id: p.id, quantity: p.quantity ?? 1 })),
-      value: totalValue,
-      currency: "BDT",
-    },
+    { ...checkoutFbParams(products, totalValue), order_id: orderId },
     {
       ecommerce: {
         transaction_id: orderId,
         currency: "BDT",
         value: totalValue,
-        items: products.map((p) => ({ item_id: p.id, item_name: p.name, price: p.price, quantity: p.quantity ?? 1 })),
+        items: checkoutGaItems(products),
       },
     },
     eventId,

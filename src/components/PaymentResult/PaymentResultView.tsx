@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image, { type StaticImageData } from "next/image";
 import { CheckCircle2, XCircle, AlertTriangle, Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
-import { trackPurchase, sendServerPurchaseEvent } from "@/lib/analytics/pixelEvents";
+import { trackPurchase, sendServerPurchaseEvent, takePendingPurchase } from "@/lib/analytics/pixelEvents";
 
 export type PaymentOutcome = "success" | "error" | "cancel";
 
@@ -84,6 +84,7 @@ export default function PaymentResultView({
   const [order, setOrder] = useState<OrderSummary | null>(null);
   const [loading, setLoading] = useState(!!orderNo);
   const tracked = useRef(false);
+  const pendingRef = useRef<ReturnType<typeof takePendingPurchase> | undefined>(undefined);
 
   useEffect(() => {
     if (!orderNo) {
@@ -118,13 +119,35 @@ export default function PaymentResultView({
   // who pays and never returns to this page is not covered here — that
   // requires the payment gateway's own webhook on the real backend, see
   // docs/tracking-backend-requirements.txt.
+  //
+  // The order's products/event_id were parked in localStorage by the checkout
+  // page just before the gateway redirect (cart is already cleared by now),
+  // so this Purchase carries the same full product detail — and the same
+  // event_id the backend received — as a COD Purchase. Waits for the
+  // order-tracking lookup to settle rather than requiring it to succeed:
+  // bKash's redirect carries a raw token that /order-tracking can't resolve,
+  // and previously that meant no Purchase was ever tracked for bKash at all.
   useEffect(() => {
-    if (outcome === "success" && order && !tracked.current) {
-      tracked.current = true;
-      const eventId = trackPurchase(order.orderNo, [], order.grandTotal);
-      sendServerPurchaseEvent({ eventId, orderId: order.orderNo, value: order.grandTotal });
-    }
-  }, [outcome, order]);
+    if (outcome !== "success" || loading || tracked.current) return;
+
+    // Read (and clear) the parked order exactly once; held in a ref so an
+    // early return below can't lose it before the effect runs again.
+    if (pendingRef.current === undefined) pendingRef.current = takePendingPurchase();
+    const pending = pendingRef.current;
+    const value = order?.grandTotal ?? (verifiedAmount ? Number(verifiedAmount) : pending?.value ?? 0);
+    const orderId = order?.orderNo ?? pending?.orderNo ?? orderNo ?? trxID;
+    if (!orderId || !(value > 0)) return;
+
+    tracked.current = true;
+    const products = pending?.products ?? [];
+    const eventId = trackPurchase(orderId, products, value, pending?.eventId);
+    sendServerPurchaseEvent({
+      eventId,
+      orderId,
+      value,
+      products: products.map((p) => ({ id: p.id, quantity: p.quantity })),
+    });
+  }, [outcome, order, loading, verifiedAmount, orderNo, trxID]);
 
   const { Icon, color, bg, title, desc } = OUTCOME_CONFIG[outcome];
 
