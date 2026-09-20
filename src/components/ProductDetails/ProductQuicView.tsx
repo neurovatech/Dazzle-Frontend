@@ -189,28 +189,32 @@ function ProductQuicView({
   // Derived image list based on selected color variant
   const colorOptions = colorGroupName ? (groupOptions[colorGroupName] ?? []) : [];
 
+  // One image per colour: the colour's variant thumbnail, else the base image
+  // at the same position (base thumbnails come back in colour order).
+  const imageForColor = (val: string, idx: number): string => {
+    if (!colorGroupName) return "";
+    const match = variants.find(
+      (v) => v.attributes[colorGroupName] === val && v.thumbnailUrl,
+    );
+    return match?.thumbnailUrl || baseImages[idx] || "";
+  };
+
+  // The strip used to list EVERY variant thumbnail of the selected colour.
+  // Each variant (storage x region) carries its own separately-uploaded copy
+  // of the same colour photo — e.g. 14 different URLs, all showing the same
+  // Deep Blue phone — so the strip was a row of identical pictures. It now
+  // mirrors the main product page's gallery: one picture per colour, then
+  // whatever extra product shots the product has (not already used above).
   const images: string[] = useMemo(() => {
-    if (!colorGroupName || !selectedAttrs[colorGroupName]) return baseImages;
+    if (!colorGroupName || colorOptions.length === 0) return baseImages;
 
-    const selectedColorVal = selectedAttrs[colorGroupName];
-
-    // ① Try variant thumbnailUrl (preferred)
-    const colorVariantImages = variants
-      .filter((v) => v.attributes[colorGroupName] === selectedColorVal && v.thumbnailUrl)
-      .map((v) => v.thumbnailUrl);
-    const uniqueColorImages = [...new Set(colorVariantImages)];
-    if (uniqueColorImages.length > 0) return uniqueColorImages;
-
-    // ② Fallback: baseImages[colorIndex] — each color maps to its index position
-    const colorIdx = colorOptions.indexOf(selectedColorVal);
-    if (colorIdx >= 0 && baseImages[colorIdx]) {
-      const primary = baseImages[colorIdx];
-      const rest = baseImages.filter((_, i) => i !== colorIdx);
-      return [primary, ...rest];
-    }
-
-    return baseImages;
-  }, [colorGroupName, selectedAttrs, variants, baseImages, colorOptions]);
+    const perColor = [
+      ...new Set(colorOptions.map((val, idx) => imageForColor(val, idx)).filter(Boolean)),
+    ];
+    const claimed = new Set(perColor);
+    return [...perColor, ...baseImages.filter((u) => !claimed.has(u))];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [colorGroupName, variants, baseImages, colorOptions]);
 
   // Color & Text variant groups
   const colorVariantGroups = colorGroupName
@@ -248,10 +252,17 @@ function ProductQuicView({
   const handleVariantChange = (group: string, value: string) => {
     if (!isOptionAvailable(group, value)) return;
     setSelectedAttrs((prev) => ({ ...prev, [group]: value }));
-    if (group.toLowerCase() === "color") {
-      setSelectedImage(0);
-    }
   };
+
+  // Keep the main image on the selected colour's own picture — covers both the
+  // auto-selected first colour on open and every later colour change.
+  const selectedColorVal = colorGroupName ? selectedAttrs[colorGroupName] : undefined;
+  useEffect(() => {
+    if (!selectedColorVal) return;
+    const at = images.indexOf(imageForColor(selectedColorVal, colorOptions.indexOf(selectedColorVal)));
+    setSelectedImage(at >= 0 ? at : 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedColorVal]);
 
   // Derived display values
   const displayTitle = selectedVariant?.name
