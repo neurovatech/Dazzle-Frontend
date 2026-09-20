@@ -2,7 +2,7 @@
 import { Provider } from "react-redux";
 import { store } from "@/store/store";
 
-import SessionExpiredModal from "@/components/Auth/SessionExpiredModal";
+import SessionExpiredHandler from "@/components/Auth/SessionExpiredHandler";
 
 // ─── Redux Provider ───────────────────────────────────────────────────────────
 // Wraps the app with the Redux store.
@@ -26,7 +26,7 @@ export default function ReduxProvider({
   return (
     <Provider store={store}>
       {children}
-      <SessionExpiredModal />
+      <SessionExpiredHandler />
     </Provider>
   );
 }

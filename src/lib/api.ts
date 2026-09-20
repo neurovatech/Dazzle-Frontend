@@ -17,8 +17,8 @@ interface FetchOptions extends RequestInit {
    * Skips the auto-refresh-then-"session expired" flow on a 401. For calls
    * that are ALLOWED to run without a valid session (e.g. a payment-gateway
    * return page visited by a guest) — without this, a plain "not logged in"
-   * 401 forces the site-wide SessionExpiredModal ("log out and log in
-   * again") onto a page that has nothing to do with an actual expired
+   * 401 forces the site-wide SessionExpiredHandler (automatic logout +
+   * redirect to login) onto a page that has nothing to do with an actual expired
    * session, purely because it happens to call a tokenized endpoint.
    */
   suppressSessionExpired?: boolean;
@@ -82,11 +82,11 @@ function getAuthCredentials(): { apiKey: string | null; token: string | null } {
 
 /**
  * `suppressEvent` skips only the "session-expired" DOM event (the one
- * SessionExpiredModal listens for) — credentials are still cleared and the
+ * SessionExpiredHandler listens for) — credentials are still cleared and the
  * user is still logged out in Redux either way. Used by pages a guest can
  * legitimately land on (payment-gateway returns) so an expired/missing
- * session doesn't force the intrusive "log out and log in again" modal onto
- * someone just checking whether their payment went through.
+ * session doesn't force a redirect to the login page onto someone just
+ * checking whether their payment went through.
  */
 function triggerSessionExpired(suppressEvent = false) {
   if (typeof window !== "undefined") {
