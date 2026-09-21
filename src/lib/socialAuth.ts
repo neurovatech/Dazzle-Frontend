@@ -1,29 +1,19 @@
 "use client";
 
 /**
- * Client-side token acquisition for "Continue with Google/Facebook".
+ * Client-side pieces of "Continue with Google/Facebook".
  *
- * Deliberately NOT a redirect-based OAuth flow (no /auth/google/callback
- * route needed on our side). Both providers' own JS SDKs open their popup,
- * hand back a token in-browser, and we send just that token to our backend
- * in one POST — the backend verifies it directly with Google/Facebook's own
- * servers rather than us running a redirect dance. See
- * docs/social-login-backend-requirements.txt for the backend half.
+ * Google uses the redirect (authorization-code) flow the backend's
+ * POST /login-with-google expects: the browser is sent to Google, Google
+ * sends it back to /signin-google?code=..., and that page hands the code (plus
+ * the exact redirectUri that was used) to our backend, which does the token
+ * exchange with Google server-side.
+ *
+ * Facebook still uses its JS SDK popup and returns an access token.
  */
 
 declare global {
   interface Window {
-    google?: {
-      accounts: {
-        oauth2: {
-          initTokenClient(config: {
-            client_id: string;
-            scope: string;
-            callback: (response: { access_token?: string; error?: string }) => void;
-          }): { requestAccessToken: () => void };
-        };
-      };
-    };
     FB?: {
       init: (config: { appId: string; cookie?: boolean; xfbml?: boolean; version: string }) => void;
       login: (
@@ -38,7 +28,12 @@ declare global {
   }
 }
 
-const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+// A Google OAuth client ID is a public identifier (it's visible in the
+// consent-screen URL of every login), not a secret — the client SECRET stays
+// on the backend. The env var lets a different environment use another client.
+const GOOGLE_CLIENT_ID =
+  process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
+  "1025049945726-ubns6jb2f4i9rua47svg69u0kvq0an84.apps.googleusercontent.com";
 const FACEBOOK_APP_ID = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID;
 
 function loadScript(src: string, id: string): Promise<void> {
@@ -66,32 +61,68 @@ export function isFacebookLoginConfigured(): boolean {
   return !!FACEBOOK_APP_ID;
 }
 
-/** Opens Google's consent popup and resolves with an OAuth access_token. */
-export async function getGoogleAccessToken(): Promise<string> {
-  if (!GOOGLE_CLIENT_ID) {
-    throw new Error("Google login is not configured (NEXT_PUBLIC_GOOGLE_CLIENT_ID is missing).");
+// ─── Google (redirect / authorization-code flow) ───────────────────────────
+
+const GOOGLE_OAUTH_SESSION_KEY = "dazzle-google-oauth";
+
+export interface GoogleOAuthSession {
+  /** Random value echoed back by Google; must match on return (CSRF guard). */
+  state: string;
+  /** The exact redirect_uri sent to Google — the backend must reuse it verbatim. */
+  redirectUri: string;
+  /** Where to send the visitor once they're logged in. */
+  returnTo: string;
+}
+
+/**
+ * Only same-site paths are allowed as a post-login destination — anything
+ * else (an absolute URL, or "//evil.com") would turn login into an open
+ * redirect.
+ */
+function safeReturnPath(path: string | null | undefined): string {
+  return path && path.startsWith("/") && !path.startsWith("//") ? path : "/";
+}
+
+function googleRedirectUri(): string {
+  return (
+    process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URI || `${window.location.origin}/signin-google`
+  );
+}
+
+/** Sends the browser to Google's consent screen. Does not return normally. */
+export function startGoogleLogin(returnTo?: string | null): void {
+  const state =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const redirectUri = googleRedirectUri();
+
+  const session: GoogleOAuthSession = { state, redirectUri, returnTo: safeReturnPath(returnTo) };
+  sessionStorage.setItem(GOOGLE_OAUTH_SESSION_KEY, JSON.stringify(session));
+
+  const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
+  url.searchParams.set("client_id", GOOGLE_CLIENT_ID);
+  url.searchParams.set("redirect_uri", redirectUri);
+  url.searchParams.set("response_type", "code");
+  url.searchParams.set("scope", "openid email profile");
+  url.searchParams.set("state", state);
+  url.searchParams.set("prompt", "select_account");
+  window.location.assign(url.toString());
+}
+
+/** Reads and clears the pending Google login (a code can only be used once). */
+export function takeGoogleOAuthSession(): GoogleOAuthSession | null {
+  try {
+    const raw = sessionStorage.getItem(GOOGLE_OAUTH_SESSION_KEY);
+    sessionStorage.removeItem(GOOGLE_OAUTH_SESSION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as GoogleOAuthSession;
+    return parsed.state && parsed.redirectUri
+      ? { ...parsed, returnTo: safeReturnPath(parsed.returnTo) }
+      : null;
+  } catch {
+    return null;
   }
-
-  await loadScript("https://accounts.google.com/gsi/client", "google-identity-script");
-
-  return new Promise((resolve, reject) => {
-    if (!window.google) {
-      reject(new Error("Google Identity Services failed to load."));
-      return;
-    }
-    const client = window.google.accounts.oauth2.initTokenClient({
-      client_id: GOOGLE_CLIENT_ID,
-      scope: "openid email profile",
-      callback: (response) => {
-        if (response.error || !response.access_token) {
-          reject(new Error(response.error || "Google login was cancelled."));
-          return;
-        }
-        resolve(response.access_token);
-      },
-    });
-    client.requestAccessToken();
-  });
 }
 
 /** Opens Facebook's login popup and resolves with an access_token. */

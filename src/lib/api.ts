@@ -266,6 +266,7 @@ export async function apiFetch<T = unknown>(
       const isAuthEndpoint =
         endpoint.includes("refresh-jwt-token") ||
         endpoint.includes("login-with-mobile") ||
+        endpoint.includes("login-with-google") ||
         endpoint.includes("login-mobile-otp") ||
         endpoint.includes("user-login");
 

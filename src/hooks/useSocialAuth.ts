@@ -7,7 +7,7 @@ import { api } from "@/lib/api";
 import { useAppDispatch } from "@/store/hooks";
 import { setCredentials } from "@/store/slices/authSlice";
 import {
-  getGoogleAccessToken,
+  startGoogleLogin,
   getFacebookAccessToken,
   isGoogleLoginConfigured,
   isFacebookLoginConfigured,
@@ -32,14 +32,29 @@ interface SocialLoginResponse {
     emailVerifiedToken?: string;
     createdAt?: string;
     "x-api-key": string;
-    Authorization: string;
+    Authorization?: string;
     authorization?: string;
+    /** Set by /login-with-google: true when this sign-in just created the account. */
+    isNewUser?: boolean;
   };
   errors?: string[];
 }
 
-function socialLogin(payload: { provider: "google" | "facebook"; accessToken: string }) {
+function socialLogin(payload: { provider: "facebook"; accessToken: string }) {
   return api.post<SocialLoginResponse>("social-login", payload);
+}
+
+/**
+ * Exchanges the authorization code Google sent to /signin-google. The backend
+ * requires the X-Requested-With header and the SAME redirectUri that was used
+ * to start the login. `login-with-google` is listed as an auth endpoint in
+ * api.ts, so a wrong/expired code (401) is reported as a login error instead
+ * of being mistaken for an expired session.
+ */
+function googleLogin(payload: { code: string; redirectUri: string }) {
+  return api.post<SocialLoginResponse>("login-with-google", payload, {
+    headers: { "X-Requested-With": "XmlHttpRequest" },
+  });
 }
 
 export function useSocialAuth() {
@@ -47,14 +62,19 @@ export function useSocialAuth() {
   const dispatch = useAppDispatch();
   const [loadingProvider, setLoadingProvider] = useState<"google" | "facebook" | null>(null);
 
-  const finishLogin = (response: SocialLoginResponse) => {
+  /** Returns true once the visitor is logged in and being redirected. */
+  const finishLogin = (response: SocialLoginResponse, redirectTo?: string): boolean => {
     if (response.statusCode !== 200 || response.status !== "success" || !response.data) {
       toast.error(response.message || "Social login failed.");
-      return;
+      return false;
     }
 
     const authHeader = response.data.Authorization || response.data.authorization || "";
     const apiKey = response.data["x-api-key"];
+    if (!authHeader || !apiKey) {
+      toast.error("Login failed: the server didn't return a session.");
+      return false;
+    }
 
     if (typeof window !== "undefined") {
       localStorage.setItem("token", authHeader);
@@ -75,9 +95,11 @@ export function useSocialAuth() {
       }),
     );
 
-    toast.success("Logged in successfully!");
-    const redirectUrl = new URLSearchParams(window.location.search).get("redirect");
-    router.push(redirectUrl || "/");
+    toast.success(response.data.isNewUser ? "Account created. Welcome!" : "Logged in successfully!");
+    const redirectUrl =
+      redirectTo ?? new URLSearchParams(window.location.search).get("redirect");
+    router.push(redirectUrl && redirectUrl.startsWith("/") && !redirectUrl.startsWith("//") ? redirectUrl : "/");
+    return true;
   };
 
   const handleError = (err: unknown) => {
@@ -94,20 +116,33 @@ export function useSocialAuth() {
     }
   };
 
-  const loginWithGoogle = async () => {
+  /** Step 1: send the browser to Google. The spinner stays until the page unloads. */
+  const loginWithGoogle = () => {
     if (!isGoogleLoginConfigured()) {
       toast.error("Google login isn't configured yet.");
       return;
     }
     setLoadingProvider("google");
     try {
-      const accessToken = await getGoogleAccessToken();
-      const response = await socialLogin({ provider: "google", accessToken });
-      finishLogin(response);
+      startGoogleLogin(new URLSearchParams(window.location.search).get("redirect"));
+    } catch (err) {
+      setLoadingProvider(null);
+      handleError(err);
+    }
+  };
+
+  /** Step 2 (on /signin-google): trade the code Google returned for a session. */
+  const completeGoogleLogin = async (
+    code: string,
+    redirectUri: string,
+    returnTo: string,
+  ): Promise<boolean> => {
+    try {
+      const response = await googleLogin({ code, redirectUri });
+      return finishLogin(response, returnTo);
     } catch (err) {
       handleError(err);
-    } finally {
-      setLoadingProvider(null);
+      return false;
     }
   };
 
@@ -130,6 +165,7 @@ export function useSocialAuth() {
 
   return {
     loginWithGoogle,
+    completeGoogleLogin,
     loginWithFacebook,
     isGoogleLoading: loadingProvider === "google",
     isFacebookLoading: loadingProvider === "facebook",

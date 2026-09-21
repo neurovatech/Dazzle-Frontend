@@ -99,13 +99,13 @@ const SocialLogin: React.FC = () => {
         >
           {isGoogleLoading ? <Spinner /> : <GoogleIcon />}
         </SocialButton>
-        <SocialButton
+        {/* <SocialButton
           onClick={loginWithFacebook}
           disabled={anyLoading}
           ariaLabel="Continue with Facebook"
         >
           {isFacebookLoading ? <Spinner /> : <FacebookIcon />}
-        </SocialButton>
+        </SocialButton> */}
       </div>
     </div>
   );
