@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 
 import { forgetPasswordSchema, ForgetPasswordSchema } from "@/schemas/forgetPasswordSchema";
 import TextInput from "@/components/ui/TextInput";
-import { FacebookIcon, GoogleIcon, InstragramIcon } from "@/icon";
+import SocialLogin from "@/components/Auth/SocialLogin";
 import { api } from "@/lib/api";
 
 // ─── API Types ────────────────────────────────────────────────────────────────
@@ -132,31 +132,7 @@ const ForgetPassword: React.FC = () => {
         </Link>
       </p>
 
-      <div className="flex flex-col items-center gap-4">
-        <p className="text-sm text-gray-500 dark:text-white">Or</p>
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            className="w-12 h-12 rounded-xl bg-[#222222DB] hover:bg-[#222222DB]/70 flex items-center justify-center transition-colors duration-200 shadow-sm"
-          >
-            <GoogleIcon />
-          </button>
-
-          <button
-            type="button"
-            className="w-12 h-12 rounded-xl bg-[#222222DB] hover:bg-[#222222DB]/70 flex items-center justify-center transition-colors duration-200 shadow-sm"
-          >
-            <FacebookIcon />
-          </button>
-
-          {/* <button
-            type="button"
-            className="w-12 h-12 rounded-xl bg-[#222222DB] hover:bg-[#222222DB]/70 flex items-center justify-center transition-colors duration-200 shadow-sm"
-          >
-            <InstragramIcon />
-          </button> */}
-        </div>
-      </div>
+      <SocialLogin />
     </form>
   );
 };

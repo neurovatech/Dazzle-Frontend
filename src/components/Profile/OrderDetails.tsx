@@ -517,13 +517,17 @@ function PayDueModal({
               <button
                 onClick={handlePay}
                 disabled={loading || parsedAmount <= 0}
-                className="w-full py-3.5 bg-[#7A4500] hover:bg-[#5a3300] text-white rounded-2xl font-bold text-base transition disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full py-3.5  bg-[#7A4500] hover:bg-[#5a3300] text-white rounded-2xl font-bold text-base transition disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <><Loader2 size={16} className="animate-spin" /> Processing...</>
                 ) : (
-                  <><Wallet size={16} /> Confirm & Pay ৳{parsedAmount > 0 ? fmtBDT(parsedAmount) : "0"}</>
+                  <>
+                  {/* <Wallet size={16} />  */}
+                  Confirm & Pay ৳{parsedAmount > 0 ? fmtBDT(parsedAmount) : "0"} <span className="text-[#f00]"> (Under Construction)</span> </>
                 )}
+
+                
               </button>
             </div>
           )}
@@ -897,7 +901,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order, onBack }) => {
                   </p>
                 )}
               </div>
-              {/* <button
+              <button
                 onClick={handlePayDue}
                 disabled={!canPayDue}
                 className={`shrink-0 px-4 py-2 rounded-xl text-sm font-bold transition ${
@@ -907,7 +911,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order, onBack }) => {
                 }`}
               >
                 Pay Due Amount
-              </button> */}
+              </button>
             </div>
           </div>
         </div>
