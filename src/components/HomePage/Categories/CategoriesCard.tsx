@@ -276,8 +276,14 @@ function CategoriesCard({
 
             return (
               <SwiperSlide key={item.uuid}>
+                {/* prefetch={false}: this grid renders every category as its
+                    own Link, and Next.js's viewport-triggered default
+                    prefetch fired one RSC-payload request per tile the
+                    instant they scrolled near-view — see GlobalProductCard's
+                    identical fix for the measured impact on staging. */}
                 <Link
                   href={href}
+                  prefetch={false}
                   className="w-full flex flex-col items-center gap-2 group focus:outline-none cursor-pointer pb-2"
                 >
                   {/* Category Box Container */}

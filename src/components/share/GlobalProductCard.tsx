@@ -105,7 +105,18 @@ const ProductCard: React.FC<ProductCardProps> = ({
         )}
 
         {/* Product Image */}
-        <Link href={href} className="block px-2 pt-2">
+        {/* prefetch={false} on every Link in this card: it's rendered dozens
+            of times per homepage/category/listing page, and Next.js's
+            default viewport-triggered prefetch fires an RSC-payload request
+            PER link the moment it scrolls near-view — with this many cards
+            on one page that was 100+ concurrent prefetch requests on first
+            load (confirmed live on staging via the Network panel), which
+            saturates the main thread and was the dominant cause of the
+            site's failing INP/TBT and of homepage sections taking many
+            seconds to reveal their real content at all. A normal click
+            still navigates instantly via a regular fetch; only the
+            speculative pre-navigation fetch is skipped. */}
+        <Link href={href} prefetch={false} className="block px-2 pt-2">
           <div className="relative flex justify-center items-center h-42 transition-all duration-500">
             <div className="relative z-10 w-full h-full transition-transform duration-500 group-hover:scale-105">
               <ProductCardImage
@@ -149,6 +160,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
             />
             <Link
               href={isendOfLifeDisabled ? "#" : compareHref}
+              prefetch={false}
               onClick={(e) => {
                 if (isendOfLifeDisabled) e.preventDefault();
               }}
@@ -170,7 +182,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
       <div className="p-2 sm:p-3 lg:p-4 flex flex-col flex-1 bg-[#F5F5F5] rounded-tl-2xl rounded-b-2xl">
         {/* Title & Stock */}
         <div className="text-left">
-          <Link href={href}>
+          <Link href={href} prefetch={false}>
             <h3
               className="font-semibold dark:text-[#222] text-[15px] leading-[1.5] line-clamp-2 h-11 text-[#575757] max-[640px]:text-[13px]"
               title={title}
@@ -205,6 +217,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
       
           <Link
             href={href}
+            prefetch={false}
             className="flex items-baseline gap-2 sm:gap-2 mb-2 sm:mb-4"
           >
             {showTbaFlag && !endOfLife ? (
