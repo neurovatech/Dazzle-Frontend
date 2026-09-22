@@ -290,6 +290,8 @@ const ProfileSideNav: React.FC<ProfileSideNavProps> = ({
   const profileData = useAppSelector((state) => state.profile.data);
   const isFetched = useAppSelector((state) => state.profile.isFetched);
 
+  console.log(profileData, "profileDataprofileDataprofileDataprofileData")
+
   const initials = profileData?.userFullName
     ? getInitials(profileData.userFullName)
     : null;

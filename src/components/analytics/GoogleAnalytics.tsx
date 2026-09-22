@@ -1,5 +1,5 @@
-import Script from "next/script";
 import { getSiteSettings } from "@/lib/getSiteSettings";
+import DeferredScript from "./DeferredScript";
 
 /**
  * The admin panel's "Google Analytics Code" field currently stores a bare
@@ -39,23 +39,23 @@ export default async function GoogleAnalytics() {
   if (!gaId) return null;
 
   return (
-    // lazyOnload: confirmed live via PageSpeed Insights that gtag/js alone
-    // costs ~184ms of main-thread time competing with the LCP paint under
-    // afterInteractive. Deferring to browser idle time doesn't change what
-    // fires or when a real user's session sees it — only removes it from
-    // the critical rendering path.
+    // DeferredScript: confirmed live via Lighthouse (staging) that gtag/js
+    // alone costs ~184ms of main-thread time, and together with GTM + Meta
+    // + TikTok under lazyOnload still landed inside the window a real
+    // visitor's first tap/scroll happens (competing with INP, not just LCP).
+    // Gating on interaction (see DeferredScript) doesn't change what fires
+    // or when a real session sees it — only moves the cost later.
     <>
-      <Script
+      <DeferredScript
         id="ga4-script"
         src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
-        strategy="lazyOnload"
       />
-      <Script id="ga4-base" strategy="lazyOnload">
+      <DeferredScript id="ga4-base">
         {`window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
 gtag('config', '${gaId}');`}
-      </Script>
+      </DeferredScript>
     </>
   );
 }

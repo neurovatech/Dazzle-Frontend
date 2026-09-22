@@ -1,5 +1,5 @@
-import Script from "next/script";
 import { getSiteSettings } from "@/lib/getSiteSettings";
+import DeferredScript from "./DeferredScript";
 
 /**
  * The admin panel's "Google GTM Code" field currently stores a bare
@@ -36,15 +36,17 @@ export default async function GoogleTagManager() {
   if (!gtmId) return null;
 
   return (
-    // lazyOnload: confirmed live via PageSpeed Insights that gtm.js alone
-    // costs ~58ms of main-thread time competing with the LCP paint under
-    // afterInteractive. dataLayer.push() calls made before GTM finishes
-    // loading are already queued (that's the whole point of the dataLayer
-    // array), so deferring the script itself doesn't drop any events —
-    // it only removes it from the critical rendering path.
-    <Script id="gtm-base" strategy="lazyOnload">
+    // DeferredScript: confirmed live via Lighthouse (staging) that gtm.js
+    // alone costs ~295 KiB / 434ms of main-thread time — GTM was the single
+    // heaviest third party, and under lazyOnload still landed inside the
+    // window a real visitor's first tap/scroll happens (competing with INP).
+    // dataLayer.push() calls made before GTM finishes loading are already
+    // queued (that's the whole point of the dataLayer array), so gating on
+    // interaction (see DeferredScript) doesn't drop any events — it only
+    // moves the cost later.
+    <DeferredScript id="gtm-base">
       {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtmId}');`}
-    </Script>
+    </DeferredScript>
   );
 }
 

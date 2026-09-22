@@ -1,5 +1,5 @@
-import Script from "next/script";
 import { getSiteSettings } from "@/lib/getSiteSettings";
+import DeferredScript from "./DeferredScript";
 
 const DEFAULT_PIXEL_ID = "1665562014226088";
 
@@ -106,15 +106,15 @@ export default async function FacebookPixel() {
   const jsCode = rawScript ? withDuplicateFilter(rawScript) : buildPixelScript(pixelId);
 
   return (
-    // lazyOnload: confirmed live via PageSpeed Insights that fbevents.js
-    // alone costs ~117ms of main-thread time competing with the LCP paint
-    // under afterInteractive. Deferring to browser idle time doesn't change
-    // what fires or when a real user's session sees it (idle happens well
-    // before any purchase completes) — only removes it from the critical
-    // rendering path.
-    <Script id="fb-pixel-base" strategy="lazyOnload">
+    // DeferredScript: confirmed live via Lighthouse (staging) that
+    // fbevents.js alone costs ~117ms of main-thread time, and together with
+    // GTM + TikTok under lazyOnload still landed inside the window a real
+    // visitor's first tap/scroll happens — competing with INP, not just LCP.
+    // Gating on interaction (see DeferredScript) doesn't change what fires
+    // or drop any event, it only moves the cost later.
+    <DeferredScript id="fb-pixel-base">
       {jsCode}
-    </Script>
+    </DeferredScript>
   );
 }
 

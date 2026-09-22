@@ -45,7 +45,11 @@ export interface SendPurchaseEventInput {
  * break the checkout/order-result flow that calls this.
  */
 export async function sendPurchaseEvent(input: SendPurchaseEventInput): Promise<void> {
-  const accessToken = process.env.META_CAPI_ACCESS_TOKEN || "EAAKEX1h0S8cBShDgrJr7GaTZCvjLpJIUlV2FbbC85en81EnsO46H1wuCoAZAfyBxzNak6ohOf9a2r9yInHZBuR99ecrtkM0QdXLJSbUQElEAa3aJqK07wRks23CNM8p88DKF9bXuSubcZBZA8ZChBX0NQp8g1Lf8ccv7hf4KIMb0cyQZBnETy7Ji8jNZAr5W2JY7PgZDZD";
+  // Server-only secret — must come from the environment (.env.local locally,
+  // the host's env config in production), NEVER hardcoded here. A previous
+  // version of this file had the real token as a fallback literal, which got
+  // committed to git — see the token-rotation note in .env.local.
+  const accessToken = process.env.META_CAPI_ACCESS_TOKEN;
   const pixelId = process.env.META_CAPI_PIXEL_ID || process.env.NEXT_PUBLIC_FB_PIXEL_ID;
   if (!accessToken || !pixelId) return;
 
