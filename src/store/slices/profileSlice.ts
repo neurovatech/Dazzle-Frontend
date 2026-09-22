@@ -11,6 +11,10 @@ export interface UserProfileData {
   updatedAt: string;
   userAvatar: string | null;
   purchasePoint: number;
+  /** GET /user-profile returns this too, alongside the update response —
+   * it just wasn't in this type yet, so the Edit Profile modal never had a
+   * value to prefill its Address field with. */
+  address?: string;
 }
 
 export interface ProfileState {

@@ -62,6 +62,8 @@ export function useUserProfile() {
         },
       });
       if (!res.success) throw new Error(res.message);
+
+      console.log("[useUserProfile] Fetched profile data:", res.data);
       return res.data;
     },
   });
@@ -93,6 +95,7 @@ export function useUpdateUserInfo() {
   const dispatch = useAppDispatch();
   const token = useAppSelector((state) => state.auth.token);
   const apiKey = useAppSelector((state) => state.auth.apiKey);
+  const currentProfile = useAppSelector((state) => state.profile.data);
 
   const authHeader = token
     ? token.startsWith("Bearer ") ? token : `Bearer ${token}`
@@ -119,9 +122,22 @@ export function useUpdateUserInfo() {
     },
     onSuccess: (res) => {
       if (res.data) {
-        dispatch(setProfileData(res.data));
+        // Merge, don't replace: `user-info-alter`'s response only echoes
+        // back a subset of fields (confirmed live — `address` was missing
+        // from it), and dispatching that subset as the WHOLE profile wiped
+        // every field it didn't include, including the address the user
+        // just typed in. Merging over the existing profile keeps anything
+        // the response is silent about instead of blanking it.
+        dispatch(setProfileData({ ...currentProfile, ...res.data }));
       }
-      queryClient.invalidateQueries({ queryKey: ["userProfile"] });
+      // `useUserProfile`'s query is `enabled: !isFetched`, so once the
+      // profile has loaded once, invalidateQueries alone never triggers an
+      // actual refetch (TanStack Query only auto-refetches enabled
+      // queries) — the merge above was standing in as the only source of
+      // truth forever after the first save. refetchQueries bypasses that
+      // and pulls the real, complete record back from the server to
+      // reconcile with, regardless of `enabled`.
+      queryClient.refetchQueries({ queryKey: ["userProfile"] });
     },
   });
 }

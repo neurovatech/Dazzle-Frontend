@@ -52,7 +52,7 @@ const EditProfileModal: React.FC<EditModalProps> = ({ onClose }) => {
 
   const [fullName, setFullName] = useState(profileData?.userFullName ?? "");
   const [mobile, setMobile] = useState(profileData?.mobile ?? "");
-  const [address, setAddress] = useState("");
+  const [address, setAddress] = useState(profileData?.address ?? "");
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(
     profileData?.userAvatar ?? null,
@@ -63,6 +63,7 @@ const EditProfileModal: React.FC<EditModalProps> = ({ onClose }) => {
     if (profileData) {
       setFullName((prev) => prev || profileData.userFullName);
       setMobile((prev) => prev || profileData.mobile);
+      setAddress((prev) => prev || profileData.address || "");
       setAvatarPreview(profileData.userAvatar ?? null);
     }
   }, [profileData]);
@@ -290,7 +291,6 @@ const ProfileSideNav: React.FC<ProfileSideNavProps> = ({
   const profileData = useAppSelector((state) => state.profile.data);
   const isFetched = useAppSelector((state) => state.profile.isFetched);
 
-  console.log(profileData, "profileDataprofileDataprofileDataprofileData")
 
   const initials = profileData?.userFullName
     ? getInitials(profileData.userFullName)
