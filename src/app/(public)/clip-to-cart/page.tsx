@@ -29,6 +29,11 @@ async function getInitialClips(): Promise<{
       next: { revalidate: 60 },
     } as RequestInit);
 
+
+    console.log("res", api.get<ClipApiResponse>(clipEndpoint(1), {
+      next: { revalidate: 60 },
+    } as RequestInit));
+
     return {
       products: (res?.data ?? []).map(mapClipProduct),
       totalPages: res?.totalPages ?? 1,

@@ -390,26 +390,85 @@ const METHODS: PaymentMethodItem[] = [
   // { value: "card",       label: "Card / Bank",  icon: "💳"    },
 ];
 
+// ─── Pay Due Amount — API types ───────────────────────────────────────────────
+interface BkashPayPartialResponse {
+  statusCode: number;
+  status: string;
+  paymentID?: string;
+  bkashURL?: string;
+  message?: string;
+  /** bKash gateway-error responses put the real reason here, not `message`. */
+  failedreason?: string;
+  errors?: string[];
+}
+interface SslPayPartialResponse {
+  statusCode: number;
+  status: string;
+  /** The real backend response uses lowercase-g `gatewayPageURL`, not
+   * SSLCommerz's own `GatewayPageURL` — same field-name quirk already
+   * confirmed live for the full-checkout sslcommerz-pay call, see
+   * CheckoutPageCom.tsx's SslPayResponse. */
+  gatewayPageURL?: string;
+  GatewayPageURL?: string;
+  message?: string;
+  failedreason?: string;
+  errors?: string[];
+}
+
 function PayDueModal({
-  orderNo, dueAmount, onClose,
-}: { orderNo: string; dueAmount: number; onClose: () => void }) {
+  orderNo, orderToken, dueAmount, authHeader, apiKey, onClose,
+}: {
+  orderNo: string;
+  orderToken: string;
+  dueAmount: number;
+  authHeader: string;
+  apiKey: string;
+  onClose: () => void;
+}) {
   const [amount, setAmount] = useState(String(dueAmount));
   const [method, setMethod] = useState<PaymentMethod>("bkash");
   const [loading, setLoading] = useState(false);
-  const [done, setDone] = useState(false);
   const [error, setError] = useState("");
 
   const parsedAmount = parseFloat(amount) || 0;
 
   const handlePay = async () => {
+    if (!orderToken) { setError("Order token not found."); return; }
     if (parsedAmount <= 0) { setError("Please enter a valid amount."); return; }
     if (parsedAmount > dueAmount) { setError(`Amount cannot exceed due amount ৳${fmtBDT(dueAmount)}.`); return; }
     setError("");
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1200)); // placeholder for real API call
-    setLoading(false);
-    setDone(true);
-    toast.success("Payment recorded successfully!");
+
+    const headers = { Authorization: authHeader, "X-API-Key": apiKey || "" };
+    const payload = { orderToken, payAmount: parsedAmount };
+
+    try {
+      if (method === "sslcommerz") {
+        const r = await api.post<SslPayPartialResponse>("/api/tokenized/v1/sslcommerz-pay-partial", payload, { headers });
+        const gatewayUrl = r?.gatewayPageURL || r?.GatewayPageURL;
+        if (gatewayUrl) {
+          window.location.href = gatewayUrl;
+          return;
+        }
+        setError(r?.errors?.join(", ") || r?.failedreason || r?.message || "SSLCommerz payment failed.");
+      } else {
+        const r = await api.post<BkashPayPartialResponse>("/api/tokenized/v1/bkash-pay-partial", payload, { headers });
+        if (r?.bkashURL) {
+          window.location.href = r.bkashURL;
+          return;
+        }
+        setError(r?.errors?.join(", ") || r?.failedreason || r?.message || "bKash payment failed.");
+      }
+    } catch (err: unknown) {
+      try {
+        const parsed = JSON.parse((err as Error).message);
+        setError(parsed?.errors?.join(", ") || parsed?.message || "Failed to start payment. Please try again.");
+      } catch {
+        setError("Failed to start payment. Please try again.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -433,20 +492,6 @@ function PayDueModal({
         </div>
 
         <div className="px-6 py-5">
-          {done ? (
-            <div className="text-center py-4">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle size={32} className="text-green-600" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Payment Submitted!</h3>
-              <p className="text-base text-gray-500 dark:text-gray-400 mb-5">
-                Your payment of <strong>৳{fmtBDT(parsedAmount)}</strong> via <strong>{METHODS.find(m => m.value === method)?.label}</strong> has been recorded.
-              </p>
-              <button onClick={onClose} className="w-full py-3 bg-[#7A4500] text-white rounded-2xl font-semibold hover:bg-[#5a3300] transition">
-                Done
-              </button>
-            </div>
-          ) : (
             <div className="space-y-5">
               {/* Order summary */}
               <div className="bg-amber-50 dark:bg-amber-950/20 rounded-2xl p-4 space-y-2">
@@ -520,17 +565,15 @@ function PayDueModal({
                 className="w-full py-3.5  bg-[#7A4500] hover:bg-[#5a3300] text-white rounded-2xl font-bold text-base transition disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {loading ? (
-                  <><Loader2 size={16} className="animate-spin" /> Processing...</>
+                  <><Loader2 size={16} className="animate-spin" /> Redirecting...</>
                 ) : (
                   <>
-                  {/* <Wallet size={16} />  */}
-                  Confirm & Pay ৳{parsedAmount > 0 ? fmtBDT(parsedAmount) : "0"} <span className="text-[#f00]"> (Under Construction)</span> </>
+                    <Wallet size={16} />
+                    Confirm & Pay ৳{parsedAmount > 0 ? fmtBDT(parsedAmount) : "0"}
+                  </>
                 )}
-
-                
               </button>
             </div>
-          )}
         </div>
       </div>
     </div>
@@ -1397,11 +1440,20 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order, onBack }) => {
         />
       )}
 
-      {/* ── Pay Due Amount Modal ── */}
+      {/* ── Pay Due Amount Modal ──
+          orderToken falls back to orderNo the same way handleCancelOrder
+          above does for cancel-order — order-list's own `orderToken` field
+          is optional and often missing, and without this fallback an order
+          loaded without a token silently refused to call
+          bkash/sslcommerz-pay-partial at all: "Order token not found" and
+          no redirect to the gateway. ── */}
       {showPayDueModal && (
         <PayDueModal
           orderNo={trackingData?.orderNo || orderNo}
+          orderToken={rawOrder?.orderToken || orderNo}
           dueAmount={dueAmount}
+          authHeader={authHeader}
+          apiKey={apiKey || ""}
           onClose={() => setShowPayDueModal(false)}
         />
       )}
