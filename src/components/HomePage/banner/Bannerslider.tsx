@@ -118,8 +118,14 @@ function Bannerslider({
         <div>
           <MarqueeBulletinBar />
         </div>
+        {/* mb-[30px] on both branches: once mounted, the real Swiper below
+            renders an (empty) `.swiper-scrollbar` whose `margin-top: 30px`
+            (globals.css) sits under the slides — this pre-mount fallback
+            lacked it, so everything under the hero (Categories, Flash Sale…)
+            jumped down 30px the moment hydration swapped the two in. Same
+            30px is reserved here so the swap doesn't move anything. */}
         {firstSlide?.imageUrl ? (
-          <div className="relative w-full h-60 max-[450px]:h-50 sm:h-75 md:h-110 rounded-[15px] overflow-hidden block">
+          <div className="relative w-full h-60 max-[450px]:h-50 sm:h-75 md:h-110 rounded-[15px] overflow-hidden block mb-[30px]">
             <BannerImage
               src={firstSlide.imageUrl}
               alt={firstSlide.title || "Hero Banner"}
@@ -128,7 +134,7 @@ function Bannerslider({
             />
           </div>
         ) : (
-          <div className="w-full h-55 sm:h-75 md:h-121 animate-pulse bg-gray-200 dark:bg-zinc-800 rounded-[15px]" />
+          <div className="w-full h-55 sm:h-75 md:h-121 animate-pulse bg-gray-200 dark:bg-zinc-800 rounded-[15px] mb-[30px]" />
         )}
       </div>
     );

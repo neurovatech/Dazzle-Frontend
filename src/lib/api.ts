@@ -178,6 +178,13 @@ async function refreshJwtToken(suppressEvent = false): Promise<{ apiKey: string;
   return refreshPromise;
 }
 
+/** True when the caller asked Next to cache this fetch (ISR / data cache). */
+function isCachedRequest(options: { cache?: RequestCache; next?: { revalidate?: number | false } }): boolean {
+  if (options.cache === "force-cache") return true;
+  const revalidate = options.next?.revalidate;
+  return typeof revalidate === "number" && revalidate > 0;
+}
+
 /**
  * API Fetch Helper
  * Works on both server-side (SSR/Server Components) and client-side (Client Components).
@@ -226,7 +233,15 @@ export async function apiFetch<T = unknown>(
 
   if (activeToken) {
     headers.set("Authorization", activeToken.startsWith("Bearer ") ? activeToken : `Bearer ${activeToken}`);
-  } else if (typeof window === "undefined") {
+  } else if (typeof window === "undefined" && !isCachedRequest(customOptions)) {
+    // Skipped for cached/ISR requests (`next: { revalidate }` / force-cache).
+    // Calling cookies() opts the ENTIRE route out of static rendering, so
+    // every page whose server components fetch public data this way was
+    // rendered fresh per request — slow TTFB, no CDN cache, and Suspense
+    // skeletons streamed in and swapped (layout shift). Public, cached data
+    // must not carry a per-visitor token anyway (it would be cached per
+    // token). Nothing in the app even sets a `token` cookie (auth lives in
+    // localStorage/Redux), so nothing that worked before stops working.
     try {
       const { cookies } = await import("next/headers");
       const cookieStore = await cookies();

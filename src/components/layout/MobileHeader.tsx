@@ -114,6 +114,7 @@ export default function MobileHeader({ categories }: Props) {
 
           <Link
             href="/cart"
+            aria-label="Cart"
             className="relative w-10 h-10 rounded-xl bg-white dark:bg-[#2e2b28] flex items-center justify-center"
           >
             <span className={bounce ? "animate-bounce" : ""}>

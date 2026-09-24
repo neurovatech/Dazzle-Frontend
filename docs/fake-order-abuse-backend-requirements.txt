@@ -1,0 +1,109 @@
+DAZZLE — FAKE / ABUSIVE ORDER CREATION: BACKEND REQUIREMENTS
+================================================================
+For: Backend developer
+From: Frontend
+Context: A user/script is creating large numbers of fake orders directly
+         against the order-creation API, bypassing the checkout UI
+         entirely. This CANNOT be fixed on the frontend — see section 1 —
+         and needs server-side validation + rate limiting.
+
+
+1. WHY THIS ISN'T A FRONTEND BUG
+----------------------------------------------------------------
+Evidence from the live admin panel (Pending Orders, 2026-09-23):
+
+    DECO-BEEE1-03781   23/09/26 12:46 PM   Md Sirazam Munir
+    DECO-3BDBF-03780   23/09/26 12:46 PM   Md Sirazam Munir
+    DECO-A8D2B-03779   23/09/26 12:46 PM   Md Sirazam Munir
+    DECO-A8644-03778   23/09/26 12:46 PM   Md Sirazam Munir
+    DECO-7BA6E-03777   23/09/26 12:46 PM   Md Sirazam Munir
+    DECO-2D8F1-03776   23/09/26 12:46 PM   Md Sirazam Munir
+    DECO-F60D4-03775   23/09/26 12:45 PM   Md Sirazam Munir
+    DECO-A2474-03774   23/09/26 12:45 PM   Md Sirazam Munir
+    DECO-39D74-03773   23/09/26 12:45 PM   Md Sirazam Munir
+    DECO-BED1F-03772   23/09/26 12:45 PM   Md Sirazam Munir
+    DECO-F3886-03771   23/09/26 12:44 PM   Md Sirazam Munir
+    ...
+
+  - Same customer (mdsirazammunir@gmail.com, 01701079379) on every order.
+  - Same exact remark text on every order ("phone e na pele kindly
+    01701079379 number e whatsapp e knock diben").
+  - Every order shows Sub: 0.00 / Paid: 0.00 / Due: 0.00 — a real cart can
+    never total ৳0; this alone should be rejected server-side.
+  - ~11 orders inside 2 minutes — no human checks out that fast, repeatedly,
+    with an empty cart.
+
+This is a valid, logged-in user calling POST /api/tokenized/v1/*
+(create-order-invoice / execute-order, etc.) directly with their own
+Authorization + X-API-Key headers — copied out of their browser's own
+Network tab, which is completely normal/expected browser behavior, not a
+security leak the frontend introduced. Any authenticated API is visible
+this way to its own logged-in user; the frontend cannot hide it, and no
+UI-side change (disabling a button, hiding a header, obfuscating a
+request) stops a script that never touches the UI in the first place.
+
+The frontend's checkout page already disables its "Confirm Order" button
+while a request is in flight (see src/components/Cart/CheckoutPageCom.tsx,
+`isSubmitting`) — that only prevents an accidental double-click inside our
+own UI. It has zero effect on a script hitting the API directly, which is
+what's happening here.
+
+The fix has to live where the request is actually accepted: the backend.
+
+
+2. REQUIRED: REJECT ZERO-VALUE ORDERS
+----------------------------------------------------------------
+Every fake order above has grand total ৳0. A real checkout can never
+produce this (see cod-calculator / checkout flow — there's always at
+least one priced product line). Add a server-side check:
+
+    If ComerzOrder.GrandTotal <= 0 (or subTotal <= 0 with no valid product
+    lines), reject the order-creation request outright (400).
+
+This alone stops THIS specific pattern immediately regardless of who's
+sending it or how fast.
+
+
+3. REQUIRED: RATE LIMIT ORDER CREATION
+----------------------------------------------------------------
+Per logged-in user (usersCommUuid / token) AND per phone number AND per
+IP, whichever is stricter:
+
+    - Max N orders per rolling hour (suggest N=3-5 for a normal retail
+      customer — adjust based on real traffic patterns).
+    - Reject over the limit with 429 and a clear message
+      ("Too many orders — please contact support.").
+
+This is the general-purpose fix for ANY future repeat of this pattern,
+not just this one customer.
+
+
+4. RECOMMENDED: FLAG / AUTO-HOLD SUSPICIOUS BURSTS
+----------------------------------------------------------------
+Even under the rate limit, orders from the same phone/email placed less
+than ~10 seconds apart, or with byte-identical remarks/address across
+multiple orders in a short window, are a strong abuse signal. Consider
+auto-setting these to a "Needs Review" status instead of "Pending" so
+they don't reach fulfillment/dispatch queues without a human check.
+
+
+5. RECOMMENDED: A REAL BOT/ABUSE CHECK ON CHECKOUT
+----------------------------------------------------------------
+If this kind of scripted abuse keeps recurring, the frontend can add
+Cloudflare Turnstile (or reCAPTCHA) to the checkout form — but this ONLY
+works if the backend verifies the token server-side on every
+create-order-invoice call (a token the frontend merely collects and never
+checks is worthless against a direct API script, which simply omits it
+unless the backend requires and validates it).
+
+If you want to go this route: tell the frontend team and we'll add the
+Turnstile widget + send its token in the request body; you'd verify it
+against Cloudflare's siteverify endpoint before accepting the order.
+
+
+6. IMMEDIATE, NO-CODE ACTION (today)
+----------------------------------------------------------------
+In the admin panel: cancel/delete the fake orders listed above, and if
+there's a customer-block feature, block 01701079379 /
+mdsirazammunir@gmail.com. This doesn't prevent a recurrence — sections 2-3
+do — but it stops these specific junk orders from reaching fulfillment.

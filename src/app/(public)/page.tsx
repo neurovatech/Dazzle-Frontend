@@ -17,22 +17,16 @@ import BannerSlider, {
   SlideItem,
 } from "@/components/HomePage/banner/Bannerslider";
 import CategoriesSection from "@/components/HomePage/Categories/CategoriesSection";
-import CategoriesSkeleton from "@/components/HomePage/Categories/CategoriesSkeleton";
 import GlobalCountdown from "@/components/share/GlobalCountdown";
-import { Suspense } from "react";
-import {
-  FlashSaleSkeleton,
-  OfferBannerSkeleton,
-  TrendingNowSkeleton,
-  ClipToCartSkeleton,
-  ShopBrandSkeleton,
-  NewArrivalsSkeleton,
-  MostPopularSkeleton,
-  HotDealSkeleton,
-  FeatureProductsSkeleton,
-  LatestBlogSkeleton,
-} from "@/components/share/Skeletons";
 import { api } from "@/lib/api";
+
+// NOTE: the sections below used to be wrapped in <Suspense fallback={<…Skeleton/>}>.
+// This page is statically generated (ISR, revalidate 60), and with those
+// boundaries the prerendered HTML still shipped every skeleton in place and the
+// real content at the very END of the document, swapped in by 13 `$RC` scripts
+// — on slow mobile that swap moved everything below it (the homepage's
+// ~0.27 CLS in Lighthouse). Without the boundaries the finished sections are
+// simply in the HTML in order, so nothing has to be swapped or moved.
 
 // ── Below-the-fold: lazy (dynamic) imports ──
 // (Newest/Popular/Olds were removed: they were only referenced by a `tabsData`
@@ -221,13 +215,13 @@ export default async function Home() {
 
       {/* Categories  */}
       <div className="flex flex-col flex-1 max-w-355 mx-auto">
-        <Suspense fallback={<CategoriesSkeleton />}>
+        <>
           <CategoriesSection />
-        </Suspense>
+        </>
       </div>
 
       {/* Flash Sale */}
-      <Suspense fallback={<FlashSaleSkeleton />}>
+      <>
         <div className="bg-[#6D3F0E]">
           <div className="flex flex-col flex-1 py-6 sm:py-8 md:py-10 mt-6 sm:mt-8 md:mt-10! max-w-355 mx-auto">
             <div className="px-3 sm:px-4 md:px-6 lg:px-12 pb-4">
@@ -240,19 +234,19 @@ export default async function Home() {
             </div>
           </div>
         </div>
-      </Suspense>
+      </>
 
 
       {/* Offer Banner */}
-      <Suspense fallback={<OfferBannerSkeleton />}>
+      <>
         <div className="flex flex-col flex-1 max-w-355 mx-auto md:px-12.5 px-4">
           <OfferBanner apiEndpoint="flash-sale-below" />
         </div>
-      </Suspense>
+      </>
 
 
       {/* Trending Now */}
-      <Suspense fallback={<TrendingNowSkeleton />}>
+      <>
         <div className="flex flex-col flex-1 max-w-355 mx-auto">
           <div className="px-3 sm:px-4 md:px-6 lg:px-12">
             <div className="flex items-center gap-4 sm:gap-6 pb-4 sm:pb-5 justify-between pt-4 sm:pt-6">
@@ -270,37 +264,37 @@ export default async function Home() {
             <TrendingNowSectionCom />
           </div>
         </div>
-      </Suspense>
+      </>
 
 
       {/* Clip To Cart */}
-      <Suspense fallback={<ClipToCartSkeleton />}>
+      <>
         <div className="bg-[#E9CCAE] dark:bg-[#6d3f0e]">
           <div className="flex flex-col flex-1 py-6 sm:py-8 md:py-10 mt-6 sm:mt-8 md:mt-10! max-w-355 mx-auto px-3 sm:px-4 md:px-6 lg:px-12">
             <ClipToCartSectionCom />
           </div>
         </div>
-      </Suspense>
+      </>
 
 
       {/* Offer Banner */}
-      <Suspense fallback={<OfferBannerSkeleton />}>
+      <>
         <div className="flex flex-col flex-1 max-w-355 mx-auto md:px-12.5 px-4">
           <OfferBannerFlash apiEndpoint="clip-to-cart-below" />
         </div>
-      </Suspense>
+      </>
 
 
       {/* Shop By Brand */}
-      <Suspense fallback={<ShopBrandSkeleton />}>
+      <>
         <div className="flex flex-col flex-1 max-w-355 mx-auto">
           <ShopBrandSectionCom />
         </div>
-      </Suspense>
+      </>
 
 
       {/* New Arrivals */}
-      <Suspense fallback={<NewArrivalsSkeleton />}>
+      <>
         <div>
           <div className="bg-[#6D3F0E]">
             <div className="flex flex-col flex-1 py-6 sm:py-8 md:py-10 mt-6 sm:mt-8 md:mt-10! max-w-355 mx-auto">
@@ -322,27 +316,27 @@ export default async function Home() {
             </div>
           </div>
         </div>
-      </Suspense>
+      </>
 
 
       {/* Offer Banner */}
-      <Suspense fallback={<OfferBannerSkeleton />}>
+      <>
         <div className="flex flex-col flex-1 max-w-355 mx-auto md:px-12.5 px-4">
           <OfferBanner apiEndpoint="new-arrivals-below" />
         </div>
-      </Suspense>
+      </>
 
 
       {/* Most Popular */}
-      <Suspense fallback={<MostPopularSkeleton />}>
+      <>
         <div className="flex flex-col flex-1 max-w-355 mx-auto md:px-12.5">
           <MostPopularSectionCom />
         </div>
-      </Suspense>
+      </>
 
 
       {/* Hot Deal of the Day */}
-      <Suspense fallback={<HotDealSkeleton />}>
+      <>
         <div className="bg-[#222222]">
           <div className="flex flex-col flex-1 py-6 sm:py-8 md:py-10 mt-6 sm:mt-8 md:mt-10! max-w-355 mx-auto">
             <div className="px-3 sm:px-4 md:px-6 lg:px-12">
@@ -362,22 +356,22 @@ export default async function Home() {
             </div>
           </div>
         </div>
-      </Suspense>
+      </>
 
 
       {/* Feature Products */}
-      <Suspense fallback={<FeatureProductsSkeleton />}>
+      <>
         <div className="flex flex-col flex-1 max-w-355 mx-auto md:px-12.5 mt-10!">
           <FeatureProducts />
         </div>
-      </Suspense>
+      </>
 
 
-      <Suspense fallback={<LatestBlogSkeleton />}>
+      <>
         <div className="">
           <LatestBlog />
         </div>
-      </Suspense>
+      </>
 
     </div>
   );

@@ -113,7 +113,14 @@ function CategoryImage({
         alt={alt}
         fill
         sizes="(max-width: 768px) 25vw, 12vw"
-        priority={priority}
+        // eager, NOT priority: `priority` also injects a <link rel=preload
+        // fetchpriority=high> per image. With 8 category tiles + ~35 product
+        // images all doing that, the homepage carried 41 high-priority image
+        // preloads competing with the hero (the actual LCP element) for
+        // bandwidth on slow mobile. Eager still loads them right away (so
+        // Swiper's transform-positioned slides never get stuck lazy) — it
+        // just no longer outranks the hero.
+        loading={priority ? "eager" : "lazy"}
         className={`object-contain p-2 transition-all duration-300 group-hover:scale-105 ${
           loaded ? "opacity-100" : "opacity-0"
         }`}

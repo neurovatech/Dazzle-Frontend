@@ -63,7 +63,6 @@ export function useUserProfile() {
       });
       if (!res.success) throw new Error(res.message);
 
-      console.log("[useUserProfile] Fetched profile data:", res.data);
       return res.data;
     },
   });

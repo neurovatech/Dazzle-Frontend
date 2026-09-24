@@ -129,11 +129,19 @@ export default function TrendingNowSectionCom() {
       {/* ── Content ── */}
       <div className="min-h-[200px]">
         {isLoading && products.length === 0 ? (
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-4">
+          // Sized to match the real carousel that replaces it (measured live:
+          // one row of cards — 2 across below lg, 5 at lg — ~372px tall on
+          // mobile / ~404px from md, plus the ~30px Swiper scrollbar gap).
+          // It used to be five 220px boxes wrapping to THREE rows on mobile
+          // (~676px) which collapsed to ~402px once the data arrived, pushing
+          // every section below it up — a large layout shift on every load.
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-4 pb-[30px]">
             {Array.from({ length: 5 }).map((_, i) => (
               <div
                 key={i}
-                className="animate-pulse bg-gray-100 dark:bg-[#2e2b28] rounded-2xl h-[220px]"
+                className={`animate-pulse bg-gray-100 dark:bg-[#2e2b28] rounded-2xl h-[372px] md:h-[404px] ${
+                  i >= 2 ? "hidden lg:block" : ""
+                }`}
               />
             ))}
           </div>

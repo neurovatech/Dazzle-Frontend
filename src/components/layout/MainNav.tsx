@@ -98,6 +98,7 @@ export default function MainNav() {
             <div className="flex gap-3 mr-12.5">
               <Link
                 href={isLoggedIn ? "/profile" : "/auth/login"}
+                aria-label={isLoggedIn ? "My profile" : "Log in"}
                 className="w-13.5 h-13.5 rounded-xl bg-background flex items-center justify-center overflow-hidden hover:bg-background/95 transition-all duration-200"
               >
                 {isLoggedIn ? (
@@ -119,6 +120,7 @@ export default function MainNav() {
 
               <Link
                 href="/cart"
+                aria-label="Cart"
                 className="relative w-13.5 h-13.5 rounded-xl bg-background flex items-center justify-center text-primary_color hover:bg-background/95 transition-all duration-200"
               >
                 <span className={bounce ? "animate-bounce" : ""}>
