@@ -134,6 +134,19 @@ const getProduct = cache((productSlug: string) =>
   } as RequestInit),
 );
 
+// ── ISR ──────────────────────────────────────────────────────────────
+// A dynamic route with no generateStaticParams is rendered from scratch on
+// EVERY request (marked ƒ in the build output), so each product view paid a
+// full server render + backend round-trip (the origin's ~0.9s TTFB). Returning
+// [] keeps every slug on-demand (nothing is pre-built) but lets Next store the
+// first render and serve it from cache for `revalidate` seconds — the same 60s
+// window the product fetch above already used, and /api/revalidate still
+// purges it instantly by tag. Prices/stock therefore stay as fresh as before.
+export const revalidate = 60;
+export async function generateStaticParams() {
+  return [];
+}
+
 // ── Metadata ─────────────────────────────────────────────────────────
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { productSlug } = await params;

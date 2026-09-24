@@ -18,6 +18,7 @@ import BannerSlider, {
 } from "@/components/HomePage/banner/Bannerslider";
 import CategoriesSection from "@/components/HomePage/Categories/CategoriesSection";
 import GlobalCountdown from "@/components/share/GlobalCountdown";
+import PauseOffscreenSwipers from "@/components/HomePage/PauseOffscreenSwipers";
 import { api } from "@/lib/api";
 
 // NOTE: the sections below used to be wrapped in <Suspense fallback={<…Skeleton/>}>.
@@ -194,6 +195,7 @@ export default async function Home() {
           engines and agentic browsers all need one top-level heading that says
           what this page is — previously the homepage's only h1 was the
           "Categories" section title, which mis-describes the page. */}
+      <PauseOffscreenSwipers />
       <h1 className="sr-only">
         Dazzle — Buy Mobiles, Laptops &amp; Gadgets Online in Bangladesh
       </h1>
