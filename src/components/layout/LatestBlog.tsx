@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { api } from "@/lib/api";
+import { api, rethrowIfTransient } from "@/lib/api";
 import BlogCard from "@/components/Blogs/BlogCard";
 import BlogInformationSection from "@/components/Blogs/BlogInformationSection";
 import { getSiteSettings } from "@/lib/getSiteSettings";
@@ -54,6 +54,7 @@ async function getBlogs() {
       data: Array.isArray(obj?.data) ? (obj.data as BlogPost[]) : [],
     };
   } catch (error) {
+    rethrowIfTransient(error);
     console.error("Error fetching blogs:", error);
     return { data: [] };
   }

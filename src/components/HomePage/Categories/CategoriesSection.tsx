@@ -1,5 +1,5 @@
 import CategoriesCard from "./CategoriesCard";
-import { api } from "@/lib/api";
+import { api, rethrowIfTransient } from "@/lib/api";
 
 export default async function CategoriesSection() {
   let categories: {
@@ -30,6 +30,7 @@ export default async function CategoriesSection() {
       };
     });
   } catch (error) {
+    rethrowIfTransient(error);
     console.error("Error fetching categories in CategoriesSection SSR:", error);
   }
 

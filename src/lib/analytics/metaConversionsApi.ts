@@ -51,7 +51,14 @@ export async function sendPurchaseEvent(input: SendPurchaseEventInput): Promise<
   // committed to git — see the token-rotation note in .env.local.
   const accessToken = process.env.META_CAPI_ACCESS_TOKEN;
   const pixelId = process.env.META_CAPI_PIXEL_ID || process.env.NEXT_PUBLIC_FB_PIXEL_ID;
-  if (!accessToken || !pixelId) return;
+  if (!accessToken || !pixelId) {
+    // Silent return made "server events aren't arriving in Meta" impossible to
+    // diagnose — say so in the server log instead.
+    console.warn(
+      "[MetaCAPI] Purchase NOT sent: META_CAPI_ACCESS_TOKEN / META_CAPI_PIXEL_ID is not set on this server.",
+    );
+    return;
+  }
 
   try {
     const userData: Record<string, unknown> = {};

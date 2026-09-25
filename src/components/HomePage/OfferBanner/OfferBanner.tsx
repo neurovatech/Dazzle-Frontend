@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Banner from "@/images/o_banner.png";
-import { api } from "@/lib/api";
+import { api, rethrowIfTransient } from "@/lib/api";
 
 interface WebBanner {
   bannerUUID: string;
@@ -32,6 +32,7 @@ export default async function OfferBanner({ apiEndpoint }: OfferBannerProps) {
 
     banners = Array.isArray(bannerRes?.data) ? bannerRes.data : [];
   } catch (error) {
+    rethrowIfTransient(error);
     console.error(
       `Error fetching ${apiEndpoint} banners SSR:`,
       error,
@@ -46,7 +47,7 @@ export default async function OfferBanner({ apiEndpoint }: OfferBannerProps) {
             src={banner?.imageURL}
             width={500}
             height={200}
-            alt={banner?.bannerUUID}
+            alt="Offer banner"
             loading="lazy"
             // Always a 2-column grid at every breakpoint (grid-cols-2 /
             // md:grid-cols-2), so each banner never renders wider than half

@@ -148,8 +148,10 @@ export default async function RootLayout({
             which is what keeps the backend host out of page source. */}
         <link rel="preconnect" href="https://dazzle.sgp1.cdn.digitaloceanspaces.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://dazzle.sgp1.cdn.digitaloceanspaces.com" />
-        <link rel="preconnect" href="https://dzl.sgp1.cdn.digitaloceanspaces.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://dzl.sgp1.cdn.digitaloceanspaces.com" />
+        {/* (dzl.sgp1 preconnect removed: nothing on the homepage requests that
+            host directly — product images go through /_next/image — and
+            Lighthouse flagged it as an unused preconnect that costs a TLS
+            handshake on the critical path.) */}
         {/* FacebookPixel must come BEFORE GoogleTagManager: the GTM container's
             own Meta tag creates its own (unfiltered) fbq stub if none exists
             yet, which would bypass the duplicate-event filter in the Pixel

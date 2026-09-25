@@ -19,7 +19,7 @@ import BannerSlider, {
 import CategoriesSection from "@/components/HomePage/Categories/CategoriesSection";
 import GlobalCountdown from "@/components/share/GlobalCountdown";
 import PauseOffscreenSwipers from "@/components/HomePage/PauseOffscreenSwipers";
-import { api } from "@/lib/api";
+import { api, rethrowIfTransient } from "@/lib/api";
 
 // NOTE: the sections below used to be wrapped in <Suspense fallback={<…Skeleton/>}>.
 // This page is statically generated (ISR, revalidate 60), and with those
@@ -162,6 +162,7 @@ async function getHeroBanners(): Promise<SlideItem[]> {
       };
     });
   } catch (error) {
+    rethrowIfTransient(error);
     console.error("Error fetching hero banners in Home SSR:", error);
     return [];
   }

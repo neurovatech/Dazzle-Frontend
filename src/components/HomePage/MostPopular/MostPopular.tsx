@@ -103,7 +103,11 @@ function MostPopular({
       <div className="pt-6">
         <Swiper
           modules={[Navigation, Scrollbar, A11y, Autoplay]}
-          loop={banners.length >= 2}
+          // Swiper needs roughly twice the widest slidesPerView (3 at lg) in
+          // slides to loop; with fewer it logs "Swiper Loop Warning: The number
+          // of slides is not enough for loop mode" and turns loop off itself.
+          // Say so explicitly instead of triggering the warning.
+          loop={banners.length >= 6}
           // pagination={pagination ? { clickable: true } : false}
           navigation={navigation}
           autoplay={
@@ -138,6 +142,7 @@ function MostPopular({
                   width={500}
                   height={500}
                   alt="Offer banner"
+                  sizes="(max-width: 1023px) 50vw, 33vw"
                   className="w-full transition-all duration-500 hover:shadow-lg"
                 />
               </Link>

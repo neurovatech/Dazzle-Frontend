@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { api } from "@/lib/api";
+import { api, rethrowIfTransient } from "@/lib/api";
 import ShopBrand, { Brand } from "./ShopBrand";
 
 export default async function ShopBrandSectionCom() {
@@ -20,15 +20,19 @@ export default async function ShopBrandSectionCom() {
         is_active: Boolean(b.is_active),
       }));
   } catch (error) {
+    rethrowIfTransient(error);
     console.error("Error fetching brands:", error);
   }
 
   return (
     <div className="md:px-12.5 px-4">
       <div className="flex justify-between items-center mb-4">
-        <h1 className="md:text-[32px] text-[20px] font-bold text-transparent bg-clip-text bg-[linear-gradient(90deg,#101518_0%,#E9CCAE_46.15%,#B57908_100%)] dark:text-white">
+        {/* h2, not h1 — the page already has its one h1 (see page.tsx); a
+            second h1 here also made the outline jump h1 → h3 (Lighthouse
+            "heading elements not in sequentially-descending order"). */}
+        <h2 className="md:text-[32px] text-[20px] font-bold text-transparent bg-clip-text bg-[linear-gradient(90deg,#101518_0%,#E9CCAE_46.15%,#B57908_100%)] dark:text-white">
           Shop by Brand
-        </h1>
+        </h2>
         <Link href="/brands" className="text-sm font-medium text-primary  bg-orange-50 border-orange-200 px-4 py-2 rounded-[10px] dark:text-[#2e2b28]  hover:underline hover:text-[#CB843B]! transition-colors duration-300 ">
           See all
         </Link>

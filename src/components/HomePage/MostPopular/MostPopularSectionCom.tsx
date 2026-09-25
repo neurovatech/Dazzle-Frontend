@@ -1,7 +1,7 @@
 import React from "react";
 import MostPopular from "./MostPopular";
 import Link from "next/link";
-import { api } from "@/lib/api";
+import { api, rethrowIfTransient } from "@/lib/api";
 import { sortInStockFirst } from "@/lib/sortProducts";
 
 interface ShowcaseThumbnail {
@@ -91,6 +91,7 @@ async function fetchProducts(): Promise<ProductCardItem[]> {
       recognitionBadge: item.recognitionBadge ?? "",
     }));
   } catch (error) {
+    rethrowIfTransient(error);
     console.error("Error fetching feature products SSR:", error);
     return [];
   }
@@ -105,6 +106,7 @@ async function fetchBanners(): Promise<WebBanner[]> {
 
     return Array.isArray(bannerRes?.data) ? bannerRes.data : [];
   } catch (error) {
+    rethrowIfTransient(error);
     console.error("Error fetching most-popular-below banners SSR:", error);
     return [];
   }

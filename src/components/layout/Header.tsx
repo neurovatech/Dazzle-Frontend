@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import BgImages from "@/images/header-bg.png";
+import BgImages from "@/images/header-bg.webp";
 import TopBar from "./TopBar";
 import MainNav from "./MainNav";
 import CategoryNav from "./CategoryNav";
 import MobileHeader from "./MobileHeader";
-import { api } from "@/lib/api";
+import { api, rethrowIfTransient } from "@/lib/api";
 
 export interface ApiBrand {
   uuid: string;
@@ -80,6 +80,7 @@ async function fetchCategories(): Promise<{
     }
     return { apiCategories: [], apiSubCategories: [] };
   } catch (err) {
+    rethrowIfTransient(err);
     console.error("[Header] categories/child fetch failed:", err);
     return { apiCategories: [], apiSubCategories: [] };
   }
@@ -117,6 +118,7 @@ async function fetchBrands(): Promise<{ apiBrands: any; apiSubBrands: any }> {
     }
     return { apiBrands: [], apiSubBrands: [] };
   } catch (err) {
+    rethrowIfTransient(err);
     console.error("[Header] categories/brands fetch failed:", err);
     return { apiBrands: [], apiSubBrands: [] };
   }

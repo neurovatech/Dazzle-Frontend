@@ -1,5 +1,5 @@
 import FlashSale from "./FlashSale";
-import { api } from "@/lib/api";
+import { api, rethrowIfTransient } from "@/lib/api";
 import GlobalTabs from "@/components/share/GlobalTabs";
 import { sortInStockFirst } from "@/lib/sortProducts";
 
@@ -76,6 +76,7 @@ async function fetchShowcase(endpoint: string): Promise<ProductCardItem[]> {
     const list = Array.isArray(res?.data) ? res.data : [];
     return mapToProductCard(sortInStockFirst(list));
   } catch (error) {
+    rethrowIfTransient(error);
     console.error(`Error fetching from ${endpoint}:`, error);
     return [];
   }

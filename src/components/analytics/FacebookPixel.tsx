@@ -112,7 +112,11 @@ export default async function FacebookPixel() {
     // visitor's first tap/scroll happens — competing with INP, not just LCP.
     // Gating on interaction (see DeferredScript) doesn't change what fires
     // or drop any event, it only moves the cost later.
-    <DeferredScript id="fb-pixel-base">
+    // delayMs 1500: unlike TikTok/chat, this one feeds Meta Ads reporting, and
+    // a visitor who bounces before the pixel loads is never counted. A short
+    // cap keeps the INP benefit (still after hydration) without dropping
+    // PageView/ViewContent for fast bounces from an ad click.
+    <DeferredScript id="fb-pixel-base" delayMs={1500}>
       {jsCode}
     </DeferredScript>
   );

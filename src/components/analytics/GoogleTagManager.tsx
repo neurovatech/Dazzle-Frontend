@@ -44,7 +44,9 @@ export default async function GoogleTagManager() {
     // queued (that's the whole point of the dataLayer array), so gating on
     // interaction (see DeferredScript) doesn't drop any events — it only
     // moves the cost later.
-    <DeferredScript id="gtm-base">
+    // delayMs 1500: GTM carries the Meta/GA tags too — same reason as the
+    // Meta Pixel (see FacebookPixel.tsx): fast bounces must still be counted.
+    <DeferredScript id="gtm-base" delayMs={1500}>
       {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtmId}');`}
     </DeferredScript>
   );

@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import Image from "next/image";
-import { api } from "@/lib/api";
+import { api, rethrowIfTransient } from "@/lib/api";
 import { sortInStockFirst } from "@/lib/sortProducts";
 import FeatureProductGrid from "./FeatureProductGrid";
 
@@ -92,6 +92,7 @@ async function fetchProducts(): Promise<ProductCardItem[]> {
       recognitionBadge: item.recognitionBadge ?? "",
     }));
   } catch (error) {
+    rethrowIfTransient(error);
     console.error("Error fetching feature products SSR:", error);
     return [];
   }
@@ -106,6 +107,7 @@ async function fetchBanners(): Promise<WebBanner[]> {
 
     return Array.isArray(bannerRes?.data) ? bannerRes.data : [];
   } catch (error) {
+    rethrowIfTransient(error);
     console.error("Error fetching feature-products-below banners SSR:", error);
     return [];
   }
@@ -156,6 +158,7 @@ export default async function FeatureProducts() {
             height={300}
             alt="Offer banner"
             loading="lazy"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 66vw"
             className="w-full h-[300px] md:h-[600px] object-cover rounded-xl transition-all duration-500 hover:shadow-lg"
           />
         </Link>
@@ -177,6 +180,7 @@ export default async function FeatureProducts() {
             height={300}
             alt="Offer banner"
             loading="lazy"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             className="w-full h-[300px] lg:h-[600px] object-cover rounded-xl transition-all duration-500 hover:shadow-lg"
           />
         </Link>

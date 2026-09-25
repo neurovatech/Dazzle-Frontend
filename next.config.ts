@@ -4,6 +4,10 @@ const nextConfig: NextConfig = {
   reactCompiler: true,
   staticPageGenerationTimeout: 180,
   experimental: {
+    // NOTE: `inlineCss: true` was tried for Lighthouse's "Render-blocking
+    // requests" and REJECTED — measured: gzip'd homepage HTML grew from
+    // 130 KB to 232 KB (the ~216 KB of CSS is embedded repeatedly), which on
+    // slow 4G costs more than the 4 stylesheet round trips it removes.
     optimizePackageImports: [
       "lucide-react",
       "@tanstack/react-query",

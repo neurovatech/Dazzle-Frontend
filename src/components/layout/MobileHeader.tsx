@@ -48,6 +48,12 @@ export default function MobileHeader({ categories }: Props) {
 
   const cartItems = useAppSelector((state) => state.cart.items);
   const cartCount = cartItems.length;
+  // The cart is persisted (redux-persist) and can already be rehydrated when
+  // this component hydrates, while the server always renders an empty cart —
+  // so a returning user with items got a badge <span> the server HTML did not
+  // have ("Hydration failed… attributes didn't match", reproduced locally).
+  // Same guard MainNav already uses: show the badge only after mount.
+  const displayCart = mounted ? cartCount : 0;
 
   const [bounce, setBounce] = useState(false);
   const prevCount = useRef(cartCount);
@@ -120,20 +126,11 @@ export default function MobileHeader({ categories }: Props) {
             <span className={bounce ? "animate-bounce" : ""}>
               <CartIcon />
             </span>
-            {cartCount > 0 && (
+            {displayCart > 0 && (
               <span
-                className={`
-                      absolute -top-1.5 -right-1.5
-                      min-w-[20px] h-5 px-1
-                      bg-[#E6A817] text-white
-                      text-[10px] font-extrabold
-                      rounded-full
-                      flex items-center justify-center
-                      shadow-md
-                      ${bounce ? "animate-bounce" : ""}
-                    `}
+                className={`absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1 bg-[#E6A817] text-white text-[10px] font-extrabold rounded-full flex items-center justify-center shadow-md ${bounce ? "animate-bounce" : ""}`}
               >
-                {cartCount > 99 ? "99+" : cartCount}
+                {displayCart > 99 ? "99+" : displayCart}
               </span>
             )}
           </Link>

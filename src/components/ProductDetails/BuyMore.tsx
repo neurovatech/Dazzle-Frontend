@@ -283,7 +283,7 @@ const BuyMore: React.FC<BuyMoreProps> = ({ items }: any) => {
                           gradientUnits="userSpaceOnUse"
                         >
                           <stop stopColor="#F44336" />
-                          <stop offset="1" stop-color="#FF9800" />
+                          <stop offset="1" stopColor="#FF9800" />
                         </linearGradient>
                         <linearGradient
                           id="paint1_linear_2075_48441"

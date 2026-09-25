@@ -36,6 +36,10 @@ interface ProductQuicViewProps {
   image?: string;
   isTba?: boolean;
   showTbaFlag?: boolean;
+  /** Open the modal as soon as it mounts (used by the lazy trigger). */
+  defaultOpen?: boolean;
+  /** Skip the built-in eye button — the lazy trigger already rendered one. */
+  hideTrigger?: boolean;
 }
 
 interface ProductApiResponse {
@@ -55,13 +59,15 @@ function ProductQuicView({
   image: fallbackImage,
   isTba: isTbaProp,
   showTbaFlag: showTbaFlagProp,
+  defaultOpen = false,
+  hideTrigger = false,
 }: ProductQuicViewProps) {
   const dispatch = useAppDispatch();
   const cartItems = useAppSelector((state) => state.cart.items);
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
   const router = useRouter();
 
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const [product, setProduct] = useState<ProductApiData | null>(null);
   const [variantApiData, setVariantApiData] =
     useState<VariantApiResponse | null>(null);
@@ -909,8 +915,10 @@ function ProductQuicView({
       </GlobalModal>
 
       {/* Trigger button */}
+      {!hideTrigger && (
       <button
         onClick={() => setOpen(true)}
+        aria-label="Quick view"
         className="lg:w-11 lg:h-11 w-10 h-10 rounded-full bg-white border-2 border-gray-200 flex items-center justify-center text-gray-500 hover:border-gray-400 hover:text-gray-700 transition-all duration-300 hover:scale-110 active:scale-95"
       >
         <svg
@@ -933,6 +941,7 @@ function ProductQuicView({
           />
         </svg>
       </button>
+      )}
     </div>
   );
 }

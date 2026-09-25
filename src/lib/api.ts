@@ -405,6 +405,30 @@ export {
 } from "./api-error";
 export type { ApiErrorPayload } from "./api-error";
 
+/**
+ * For server components that render from cached (ISR/static) data and swallow
+ * fetch errors into an empty fallback: call this FIRST in the catch block.
+ *
+ * Why: the pages are now prerendered and cached. If the backend is down or
+ * slow at the moment the page is (re)generated, "catch → empty list" gets
+ * baked into the cache — an empty homepage/menu served to everyone until the
+ * next successful regeneration (seen for real: a build with the backend
+ * unreachable produced a homepage with zero products). Re-throwing a
+ * TRANSIENT failure makes Next keep serving the last good page (or fail the
+ * build) instead. A real 4xx (missing banner, empty showcase…) still falls
+ * through to the graceful empty state as before. Production only — in dev the
+ * old forgiving behaviour is kept so a stopped backend doesn't blank the app.
+ */
+export function rethrowIfTransient(error: unknown): void {
+  if (process.env.NODE_ENV !== "production") return;
+  const status = (error as { status?: number } | null)?.status;
+  // Only genuine API/transport failures (ApiError carries a numeric status;
+  // 0 = the request never got an HTTP response). A plain TypeError from
+  // mapping code is a bug, not an outage — leave that path unchanged.
+  if (typeof status !== "number") return;
+  if (status === 0 || status >= 500 || status === 408 || status === 429) throw error;
+}
+
 // Convenient wrappers for HTTP methods
 export const api = {
   get: <T = unknown>(endpoint: string, options?: Omit<FetchOptions, "method" | "body">) =>

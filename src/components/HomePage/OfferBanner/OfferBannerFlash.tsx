@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Banner from "@/images/o_banner.png";
-import { api } from "@/lib/api";
+import { api, rethrowIfTransient } from "@/lib/api";
 
 interface WebBanner {
   bannerUUID: string;
@@ -36,6 +36,7 @@ export default async function OfferBannerFlash({
 
     banners = Array.isArray(bannerRes?.data) ? bannerRes.data : [];
   } catch (error) {
+    rethrowIfTransient(error);
     console.error(`Error fetching ${apiEndpoint} banners SSR:`, error);
   }
 
@@ -47,8 +48,12 @@ export default async function OfferBannerFlash({
             src={banner?.imageURL}
             width={500}
             height={200}
-            alt={banner?.bannerUUID}
+            alt="Offer banner"
             loading="lazy"
+            // Always 2 columns => each banner is at most ~half the viewport. Without
+            // `sizes` Next assumes 100vw and served a 1080px file (41 KiB) into a
+            // ~186px slot (Lighthouse "Improve image delivery").
+            sizes="50vw"
             className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
           />
         </div>

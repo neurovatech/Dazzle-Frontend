@@ -108,6 +108,13 @@ async function handleProxy(
     responseHeaders.delete("server");
     responseHeaders.delete("x-powered-by");
     responseHeaders.delete("access-control-allow-origin");
+    // The backend sits behind its own Cloudflare zone and can answer with
+    // Set-Cookie (e.g. `__cf_bm; Domain=.<backend zone>`). Forwarded verbatim
+    // through THIS origin, the browser rejects it ("Cookie “__cf_bm” has been
+    // rejected for invalid domain") because the domain isn't ours. Nothing in
+    // this app reads backend cookies — auth travels in Authorization /
+    // X-API-Key headers — so they're dropped here.
+    responseHeaders.delete("set-cookie");
 
     // Rewrite redirects so the real backend URL never reaches the Network tab.
     const location = responseHeaders.get("location");

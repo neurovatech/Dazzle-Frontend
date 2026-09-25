@@ -281,6 +281,7 @@ export default function Footer() {
                 <Link
                   href={siteSettings?.facebookUrl || "#"}
                   target="_blank"
+                  aria-label="Dazzle on Facebook"
                   className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-[#222222DB] text-sm cursor-pointer"
                 >
                   <FacebookIcon />
@@ -288,6 +289,7 @@ export default function Footer() {
                 <Link
                   href={siteSettings?.instagramUrl || "#"}
                   target="_blank"
+                  aria-label="Dazzle on Instagram"
                   className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-[#222222DB] text-sm cursor-pointer"
                 >
                   <InstragramIcon />
@@ -295,6 +297,7 @@ export default function Footer() {
                 <Link
                   href={siteSettings?.linkedinUrl || "#"}
                   target="_blank"
+                  aria-label="Dazzle on LinkedIn"
                   className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-[#222222DB] text-sm cursor-pointer"
                 >
                   <LinkindIcon />
@@ -302,6 +305,7 @@ export default function Footer() {
                 <Link
                   href={siteSettings?.youtubeUrl || "#"}
                   target="_blank"
+                  aria-label="Dazzle on YouTube"
                   className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-[#222222DB] text-sm cursor-pointer"
                 >
                   <YouTubeIcon />

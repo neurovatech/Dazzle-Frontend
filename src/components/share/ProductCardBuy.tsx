@@ -7,7 +7,7 @@ import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { addToCart } from "@/store/slices/cartSlice";
 import { useAddToWishlist, useRemoveFromWishlist } from "@/hooks/useWishlist";
 import { trackAddToCart } from "@/lib/analytics/pixelEvents";
-import ProductQuicView from "@/components/ProductDetails/ProductQuicView";
+import ProductQuicView from "@/components/ProductDetails/ProductQuickViewTrigger";
 import toast from "react-hot-toast";
 import { api } from "@/lib/api";
 import { verifyOrderProduct, friendlyUnresolvedMessage } from "@/lib/verify-order-product";

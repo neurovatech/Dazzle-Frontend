@@ -24,7 +24,16 @@ const FALLBACK_DELAY_MS = 4000;
  * without dropping or delaying it for long — most visitors interact within
  * the first second or two anyway.
  */
-export default function DeferredScript(props: React.ComponentProps<typeof Script>) {
+export default function DeferredScript({
+  delayMs = FALLBACK_DELAY_MS,
+  ...scriptProps
+}: React.ComponentProps<typeof Script> & {
+  /** Max wait before loading even with no interaction. Ad-measurement scripts
+   * (Meta Pixel, GTM) pass a SHORT value: a visitor who leaves before the
+   * script loads is never counted at all, so a long delay under-reports
+   * PageView/ViewContent for every fast bounce from an ad click. */
+  delayMs?: number;
+}) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -38,7 +47,7 @@ export default function DeferredScript(props: React.ComponentProps<typeof Script
       setReady(true);
     };
 
-    const timer = window.setTimeout(mark, FALLBACK_DELAY_MS);
+    const timer = window.setTimeout(mark, delayMs);
     function cleanup() {
       window.clearTimeout(timer);
       INTERACTION_EVENTS.forEach((ev) => window.removeEventListener(ev, mark));
@@ -52,5 +61,5 @@ export default function DeferredScript(props: React.ComponentProps<typeof Script
   }, []);
 
   if (!ready) return null;
-  return <Script {...props} />;
+  return <Script {...scriptProps} />;
 }

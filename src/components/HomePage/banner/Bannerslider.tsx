@@ -76,9 +76,15 @@ function BannerImage({
         src={src}
         alt={alt}
         fill
-        className={`object-cover transition-opacity duration-300 ${
-          loaded ? "opacity-100" : "opacity-0"
-        }`}
+        // Always opaque. This used to be `opacity-0` until React flipped
+        // `loaded` after HYDRATION — and Lighthouse does not count an
+        // invisible element as the LCP, so the hero (fetched in ~250ms) only
+        // "rendered" once JS finished hydrating: LCP breakdown showed 2,590ms
+        // of pure element-render delay (LCP 6.6s on slow 4G). An <img> paints
+        // nothing until its bytes have decoded anyway, and the grey pulse
+        // placeholder underneath still shows until then, so nothing visible
+        // changes except that the photo now appears the moment it's ready.
+        className="object-cover"
         sizes="(max-width: 767px) 100vw, (max-width: 1420px) 66vw, 936px"
         priority={priority}
         fetchPriority={fetchPriorityValue}

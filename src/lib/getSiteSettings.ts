@@ -1,5 +1,5 @@
 import { cache } from "react";
-import { api } from "@/lib/api";
+import { api, rethrowIfTransient } from "@/lib/api";
 
 export interface SiteSettings {
   siteTitle?: string;
@@ -83,6 +83,7 @@ export const getSiteSettings = cache(async (): Promise<SiteSettings> => {
     });
     return res.data ?? {};
   } catch (error) {
+    rethrowIfTransient(error);
     const message = error instanceof Error ? error.message : String(error);
     if (!/not found/i.test(message)) {
       console.error("Error fetching site settings:", error);

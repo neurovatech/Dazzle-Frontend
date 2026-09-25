@@ -1,5 +1,5 @@
 import HotDealCom from "./HotDealCom";
-import { api } from "@/lib/api";
+import { api, rethrowIfTransient } from "@/lib/api";
 import { sortInStockFirst } from "@/lib/sortProducts";
 
 interface ShowcaseThumbnail {
@@ -76,6 +76,7 @@ export default async function HotDealSectionCom() {
       recognitionBadge: item.recognitionBadge ?? "",
     }));
   } catch (error) {
+    rethrowIfTransient(error);
     console.error("Error fetching hot deal products SSR:", error);
   }
 
