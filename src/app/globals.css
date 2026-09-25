@@ -322,3 +322,53 @@ img {
   color: #ffffff !important;
   background-color: transparent !important;
 }
+
+/* ─── Homepage Categories: pre-JS layout == post-JS layout ───────────────────
+   Before Swiper initialises every category slide is a full-width square, so the
+   server HTML was ~140px TALLER than the hydrated grid (486px vs 346px on a 412px
+   phone). When Swiper (Grid, 2 rows) kicked in the section collapsed and pulled
+   Flash Sale up into the viewport: the ~0.27 layout shift Lighthouse reported.
+   The Grid module lays slides out ROW-MAJOR (n slides => ceil(n/2) columns; slide
+   i sits at row floor(i/cols)) and each row is as tall as its tallest tile,
+   including tiles scrolled off-screen. A CSS grid with the same column count
+   (--cat-cols, set by CategoriesCard) reproduces that exactly, using the same
+   slides-per-view / gap per breakpoint as the Swiper config. Only applies while
+   the Swiper has NOT initialised. */
+.categories-swiper { container-type: inline-size; }
+.categories-swiper:not(.swiper-initialized) { --cat-gap: 10px; --cat-w: calc((100cqw - 30px) / 4); }
+.categories-swiper:not(.swiper-initialized) .swiper-wrapper {
+  display: grid;
+  grid-template-columns: repeat(var(--cat-cols, 4), var(--cat-w));
+  grid-template-rows: auto auto;
+  gap: var(--cat-gap);
+  width: max-content;
+}
+.categories-swiper:not(.swiper-initialized) .swiper-slide { width: var(--cat-w); margin: 0; }
+@media (min-width: 480px) { .categories-swiper:not(.swiper-initialized) { --cat-gap: 12px; --cat-w: calc((100cqw - 12px) / 2); } }
+@media (min-width: 640px) { .categories-swiper:not(.swiper-initialized) { --cat-gap: 14px; --cat-w: calc((100cqw - 14px) / 2); } }
+@media (min-width: 768px) { .categories-swiper:not(.swiper-initialized) { --cat-gap: 16px; --cat-w: calc((100cqw - 16px) / 2); } }
+@media (min-width: 1024px) {
+  .categories-swiper:not(.swiper-initialized) { --cat-gap: 16px; --cat-w: calc((100cqw - 112px) / 8); }
+  .categories-swiper:not(.swiper-initialized) .swiper-wrapper { display: flex; flex-wrap: nowrap; gap: 0; width: auto; }
+  .categories-swiper:not(.swiper-initialized) .swiper-slide { margin-right: var(--cat-gap); }
+}
+
+/* ─── Single-row homepage carousels: pre-JS slide width == Swiper's ───────────
+   Before Swiper initialises its slides have no width, so cards/logos render
+   full-width and the section is far taller than after hydration (Clip To Cart
+   1164px -> 686px, Shop by Brand 1250px -> 602px on a phone): everything below
+   jumps when JS lands. Same slides-per-view / gap per breakpoint as each Swiper
+   config, expressed with container-query units so it is exact. Only applies
+   while the Swiper has NOT initialised. */
+.pre-swiper { container-type: inline-size; }
+.pre-swiper:not(.swiper-initialized) .swiper-slide { width: var(--pw); margin-right: var(--pg); flex-shrink: 0; }
+/* Clip To Cart: 1.2 / 1.5 / 2 / 2 / 5 */
+.pre-clip:not(.swiper-initialized) { --pg: 10px; --pw: calc((100cqw - 2px) / 1.2); }
+@media (min-width: 480px) { .pre-clip:not(.swiper-initialized) { --pg: 12px; --pw: calc((100cqw - 6px) / 1.5); } }
+@media (min-width: 640px) { .pre-clip:not(.swiper-initialized) { --pg: 14px; --pw: calc((100cqw - 14px) / 2); } }
+@media (min-width: 768px) { .pre-clip:not(.swiper-initialized) { --pg: 16px; --pw: calc((100cqw - 16px) / 2); } }
+@media (min-width: 1024px) { .pre-clip:not(.swiper-initialized) { --pg: 10px; --pw: calc((100cqw - 40px) / 5); } }
+/* Shop by Brand logo row: 4 / 2 / 2 / 2 / 8 */
+.pre-brand:not(.swiper-initialized) { --pg: 6px; --pw: calc((100cqw - 18px) / 4); }
+@media (min-width: 480px) { .pre-brand:not(.swiper-initialized) { --pg: 2px; --pw: calc((100cqw - 2px) / 2); } }
+@media (min-width: 1024px) { .pre-brand:not(.swiper-initialized) { --pg: 10px; --pw: calc((100cqw - 70px) / 8); } }

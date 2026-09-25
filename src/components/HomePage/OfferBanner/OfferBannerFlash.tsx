@@ -46,8 +46,10 @@ export default async function OfferBannerFlash({
         <div key={i} className="overflow-hidden rounded-xl lg:h-96.25">
           <Image
             src={banner?.imageURL}
-            width={500}
-            height={200}
+            // 1080x590 = the real ratio of the banner files — see OfferBanner.tsx
+            // (declared 500x200 reserved 74px, the loaded image is 102px tall).
+            width={1080}
+            height={590}
             alt="Offer banner"
             loading="lazy"
             // Always 2 columns => each banner is at most ~half the viewport. Without

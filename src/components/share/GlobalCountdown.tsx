@@ -79,7 +79,12 @@ const GlobalCountdown: React.FC<CountdownProps> = ({
     };
   }, [targetDate]);
 
-  if (!mounted) return null;
+  // Used to be `if (!mounted) return null`: the whole row (title + timer + See All)
+  // popped in after hydration, growing the Flash Sale block by ~68px and pushing
+  // everything under it down (part of the homepage layout shift). The row is now
+  // always rendered so its space is reserved; only the timer numbers stay
+  // invisible until the client knows the real time (the server has no "now" to
+  // agree with — that is why they were gated at all).
 
   return (
     <div className="w-full flex md:flex-row gap-4 lg:py-6 py-4 justify-between items-center">
@@ -88,7 +93,7 @@ const GlobalCountdown: React.FC<CountdownProps> = ({
           {title}
         </h2>
 
-        <div className="flex flex-wrap items-center lg:gap-3 gap-1">
+        <div className={`flex flex-wrap items-center lg:gap-3 gap-1 ${mounted ? "" : "invisible"}`}>
           <TimeBox value={timeLeft.days} label="Days" />
           <span className="text-white"> : </span>
 

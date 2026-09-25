@@ -57,12 +57,21 @@ function ClipToCart({
             Clip to Cart
           </h3>
         </div>
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-4">
+        {/* One row shaped like the carousel that replaces it (same
+            cards-per-view and gap per breakpoint as the Swiper config below;
+            a card is ~its width + 228px tall — measured 322x550 on a phone —
+            plus the ~30px Swiper scrollbar gap). It used to be five 350px
+            boxes wrapping to three rows (~1164px section vs ~686px loaded),
+            which pulled everything under it up when the data arrived. */}
+        <div className="flex overflow-hidden gap-2.5 min-[480px]:gap-3 sm:gap-3.5 md:gap-4 lg:gap-2.5 pb-[30px]">
           {Array.from({ length: 5 }).map((_, i) => (
             <div
               key={i}
-              className="animate-pulse bg-gray-100 dark:bg-[#2e2b28] rounded-2xl h-[350px]"
-            />
+              className="animate-pulse shrink-0 rounded-2xl bg-gray-100 dark:bg-[#2e2b28] w-[calc((100%-2px)/1.2)] min-[480px]:w-[calc((100%-6px)/1.5)] sm:w-[calc((100%-14px)/2)] md:w-[calc((100%-16px)/2)] lg:w-[calc((100%-40px)/5)]"
+            >
+              <div className="aspect-square" />
+              <div className="h-[228px]" />
+            </div>
           ))}
         </div>
       </div>
@@ -105,7 +114,7 @@ function ClipToCart({
             768: { slidesPerView: 2, spaceBetween: 16 },
             1024: { slidesPerView: 5, spaceBetween: 10 },
           }}
-          className="mySwiper"
+          className="mySwiper pre-swiper pre-clip"
         >
           {products.map((product, i) => (
             <SwiperSlide key={product.id} className="h-auto">

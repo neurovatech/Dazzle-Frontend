@@ -87,6 +87,7 @@ export default function ShopBrand({ brands }: Props) {
         {/* ── Brand Slider / Grid ── */}
         <div className="mb-6 shop_brand">
           <Swiper
+            className="pre-swiper pre-brand"
             slidesPerView={4}
             spaceBetween={6}
             breakpoints={{
@@ -152,11 +153,18 @@ export default function ShopBrand({ brands }: Props) {
         {activeBrandSlug && (
           <div>
             {isLoading ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-                {Array.from({ length: 6 }).map((_, i) => (
+              // Sized like the carousel that replaces it (one row: 2 cards
+              // across below lg, 5 at lg; card ~372px tall on a phone, ~404px
+              // from md; + ~30px Swiper scrollbar gap — measured). It used to
+              // be six 3:4 boxes wrapping to several rows (~960px section vs
+              // ~602px once loaded), which pulled everything below it up.
+              <div className="grid grid-cols-2 lg:grid-cols-5 gap-[6px] md:gap-5 lg:gap-2.5 pb-[30px]">
+                {Array.from({ length: 5 }).map((_, i) => (
                   <div
                     key={i}
-                    className="rounded-2xl bg-gray-100 dark:bg-zinc-800 animate-pulse aspect-[3/4]"
+                    className={`rounded-2xl bg-gray-100 dark:bg-zinc-800 animate-pulse h-[372px] md:h-[404px] ${
+                      i >= 2 ? "hidden lg:block" : ""
+                    }`}
                   />
                 ))}
               </div>

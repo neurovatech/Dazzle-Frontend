@@ -45,8 +45,15 @@ export default async function OfferBanner({ apiEndpoint }: OfferBannerProps) {
         <div key={i} className="overflow-hidden rounded-xl">
           <Image
             src={banner?.imageURL}
-            width={500}
-            height={200}
+            // 1080x590 = the real ratio of these banner files (Lighthouse:
+            // "file is 1080x590"). With 500x200 declared the box was reserved
+            // at 2.5:1 (74px tall) and, once loaded, `aspect-ratio: auto`
+            // switched it to the file's natural 1.83:1 (102px): a +28px jump
+            // for everything below each of the three banner rows. Declaring
+            // the true ratio reserves the final size up front — same displayed
+            // result, no jump. (srcset is chosen from `sizes`, not this.)
+            width={1080}
+            height={590}
             alt="Offer banner"
             loading="lazy"
             // Always a 2-column grid at every breakpoint (grid-cols-2 /

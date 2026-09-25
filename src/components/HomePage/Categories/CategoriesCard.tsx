@@ -268,7 +268,8 @@ function CategoriesCard({
           onSwiper={(swiper) => {
             swiperRef.current = swiper;
           }}
-          className="mySwiper w-full pt-1 pb-4"
+          style={{ ["--cat-cols" as string]: Math.ceil(displayCategories.length / 2) }}
+          className="mySwiper categories-swiper w-full pt-1 pb-4"
         >
           {displayCategories.map((item, index) => {
             const hasImage = !isEmpty(item.thumbnail_img);

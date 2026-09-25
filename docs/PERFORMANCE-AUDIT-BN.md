@@ -141,6 +141,42 @@
 - ✅ Proxy থেকে backend-এর `Set-Cookie` ছেঁটে দেওয়া ([`route.ts`](../src/app/api/proxy/[...path]/route.ts)) → "`__cf_bm` rejected for invalid domain"।
 - ✅ Swiper loop warning ও `stop-color` warning ঠিক করা।
 
+### ২.১৩ CLS-এর আসল কারণ — মাপা প্রমাণ (staging report: "Flash Sale 0.271")
+
+**পদ্ধতি:** production build-এ একই পেজ দুইভাবে মেপেছি — (ক) JS ছাড়া (server-এর HTML), (খ) hydrate হওয়ার পর। প্রতিটা section-এর উচ্চতা তুলনা করেছি (412px মোবাইল)।
+
+| Section | JS ছাড়া | hydrate-এর পর | কারণ |
+|---|---|---|---|
+| **Categories** | 486 px | 346 px (**−140**) | Swiper চালু হওয়ার আগে প্রতিটা tile পুরো-প্রস্থের বর্গ। Hydrate-এ সংকুচিত হয়ে **Flash Sale-কে উপরে টেনে আনত** → এটাই তোমার ০.২৭১ |
+| **Flash Sale** | 518 px | 586 px (**+68**) | `GlobalCountdown` mount-এর আগে `null` ছিল, পরে পুরো সারি আসত |
+| Clip To Cart | 1164 px | 686 px (−478) | client-side data আসার আগের skeleton ৩ সারি লম্বা |
+| Shop by Brand | 1250 px | 602 px (−648) | ঐ একই কারণ + logo সারি |
+| Offer banner ×৩ | 122 px | 150 px | ছবির ঘোষিত অনুপাত 500×200 (২.৫:১), লোডের পর আসল ফাইলের ১০৮০×৫৯০ (১.৮৩:১) → +২৮px |
+
+**ঠিক করেছি ✅** (সবগুলোতে design একই থাকে, শুধু জায়গা আগেই ধরে রাখা হয়):
+- Categories: hydrate-এর আগে CSS Grid দিয়ে Swiper Grid-এর হুবহু বিন্যাস ([`globals.css`](../src/app/globals.css), `--cat-cols`)।
+- Countdown: সারি সবসময় আঁকা, শুধু সংখ্যা mount পর্যন্ত অদৃশ্য ([`GlobalCountdown.tsx`](../src/components/share/GlobalCountdown.tsx))। (উপরি লাভ: "Flash Sale" লেখাটা এখন server HTML-এই আছে।)
+- Clip To Cart / Shop by Brand: skeleton আসল carousel-এর মাপে, আর logo সারির জন্য pre-JS slide প্রস্থ।
+- Offer banner: আসল অনুপাত ১০৮০×৫৯০ ঘোষণা।
+
+**ফলাফল (মাপা):** JS ছাড়া বনাম hydrate-এর পর ১৫টা section-এর মধ্যে ১৪টা **হুবহু এক** উচ্চতা; বাকিটায় ৮px। পুরো পেজ ৯৮৭০ → ৯৮৭৮ px। প্রথম স্ক্রিনে (viewport) কোনো section সরে না।
+
+### ২.১৪ Network dependency tree (staging: ৩,০০১ ms) ও Render-blocking CSS (২,০৩০ ms)
+
+- **কারণ ১ ✅ ছবির ভিড়:** প্রথম লোডে ~৩০টা product ছবি একসাথে নামত (React সবগুলোর জন্য `<head>`-এ preload বসায়) এবং ধীর 4G-তে CSS-কে আটকে রাখত। এখন এগুলোতে `fetchpriority="low"`; preload ৩০ → ১০ (মাপা)। ছবিগুলো `eager`-ই থাকল, কারণ Swiper-এর ভেতরে `lazy` ছবি সত্যিই আর লোড হয় না (আমি যাচাই করেছি: দৃশ্যমান ৬টা ছবি অপেক্ষার পরও খালি ছিল)।
+- **কারণ ২ 🔧 Cloudflare Web Analytics:** চেইনে `static.cloudflareinsights.com/beacon.min.js` (১,৩২৪ ms) → `/cdn-cgi/rum` (৩,০০১ ms) আছে। এটা Cloudflare নিজে HTML-এ ঢোকায়, আমাদের code-এ নেই। **Cloudflare → Analytics & Logs → Web Analytics → বন্ধ করো** (আমরা GA4 ব্যবহার করছি)। এতে ৩,০০১ ms-এর ক্রিটিক্যাল পথ থেকে এটা সরে যাবে।
+- ⚠️ ফন্ট (`woff2`) CSS-এর পরে চেইন হয় (২,৬৮১ ms); CSS দ্রুত হলে এটাও দ্রুত হবে।
+
+### ২.১৫ Forced reflow (১৬১ ms)
+
+- উৎস: React-DOM hydration (`00nvzi…`) ও `10t3b7…` (Swiper-এর মাপজোখ)। এটা প্রতিটা Swiper চালু হওয়ার সময় `offsetWidth` পড়া। ⚠️ ১২টা Swiper থাকা পর্যন্ত পুরো এড়ানো যায় না; স্ক্রিনের নিচের Swiper গুলো দেরিতে চালু করা (lazy hydrate) আলাদা, বড় কাজ।
+
+### ২.১৬ 90+ স্কোর নিয়ে সৎ কথা
+
+- এই স্ট্যাকে (React + ১২টা Swiper + ~১.৯MB HTML + Meta/GTM/GA4/TikTok/Tawk) **Moto G Power + ধীর 4G-তে 90+ বাস্তবসম্মত না।** আমার মাপা উন্নতিগুলো (LCP, CLS, TTFB, তৃতীয়-পক্ষ) মিলিয়ে স্কোর উল্লেখযোগ্য বাড়ার কথা, কিন্তু আসল সংখ্যা আমি Lighthouse চালিয়ে দেখিনি।
+- 90-এর দিকে যেতে দুটো বড় সিদ্ধান্ত লাগবে: (১) tracking script শুধু প্রথম স্ক্রল/ট্যাপে লোড (Meta PageView-এর কিছু bounce হারাবে), (২) স্ক্রিনের নিচের section-এর client JS দেরিতে hydrate করা (বড় refactor)।
+- `Performance 35 ↔ 42` এর ওঠানামা অনেকটা Lighthouse-এর নিজের variance (±১০); ৩টা করে চালিয়ে মাঝেরটা নাও।
+
 ---
 
 ## ৩. তোমার করণীয় তালিকা (গুরুত্ব অনুযায়ী)
