@@ -13,7 +13,7 @@ import ReduxProvider from "@/app/providers/ReduxProvider";
 import { Toaster } from "react-hot-toast";
 import GoogleTagManager, { GoogleTagManagerNoScript } from "@/components/analytics/GoogleTagManager";
 import FacebookPixel, { FacebookPixelNoScript } from "@/components/analytics/FacebookPixel";
-import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
+// GoogleAnalytics is loaded by the GTM container — see the note in <head> below.
 import TikTokPixel from "@/components/analytics/TikTokPixel";
 import TawkToChat from "@/components/analytics/TawkToChat";
 import RouteChangeTracker from "@/components/analytics/RouteChangeTracker";
@@ -158,7 +158,13 @@ export default async function RootLayout({
             snippet. */}
         <FacebookPixel />
         <GoogleTagManager />
-        <GoogleAnalytics />
+        {/* <GoogleAnalytics /> removed: the GTM container (GTM-NM9TVHT3) already
+            loads the SAME GA4 property (G-XEGWL1PBPK, via its Google tag), so
+            this loaded gtag.js a second time — visible in Lighthouse as two
+            /gtag/js requests (~245ms of main-thread CPU) and a risk of every
+            page view being counted twice in GA. The component file is kept in
+            case GTM's GA tag is ever removed. Verify in GA4 → Realtime that
+            page views still arrive after deploying. */}
         <TikTokPixel />
         <TawkToChat />
       </head>

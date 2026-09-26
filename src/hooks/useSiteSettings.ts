@@ -36,13 +36,27 @@ export function useSiteSettings() {
       // Strip client-side too: this path runs only when the dehydrated cache
       // was missed, and without it the heavy fields would land in Redux (and,
       // via redux-persist, in localStorage).
-      const { metaDescription, metaKeywords, aboutUs, termsAndCondition, faq, ...lite } =
-        res.data ?? ({} as SiteSettingsData);
+      const {
+        metaDescription,
+        metaKeywords,
+        aboutUs,
+        termsAndCondition,
+        faq,
+        hseogl1,
+        hseogl2,
+        hseogl3,
+        hseogl4,
+        ...lite
+      } = (res.data ?? {}) as SiteSettingsData & Record<string, unknown>;
       void metaDescription;
       void metaKeywords;
       void aboutUs;
       void termsAndCondition;
       void faq;
+      void hseogl1;
+      void hseogl2;
+      void hseogl3;
+      void hseogl4;
       return lite as SiteSettingsData;
     },
   });

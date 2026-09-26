@@ -171,6 +171,22 @@
 
 - উৎস: React-DOM hydration (`00nvzi…`) ও `10t3b7…` (Swiper-এর মাপজোখ)। এটা প্রতিটা Swiper চালু হওয়ার সময় `offsetWidth` পড়া। ⚠️ ১২টা Swiper থাকা পর্যন্ত পুরো এড়ানো যায় না; স্ক্রিনের নিচের Swiper গুলো দেরিতে চালু করা (lazy hydrate) আলাদা, বড় কাজ।
 
+### ২.১৭ HTML/JS payload — সবচেয়ে বড় "অদৃশ্য" বোঝা (মাপা)
+
+Field data-য় INP ৪৭৭ → ৩০২ ms, CLS ০.২৩ → ০.১৮ নেমেছে (আগের deploy কাজ করছে)। বাকি INP-র বড় অংশ **JavaScript পার্স/এক্সিকিউট** (তোমার report: first-party ৩,২২৮ ms CPU, তার মধ্যে HTML নিজে ৮৩০ ms)। কারণ খুঁজতে homepage-এর RSC flight stream পার্স করে দেখলাম:
+
+| উৎস | আকার | অবস্থা |
+|---|---|---|
+| CMS-এর SEO blob `hseogl1–4` (একই ১৬০KB লেখা ৪ বার) | **৬৪০ KB** | ✅ client state থেকে সরানো |
+| Header-র categories/brands props | ১৭৩ KB | ⚠️ ছুঁইনি (কোন ফিল্ড কোথায় লাগে যাচাই করে ছাঁটতে হবে) |
+| LatestBlog-এর SEO card লেখা | ~১৫০ KB | ⚠️ ইচ্ছাকৃত (crawler-এর জন্য) |
+
+- **কারণ:** layout প্রতিটা পেজে site-settings dehydrate করত; `hseogl1–4` ছাঁটা হতো না। ফলে প্রতিটা পেজে ৬৪০KB অতিরিক্ত JS-string ব্রাউজার পার্স করত, আর redux-persist সেটা **localStorage-এও** লিখত।
+- **সমাধান ✅** ([`getSiteSettings.ts`](../src/lib/getSiteSettings.ts), [`useSiteSettings.ts`](../src/hooks/useSiteSettings.ts)): শুধু server-side `LatestBlog` ওগুলো পড়ে (ছাঁটা হয় না), client আর পায় না।
+- **মাপা ফল:** flight payload **১,০৭৬ KB → ৪৩৫ KB**; homepage HTML ১.৮৭ MB → ১.২৭ MB; product page ~৫২২ KB। localStorage-এ site-settings এখন ২.৬ KB। Footer, SEO card, Latest Blog সব আগের মতো চলছে, console-এ error নেই।
+- **GA4 ডুপ্লিকেট ✅:** GTM container-এই একই `G-XEGWL1PBPK` আছে, আর আমাদের `GoogleAnalytics` component আবারও লোড করত (report-এ `gtag/js` ২ বার)। এটা [`layout.tsx`](../src/app/layout.tsx) থেকে সরিয়েছি। 🔧 **Deploy-এর পর GA4 → Realtime-এ page view আসছে কিনা দেখো।**
+- 🔧 **Cloudflare (staging):** `cf-cache-status: DYNAMIC` — HTML cache হচ্ছে না, প্রতি request origin-এ যাচ্ছে (TTFB ০.৯ s)। HTML-এর জন্য Cache Rule দাও (Origin-এর `s-maxage` মেনে), তাহলে TTFB ৫০ ms-এর কাছে নামবে।
+
 ### ২.১৬ 90+ স্কোর নিয়ে সৎ কথা
 
 - এই স্ট্যাকে (React + ১২টা Swiper + ~১.৯MB HTML + Meta/GTM/GA4/TikTok/Tawk) **Moto G Power + ধীর 4G-তে 90+ বাস্তবসম্মত না।** আমার মাপা উন্নতিগুলো (LCP, CLS, TTFB, তৃতীয়-পক্ষ) মিলিয়ে স্কোর উল্লেখযোগ্য বাড়ার কথা, কিন্তু আসল সংখ্যা আমি Lighthouse চালিয়ে দেখিনি।

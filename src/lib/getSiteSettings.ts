@@ -60,12 +60,23 @@ export function stripHtml(html?: string, maxLen = 160): string {
  * pages that genuinely need the long-form HTML fetch it themselves via
  * useSiteSettingsFull().
  */
+// hseogl1–4 (added later): the CMS stores the SAME ~160 KB SEO blob in each of
+// the four fields, and they were riding along in the dehydrated settings on
+// EVERY page — 4 x 160 KB = ~640 KB, more than half of the homepage's whole RSC
+// payload (measured by parsing the flight stream), all of it also evaluated on
+// the main thread and written to localStorage by redux-persist. Only the
+// server-rendered LatestBlog reads them (via getSiteSettings(), which is NOT
+// stripped), so nothing on the client needs them.
 const HEAVY_FIELDS = [
   "metaDescription",
   "metaKeywords",
   "aboutUs",
   "termsAndCondition",
   "faq",
+  "hseogl1",
+  "hseogl2",
+  "hseogl3",
+  "hseogl4",
 ] as const;
 
 export type ClientSiteSettings = Omit<SiteSettings, (typeof HEAVY_FIELDS)[number]>;
