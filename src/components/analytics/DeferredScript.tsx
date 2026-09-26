@@ -4,34 +4,11 @@ import { useEffect, useState } from "react";
 import Script from "next/script";
 
 const INTERACTION_EVENTS = ["pointerdown", "keydown", "touchstart", "scroll"] as const;
-/** Guarantees the script still loads for a visitor who never interacts
- * (a bot, or someone who just reads the page and leaves) — no
- * conversion/tracking event is silently lost, it only fires later. */
 const FALLBACK_DELAY_MS = 4000;
-
-/**
- * Delays mounting a third-party <Script> (GTM/Meta Pixel/TikTok/chat widget)
- * until the visitor does something — scroll, tap, key press — or
- * FALLBACK_DELAY_MS passes, whichever comes first. This is the standard
- * "facade" pattern for third-party embeds.
- *
- * Why this exists: `strategy="lazyOnload"` alone still runs these scripts
- * during the browser's early idle window, which on staging measured live
- * via Lighthouse was GTM + Meta Pixel + TikTok together costing ~1.2s of
- * main-thread time (710 KiB) — landing squarely inside the window a real
- * visitor's FIRST tap/scroll happens, which is exactly what INP measures.
- * Gating on interaction moves that cost to AFTER the moment INP cares about,
- * without dropping or delaying it for long — most visitors interact within
- * the first second or two anyway.
- */
 export default function DeferredScript({
   delayMs = FALLBACK_DELAY_MS,
   ...scriptProps
 }: React.ComponentProps<typeof Script> & {
-  /** Max wait before loading even with no interaction. Ad-measurement scripts
-   * (Meta Pixel, GTM) pass a SHORT value: a visitor who leaves before the
-   * script loads is never counted at all, so a long delay under-reports
-   * PageView/ViewContent for every fast bounce from an ad click. */
   delayMs?: number;
 }) {
   const [ready, setReady] = useState(false);

@@ -3,20 +3,6 @@ import DeferredScript from "./DeferredScript";
 
 const DEFAULT_PIXEL_ID = "1665562014226088";
 
-/**
- * Standard events this site already sends itself, directly, with full
- * parameters and a shared event_id (src/lib/analytics/pixelEvents.ts).
- *
- * The GTM container ships its own Meta Pixel tag that ALSO converts every
- * GA4 dataLayer event (gtm.dom, page_view, view_item, add_to_cart,
- * begin_checkout, add_payment_info, purchase, search, add_to_wishlist) into a
- * Meta event — via fbq('trackSingle', ...), with EMPTY custom data and a
- * different event id, so Meta counts each one twice and can't dedupe them.
- * The stub below drops only those GTM copies (method "trackSingle", one of
- * these event names); the site's own fbq('track', ...) calls, and any Meta
- * event the site does NOT send itself (Lead, CompleteRegistration, custom
- * events ...), pass through untouched.
- */
 const SITE_OWNED_EVENTS = [
   "PageView",
   "ViewContent",
@@ -30,21 +16,11 @@ const SITE_OWNED_EVENTS = [
 
 const OWNED_MAP = `{${SITE_OWNED_EVENTS.map((e) => `${e}:1`).join(",")}}`;
 
-// Meta's standard stub, plus one line that drops the GTM duplicates.
 const FILTERED_STUB = `function(){var a=arguments;if(a[0]==='trackSingle'&&(${OWNED_MAP})[a[2]])return;n.callMethod?n.callMethod.apply(n,a):n.queue.push(a)}`;
 
-// Meta's UNMODIFIED stub, exactly as it appears in the snippet Meta hands out.
 const STANDARD_STUB =
   /function\(\)\{n\.callMethod\?\s*n\.callMethod\.apply\(n,arguments\):n\.queue\.push\(arguments\)\}/;
 
-/**
- * The CMS "Facebook Base Code" field now holds Meta's full, unmodified
- * snippet, so building our own script isn't enough — that snippet is what
- * actually runs. Swap its stub for the filtered one; every other line
- * (init, PageView, any custom calls marketing adds) is left as-is. If the
- * stub isn't recognisable (Meta changed the snippet), it runs unmodified
- * rather than risk breaking the Pixel.
- */
 function withDuplicateFilter(rawScript: string): string {
   return STANDARD_STUB.test(rawScript) ? rawScript.replace(STANDARD_STUB, FILTERED_STUB) : rawScript;
 }
@@ -61,14 +37,6 @@ fbq('init', '${pixelId}');
 fbq('track', 'PageView');`;
 }
 
-/**
- * The admin panel's "Facebook Base Code" field currently stores a bare
- * numeric pixel ID (e.g. "1665562014226088"), not the full <script> snippet
- * the field name implies. Running that bare ID as if it were JavaScript
- * (the old behavior) throws "ReferenceError" and the Pixel never loads —
- * confirmed live via the CMS API response. Detect that shape and build the
- * base code ourselves instead of trusting the field to already be a script.
- */
 function resolvePixel(
   cmsCode: string | undefined,
   fallbackId: string
@@ -87,16 +55,6 @@ function resolvePixel(
   return { pixelId: fallbackId, rawScript: null };
 }
 
-/**
- * Facebook Pixel — API-driven.
- *
- * Priority order:
- *   1. `facebookBaseCode` from site-settings API (bare pixel ID today, or a
- *      full <script> base-code snippet if the CMS field is ever upgraded)
- *   2. `NEXT_PUBLIC_FB_PIXEL_ID` env variable, else a hardcoded fallback ID
- *
- * Subsequent client-side route-change PageViews are fired by RouteChangeTracker.
- */
 export default async function FacebookPixel() {
   const settings = await getSiteSettings();
   const cmsCode = settings.facebookBaseCode?.trim();
@@ -106,16 +64,6 @@ export default async function FacebookPixel() {
   const jsCode = rawScript ? withDuplicateFilter(rawScript) : buildPixelScript(pixelId);
 
   return (
-    // DeferredScript: confirmed live via Lighthouse (staging) that
-    // fbevents.js alone costs ~117ms of main-thread time, and together with
-    // GTM + TikTok under lazyOnload still landed inside the window a real
-    // visitor's first tap/scroll happens — competing with INP, not just LCP.
-    // Gating on interaction (see DeferredScript) doesn't change what fires
-    // or drop any event, it only moves the cost later.
-    // delayMs 1500: unlike TikTok/chat, this one feeds Meta Ads reporting, and
-    // a visitor who bounces before the pixel loads is never counted. A short
-    // cap keeps the INP benefit (still after hydration) without dropping
-    // PageView/ViewContent for fast bounces from an ad click.
     <DeferredScript id="fb-pixel-base" delayMs={1500}>
       {jsCode}
     </DeferredScript>
