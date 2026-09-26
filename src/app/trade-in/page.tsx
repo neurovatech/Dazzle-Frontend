@@ -9,16 +9,7 @@ import { useState } from "react";
 const TradeInPage = () => {
   const token = useAppSelector((state) => state.auth.token);
 
-    const [openIndex, setOpenIndex] = useState(0);
-
-  const steps = [
-    "Provide device details and get a price quote",
-    "Book a home pick-up or visit the nearest Dazzle store",
-    "Your device will be assessed for condition",
-    "Opt for a certified data wipe service",
-    "Trade-in and get instant cash on home pickup or Dazzle Voucher on Store drop-off",
-  ];
-
+  const [openIndex, setOpenIndex] = useState(0);
   const faqs = [
     {
       question: "What services does you offer?",
@@ -36,7 +27,6 @@ const TradeInPage = () => {
         "We focus on providing the best market value for used devices while maintaining a secure and eco-friendly disposal or resale strategy tailored to client needs.",
     },
   ];
-
 
   // ── Not logged in ──────────────────────────────────────────────────────────
   if (!token) {
@@ -62,7 +52,10 @@ const TradeInPage = () => {
           </Link>
           <p className="text-xs text-gray-400 dark:text-gray-500">
             Don&apos;t have an account?{" "}
-            <Link href="/auth/registration" className="text-[#6D3F0E] dark:text-[#d4a97a] hover:underline font-medium">
+            <Link
+              href="/auth/registration"
+              className="text-[#6D3F0E] dark:text-[#d4a97a] hover:underline font-medium"
+            >
               Register here
             </Link>
           </p>
@@ -138,7 +131,6 @@ const TradeInPage = () => {
           </div>
         </div>
       </div>
-
     </div>
   );
 };

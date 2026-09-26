@@ -3,44 +3,50 @@
  * GET /products/sitemap.xml
  *
  * Lists every active product slug as a <url> entry.
- * Fetches in pages of 2 000 and turns each page into its <url> XML
- * immediately, so only the small XML strings are kept. A backend outage yields an
- * empty (but valid) sitemap - never a 500.
  *
- * Disk: the backend pages are fetched with `cache: "no-store"` so the ~1 MB JSON
- * bodies are not written to .next/cache/fetch-cache; `dynamic = "force-static"`
- * keeps the route prerendered/ISR (a bare no-store fetch would make it dynamic,
- * i.e. every request would wait ~27 s for the backend). The finished XML is
- * cached by this route's own `revalidate` (6 h).
+ * WHY THIS ROUTE IS DYNAMIC (not prerendered at build time)
+ * The backend needs ~27 s per 2 000-item page and often times out or 500s.
+ * As a prerendered route, `next build` had to wait for it: past Next's 180 s
+ * static-generation limit, three attempts in a row, the whole BUILD FAILED.
+ * A deploy must never depend on that endpoint, so the sitemap is now built on
+ * demand and kept in memory instead:
+ *   - fresh copy (< 6 h)  -> served instantly
+ *   - stale copy          -> served instantly, refreshed in the background
+ *   - no copy yet (first request after a restart) -> built once, the wait is
+ *     shared by every concurrent request (single in-flight promise)
+ * The response carries `s-maxage`, so Cloudflare/the CDN absorbs nearly all
+ * traffic and each container only rebuilds it about once per 6 h.
+ *
+ * Disk/memory: backend pages are fetched with `cache: "no-store"` (nothing
+ * written to .next/cache/fetch-cache) and reduced to their <url> strings as
+ * soon as they arrive. A backend outage yields an empty (but valid) sitemap
+ * that is only cached for a minute - never a 500.
  */
 
 import { absoluteUrl } from "@/lib/seo-config";
 import { api } from "@/lib/api";
 import { NextResponse } from "next/server";
 
-export const revalidate = 21600; // 6 h
-// force-static keeps this route prerendered/ISR even though its backend fetches
-// use `cache: "no-store"` (which would otherwise make the route dynamic).
-export const dynamic = "force-static";
+export const dynamic = "force-dynamic";
 
 const LIMIT = 2000;
-// Verified live: the backend takes ~24s to return one 2000-item page - well
-// past api.ts's normal 30s default. This route runs at most every 6h and
-// already falls back to an empty (but valid) sitemap on any failure.
+const FRESH_MS = 6 * 60 * 60 * 1000; // 6 h
+const EMPTY_RETRY_MS = 60 * 1000; // an empty result is retried after 1 min
+// The backend takes ~27 s per 2000-item page; leave headroom.
 const TIMEOUT_MS = 60_000;
 
 function urlEntry(slug: string): string {
   return `  <url>\n    <loc>${absoluteUrl(`/product/${slug}`)}</loc>\n    <changefreq>daily</changefreq>\n    <priority>0.9</priority>\n  </url>`;
 }
 
-async function fetchPage(page: number): Promise<any> {
+function fetchPage(page: number): Promise<any> {
   return api.get<any>(`/products?page=${page}&limit=${LIMIT}`, {
     cache: "no-store",
     timeoutMs: TIMEOUT_MS,
   });
 }
 
-async function buildEntries(): Promise<string[]> {
+async function buildXml(): Promise<{ xml: string; count: number }> {
   const seen = new Set<string>();
   const entries: string[] = [];
 
@@ -59,11 +65,7 @@ async function buildEntries(): Promise<string[]> {
     const totalPages = Math.ceil((Number(first?.totalCount) || 0) / LIMIT);
     consume(first);
 
-    // The remaining pages are fetched IN PARALLEL: the backend needs ~27 s per
-    // 2000-item page, so going one-by-one (tried) pushed the prerender past
-    // Next's 180 s static-generation limit and FAILED THE BUILD. Memory is not
-    // a concern here - only a few ~1 MB responses, and each is reduced to its
-    // <url> strings as soon as it is consumed.
+    // Remaining pages in parallel (sequential would take ~27 s x pages).
     const rest = await Promise.allSettled(
       Array.from({ length: Math.max(0, totalPages - 1) }, (_, i) => fetchPage(i + 2)),
     );
@@ -74,16 +76,45 @@ async function buildEntries(): Promise<string[]> {
   } catch (err) {
     console.error("[products/sitemap.xml]", err);
   }
-  return entries;
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries.join("\n")}\n</urlset>`;
+  return { xml, count: entries.length };
+}
+
+// ── In-memory cache (per server process) ────────────────────────────────────
+let cached: { xml: string; builtAt: number; count: number } | null = null;
+let inflight: Promise<void> | null = null;
+
+function refresh(): Promise<void> {
+  if (!inflight) {
+    inflight = buildXml()
+      .then(({ xml, count }) => {
+        // Never let a failed (empty) rebuild replace a good copy.
+        if (count > 0 || !cached || cached.count === 0) {
+          cached = { xml, builtAt: Date.now(), count };
+        }
+      })
+      .finally(() => {
+        inflight = null;
+      });
+  }
+  return inflight;
+}
+
+function isFresh(c: NonNullable<typeof cached>): boolean {
+  return Date.now() - c.builtAt < (c.count > 0 ? FRESH_MS : EMPTY_RETRY_MS);
 }
 
 export async function GET() {
-  const entries = await buildEntries();
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries.join("\n")}\n</urlset>`;
-  return new NextResponse(xml, {
+  if (!cached) await refresh();
+  else if (!isFresh(cached)) void refresh(); // stale-while-revalidate
+
+  const c = cached ?? { xml: "", builtAt: 0, count: 0 };
+  const maxAge = c.count > 0 ? FRESH_MS / 1000 : EMPTY_RETRY_MS / 1000;
+  return new NextResponse(c.xml, {
     headers: {
       "Content-Type": "application/xml; charset=utf-8",
-      "Cache-Control": `public, max-age=${revalidate}, s-maxage=${revalidate}`,
+      "Cache-Control": `public, max-age=${maxAge}, s-maxage=${maxAge}`,
     },
   });
 }
