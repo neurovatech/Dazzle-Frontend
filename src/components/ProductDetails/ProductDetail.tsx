@@ -39,11 +39,56 @@ import {
   type GalleryImage,
 } from "./utils";
 
+type PlanAccessoriesResponse = {
+        statusCode: number;
+        status: string;
+        found: boolean;
+        count: number;
+        data: {
+          planGroup: string;
+          items: {
+            accessoriesUuid: string;
+            bundleProdUuid: string;
+            bundleCode: string;
+            planGroup: string;
+            productCode: string;
+            productName: string;
+            productSlug: string;
+            regularPrice: number;
+            discountedPrice: number;
+            isTba: boolean;
+            productBadge: string;
+            stdWarrantyProdDay: number;
+            salesOnRate: number;
+            thumbnail: {
+              fileUuid: string;
+              mediaFileURL?: string;
+              mediaFileUrl?: string;
+            }[];
+          }[];
+        }[];
+      };
+
 interface ProductDetailProps {
   product: any | null;
+  /**
+   * Variants / Dazzle Care source data fetched on the server (ISR). Seeding the
+   * two queries below with it means the "Color / RAM & Storage" block (~250px)
+   * and the "Dazzle Care" block (~470px) are part of the server HTML instead of
+   * popping in after two client requests — which pushed everything under them
+   * (price, Buy buttons, delivery info) down ~720px on every product view
+   * (layout shift ~0.07-0.08). If a server fetch failed these are undefined
+   * and the client queries fetch as before.
+   */
+  initialVariants?: VariantApiResponse;
+  initialPlanAccessories?: PlanAccessoriesResponse;
 }
 
-const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
+const ProductDetail: React.FC<ProductDetailProps> = ({
+  product,
+  initialVariants,
+  initialPlanAccessories,
+}) => {
   const dispatch = useAppDispatch();
   const [qty, setQty] = useState(1);
   const [selectedAttrs, setSelectedAttrs] = useState<Record<string, string>>(
@@ -72,42 +117,16 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ product }) => {
         ),
       enabled: !!product?.productUuid,
       staleTime: 10 * 60 * 1000,
+      initialData: initialVariants,
     });
 
-  const { data: planAccessoriesData } = useQuery({
+  const { data: planAccessoriesData } = useQuery<PlanAccessoriesResponse>({
     queryKey: ["plan-accessories", product?.productUuid],
     queryFn: () =>
-      api.get<{
-        statusCode: number;
-        status: string;
-        found: boolean;
-        count: number;
-        data: {
-          planGroup: string;
-          items: {
-            accessoriesUuid: string;
-            bundleProdUuid: string;
-            bundleCode: string;
-            planGroup: string;
-            productCode: string;
-            productName: string;
-            productSlug: string;
-            regularPrice: number;
-            discountedPrice: number;
-            isTba: boolean;
-            productBadge: string;
-            stdWarrantyProdDay: number;
-            salesOnRate: number;
-            thumbnail: {
-              fileUuid: string;
-              mediaFileURL?: string;
-              mediaFileUrl?: string;
-            }[];
-          }[];
-        }[];
-      }>(`/plan-accessories/${product!.productUuid}`),
+      api.get<PlanAccessoriesResponse>(`/plan-accessories/${product!.productUuid}`),
     enabled: !!product?.productUuid,
     staleTime: 10 * 60 * 1000,
+    initialData: initialPlanAccessories,
   });
 
   // ── Consolidate ────────────────────────────────────────────────

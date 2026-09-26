@@ -248,6 +248,26 @@ export default async function ProductDetailsPage({ params }: PageProps) {
     notFound();
   }
 
+  // Variants + Dazzle Care are fetched here (cached with the page, same 60s
+  // window) and handed to ProductDetail as initialData, so those two large
+  // blocks are in the server HTML instead of appearing after client requests
+  // (a ~720px layout shift). Any failure just leaves them undefined and the
+  // client falls back to fetching them itself, exactly as before.
+  const [initialVariants, initialPlanAccessories] = product?.productUuid
+    ? await Promise.all([
+        api
+          .get<any>(`/product-variants/${product.productUuid}`, {
+            next: { revalidate: 60, tags: ['product', `product:${productSlug}`] },
+          } as RequestInit)
+          .catch(() => undefined),
+        api
+          .get<any>(`/plan-accessories/${product.productUuid}`, {
+            next: { revalidate: 60, tags: ['product', `product:${productSlug}`] },
+          } as RequestInit)
+          .catch(() => undefined),
+      ])
+    : [undefined, undefined];
+
   const jsonLd = product
     ? buildJsonLd(
         productSchema(product),
@@ -273,7 +293,11 @@ export default async function ProductDetailsPage({ params }: PageProps) {
         />
       )}
       {requestFailed && <ProductLoadFailedBanner />}
-      <ProductDetails product={product} />
+      <ProductDetails
+        product={product}
+        initialVariants={initialVariants}
+        initialPlanAccessories={initialPlanAccessories}
+      />
     </div>
   );
 }
