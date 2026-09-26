@@ -16,7 +16,7 @@ const nextConfig: NextConfig = {
   images: {
     formats: ["image/webp"],
     qualities: [70, 75],
-    minimumCacheTTL: 86400,
+    minimumCacheTTL: 259200,
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "upload.wikimedia.org" },
