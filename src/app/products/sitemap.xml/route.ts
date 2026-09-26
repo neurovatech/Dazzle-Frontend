@@ -12,6 +12,7 @@
  * demand and kept in memory instead:
  *   - fresh copy (< 6 h)  -> served instantly
  *   - stale copy          -> served instantly, refreshed in the background
+ *   - INCOMPLETE copy (some backend pages failed) -> trusted for only 2 min
  *   - no copy yet (first request after a restart) -> built once, the wait is
  *     shared by every concurrent request (single in-flight promise)
  * The response carries `s-maxage`, so Cloudflare/the CDN absorbs nearly all
@@ -31,7 +32,11 @@ export const dynamic = "force-dynamic";
 
 const LIMIT = 2000;
 const FRESH_MS = 6 * 60 * 60 * 1000; // 6 h
-const EMPTY_RETRY_MS = 60 * 1000; // an empty result is retried after 1 min
+// An incomplete result (backend failed/timed out on some pages, or returned
+// nothing) is only trusted for a short while, then rebuilt. Measured: the
+// backend often 500s on pages 2-3, so a "successful" build can list only
+// ~1900 of ~4300 products - that must NOT be cached/CDN-cached for 6 hours.
+const PARTIAL_RETRY_MS = 2 * 60 * 1000;
 // The backend takes ~27 s per 2000-item page; leave headroom.
 const TIMEOUT_MS = 60_000;
 
@@ -46,9 +51,10 @@ function fetchPage(page: number): Promise<any> {
   });
 }
 
-async function buildXml(): Promise<{ xml: string; count: number }> {
+async function buildXml(): Promise<{ xml: string; count: number; complete: boolean }> {
   const seen = new Set<string>();
   const entries: string[] = [];
+  let complete = false;
 
   const consume = (res: any) => {
     for (const p of res?.data ?? []) {
@@ -69,29 +75,38 @@ async function buildXml(): Promise<{ xml: string; count: number }> {
     const rest = await Promise.allSettled(
       Array.from({ length: Math.max(0, totalPages - 1) }, (_, i) => fetchPage(i + 2)),
     );
+    let failed = 0;
     rest.forEach((r, i) => {
       if (r.status === "fulfilled") consume(r.value);
-      else console.error(`[products/sitemap.xml] page ${i + 2} failed`, r.reason);
+      else {
+        failed++;
+        console.error(`[products/sitemap.xml] page ${i + 2} failed`, r.reason);
+      }
     });
+    complete = failed === 0 && totalPages > 0;
   } catch (err) {
     console.error("[products/sitemap.xml]", err);
   }
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries.join("\n")}\n</urlset>`;
-  return { xml, count: entries.length };
+  return { xml, count: entries.length, complete };
 }
 
 // ── In-memory cache (per server process) ────────────────────────────────────
-let cached: { xml: string; builtAt: number; count: number } | null = null;
+type Cached = { xml: string; builtAt: number; count: number; complete: boolean };
+let cached: Cached | null = null;
 let inflight: Promise<void> | null = null;
 
 function refresh(): Promise<void> {
   if (!inflight) {
     inflight = buildXml()
-      .then(({ xml, count }) => {
-        // Never let a failed (empty) rebuild replace a good copy.
-        if (count > 0 || !cached || cached.count === 0) {
-          cached = { xml, builtAt: Date.now(), count };
+      .then((next) => {
+        // A rebuild may only replace the current copy if it is at least as
+        // good: complete, or listing at least as many products.
+        if (!cached || next.complete || next.count >= cached.count) {
+          cached = { ...next, builtAt: Date.now() };
+        } else {
+          cached = { ...cached, builtAt: Date.now() }; // keep the better copy, retry later
         }
       })
       .finally(() => {
@@ -101,16 +116,16 @@ function refresh(): Promise<void> {
   return inflight;
 }
 
-function isFresh(c: NonNullable<typeof cached>): boolean {
-  return Date.now() - c.builtAt < (c.count > 0 ? FRESH_MS : EMPTY_RETRY_MS);
+function ttlMs(c: Cached): number {
+  return c.complete && c.count > 0 ? FRESH_MS : PARTIAL_RETRY_MS;
 }
 
 export async function GET() {
   if (!cached) await refresh();
-  else if (!isFresh(cached)) void refresh(); // stale-while-revalidate
+  else if (Date.now() - cached.builtAt >= ttlMs(cached)) void refresh(); // stale-while-revalidate
 
-  const c = cached ?? { xml: "", builtAt: 0, count: 0 };
-  const maxAge = c.count > 0 ? FRESH_MS / 1000 : EMPTY_RETRY_MS / 1000;
+  const c: Cached = cached ?? { xml: "", builtAt: 0, count: 0, complete: false };
+  const maxAge = ttlMs(c) / 1000;
   return new NextResponse(c.xml, {
     headers: {
       "Content-Type": "application/xml; charset=utf-8",

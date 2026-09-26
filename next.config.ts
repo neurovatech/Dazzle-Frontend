@@ -14,9 +14,10 @@ const nextConfig: NextConfig = {
     ],
   },
   images: {
-    formats: ["image/webp"],
-    qualities: [70, 75],
-    minimumCacheTTL: 259200,
+    // Custom loader rewrites Spaces URLs to /media/... on dazzle.com.bd.
+    // The built-in optimizer stays off, so containers do not store WebP copies.
+    loader: "custom",
+    loaderFile: "./image-loader.ts",
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "upload.wikimedia.org" },
