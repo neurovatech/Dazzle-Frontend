@@ -21,6 +21,9 @@ import { api } from "@/lib/api";
 import { NextResponse } from "next/server";
 
 export const revalidate = 21600; // 6 h
+// force-static keeps this route prerendered/ISR even though its backend fetches
+// use `cache: "no-store"` (which would otherwise make the route dynamic).
+export const dynamic = "force-static";
 
 const LIMIT = 2000;
 // Verified live: the backend takes ~24s to return one 2000-item page - well
@@ -34,7 +37,7 @@ function urlEntry(slug: string): string {
 
 async function fetchPage(page: number): Promise<any> {
   return api.get<any>(`/products?page=${page}&limit=${LIMIT}`, {
-    next: { revalidate },
+    cache: "no-store",
     timeoutMs: TIMEOUT_MS,
   });
 }

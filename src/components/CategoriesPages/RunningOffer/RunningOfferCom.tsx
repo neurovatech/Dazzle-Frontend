@@ -62,9 +62,9 @@ export default function RunningOfferCom() {
         </h1>
       </div>
       {isLoading && products.length === 0 ? (
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-4 pb-[30px]">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="animate-pulse bg-[#8B5A2B] dark:bg-[#3a3330] rounded-2xl h-[220px]" />
+            <div key={i} className={`animate-pulse bg-[#8B5A2B] dark:bg-[#3a3330] rounded-2xl h-[372px] md:h-[404px] ${i >= 2 ? "hidden lg:block" : ""}`} />
           ))}
         </div>
       ) : (
