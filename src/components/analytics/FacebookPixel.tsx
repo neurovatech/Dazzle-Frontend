@@ -64,7 +64,7 @@ export default async function FacebookPixel() {
   const jsCode = rawScript ? withDuplicateFilter(rawScript) : buildPixelScript(pixelId);
 
   return (
-    <DeferredScript id="fb-pixel-base" delayMs={1500}>
+    <DeferredScript id="fb-pixel-base">
       {jsCode}
     </DeferredScript>
   );
