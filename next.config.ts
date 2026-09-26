@@ -14,10 +14,9 @@ const nextConfig: NextConfig = {
     ],
   },
   images: {
-    // Custom loader rewrites Spaces URLs to /media/... on dazzle.com.bd.
-    // The built-in optimizer stays off, so containers do not store WebP copies.
-    loader: "custom",
-    loaderFile: "./image-loader.ts",
+    formats: ["image/webp"],
+    qualities: [70, 75],
+    minimumCacheTTL: 604800, // 7 days
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "upload.wikimedia.org" },
