@@ -70,7 +70,7 @@ function ClipToCart({
               className="animate-pulse shrink-0 rounded-2xl bg-gray-100 dark:bg-[#2e2b28] w-[calc((100%-2px)/1.2)] min-[480px]:w-[calc((100%-6px)/1.5)] sm:w-[calc((100%-14px)/2)] md:w-[calc((100%-16px)/2)] lg:w-[calc((100%-40px)/5)]"
             >
               <div className="aspect-square" />
-              <div className="h-[228px]" />
+              <div className="h-[228px] lg:h-[208px]" />
             </div>
           ))}
         </div>

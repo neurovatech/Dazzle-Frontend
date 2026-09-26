@@ -101,6 +101,11 @@ function MostPopular({
       </div>
 
       <div className="pt-6">
+        {/* Only mount the Swiper when there are banners. With none it rendered an
+            empty Swiper whose scrollbar's 30px margin-top (globals.css) was in
+            the server HTML and vanished once Swiper initialised on the client —
+            a 30px shift of everything below Most Popular. */}
+        {banners.length > 0 && (
         <Swiper
           modules={[Navigation, Scrollbar, A11y, Autoplay]}
           // Swiper needs roughly twice the widest slidesPerView (3 at lg) in
@@ -132,7 +137,7 @@ function MostPopular({
               spaceBetween: 10,
             },
           }}
-          className="mySwiper"
+          className="mySwiper pre-swiper pre-mostpop"
         >
           {banners.map((banner, i) => (
             <SwiperSlide key={i}>
@@ -149,6 +154,7 @@ function MostPopular({
             </SwiperSlide>
           ))}
         </Swiper>
+        )}
       </div>
     </div>
   );

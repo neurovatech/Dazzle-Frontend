@@ -130,14 +130,24 @@ function Bannerslider({
             lacked it, so everything under the hero (Categories, Flash Sale…)
             jumped down 30px the moment hydration swapped the two in. Same
             30px is reserved here so the swap doesn't move anything. */}
+        {/* hero-pre / hero-pre-slide (globals.css): from 768px the real Swiper
+            shows 1.5 slides per view, so its first slide is only
+            (container - gap/2) / 1.5 wide — ~818px of a ~1240px row on a
+            1350px screen. This fallback used to be the FULL row width, so the
+            hero image shrank by a third the moment Swiper mounted (Lighthouse
+            "Layout shift culprits": Slide 1/Slide 2, ~0.27 CLS on desktop).
+            The container-query width below gives the fallback the exact width
+            the first Swiper slide ends up with, so nothing moves. */}
         {firstSlide?.imageUrl ? (
-          <div className="relative w-full h-60 max-[450px]:h-50 sm:h-75 md:h-110 rounded-[15px] overflow-hidden block mb-[30px]">
-            <BannerImage
-              src={firstSlide.imageUrl}
-              alt={firstSlide.title || "Hero Banner"}
-              priority
-              fetchPriorityValue="high"
-            />
+          <div className="hero-pre">
+            <div className="hero-pre-slide relative w-full h-60 max-[450px]:h-50 sm:h-75 md:h-110 rounded-[15px] overflow-hidden block mb-[30px]">
+              <BannerImage
+                src={firstSlide.imageUrl}
+                alt={firstSlide.title || "Hero Banner"}
+                priority
+                fetchPriorityValue="high"
+              />
+            </div>
           </div>
         ) : (
           <div className="w-full h-55 sm:h-75 md:h-121 animate-pulse bg-gray-200 dark:bg-zinc-800 rounded-[15px] mb-[30px]" />

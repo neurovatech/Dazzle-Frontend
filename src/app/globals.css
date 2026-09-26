@@ -372,3 +372,30 @@ img {
 .pre-brand:not(.swiper-initialized) { --pg: 6px; --pw: calc((100cqw - 18px) / 4); }
 @media (min-width: 480px) { .pre-brand:not(.swiper-initialized) { --pg: 2px; --pw: calc((100cqw - 2px) / 2); } }
 @media (min-width: 1024px) { .pre-brand:not(.swiper-initialized) { --pg: 10px; --pw: calc((100cqw - 70px) / 8); } }
+
+/* Hero banner, pre-hydration fallback (Bannerslider.tsx). The real Swiper uses
+   slidesPerView 1 below 768px and 1.5 from 768px, with spaceBetween 20 (md) and
+   24 (lg), i.e. first-slide width = (row - 0.5 * gap) / 1.5. Mirror that here so
+   the hero image keeps the same box when Swiper mounts (no layout shift). */
+.hero-pre {
+  container-type: inline-size;
+}
+@media (min-width: 768px) {
+  .hero-pre .hero-pre-slide {
+    width: calc((100cqw - 10px) / 1.5);
+  }
+}
+@media (min-width: 1024px) {
+  .hero-pre .hero-pre-slide {
+    width: calc((100cqw - 12px) / 1.5);
+  }
+}
+
+/* Most Popular banner strip (MostPopular.tsx): slidesPerView 2 (gap 8/16/20) below
+   1024px, 3 (gap 10) from 1024px. Before Swiper initialises its slides are 100%
+   wide, so a 500x500 banner used to render ~1200px tall and then collapse to a
+   third of that — mirror the real slide width here so nothing moves. */
+.pre-mostpop:not(.swiper-initialized) { --pg: 8px; --pw: calc((100cqw - 8px) / 2); }
+@media (min-width: 640px) { .pre-mostpop:not(.swiper-initialized) { --pg: 16px; --pw: calc((100cqw - 16px) / 2); } }
+@media (min-width: 768px) { .pre-mostpop:not(.swiper-initialized) { --pg: 20px; --pw: calc((100cqw - 20px) / 2); } }
+@media (min-width: 1024px) { .pre-mostpop:not(.swiper-initialized) { --pg: 10px; --pw: calc((100cqw - 20px) / 3); } }
