@@ -88,7 +88,7 @@ function BannerImage({
         sizes="(max-width: 767px) 100vw, (max-width: 1420px) 66vw, 936px"
         priority={priority}
         fetchPriority={fetchPriorityValue}
-        quality={70}
+        quality={75}
         onLoad={() => setLoaded(true)}
       />
     </>

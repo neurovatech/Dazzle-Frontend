@@ -199,7 +199,13 @@ export default async function CategoriesPage({
 
       const res = await api.get<ProductListResponse>(
         `/products?${queryParams.toString()}`,
-        { next: { revalidate: 60 } },
+        // Only the default view (page 1, no sort/search) is a shared, cached
+        // response. Every other page/sort/search combination is its own URL and
+        // would become its own file in .next/cache/fetch-cache (search text is
+        // unbounded), so those are fetched fresh and never written to disk.
+        currentPage <= 1 && !sort && !search
+          ? { next: { revalidate: 60 } }
+          : { cache: "no-store" },
       );
       if (res && typeof res === "object" && "data" in res) {
         return res;

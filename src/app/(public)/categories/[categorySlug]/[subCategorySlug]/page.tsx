@@ -164,9 +164,15 @@ export default async function SubCategoriesPage({
       if (sort) queryParams.set("sort", sort);
       if (search) queryParams.set("search", search);
 
-      const res = await api.get<any>(`/products?${queryParams.toString()}`, {
-        next: { revalidate: 60 },
-      });
+      // Only the default view (page 1, no sort/search) is a shared, cached
+      // response; every other combination is fetched fresh so it does not
+      // become its own file in .next/cache/fetch-cache (search text is unbounded).
+      const res = await api.get<any>(
+        `/products?${queryParams.toString()}`,
+        currentPage <= 1 && !sort && !search
+          ? { next: { revalidate: 60 } }
+          : { cache: "no-store" },
+      );
       if (res && typeof res === "object" && "data" in res) {
         return res;
       }

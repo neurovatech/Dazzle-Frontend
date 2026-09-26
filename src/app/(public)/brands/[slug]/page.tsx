@@ -219,7 +219,9 @@ export default async function BrandDetailsPage({
         limit: String(LIMIT),
         ...(requestedCategory ? { categorySlug: requestedCategory } : {}),
       }).toString()}`,
-      { next: { revalidate: 60 } },
+      // `fromCategory` is a free-form query string: cache only the plain brand
+      // page, fetch the filtered variants fresh (no per-value disk files).
+      requestedCategory ? { cache: "no-store" } : { next: { revalidate: 60 } },
     ),
     api.get<BrandAttributesResponse>(`/products/attributes?brandSlug=${slug}`, {
       next: { revalidate: 60 },
