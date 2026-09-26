@@ -3,17 +3,15 @@
  * GET /products/sitemap.xml
  *
  * Lists every active product slug as a <url> entry.
- * Fetches in pages of 2 000, ONE PAGE AT A TIME, and turns each page into its
- * <url> XML immediately, so only the small XML strings (not the ~MB-sized
- * backend JSON pages) are kept between pages. A backend outage yields an
+ * Fetches in pages of 2 000 and turns each page into its <url> XML
+ * immediately, so only the small XML strings are kept. A backend outage yields an
  * empty (but valid) sitemap - never a 500.
  *
- * Memory: pages are fetched one at a time (was Promise.all over every page)
- * and only the slugs' <url> strings are kept. The finished XML is cached by
- * this route's own `revalidate` (6 h), so the backend is hit at most once per
- * window. NOTE: do NOT switch these fetches to `cache: "no-store"` - measured:
- * that makes the whole route dynamic (every request would wait ~27 s for the
- * backend). The 3 backend pages are ~1.1 MB each, i.e. ~3 MB of fetch-cache.
+ * Disk: the backend pages are fetched with `cache: "no-store"` so the ~1 MB JSON
+ * bodies are not written to .next/cache/fetch-cache; `dynamic = "force-static"`
+ * keeps the route prerendered/ISR (a bare no-store fetch would make it dynamic,
+ * i.e. every request would wait ~27 s for the backend). The finished XML is
+ * cached by this route's own `revalidate` (6 h).
  */
 
 import { absoluteUrl } from "@/lib/seo-config";
@@ -61,15 +59,18 @@ async function buildEntries(): Promise<string[]> {
     const totalPages = Math.ceil((Number(first?.totalCount) || 0) / LIMIT);
     consume(first);
 
-    // Sequential on purpose (was Promise.all): only one 2000-item response is
-    // alive at a time.
-    for (let page = 2; page <= totalPages; page++) {
-      try {
-        consume(await fetchPage(page));
-      } catch (err) {
-        console.error(`[products/sitemap.xml] page ${page} failed`, err);
-      }
-    }
+    // The remaining pages are fetched IN PARALLEL: the backend needs ~27 s per
+    // 2000-item page, so going one-by-one (tried) pushed the prerender past
+    // Next's 180 s static-generation limit and FAILED THE BUILD. Memory is not
+    // a concern here - only a few ~1 MB responses, and each is reduced to its
+    // <url> strings as soon as it is consumed.
+    const rest = await Promise.allSettled(
+      Array.from({ length: Math.max(0, totalPages - 1) }, (_, i) => fetchPage(i + 2)),
+    );
+    rest.forEach((r, i) => {
+      if (r.status === "fulfilled") consume(r.value);
+      else console.error(`[products/sitemap.xml] page ${i + 2} failed`, r.reason);
+    });
   } catch (err) {
     console.error("[products/sitemap.xml]", err);
   }
