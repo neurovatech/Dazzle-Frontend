@@ -1,0 +1,470 @@
+DAZZLE — RESPONSE TO "Meta Pixel + Conversions API Tracking Migration" HANDOFF
+================================================================================
+To:      SEO developer (author of the handoff doc, Version 2)
+From:    Frontend developer
+Scope:   Next.js / React FRONTEND ONLY. This repo does not contain the
+         ASP.NET backend — every backend item below is marked as such and
+         has NOT been implemented from this side.
+Date:    2026-09-28
+
+This file goes through your handoff doc section by section and states, for
+each requirement, whether it has been implemented, partially implemented, is
+not applicable to the frontend, or was intentionally skipped (with the
+reason). Where something is DONE, the file/function that does it is named so
+it can be checked directly in the repo.
+
+
+================================================================================
+1. NON-NEGOTIABLE REQUIREMENTS
+================================================================================
+
+- "Google Tag Manager must not be required"
+  DONE. GTM component and its usage removed entirely from the codebase
+  (src/components/analytics/GoogleTagManager.tsx deleted; layout.tsx no
+  longer imports or renders it). GA4 now loads directly via gtag.js
+  (src/components/analytics/GoogleAnalytics.tsx).
+
+- "Step.io must not be used"
+  N/A — Step.io was never present in this repo (confirmed by a full
+  repository search: no match for "step.io", "stepio", or any Step.io SDK/API
+  reference).
+
+- "Only the existing Meta Pixel/Data Source"
+  DONE. No new Pixel ID introduced. The existing ID is still resolved the
+  same way (CMS site-settings field, falling back to the existing hardcoded
+  ID / NEXT_PUBLIC_FB_PIXEL_ID) in src/components/analytics/FacebookPixel.tsx.
+
+- "Tracking must fire only on the production/live domain"
+  DONE, via a runtime hostname check rather than an environment variable —
+  see the "IMPLEMENTATION NOTE" below for why. File:
+  src/lib/analytics/environment.ts. Applied to Meta Pixel, TikTok Pixel, GA4,
+  and the server-side CAPI relay endpoint. Verified live in a browser on
+  localhost: window.fbq / window.gtag / window.ttq are all undefined, and
+  fbevents.js / TikTok's script are never requested.
+
+- "Every event must have a defined owner, trigger, payload schema and QA
+  method"
+  PARTIAL. Every track* function in src/lib/analytics/pixelEvents.ts has a
+  doc comment stating its trigger and where it's called from (see section 6
+  below for the full list with file references). A single consolidated
+  catalog document has not been written as a separate deliverable — see
+  section 17.
+
+- "Browser + server copies of the same conversion must use the same
+  event_name and shared event identifier"
+  DONE for Purchase (the only event this frontend sends both browser- and
+  server-side). Fixed a real bug in the process — see section 8.
+
+- "Meta access tokens ... must never be exposed through NEXT_PUBLIC_* or
+  browser JavaScript"
+  DONE (was already true before this work; re-verified). META_CAPI_ACCESS_TOKEN
+  is read only in src/lib/analytics/metaConversionsApi.ts, a server-only
+  module, and is never returned to the client.
+
+- "Purchase must be confirmed from the backend/payment state, not trusted
+  only from a thank-you-page visit"
+  NOT DONE from the frontend alone — see section 10.2/15 below. This
+  requires the ASP.NET backend to fire Purchase from its own payment
+  webhook. The current frontend implementation is a best-effort browser-side
+  signal (see "IMPORTANT ARCHITECTURE GAP" below).
+
+- "The implementation must be observable"
+  DONE for the server relay (src/app/api/analytics/purchase/route.ts logs
+  success, failure, and every skip reason — non-production host, duplicate
+  event_id — via console.error/console.warn). No sensitive data is logged
+  (no access token, no raw card/payment data).
+
+
+================================================================================
+2. TARGET ARCHITECTURE
+================================================================================
+
+IMPORTANT ARCHITECTURE GAP — please read before reviewing anything else
+--------------------------------------------------------------------------
+Your target architecture puts Meta CAPI entirely on the ASP.NET backend. That
+is NOT what this repo currently does. This Next.js app has its own
+server-side CAPI call (src/lib/analytics/metaConversionsApi.ts, called from
+src/app/api/analytics/purchase/route.ts) that talks to Meta's Graph API
+directly, using its own server-side access token
+(META_CAPI_ACCESS_TOKEN env var on the frontend host).
+
+This predates your handoff doc — it was built to cover Purchase tracking in
+the absence of a backend CAPI service. It is functionally a stand-in for the
+box in your diagram labeled "ASP.NET Backend → Meta CAPI", not the real
+thing, and it has real gaps your doc explicitly warns against — see section
+10.2 below.
+
+Also relevant: per docs/tracking-backend-requirements.txt (an earlier,
+separate handoff to the backend team), the ASP.NET backend ALREADY receives a
+trackingMeta.eventId on every create-order-invoice call. If the backend team
+has since built their own CAPI call from that field, then BOTH this Next.js
+relay and the ASP.NET backend are sending Purchase to Meta right now. Because
+they'd use the same event_id, Meta would deduplicate them (no double-counted
+conversions), but it means two access tokens and two logs doing the same
+job. Please confirm with the backend team whether they are already sending
+CAPI Purchase events, and if so, plan to retire one side (recommended: keep
+ASP.NET's, retire this Next.js relay) rather than running both indefinitely.
+
+
+================================================================================
+3-5. OWNER CLEANUP / REPO AUDIT / ENVIRONMENT STRATEGY
+================================================================================
+
+Legacy audit performed (section 4/18 checklist) — results:
+
+  Location                  Found?   Action taken
+  -------------------------------------------------------------------------
+  GTM                       YES      Removed (component + import + usage)
+  Step.io                   NO       Nothing to remove
+  Direct fbq (Next.js)      YES,     Kept as the one central implementation
+                            1 place  (FacebookPixel.tsx) — confirmed no
+                                     scattered fbq() calls elsewhere via
+                                     repo-wide search
+  ASP.NET backend           N/A      Not in this repo, could not be audited
+  Old server CAPI           YES      This repo's OWN CAPI relay — see the
+                                     architecture gap above. Not "legacy" in
+                                     the sense of being unintentional, but it
+                                     is a duplicate risk once ASP.NET builds
+                                     its own.
+  Database/CMS/Admin        N/A      Outside this repo — needs backend/CMS
+                                     access, could not be checked from here
+  Environment/secrets       Checked  META_CAPI_ACCESS_TOKEN/PIXEL_ID/
+                                     TEST_EVENT_CODE are server-only, not
+                                     NEXT_PUBLIC_*. NEXT_PUBLIC_FB_PIXEL_ID/
+                                     NEXT_PUBLIC_GTM_ID(now unused)/
+                                     NEXT_PUBLIC_GA_ID/NEXT_PUBLIC_TIKTOK_
+                                     PIXEL_ID exist as public fallback IDs
+                                     (not secrets — just IDs)
+  Cloudflare/CDN/server      N/A     Outside this repo, needs Cloudflare
+  injection                          dashboard access
+
+Environment strategy (section 5): DONE, but implemented differently than your
+"Recommended configuration concept" suggests — see below.
+
+IMPLEMENTATION NOTE — why a hostname check instead of APP_ENV
+--------------------------------------------------------------------------
+Your doc suggests `APP_ENV=production` as an environment variable gate. We
+did not use that pattern, for a concrete reason: this app is heavily
+optimized for Next.js static rendering (most pages are prerendered/ISR, not
+server-rendered per request — see docs/PERFORMANCE-AUDIT-BN.md for the full
+performance work this session). Reading the real request in a Server
+Component (which `APP_ENV` checked via headers()/cookies() would require, if
+you wanted it to vary the rendered HTML) would force pages back to dynamic
+rendering, undoing that work.
+
+A pure build-time `NEXT_PUBLIC_APP_ENV` env var (no headers() needed) would
+avoid that problem, but introduces a different one: if it is ever left unset
+on the production deploy, ALL tracking goes silently dark on production with
+no error — worse than the staging-leak problem it's meant to prevent.
+
+Instead: every tracker's inline script checks `location.hostname` in the
+VISITOR'S BROWSER at the moment it runs (src/lib/analytics/environment.ts,
+`guardProductionOnly()`), against an allow-list of
+["dazzle.com.bd", "www.dazzle.com.bd"]. This is correct regardless of
+deployment topology, needs no new environment variable anywhere, and was
+verified live (see section 1 above). If your team specifically needs an
+APP_ENV-style variable for other reasons (e.g. the backend), that's fine and
+independent of this frontend mechanism.
+
+
+================================================================================
+6. FRONTEND RESPONSIBILITIES (Next.js / React)
+================================================================================
+
+6.1 Central tracking module
+  PARTIAL. A central module exists and is the ONLY place fbq() is called
+  from — but at src/lib/analytics/{pixelEvents,metaConversionsApi,clickIds,
+  environment}.ts, not at your suggested src/analytics/meta/{pixel,events,
+  types,consent,event-id}.ts path. We did not move/rename it: it is already
+  functionally centralized and imported by every call site, and a pure path
+  rename across ~15 files carries real risk of breaking an import with no
+  functional benefit. Happy to do the rename if you consider the exact path
+  a hard requirement — flag it and we will.
+
+6.2 Browser Pixel initialization
+  DONE — production-only (guardProductionOnly), loaded once from
+  src/app/layout.tsx (not per-component), duplicate-init guarded by fbq's own
+  `if(f.fbq)return`.
+  Consent/privacy controls: NOT DONE. No cookie-consent gate exists. If your
+  market/legal requirements need one (e.g. EU visitors), tell us and we'll
+  build it — none of the current markets this store serves were specified as
+  requiring it.
+
+6.3 P0 events — PageView, ViewContent, AddToCart, InitiateCheckout, Purchase
+  ALL DONE (pre-existing, re-verified as correctly wired). Call sites, for
+  reference:
+    PageView          — src/components/analytics/FacebookPixel.tsx (initial)
+                         + RouteChangeTracker.tsx (client-side navigations)
+    ViewContent        — src/components/ProductDetails/ProductDetail.tsx (and
+                         2-3 other product-detail entry points)
+    AddToCart          — src/components/share/ProductCardBuy.tsx,
+                         ProductQuicView.tsx, StickyPurchaseBar.tsx,
+                         ClipToCartCard.tsx, FrequentlyBoughtTogether.tsx
+    InitiateCheckout   — src/components/Cart/CheckoutPageCom.tsx
+    Purchase           — CheckoutPageCom.tsx (COD/pay-at-store) +
+                         PaymentResult/PaymentResultView.tsx (bKash/SSLCommerz
+                         gateway return)
+
+6.3 P1 events
+    Search             — DONE (search/SearchBar.tsx)
+    AddToWishlist      — DONE (hooks/useWishlist.ts)
+    AddPaymentInfo     — DONE (CheckoutPageCom.tsx, on order confirm)
+    RemoveFromCart     — DONE, added this pass (Cart/CartItem.tsx)
+    CompleteRegistration — DONE, added this pass. Fires on the email-
+                         verification success step (verify-email-token/
+                         [emailVerifiedToken]/page.tsx), not the initial
+                         signup-form submit — this site requires email
+                         verification before an account is usable, so that
+                         is the real "registration completed" moment. The
+                         backend's own token check already makes this
+                         idempotent (a revisited/reloaded verification link
+                         returns "already verified" instead of "success").
+    Contact            — DONE, added this pass ((public)/feedback/page.tsx —
+                         this site's general-purpose contact form)
+    Lead               — DONE, added this pass (TradeIn/TradeInWizard.tsx,
+                         on a successful trade-in request submission)
+
+6.4 Additional events
+    CouponApplied/CouponRemoved   — DONE, added this pass (CheckoutPageCom.tsx)
+    PaymentMethodSelected         — DONE, added this pass (CheckoutPageCom.tsx,
+                                     on the payment-method radio change)
+    PaymentFailed                 — DONE, added this pass (CheckoutPageCom.tsx
+                                     on a gateway/execute-order error, AND
+                                     PaymentResultView.tsx when the customer
+                                     returns from bKash/SSLCommerz with an
+                                     error/cancel status)
+    ProductSelect, ProductListView, CartView, CheckoutStepViewed/Completed,
+    PurchaseInitiated
+      NOT DONE — intentionally. Reason: no single, unambiguous trigger point
+      exists for these without instrumenting many separate listing/card
+      components across the app, and your own section 6.5 says not to
+      overuse custom events. We did not want to guess at trigger points and
+      ship something inconsistent. If you name the specific component(s) you
+      want instrumented (e.g. "fire ProductSelect from
+      src/components/share/ProductCardBuy.tsx's wrapping link"), we will add
+      it precisely.
+    Subscribe, StartTrial   — N/A, this store has no subscriptions/trials.
+    Refund                  — Per your own doc, this is "server-side only, if
+                              the business needs it" — a backend decision,
+                              not frontend.
+
+6.5 Standard vs custom events
+  DONE correctly. A real bug was caught and fixed here: events with no Meta
+  standard-event name (RemoveFromCart, CouponApplied/Removed,
+  PaymentMethodSelected, PaymentFailed) are now sent via a NEW
+  fbTrackCustom() helper, which calls fbq("trackCustom", ...) — the earlier
+  code always called fbq("track", ...) regardless, which is wrong for
+  non-standard names (Meta buckets/labels them incorrectly in Events
+  Manager). Standard events (Purchase, AddToCart, Lead, CompleteRegistration,
+  Contact, etc.) still go through fbq("track", ...) via the existing
+  fbTrack().
+
+
+================================================================================
+7-9. PAYLOAD CONTRACT / EVENT ID / MATCHING DATA
+================================================================================
+
+7. Payload shape
+  PARTIAL. Every event's actual payload is close to your suggested shape
+  (content_ids, value, currency, contents with id+quantity+item_price, etc.)
+  but is not literally typed as the eventName/eventId/eventTime/source/
+  pageUrl/contentType TypeScript interface in your doc. No separate types.ts
+  file was written for this — see section 17.
+
+8. Event ID / deduplication — CRITICAL, fixed a real bug here
+  Before this work: bKash/SSLCommerz Purchase used a RANDOM event_id
+  generated fresh on every page load of the payment-result page. Reloading
+  that page after a successful payment fired a SECOND Purchase (browser
+  pixel AND the server CAPI relay) with a DIFFERENT event_id — a genuine
+  duplicate that Meta could not deduplicate, because your own rule ("do not
+  use a new random ID on every thank-you-page refresh") was being violated.
+
+  Fixed: trackPurchase() (pixelEvents.ts) now derives a STABLE event_id from
+  the order id (`purchase_<orderId>`) when no explicit id is passed, and
+  persists a "this order's Purchase was already fired" flag in localStorage
+  (keyed by orderId, never cleared) — a reload now returns `null` and skips
+  both the browser pixel call and the server relay call entirely. Verified
+  by code review of both call sites
+  (Cart/CheckoutPageCom.tsx, PaymentResult/PaymentResultView.tsx); not yet
+  verified against a real duplicate-reload in a live browser session (would
+  need a real test order).
+
+9. fbp/fbc/click-id capture
+  DONE (pre-existing, unchanged) — src/lib/analytics/clickIds.ts.
+  em/ph SHA-256 hashing
+  DONE in metaConversionsApi.ts's server code, but the frontend never
+  actually collects/sends email or phone today — nothing on this frontend
+  passes em/ph into the CAPI call. If you want better Meta match quality via
+  hashed customer email/phone, that requires either (a) the frontend passing
+  the logged-in customer's email/phone to the CAPI relay, or (b) the ASP.NET
+  backend adding it when it owns CAPI. Flag if you want (a) done here.
+
+
+================================================================================
+10-14. ASP.NET BACKEND SECTIONS — NOT APPLICABLE TO THIS REPO
+================================================================================
+
+None of the following exist in this codebase and cannot be built from here:
+  - 10.1 MetaCapiService.cs / MetaHttpClient.cs / typed config
+  - 10.2 Purchase fired from a verified-payment webhook (backend order state)
+  - 10.3 Persistent idempotency / retry with the same event_id
+  - 11   Server-side event priority list (Lead, CompleteRegistration,
+         Subscribe, StartTrial, AddPaymentInfo, Contact — server side)
+  - 14   MetaEventLog data model
+
+These need to go to whoever owns the ASP.NET backend. The one thing worth
+stressing to them specifically: right now, a customer who pays via
+bKash/SSLCommerz and never returns to this site's payment-result page (closes
+the tab, abandons the gateway) has their Purchase NEVER tracked by anything
+in this frontend — only a real payment-webhook-based server event (10.2) can
+see that outcome. This is the single biggest tracking-accuracy gap left, and
+it is entirely a backend item.
+
+
+================================================================================
+15-16. QA / LAUNCH ACCEPTANCE CRITERIA
+================================================================================
+
+  Check                                    Status
+  -------------------------------------------------------------------------
+  No GTM/Step.io requests remain            DONE (code-level; not yet
+                                             re-verified on a live deploy)
+  Local/staging isolation                   DONE, verified live: on
+                                             localhost, fbq/gtag/ttq are all
+                                             undefined and their scripts are
+                                             never fetched
+  One controlled Pixel implementation       DONE
+  CAPI secret server-only                   DONE
+  Purchase = backend-confirmed               NOT DONE (see architecture gap,
+                                             backend item)
+  Refresh doesn't duplicate Purchase        DONE (see section 8) — verified
+                                             by code review, not yet by a
+                                             live repeated-reload test
+  Meta Events Manager Test Events           NOT DONE FROM HERE. Can only be
+  verification                              run against the real production
+                                             domain (dazzle.com.bd) after
+                                             deploy — the production-only
+                                             guard means nothing fires on
+                                             staging/localhost to test
+                                             against. Please run this after
+                                             deploying and let us know if
+                                             anything looks wrong.
+
+
+================================================================================
+17. DEVELOPER DELIVERABLES — STATUS
+================================================================================
+
+  Frontend Meta tracking module        DONE (existing structure, see 6.1)
+  Backend Meta CAPI service            NOT APPLICABLE (backend item)
+  Central event catalog + types        NOT DONE as a standalone document —
+                                        every event's trigger/file is listed
+                                        in section 6 of THIS file instead.
+                                        Say the word and we'll produce a
+                                        separate catalog.md/types.ts if you
+                                        want one committed to the repo.
+  Production-only environment guard    DONE
+  Shared event ID/dedup                DONE (Purchase; the only dual-fired
+                                        event)
+  Purchase tied to verified order      PARTIAL — tied to "customer returned
+                                        to a page with a confirmed order",
+                                        not to a backend payment webhook
+                                        (backend item, see above)
+  Server event log/idempotency         PARTIAL — in-memory only, per server
+                                        process, does not survive a restart
+                                        or work across multiple instances.
+                                        Real (persistent) idempotency needs
+                                        a DB-backed store, which is a
+                                        backend responsibility (section 14).
+  Retry handling for CAPI failures     NOT DONE — a failed CAPI call is
+                                        logged but not retried.
+  QA evidence for P0 events            NOT DONE FROM HERE — needs a live
+                                        production deploy + Meta Events
+                                        Manager access (see section 15).
+  README: how to add a new event       NOT DONE as a separate file. Every
+                                        track* function in pixelEvents.ts is
+                                        commented with its trigger/mapping;
+                                        adding a new one means: add a
+                                        track*() function there (using
+                                        trackBoth for a Meta standard event,
+                                        trackBothCustom otherwise), call it
+                                        from the real UI trigger, done.
+  Deployment/secrets list              DONE — see section 3-5 above
+                                        (env var names, no values)
+
+
+================================================================================
+18-21. LEGACY AUDIT / TEST EVENTS / SIGN-OFF — STATUS
+================================================================================
+
+18 (audit)          DONE for the parts reachable from this repo — see
+                     section 3-5's table.
+19.1 (browser Test Events)     NOT DONE — requires the live production site
+                                and Meta Events Manager access; please run
+                                after deploy.
+19.2 (server test_event_code)  Mechanism already existed and is unchanged:
+                                META_CAPI_TEST_EVENT_CODE env var, included
+                                in the CAPI payload only when set
+                                (metaConversionsApi.ts). Not a new
+                                META_TRACKING_MODE flag as your doc's example
+                                shows, but achieves the same rule ("only in
+                                test config, never for normal production
+                                traffic") — it is simply absent from prod's
+                                env by default.
+19.3 (test Purchase flow)      NOT DONE — needs a real test order against a
+                                live/staging payment flow, which needs
+                                backend/payment coordination outside this
+                                repo change.
+20 (final sign-off table)      See section 15-16 above — same content,
+                                organized by your table's rows.
+
+
+================================================================================
+22-27. CLARIFICATIONS / WHAT NOT TO DO / SEQUENCE / OWNER CHECKLIST
+================================================================================
+
+Section 23 ("what must NOT be implemented") — confirmed NOT done, all of them:
+  - GTM was not reinstalled.
+  - Step.io was not added.
+  - The CAPI access token was not put in any Next.js client code.
+  - Purchase does not fire from multiple unrelated components (exactly two
+    call sites, COD and gateway-return, both funneling through the same
+    trackPurchase()).
+  - The confirmation/thank-you page no longer creates a Purchase on every
+    render/reload (section 8 fix).
+  - Retries were not implemented to generate a new ID (moot — no retry logic
+    exists yet, see section 17).
+  - Localhost/staging do not send production events (section 1).
+  - No new custom events were invented for actions with an existing Meta
+    standard event.
+
+Section 25 (owner checklist) — items only the business/marketing owner can
+do, listed here for visibility, not actioned by this frontend change:
+  - Confirming the production Pixel ID to retain (assumed unchanged/existing)
+  - Providing production CAPI credentials through secret management
+  - Confirming production vs staging/dev domains (assumed: dazzle.com.bd is
+    production; staging.bigpoint.com.bd and localhost are not, per this
+    session's context — please confirm this is correct)
+  - Privacy/consent review for the target market
+
+
+================================================================================
+SUMMARY — the honest short version
+================================================================================
+
+Fully done from the frontend: legacy audit, GTM removal (with a GA4 breakage
+this uncovered and fixed), production/staging isolation, all P0 events,
+almost all P1/P2 browser events, the Purchase duplicate-Purchase-on-reload
+bug, and correct standard-vs-custom event routing.
+
+Not done, and NOT possible from this repo: anything requiring the ASP.NET
+backend to own CAPI, fire Purchase from a real payment webhook, or persist
+idempotency in a database. That work needs to go to whoever maintains the
+backend, using section 10-14 of your own original document plus the
+"IMPORTANT ARCHITECTURE GAP" note above (there is likely a live duplicate-
+CAPI-path question to resolve with them).
+
+Not done, but possible from here if you want it: a standalone event catalog/
+types file, ProductSelect/CartView/ProductListView (need you to name the
+target component(s)), consent controls, and passing hashed email/phone into
+the existing CAPI relay for better match quality.
