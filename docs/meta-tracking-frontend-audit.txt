@@ -194,8 +194,18 @@ Meta-তে "standard" না এমন event এখন fbq("trackCustom", ...) 
                               (bKash/SSLCommerz থেকে error/cancel status নিয়ে
                               ফেরত এলে)
 
-যা ইচ্ছাকৃতভাবে যোগ করা হয়নি (এবং কেন):
-  - ProductSelect, ProductListView, CartView, CheckoutStepViewed/Completed,
+পরে আরও দুটো যোগ করা হয়েছে (section ১২-এর টেবিল মিলিয়ে দেখার পর):
+  - trackCartView(products)              — Meta: custom | GA4: standard `view_cart`
+                                            বসানো: Cart/CartPageCom.tsx, পাতা
+                                            মাউন্ট হলে একবার
+  - trackShippingInfoSubmitted(products, value) — Meta: custom | GA4: standard
+                                            `add_shipping_info`
+                                            বসানো: CheckoutPageCom.tsx, ঠিকানা
+                                            সফলভাবে সেভ হওয়ার (saveNewAddressToBook)
+                                            পরপরই, তিনটা payment path-এই
+
+যা এখনো ইচ্ছাকৃতভাবে যোগ করা হয়নি (এবং কেন):
+  - ProductSelect, ProductListView, CheckoutStepViewed/Completed,
     PurchaseInitiated — এগুলোর জন্য একটামাত্র নির্ভরযোগ্য trigger জায়গা নেই
     (product card অনেকগুলো আলাদা component-এ ছড়ানো, listing page অনেক রকম)।
     ডকুমেন্টের নিজের ৬.৫ নির্দেশনা — "Do not overuse custom Meta events" —

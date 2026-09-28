@@ -320,6 +320,40 @@ function checkoutGaItems(products: TrackedProduct[]): Record<string, unknown>[] 
   }));
 }
 
+/**
+ * Fired once when the cart page is viewed (src/components/Cart/CartPageCom.tsx
+ * mount) — not on every cart mutation. No Meta standard event exists for this
+ * ("CartView" is a custom name); GA4 has a standard `view_cart` event.
+ */
+export function trackCartView(products: TrackedProduct[]): void {
+  const eventId = generateEventId();
+  const totalValue = products.reduce((sum, p) => sum + p.price * (p.quantity ?? 1), 0);
+  trackBothCustom(
+    "CartView",
+    "view_cart",
+    { ...checkoutFbParams(products, totalValue) },
+    { currency: "BDT", value: totalValue, items: checkoutGaItems(products) },
+    eventId,
+  );
+}
+
+/**
+ * Fired once the checkout page's delivery address/method has been
+ * successfully saved (src/components/Cart/CheckoutPageCom.tsx, right after
+ * saveNewAddressToBook() succeeds, for every payment path). No Meta standard
+ * event exists for this; GA4's matching standard event is `add_shipping_info`.
+ */
+export function trackShippingInfoSubmitted(products: TrackedProduct[], totalValue: number): void {
+  const eventId = generateEventId();
+  trackBothCustom(
+    "ShippingInfoSubmitted",
+    "add_shipping_info",
+    checkoutFbParams(products, totalValue),
+    { currency: "BDT", value: totalValue, items: checkoutGaItems(products) },
+    eventId,
+  );
+}
+
 export function trackInitiateCheckout(products: TrackedProduct[], totalValue: number): string {
   const eventId = generateEventId();
   trackBoth(

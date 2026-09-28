@@ -233,7 +233,17 @@ independent of this frontend mechanism.
                                      PaymentResultView.tsx when the customer
                                      returns from bKash/SSLCommerz with an
                                      error/cancel status)
-    ProductSelect, ProductListView, CartView, CheckoutStepViewed/Completed,
+    CartView                       — DONE, added in a later pass
+                                     (Cart/CartPageCom.tsx, fires once on
+                                     mount). Meta: custom event (no standard
+                                     name); GA4: standard `view_cart`.
+    ShippingInfoSubmitted           — DONE, added in a later pass
+                                     (Cart/CheckoutPageCom.tsx, right after
+                                     the delivery address is successfully
+                                     saved, on all three payment paths).
+                                     Meta: custom; GA4: standard
+                                     `add_shipping_info`.
+    ProductSelect, ProductListView, CheckoutStepViewed/Completed,
     PurchaseInitiated
       NOT DONE — intentionally. Reason: no single, unambiguous trigger point
       exists for these without instrumenting many separate listing/card

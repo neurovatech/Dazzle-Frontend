@@ -27,6 +27,7 @@ import {
   trackPaymentFailed,
   trackCouponApplied,
   trackCouponRemoved,
+  trackShippingInfoSubmitted,
   generateEventId,
   sendServerPurchaseEvent,
   savePendingPurchase,
@@ -1148,6 +1149,7 @@ export default function CheckoutPageCom() {
           const gatewayUrl = r?.gatewayPageURL || r?.GatewayPageURL;
           if (gatewayUrl) {
             await saveNewAddressToBook(isPickup);
+            trackShippingInfoSubmitted(trackedProducts, resEx.data?.total || total);
             savePendingPurchase({ eventId: purchaseEventId, orderNo: resInvoice.data.orderNo, value: resEx.data?.total || total, products: trackedProducts });
             dispatch(clearCart());
             window.location.href = gatewayUrl;
@@ -1160,6 +1162,7 @@ export default function CheckoutPageCom() {
           const r = await api.post<BkashPayResponse>("/api/tokenized/v1/bkash-pay", { orderToken }, { headers: { Authorization: authHeader, "X-API-Key": apiKey || "" } });
           if (r?.bkashURL) {
             await saveNewAddressToBook(isPickup);
+            trackShippingInfoSubmitted(trackedProducts, resEx.data?.total || total);
             savePendingPurchase({ eventId: purchaseEventId, orderNo: resInvoice.data.orderNo, value: resEx.data?.total || total, products: trackedProducts });
             dispatch(clearCart());
             window.location.href = r.bkashURL;
@@ -1171,6 +1174,7 @@ export default function CheckoutPageCom() {
         }
       } else {
         await saveNewAddressToBook(isPickup);
+        trackShippingInfoSubmitted(trackedProducts, resEx.data?.total || total);
         const purchaseTotal = resEx.data?.total || total;
         const purchaseOrderNo = resInvoice.data.orderNo || `DZL-${Date.now()}`;
         // trackPurchase returns null if this orderId's Purchase already fired

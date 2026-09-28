@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import CartItem from "./CartItem";
 import AddressFormModal from "./AddressFormModal";
 import AddressViewModal from "./AddressViewModal";
@@ -14,6 +14,7 @@ import { verifyOrderProducts, friendlyUnresolvedMessage } from "@/lib/verify-ord
 import toast from "react-hot-toast";
 import { DeliveryOption } from "./CartSidebar";
 import { LogIn, X, XCircle } from "lucide-react";
+import { trackCartView } from "@/lib/analytics/pixelEvents";
 
 type AddressData = {
   name: string;
@@ -49,6 +50,23 @@ export default function CartPageCom() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const cartItems = useAppSelector((state) => state.cart.items);
+
+  // CartView — fired once per page view, not on every cart mutation.
+  const cartViewTracked = useRef(false);
+  useEffect(() => {
+    if (cartViewTracked.current) return;
+    cartViewTracked.current = true;
+    trackCartView(
+      cartItems.map((i) => ({
+        id: i.productUuid || i.id,
+        name: i.name,
+        price: i.price,
+        quantity: i.quantity,
+        brand: i.brand || undefined,
+      })),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const token = useAppSelector((state) => state.auth.token);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
