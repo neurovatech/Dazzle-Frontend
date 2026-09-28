@@ -1,5 +1,6 @@
 import { getSiteSettings } from "@/lib/getSiteSettings";
 import DeferredScript from "./DeferredScript";
+import { guardProductionOnly } from "@/lib/analytics/environment";
 
 const DEFAULT_PIXEL_ID = "1665562014226088";
 
@@ -65,7 +66,7 @@ export default async function FacebookPixel() {
 
   return (
     <DeferredScript id="fb-pixel-base">
-      {jsCode}
+      {guardProductionOnly(jsCode)}
     </DeferredScript>
   );
 }

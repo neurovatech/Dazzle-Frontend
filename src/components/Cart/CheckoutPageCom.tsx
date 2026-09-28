@@ -1161,13 +1161,17 @@ export default function CheckoutPageCom() {
         await saveNewAddressToBook(isPickup);
         const purchaseTotal = resEx.data?.total || total;
         const purchaseOrderNo = resInvoice.data.orderNo || `DZL-${Date.now()}`;
-        trackPurchase(purchaseOrderNo, trackedProducts, purchaseTotal, purchaseEventId);
-        sendServerPurchaseEvent({
-          eventId: purchaseEventId,
-          orderId: purchaseOrderNo,
-          value: purchaseTotal,
-          products: cartItems.map((i) => ({ id: i.productUuid || i.id, quantity: i.quantity })),
-        });
+        // trackPurchase returns null if this orderId's Purchase already fired
+        // (defensive here too, even though this branch normally runs once).
+        const firedEventId = trackPurchase(purchaseOrderNo, trackedProducts, purchaseTotal, purchaseEventId);
+        if (firedEventId) {
+          sendServerPurchaseEvent({
+            eventId: firedEventId,
+            orderId: purchaseOrderNo,
+            value: purchaseTotal,
+            products: cartItems.map((i) => ({ id: i.productUuid || i.id, quantity: i.quantity })),
+          });
+        }
         dispatch(clearCart());
         // Profile → Orders caches order-list for 5 minutes (the app's default
         // staleTime) — without this, landing there right after checkout still

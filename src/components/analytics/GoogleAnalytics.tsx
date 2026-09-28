@@ -1,5 +1,6 @@
 import { getSiteSettings } from "@/lib/getSiteSettings";
 import DeferredScript from "./DeferredScript";
+import { guardProductionOnly } from "@/lib/analytics/environment";
 
 /**
  * The admin panel's "Google Analytics Code" field currently stores a bare
@@ -19,15 +20,21 @@ function resolveGaId(cmsCode: string | undefined, fallbackId: string | undefined
 }
 
 /**
- * Google Analytics (GA4) — API-driven.
+ * Google Analytics (GA4) — API-driven, loaded DIRECTLY (no Google Tag
+ * Manager). GTM was removed from this app per the Meta tracking migration
+ * handoff ("Google Tag Manager must not be required") — see
+ * docs/meta-tracking-frontend-audit.txt. This is now the ONLY place GA4 is
+ * initialized.
  *
  * Priority order:
  *   1. `googleAnalyticsCode` from site-settings API (bare measurement ID
  *      today, or a full gtag.js snippet if the CMS field is ever upgraded)
  *   2. `NEXT_PUBLIC_GA_ID` env variable (legacy / fallback)
  *
- * NOTE: If GTM is already configured and GA4 is set up inside GTM,
- * you do NOT need this component separately. Only use one or the other.
+ * `window.gtag` defined here is what src/lib/analytics/pixelEvents.ts's
+ * `gaTrack()` calls for every ecommerce event (view_item, add_to_cart,
+ * purchase, ...) — without GTM there is no `dataLayer.push({event:...})`
+ * consumer any more, so those events MUST go through gtag() directly.
  */
 export default async function GoogleAnalytics() {
   const settings = await getSiteSettings();
@@ -40,21 +47,28 @@ export default async function GoogleAnalytics() {
 
   return (
     // DeferredScript: confirmed live via Lighthouse (staging) that gtag/js
-    // alone costs ~184ms of main-thread time, and together with GTM + Meta
-    // + TikTok under lazyOnload still landed inside the window a real
+    // alone costs ~184ms of main-thread time, and together with Meta +
+    // TikTok under lazyOnload still landed inside the window a real
     // visitor's first tap/scroll happens (competing with INP, not just LCP).
     // Gating on interaction (see DeferredScript) doesn't change what fires
     // or when a real session sees it — only moves the cost later.
+    //
+    // Production-only (guardProductionOnly): staging/localhost must not send
+    // real GA4 hits — see src/lib/analytics/environment.ts. The external
+    // gtag/js library load below is NOT worth gating (it sends no data by
+    // itself); only the `gtag('config', ...)` call that actually starts
+    // reporting is wrapped.
     <>
       <DeferredScript
         id="ga4-script"
         src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
       />
       <DeferredScript id="ga4-base">
-        {`window.dataLayer = window.dataLayer || [];
+        {guardProductionOnly(`window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
+window.gtag = gtag;
 gtag('js', new Date());
-gtag('config', '${gaId}');`}
+gtag('config', '${gaId}');`)}
       </DeferredScript>
     </>
   );

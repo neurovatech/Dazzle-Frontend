@@ -1,0 +1,215 @@
+DAZZLE — META PIXEL + CONVERSIONS API MIGRATION: FRONTEND AUDIT ও যা করা হয়েছে
+================================================================================
+তারিখ: ২০২৬-০৯-২৮
+
+
+
+================================================================================
+অংশ ১ — অডিট: আগে কী অবস্থায় ছিল (section 18 অনুযায়ী)
+================================================================================
+
+জায়গা                  | পাওয়া গেছে?  | বিস্তারিত
+------------------------|--------------|--------------------------------------
+GTM                     | হ্যাঁ        | GoogleTagManager.tsx, layout.tsx-এ লোড
+                        |              | হতো (GTM-NM9TVHT3)। এর ভেতরে GA4 আর
+                        |              | Meta Pixel tag দুটোই ছিল (fbevents.js
+                        |              | দুইবার লোড হতো — Pixel-এর নিজের কপি +
+                        |              | GTM-এর কপি)।
+Step.io                 | না           | পুরো repo-তে কোনো চিহ্ন পাওয়া যায়নি।
+Direct fbq (Next.js)    | একটাই জায়গা | src/components/analytics/FacebookPixel.tsx
+                        |              | — এলোমেলো fbq() কল অন্য কোথাও নেই,
+                        |              | নিশ্চিত করা হয়েছে গ্রেপ করে।
+ASP.NET backend         | এই repo-তে   | আলাদা codebase, এখান থেকে অডিট করা
+                        | নেই          | সম্ভব না।
+Server CAPI (এই repo)   | হ্যাঁ        | src/lib/analytics/metaConversionsApi.ts
+                        |              | + src/app/api/analytics/purchase/route.ts
+                        |              | — Next.js নিজেই সরাসরি Meta Graph API
+                        |              | ডাকে (ASP.NET না)। Token server-side
+                        |              | env var-এ (META_CAPI_ACCESS_TOKEN),
+                        |              | browser-এ কখনো যায় না — নিরাপদ পাওয়া
+                        |              | গেছে।
+Environment isolation   | ছিল না       | staging (staging.bigpoint.com.bd) আর
+                        |              | production (dazzle.com.bd) একই script
+                        |              | চালাত, আলাদা করার কোনো ব্যবস্থা ছিল না।
+Event ID / dedup        | মূলত ছিল     | browser আর server দুই জায়গায় একই
+                        |              | eventId পাঠানো হতো (generateEventId())।
+Purchase idempotency    | বাগ ছিল      | bKash/SSLCommerz payment-result পাতা
+                        |              | reload করলে নতুন random eventId দিয়ে
+                        |              | দ্বিতীয়বার Purchase (client + server
+                        |              | দুই জায়গাতেই) পাঠানোর সুযোগ ছিল।
+Secrets                 | নিরাপদ       | META_CAPI_ACCESS_TOKEN কখনো
+                        |              | NEXT_PUBLIC_* না।
+DB / CMS / Cloudflare   | পরীক্ষা করা  | এগুলো এই Next.js repo-র বাইরে (admin
+                        | যায়নি        | panel DB, Cloudflare dashboard)।
+
+
+================================================================================
+অংশ ২ — যা বদলানো হয়েছে (frontend, ধাপে ধাপে)
+================================================================================
+
+ধাপ ১ — Environment guard তৈরি (নতুন ফাইল)
+-------------------------------------------
+ফাইল: src/lib/analytics/environment.ts
+
+কেন হেডার/env var দিয়ে না করে হোস্টনেম-চেক দিয়ে করা হয়েছে:
+  - Server Component-এ request-এর host পড়তে headers()/cookies() লাগত, যেটা
+    পুরো পাতাকে static rendering থেকে বের করে দিত — এই session-এর আগের পুরো
+    performance audit-এর সাথে সরাসরি সাংঘর্ষিক (দেখুন
+    docs/PERFORMANCE-AUDIT-BN.md)।
+  - একটা build-time env var (যেমন NEXT_PUBLIC_APP_ENV) ব্যবহার করলে ঠিক থাকত,
+    কিন্তু এটা একটা operational ঝুঁকি তৈরি করত: production deploy-এ কেউ যদি
+    ভুলে সেই var সেট করতে ভুলে যায়, তাহলে পুরো production-এই কোনো নিঃশব্দে
+    tracking বন্ধ হয়ে যেত — কোনো error ছাড়াই।
+
+তাই সমাধান: প্রতিটা tracker-এর ভেতরের script browser-এ নিজে
+location.hostname চেক করে — শুধু dazzle.com.bd / www.dazzle.com.bd-এ কাজ
+করবে। এটা যেকোনো deployment ব্যবস্থায় সঠিকভাবে কাজ করে (এক build একাধিক
+domain-এ চললেও, আলাদা build/env হলেও), কোনো নতুন environment variable লাগে
+না, আর static rendering-এ কোনো প্রভাব ফেলে না (check browser-এ চলে, Next.js
+render-এ না)।
+
+ধাপ ২ — Meta Pixel, TikTok, GA4 — সবগুলোতে guard বসানো
+-------------------------------------------------------
+বদলানো ফাইল:
+  - src/components/analytics/FacebookPixel.tsx
+  - src/components/analytics/TikTokPixel.tsx
+  - src/components/analytics/GoogleAnalytics.tsx
+
+প্রতিটার ভেতরের inline script guardProductionOnly() দিয়ে মুড়ে দেওয়া হয়েছে।
+এতে non-production host-এ শুধু event পাঠানো বন্ধ হয় না — fbevents.js এবং
+TikTok-এর events.js-ও লোড হয় না (পুরো init কোডটাই inline JS-এর ভেতরে)। GA4-এর
+বহিরাগত gtag/js লাইব্রেরি লোড আলাদা <script src> ট্যাগ হওয়ায় সেটা গার্ড করা
+যায়নি, কিন্তু সেই লাইব্রেরি একা কোনো ডেটা পাঠায় না — আসল gtag('config', ...)
+কলটাই গার্ড করা আছে।
+
+ধাপ ৩ — GTM সম্পূর্ণ সরানো
+----------------------------
+বদলানো/মুছে ফেলা ফাইল:
+  - src/app/layout.tsx — GoogleTagManager ইম্পোর্ট ও ব্যবহার সরানো, আগের থেকে
+    বন্ধ থাকা <GoogleAnalytics /> আবার চালু করা হয়েছে (সরাসরি gtag.js)।
+  - src/components/analytics/GoogleTagManager.tsx — ফাইলটা সম্পূর্ণ মুছে
+    ফেলা হয়েছে।
+
+ধাপ ৪ — লুকানো bug ঠিক করা: GTM সরালে GA4-এর সব ecommerce event বন্ধ হয়ে যেত
+-----------------------------------------------------------------------------
+বদলানো ফাইল: src/lib/analytics/pixelEvents.ts, RouteChangeTracker.tsx
+
+আগে pushDataLayer() ফাংশন GTM-স্টাইল অবজেক্ট পুশ করত:
+    window.dataLayer.push({event: "add_to_cart", ecommerce: {...}})
+এই ফরম্যাটটা GTM নিজের custom-event/trigger convention — সরাসরি gtag.js এটা
+বোঝে না। GTM সরিয়ে ফেলার পর এই কোড অপরিবর্তিত থাকলে view_item, add_to_cart,
+begin_checkout, purchase ইত্যাদি GA4-এ কোনো error ছাড়াই চুপচাপ বন্ধ হয়ে
+যেত — GA4 রিপোর্টে ecommerce ডেটা শূন্য দেখাত।
+
+ঠিক করা হয়েছে: নতুন gaTrack(eventName, params) ফাংশন সরাসরি
+window.gtag('event', eventName, params) কল করে (GoogleAnalytics.tsx-এ
+window.gtag সেট করা হয়েছে)। প্রতিটা track* ফাংশনের GA4 params flat করা
+হয়েছে (ecommerce wrapper সরিয়ে, যেহেতু gtag.js flat params আশা করে, GTM-এর
+মতো নেস্টেড না)।
+
+ধাপ ৫ — Purchase idempotency fix (সবচেয়ে গুরুত্বপূর্ণ correctness fix)
+-------------------------------------------------------------------------
+বদলানো ফাইল: pixelEvents.ts, PaymentResultView.tsx, CheckoutPageCom.tsx
+
+ডকুমেন্টের নন-নেগোশিয়েবল দাবি: "Do not create a Purchase every time the
+thank-you page renders" এবং "Refreshing confirmation page does not create a
+new Purchase."
+
+আগে: bKash/SSLCommerz payment-result পাতায় (PaymentResultView.tsx) order
+তথ্য localStorage থেকে একবার পড়ে সাথে সাথে মুছে ফেলা হতো
+(takePendingPurchase())। পাতা reload হলে সেই তথ্য না পেয়ে কোড নতুন random
+eventId বানিয়ে আবার Purchase পাঠাত — client pixel আর server relay দুই
+জায়গাতেই। এটা প্রকৃত duplicate ছিল; eventId আলাদা হওয়ায় Meta-ও dedupe করতে
+পারত না।
+
+ঠিক করা হয়েছে:
+  - trackPurchase() এখন orderId থেকে একটা স্থায়ী eventId বানায়
+    (purchase_<orderId>) যদি অন্য কোনো id দেওয়া না থাকে।
+  - localStorage-এ orderId ভিত্তিক "ইতিমধ্যে পাঠানো হয়েছে" flag রাখা হয়
+    (dazzle-purchase-fired:<orderId>), যেটা কখনো মোছা হয় না (pending order
+    রেকর্ডের মতো একবার consume হয় না)।
+  - ওই flag থাকলে trackPurchase() null রিটার্ন করে; কলার (PaymentResultView,
+    CheckoutPageCom) null পেলে sendServerPurchaseEvent() স্কিপ করে।
+  - ফলাফল: পাতা যতবারই reload হোক, একই order-এর Purchase client বা server
+    কোনোটাতেই দ্বিতীয়বার যাবে না।
+
+ধাপ ৬ — CAPI relay route-এ production-host guard + best-effort dedupe
+-------------------------------------------------------------------------
+বদলানো ফাইল: src/app/api/analytics/purchase/route.ts
+
+  - এই route আগে থেকেই force-dynamic (প্রতি request-এ চলে), তাই এখানে আসল
+    incoming request-এর Host header সরাসরি চেক করা নিরাপদ (static rendering-এ
+    কোনো প্রভাব নেই)। Production ছাড়া অন্য host থেকে এলে Meta-কে কিছু
+    পাঠানো হয় না, checkout ভাঙে না — শুধু log হয়।
+  - একটা best-effort, single-process in-memory dedupe যোগ করা হয়েছে
+    (১০ মিনিটের window) — একই eventId খুব কাছাকাছি সময়ে দুইবার এলে দ্বিতীয়টা
+    আটকায়। এটা ASLI persistent idempotency না (server restart বা একাধিক
+    instance-এ কাজ করবে না) — সেটা ASP.NET backend-এর কাজ (অংশ ৩ দেখুন)।
+
+
+================================================================================
+অংশ ৩ — যা এই repo থেকে সম্ভব না (ASP.NET backend-এর কাজ, SEO doc section 10-11)
+================================================================================
+
+1. ASP.NET-এ নিজস্ব Meta CAPI service বানানো (MetaCapiService.cs ইত্যাদি)।
+   এই মুহূর্তে Next.js নিজেই CAPI call করছে (metaConversionsApi.ts) — এটা
+   একটা অস্থায়ী ব্যবস্থা, ASP.NET-এর নিজের service তৈরি হওয়ার আগে সরানো
+   ঠিক হবে না (তাহলে Purchase tracking পুরোপুরি বন্ধ হয়ে যাবে)।
+
+2. ⚠️ গুরুত্বপূর্ণ সমন্বয়ের প্রয়োজন: docs/tracking-backend-requirements.txt
+   অনুযায়ী ASP.NET backend প্রতিটা create-order-invoice কলে একটা
+   trackingMeta.eventId পায় (CheckoutPageCom.tsx থেকে)। যদি ASP.NET ইতিমধ্যে
+   নিজে থেকেই সেই eventId দিয়ে একটা CAPI Purchase call করে থাকে, তাহলে এই
+   Next.js app-এর server-side relay-ও চলছে মানে দুই জায়গা থেকে Purchase
+   যাচ্ছে। যেহেতু eventId একই, Meta সেটা dedupe করবে (double-count হবে না),
+   কিন্তু দুটো আলাদা access token/log রাখা অপ্রয়োজনীয় ও বিভ্রান্তিকর।
+   backend টিমকে জিজ্ঞেস করুন তারা ইতিমধ্যে CAPI পাঠাচ্ছে কিনা; পাঠালে দুটোর
+   একটা (পছন্দনীয়ভাবে ASP.NET-এরটা রেখে Next.js-এরটা) বন্ধ করে দিন।
+
+3. Purchase must originate from verified payment/order state (ডকুমেন্ট section
+   10.2) — bKash/SSLCommerz-এর জন্য প্রকৃত backend-truth ভিত্তিক Purchase
+   (payment gateway-র নিজের webhook থেকে ফায়ার হওয়া) এখনো তৈরি হয়নি।
+   বর্তমান frontend ব্যবস্থা শুধু "গ্রাহক ফিরে এসে payment-result পাতা
+   দেখেছে" এই সিগন্যালের ওপর নির্ভর করে — যে গ্রাহক পেমেন্ট করে সাইটে আর
+   ফেরত আসে না, তার Purchase কখনো ট্র্যাক হয় না। এটা শুধু ASP.NET-এর নিজের
+   webhook দিয়েই সমাধান সম্ভব (docs/tracking-backend-requirements.txt-এ
+   বিস্তারিত আছে)।
+
+4. Persistent (DB-ভিত্তিক) idempotency — MetaEventLog টেবিল, retry logic,
+   ইত্যাদি (section 10.3, 14)। Next.js-এর in-memory guard শুধু সাময়িক।
+
+5. Database/CMS/environment/Cloudflare audit (section 18.4) — এই repo-র
+   বাইরে, backend/marketing/Cloudflare অ্যাক্সেস দরকার।
+
+
+================================================================================
+অংশ ৪ — যাচাই করা হয়েছে
+================================================================================
+
+  - npx tsc --noEmit → ০ error
+  - npx eslint (বদলানো সব ফাইল) → ০ error (শুধু আগে থেকে থাকা, অসম্পর্কিত
+    warning)
+  - npx next build → [এই ফাইল লেখার সময় ব্যাকগ্রাউন্ডে চলছিল; ফলাফল চ্যাটে
+    আলাদাভাবে জানানো হয়েছে]
+  - এখনো যাচাই হয়নি (browser দিয়ে সরাসরি): Meta Events Manager Test Events
+    দিয়ে বাস্তবে PageView/ViewContent/AddToCart/Purchase আসছে কিনা — এটা
+    দরকার হলে staging নয়, সরাসরি production dazzle.com.bd-এ deploy করার
+    পর করতে হবে (কারণ guard-এর কারণে staging-এ এখন থেকে কিছুই যাবে না)।
+
+
+================================================================================
+অংশ ৫ — করণীয় (deploy-এর পর)
+================================================================================
+
+  1. dazzle.com.bd-এ deploy করুন।
+  2. Meta Events Manager → Test Events-এ গিয়ে সরাসরি dazzle.com.bd খুলে
+     PageView, ViewContent (product page), AddToCart, InitiateCheckout,
+     Purchase (একটা টেস্ট অর্ডার দিয়ে) যাচাই করুন।
+  3. staging.bigpoint.com.bd খুলে Network ট্যাবে নিশ্চিত করুন
+     fbevents.js/gtag.js-এর কোনো config/init call যাচ্ছে না (guard কাজ
+     করছে কিনা)।
+  4. GA4 → Realtime-এ দেখুন page view ও ecommerce event আসছে কিনা (GTM
+     সরানোর পর প্রথমবার সরাসরি যাচাই — আগে GTM এই কাজ করত)।
+  5. ASP.NET backend টিমকে অংশ ৩-এর তালিকা পাঠান — তাদের নিজের CAPI
+     service, webhook-ভিত্তিক Purchase, আর persistent idempotency এখনো
+     বাকি।

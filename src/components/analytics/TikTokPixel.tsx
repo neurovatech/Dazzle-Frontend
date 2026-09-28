@@ -1,5 +1,6 @@
 import { getSiteSettings } from "@/lib/getSiteSettings";
 import DeferredScript from "./DeferredScript";
+import { guardProductionOnly } from "@/lib/analytics/environment";
 
 /**
  * The admin panel's "TikTok Base Code" field currently stores a bare pixel
@@ -35,7 +36,7 @@ export default async function TikTokPixel() {
     const jsCode = scriptMatch ? scriptMatch[1].trim() : cmsCode;
     return (
       <DeferredScript id="tiktok-pixel-base">
-        {jsCode}
+        {guardProductionOnly(jsCode)}
       </DeferredScript>
     );
   }
@@ -50,11 +51,11 @@ export default async function TikTokPixel() {
     // LCP). Gating on interaction (see DeferredScript) doesn't change what
     // fires or when a real session sees it — only moves the cost later.
     <DeferredScript id="tiktok-pixel-base">
-      {`!function (w, d, t) {
+      {guardProductionOnly(`!function (w, d, t) {
   w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie"],ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for(var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e},ttq.load=function(e,n){var i="https://analytics.tiktok.com/i18n/pixel/events.js";ttq._i=ttq._i||{},ttq._i[e]=[],ttq._i[e]._u=i,ttq._t=ttq._t||{},ttq._t[e]=+new Date,ttq._o=ttq._o||{},ttq._o[e]=n||{};var o=document.createElement("script");o.type="text/javascript",o.async=!0,o.src=i+"?sdkid="+e+"&lib="+t;var a=document.getElementsByTagName("script")[0];a.parentNode.insertBefore(o,a)};
   ttq.load('${pixelId}');
   ttq.page();
-}(window, document, 'ttq');`}
+}(window, document, 'ttq');`)}
     </DeferredScript>
   );
 }

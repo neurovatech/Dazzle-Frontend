@@ -140,13 +140,19 @@ export default function PaymentResultView({
 
     tracked.current = true;
     const products = pending?.products ?? [];
+    // trackPurchase returns null when this orderId's Purchase was already
+    // fired earlier (e.g. this page was reloaded) — the server relay must be
+    // skipped too in that case, or a reload would still double-send
+    // server-side even though the browser pixel correctly stayed silent.
     const eventId = trackPurchase(orderId, products, value, pending?.eventId);
-    sendServerPurchaseEvent({
-      eventId,
-      orderId,
-      value,
-      products: products.map((p) => ({ id: p.id, quantity: p.quantity })),
-    });
+    if (eventId) {
+      sendServerPurchaseEvent({
+        eventId,
+        orderId,
+        value,
+        products: products.map((p) => ({ id: p.id, quantity: p.quantity })),
+      });
+    }
   }, [outcome, order, loading, verifiedAmount, orderNo, trxID]);
 
   const { Icon, color, bg, title, desc } = OUTCOME_CONFIG[outcome];

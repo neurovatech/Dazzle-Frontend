@@ -29,7 +29,15 @@ export default function DeferredScript({
       }
     };
 
-    const timer = window.setTimeout(mark, delayMs);
+    // Opened from another window (Meta Events Manager's "Set up events" /
+    // "Test events" tools, Tag Assistant, GTM preview all open the site this
+    // way): those tools look for the pixel within a few seconds and do not
+    // scroll or tap, so waiting for an interaction/timer makes them report
+    // "A pixel wasn't detected". Normal visitors have no opener (external
+    // links carry noopener), so their behaviour is unchanged.
+    const openedByTool = !!window.opener;
+
+    const timer = window.setTimeout(mark, openedByTool ? 0 : delayMs);
     function cleanup() {
       window.clearTimeout(timer);
       INTERACTION_EVENTS.forEach((ev) => window.removeEventListener(ev, mark));

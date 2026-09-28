@@ -3,20 +3,22 @@
 import { readTrackingCookie } from "./clickIds";
 
 /**
- * Thin, safe wrappers around window.fbq (Facebook Pixel) and window.dataLayer
- * (Google Tag Manager / GA4), plus the ecommerce event helpers used at every
- * add-to-cart / checkout / purchase call site across the app.
+ * Thin, safe wrappers around window.fbq (Facebook Pixel) and window.gtag
+ * (GA4, loaded directly — no Google Tag Manager, see
+ * docs/meta-tracking-frontend-audit.txt), plus the ecommerce event helpers
+ * used at every add-to-cart / checkout / purchase call site across the app.
  *
  * Every helper is safe when the underlying script is missing (pixel not
- * configured, ad-blocker) — it never throws, tracking must never break a real
- * user action like adding to cart. fbTrack additionally queues events raised
- * while the Pixel is still loading and flushes them once it's ready.
+ * configured, ad-blocker, non-production hostname — see ./environment.ts) —
+ * it never throws, tracking must never break a real user action like adding
+ * to cart. fbTrack additionally queues events raised while the Pixel is
+ * still loading and flushes them once it's ready.
  */
 
 declare global {
   interface Window {
     fbq?: (...args: unknown[]) => void;
-    dataLayer?: Record<string, unknown>[];
+    gtag?: (...args: unknown[]) => void;
   }
 }
 
@@ -31,10 +33,21 @@ export function generateEventId(): string {
   return `evt_${Date.now()}_${Math.random().toString(36).slice(2)}`;
 }
 
-export function pushDataLayer(event: string, params: Record<string, unknown> = {}): void {
+/**
+ * Fires a GA4 event via the DIRECT gtag.js loaded in GoogleAnalytics.tsx.
+ *
+ * Renamed/repurposed from the old `pushDataLayer(event, params)`, which
+ * pushed a Google-Tag-Manager-shaped object (`{event: "add_to_cart", ...}`)
+ * onto `window.dataLayer` — that format is GTM's own custom-event/trigger
+ * convention and is NOT understood by gtag.js on its own. Now that GTM has
+ * been removed, `window.gtag('event', name, params)` is what actually
+ * reaches GA4; calling it directly instead of shaping a dataLayer object is
+ * also what lets `params` be flat (currency/value/items at the top level,
+ * as GA4's own ecommerce events expect) instead of wrapped in `{ecommerce}`.
+ */
+export function gaTrack(eventName: string, params: Record<string, unknown> = {}): void {
   if (typeof window === "undefined") return;
-  window.dataLayer = window.dataLayer || [];
-  window.dataLayer.push({ event, ...params });
+  window.gtag?.("event", eventName, params);
 }
 
 interface PendingFbCall {
@@ -109,20 +122,21 @@ export interface TrackedProduct {
 }
 
 /**
- * Fires the matching Facebook Pixel event AND pushes the equivalent GA4/GTM
- * ecommerce event for one logical action, sharing one event_id between the
- * pixel call and whatever the caller forwards to the backend for
- * Conversions API dedup (see the individual track* helpers below).
+ * Fires the matching Facebook Pixel event AND the equivalent GA4 ecommerce
+ * event (via gtag() directly — see gaTrack()) for one logical action,
+ * sharing one event_id between the pixel call and whatever the caller
+ * forwards to the backend for Conversions API dedup (see the individual
+ * track* helpers below).
  */
 function trackBoth(
   fbEventName: string,
-  gtmEventName: string,
+  gaEventName: string,
   fbParams: Record<string, unknown>,
-  gtmParams: Record<string, unknown>,
+  gaParams: Record<string, unknown>,
   eventId: string,
 ): void {
   fbTrack(fbEventName, fbParams, eventId);
-  pushDataLayer(gtmEventName, { ...gtmParams, event_id: eventId });
+  gaTrack(gaEventName, { ...gaParams, event_id: eventId });
 }
 
 export function trackViewContent(product: TrackedProduct): string {
@@ -138,11 +152,9 @@ export function trackViewContent(product: TrackedProduct): string {
       currency: "BDT",
     },
     {
-      ecommerce: {
-        currency: "BDT",
-        value: product.price,
-        items: [{ item_id: product.id, item_name: product.name, price: product.price, item_brand: product.brand, item_category: product.category }],
-      },
+      currency: "BDT",
+      value: product.price,
+      items: [{ item_id: product.id, item_name: product.name, price: product.price, item_brand: product.brand, item_category: product.category }],
     },
     eventId,
   );
@@ -174,11 +186,9 @@ export function trackAddToWishlist(product: TrackedProduct): string {
       currency: "BDT",
     },
     {
-      ecommerce: {
-        currency: "BDT",
-        value: product.price,
-        items: [{ item_id: product.id, item_name: product.name, price: product.price }],
-      },
+      currency: "BDT",
+      value: product.price,
+      items: [{ item_id: product.id, item_name: product.name, price: product.price }],
     },
     eventId,
   );
@@ -200,11 +210,9 @@ export function trackAddToCart(product: TrackedProduct): string {
       contents: [{ id: product.id, quantity }],
     },
     {
-      ecommerce: {
-        currency: "BDT",
-        value: product.price * quantity,
-        items: [{ item_id: product.id, item_name: product.name, price: product.price, quantity }],
-      },
+      currency: "BDT",
+      value: product.price * quantity,
+      items: [{ item_id: product.id, item_name: product.name, price: product.price, quantity }],
     },
     eventId,
   );
@@ -247,7 +255,7 @@ export function trackInitiateCheckout(products: TrackedProduct[], totalValue: nu
     "InitiateCheckout",
     "begin_checkout",
     checkoutFbParams(products, totalValue),
-    { ecommerce: { currency: "BDT", value: totalValue, items: checkoutGaItems(products) } },
+    { currency: "BDT", value: totalValue, items: checkoutGaItems(products) },
     eventId,
   );
   return eventId;
@@ -269,12 +277,10 @@ export function trackAddPaymentInfo(
     "add_payment_info",
     { ...checkoutFbParams(products, totalValue), payment_type: paymentType },
     {
-      ecommerce: {
-        currency: "BDT",
-        value: totalValue,
-        payment_type: paymentType,
-        items: checkoutGaItems(products),
-      },
+      currency: "BDT",
+      value: totalValue,
+      payment_type: paymentType,
+      items: checkoutGaItems(products),
     },
     eventId,
   );
@@ -323,28 +329,69 @@ export function takePendingPurchase(): PendingPurchase | null {
   }
 }
 
+// ─── Purchase idempotency ───────────────────────────────────────────────────
+// Requirement (Meta tracking migration handoff): "Do not create a Purchase
+// every time the thank-you page renders" / "Refreshing confirmation page
+// does not create a new Purchase." Reloading the bKash/SSLCommerz
+// payment-result page used to do exactly that: the parked order (see
+// savePendingPurchase/takePendingPurchase above) is consumed — and therefore
+// gone — after the first read, so a reload fell through to
+// `eventId = generateEventId()` and fired a SECOND Purchase with a brand-new
+// event_id (both the browser pixel and the server CAPI relay), which Meta has
+// no way to deduplicate against the first. Guarding per orderId (persisted,
+// not consumed) makes a reload a no-op regardless of whether the pending
+// record is still around.
+const FIRED_PURCHASE_PREFIX = "dazzle-purchase-fired:";
+
+function purchaseEventIdFor(orderId: string): string {
+  // Deterministic, not random: even if this guard is ever bypassed (private
+  // browsing with storage blocked, a second tab), the same order always maps
+  // to the same event_id, so Meta can still dedupe the two attempts.
+  return `purchase_${orderId}`;
+}
+
+function hasFiredPurchase(orderId: string): boolean {
+  try {
+    return window.localStorage.getItem(FIRED_PURCHASE_PREFIX + orderId) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function markPurchaseFired(orderId: string): void {
+  try {
+    window.localStorage.setItem(FIRED_PURCHASE_PREFIX + orderId, "1");
+  } catch {}
+}
+
 /**
- * Fires the client-side Purchase pixel + GA4 `purchase` event. Call
+ * Fires the client-side Purchase pixel + GA4 `purchase` event — at most ONCE
+ * per `orderId`, ever (see the idempotency note above). Call
  * `sendServerPurchaseEvent` alongside this with the SAME `eventId` so Meta
  * can dedupe the browser pixel against the server-side Conversions API copy.
+ *
+ * Returns the event_id that was (or would have been) used, or `null` if this
+ * order's Purchase was already fired earlier — callers must skip
+ * `sendServerPurchaseEvent` in that case too.
  */
 export function trackPurchase(
   orderId: string,
   products: TrackedProduct[],
   totalValue: number,
-  eventId: string = generateEventId(),
-): string {
+  eventId: string = purchaseEventIdFor(orderId),
+): string | null {
+  if (hasFiredPurchase(orderId)) return null;
+  markPurchaseFired(orderId);
+
   trackBoth(
     "Purchase",
     "purchase",
     { ...checkoutFbParams(products, totalValue), order_id: orderId },
     {
-      ecommerce: {
-        transaction_id: orderId,
-        currency: "BDT",
-        value: totalValue,
-        items: checkoutGaItems(products),
-      },
+      transaction_id: orderId,
+      currency: "BDT",
+      value: totalValue,
+      items: checkoutGaItems(products),
     },
     eventId,
   );
