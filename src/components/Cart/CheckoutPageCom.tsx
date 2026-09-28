@@ -23,6 +23,10 @@ import {
   trackInitiateCheckout,
   trackAddPaymentInfo,
   trackPurchase,
+  trackPaymentMethodSelected,
+  trackPaymentFailed,
+  trackCouponApplied,
+  trackCouponRemoved,
   generateEventId,
   sendServerPurchaseEvent,
   savePendingPurchase,
@@ -1130,7 +1134,13 @@ export default function CheckoutPageCom() {
 
       const resEx = await api.post<ExecuteOrderResponse>("/api/tokenized/v1/execute-order", { orderToken },
         { headers: { Authorization: authHeader, "X-API-Key": apiKey || "" } });
-      if (!resEx || resEx.status !== "success") { toast.error(resEx?.errors?.join(", ") || "Failed to execute order."); setIsSubmitting(false); return; }
+      if (!resEx || resEx.status !== "success") {
+        const reason = resEx?.errors?.join(", ") || "Failed to execute order.";
+        trackPaymentFailed(paymentOption, reason);
+        toast.error(reason);
+        setIsSubmitting(false);
+        return;
+      }
 
       if (paymentOption === "full_online" || paymentOption === "booking") {
         if (paymentGateway === "ssl") {
@@ -1144,6 +1154,7 @@ export default function CheckoutPageCom() {
             return;
           }
           console.error("[Checkout] sslcommerz-pay did not return a gatewayPageURL:", r);
+          trackPaymentFailed("sslcommerz", r?.message || r?.failedreason);
           toast.error(r?.message || r?.failedreason || "SSLCommerz failed.");
         } else {
           const r = await api.post<BkashPayResponse>("/api/tokenized/v1/bkash-pay", { orderToken }, { headers: { Authorization: authHeader, "X-API-Key": apiKey || "" } });
@@ -1155,6 +1166,7 @@ export default function CheckoutPageCom() {
             return;
           }
           console.error("[Checkout] bkash-pay did not return a bkashURL:", r);
+          trackPaymentFailed("bkash", r?.message || r?.statusMessage);
           toast.error(r?.message || r?.statusMessage || "bKash failed.");
         }
       } else {
@@ -1421,7 +1433,10 @@ export default function CheckoutPageCom() {
                     </div>
                     <button
                       type="button"
-                      onClick={() => setAppliedCoupon(null)}
+                      onClick={() => {
+                        trackCouponRemoved(appliedCoupon.code);
+                        setAppliedCoupon(null);
+                      }}
                       aria-label="Remove coupon"
                       className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-zinc-800 transition"
                     >
@@ -1465,7 +1480,11 @@ export default function CheckoutPageCom() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {paymentOptions.map((opt) => (
                     <Radio key={opt.value} checked={paymentOption === opt.value}
-                      onChange={() => { if (!opt.disabled) setPaymentOption(opt.value); }}
+                      onChange={() => {
+                        if (opt.disabled) return;
+                        setPaymentOption(opt.value);
+                        trackPaymentMethodSelected(opt.value);
+                      }}
                       label={opt.label} sub={opt.sub} disabled={opt.disabled}
                     />
                   ))}
@@ -1750,6 +1769,7 @@ export default function CheckoutPageCom() {
         isOpen={couponModalOpen}
         onClose={() => setCouponModalOpen(false)}
         onApply={(coupon: Coupon) => {
+          trackCouponApplied(coupon.code, couponDiscountFor(coupon, subtotal));
           setAppliedCoupon(coupon);
           setCouponModalOpen(false);
         }}

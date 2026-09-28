@@ -9,6 +9,7 @@ import { useForm, SubmitHandler, Resolver } from "react-hook-form";
 import { api } from "@/lib/api";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
+import { trackContact } from "@/lib/analytics/pixelEvents";
 
 const Feedback = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -48,6 +49,7 @@ const Feedback = () => {
     onSuccess: () => {
       toast.success("Your feedback has been submitted successfully!");
       setSuccessMessage("Your feedback has been submitted successfully!");
+      trackContact();
       reset();
     },
     onError: (error: any) => {

@@ -7,6 +7,7 @@ import StepSelectBrand      from "./StepSelectBrand";
 import StepSelectModel      from "./StepSelectModel";
 import StepDeviceDetails    from "./StepDeviceDetails";
 import StepCollectionMethod from "./StepCollectionMethod";
+import { trackLead } from "@/lib/analytics/pixelEvents";
 import type {
   TradeInStep, TradeInSelection, TradeInCategory,
   TradeInBrand, TradeInDevice, TradeInVariantSummary,
@@ -126,7 +127,15 @@ export default function TradeInWizard() {
           {step === 1 && <StepSelectBrand    selection={selection} onSelect={selectBrand}    onRemove={handleRemove} />}
           {step === 2 && <StepSelectModel    selection={selection} onSelectVariant={selectVariant} onRemove={handleRemove} />}
           {step === 3 && <StepDeviceDetails  selection={selection} onConditionSelect={selectCondition} onRemove={handleRemove} />}
-          {step === 4 && <StepCollectionMethod selection={selection} onSuccess={() => setSubmitted(true)} />}
+          {step === 4 && (
+            <StepCollectionMethod
+              selection={selection}
+              onSuccess={() => {
+                trackLead("trade-in");
+                setSubmitted(true);
+              }}
+            />
+          )}
         </div>
       </div>
     </div>

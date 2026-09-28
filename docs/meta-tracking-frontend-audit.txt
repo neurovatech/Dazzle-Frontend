@@ -148,6 +148,65 @@ eventId বানিয়ে আবার Purchase পাঠাত — client p
 
 
 ================================================================================
+অংশ ২.৫ — অতিরিক্ত P1/P2 event যোগ করা হয়েছে (section 6.3, 6.4, 12)
+================================================================================
+
+আগের round-এ শুধু P0 event (PageView, ViewContent, AddToCart, InitiateCheckout,
+Purchase) আগে থেকেই ছিল বলে ছুঁইনি। এই round-এ ডকুমেন্টের P1 তালিকা আর section
+৬.৪-এর কিছু ইভেন্ট নতুন করে যোগ করা হয়েছে — প্রতিটার জন্য কোডে একটা আসল, স্পষ্ট
+trigger point খুঁজে বসানো হয়েছে (অনুমান করে বসানো হয়নি)।
+
+নতুন track ফাংশন (pixelEvents.ts):
+  - trackRemoveFromCart(product)      — Meta: custom event (কোনো standard নেই)
+                                         GA4: standard `remove_from_cart`
+  - trackCompleteRegistration()       — Meta: standard | GA4: standard `sign_up`
+  - trackContact()                    — Meta: standard | GA4: custom `contact`
+  - trackLead(leadType)               — Meta: standard | GA4: standard `generate_lead`
+  - trackCouponApplied(code, value)   — দুই জায়গাতেই custom
+  - trackCouponRemoved(code)          — দুই জায়গাতেই custom
+  - trackPaymentMethodSelected(type)  — দুই জায়গাতেই custom
+  - trackPaymentFailed(type, reason?) — দুই জায়গাতেই custom
+
+Meta-তে "standard" না এমন event এখন fbq("trackCustom", ...) দিয়ে পাঠানো হয়
+(নতুন fbTrackCustom() হেল্পার) — আগে fbTrack() সবসময় fbq("track", ...) কল করত,
+যেটা অচেনা event name-এর জন্য ভুল হত (Meta সেটা "track" দিয়ে পাঠালে সঠিকভাবে
+বাকেট করে না)।
+
+কোথায় বসানো হয়েছে:
+  - RemoveFromCart          → src/components/Cart/CartItem.tsx (✕ বাটন)
+  - CompleteRegistration    → verify-email-token/[emailVerifiedToken]/page.tsx,
+                              শুধু status==="success"-এ (ইমেইল ভেরিফাই সফল
+                              হওয়ার আসল মুহূর্ত, ফর্ম সাবমিটের সময় না — কারণ
+                              এই সাইটে ইমেইল ভেরিফাই ছাড়া account আসলে ব্যবহার
+                              করা যায় না)। দ্বিতীয়বার একই লিংক খুললে backend
+                              নিজেই "already verified" ফেরত দেয়, তাই এটা
+                              স্বাভাবিকভাবেই দ্বিতীয়বার fire হয় না।
+  - Contact                 → feedback/page.tsx (এই সাইটের একমাত্র সাধারণ
+                              contact form), API সফল হওয়ার পর
+  - Lead                    → TradeInWizard.tsx, trade-in request সফল জমা
+                              হওয়ার পর
+  - CouponApplied/Removed   → CheckoutPageCom.tsx, কুপন apply/remove বাটনে
+  - PaymentMethodSelected   → CheckoutPageCom.tsx, payment method radio
+                              পরিবর্তনে (AddPaymentInfo থেকে আলাদা — সেটা অর্ডার
+                              confirm করার মুহূর্তে, এটা শুধু বেছে নেওয়ার মুহূর্তে)
+  - PaymentFailed           → CheckoutPageCom.tsx (execute-order/bkash-pay/
+                              sslcommerz-pay ব্যর্থ হলে) + PaymentResultView.tsx
+                              (bKash/SSLCommerz থেকে error/cancel status নিয়ে
+                              ফেরত এলে)
+
+যা ইচ্ছাকৃতভাবে যোগ করা হয়নি (এবং কেন):
+  - ProductSelect, ProductListView, CartView, CheckoutStepViewed/Completed,
+    PurchaseInitiated — এগুলোর জন্য একটামাত্র নির্ভরযোগ্য trigger জায়গা নেই
+    (product card অনেকগুলো আলাদা component-এ ছড়ানো, listing page অনেক রকম)।
+    ডকুমেন্টের নিজের ৬.৫ নির্দেশনা — "Do not overuse custom Meta events" —
+    মেনে অনুমান-ভিত্তিক event বসানো এড়ানো হয়েছে। প্রয়োজন হলে নির্দিষ্ট করে
+    বললে (কোন component-এ) যোগ করে দেওয়া যাবে।
+  - Subscribe, StartTrial — এই ecommerce সাইটে subscription/trial নেই।
+  - Refund — ডকুমেন্ট নিজেই বলেছে "server-side only, if the business needs
+    it" — backend-এর সিদ্ধান্ত, frontend-এর কাজ না।
+
+
+================================================================================
 অংশ ৩ — যা এই repo থেকে সম্ভব না (ASP.NET backend-এর কাজ, SEO doc section 10-11)
 ================================================================================
 

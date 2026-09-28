@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image, { type StaticImageData } from "next/image";
 import { CheckCircle2, XCircle, AlertTriangle, Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
-import { trackPurchase, sendServerPurchaseEvent, takePendingPurchase } from "@/lib/analytics/pixelEvents";
+import { trackPurchase, sendServerPurchaseEvent, takePendingPurchase, trackPaymentFailed } from "@/lib/analytics/pixelEvents";
 
 export type PaymentOutcome = "success" | "error" | "cancel";
 
@@ -84,7 +84,16 @@ export default function PaymentResultView({
   const [order, setOrder] = useState<OrderSummary | null>(null);
   const [loading, setLoading] = useState(!!orderNo);
   const tracked = useRef(false);
+  const failureTracked = useRef(false);
   const pendingRef = useRef<ReturnType<typeof takePendingPurchase> | undefined>(undefined);
+
+  // Customer was redirected back from the gateway with a failure/cancel
+  // status. No Meta standard event for this — see trackPaymentFailed.
+  useEffect(() => {
+    if (outcome === "success" || failureTracked.current) return;
+    failureTracked.current = true;
+    trackPaymentFailed(gatewayName.toLowerCase(), outcome);
+  }, [outcome, gatewayName]);
 
   useEffect(() => {
     if (!orderNo) {

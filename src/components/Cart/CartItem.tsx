@@ -9,6 +9,7 @@ import {
   removeFromCart,
 } from "@/store/slices/cartSlice";
 import Link from "next/link";
+import { trackRemoveFromCart } from "@/lib/analytics/pixelEvents";
 type CartItemProps = {
   id: string;
   variantUuid?: string;
@@ -48,7 +49,10 @@ export default function CartItem({
         <div className="relative w-16 h-16 sm:w-20 sm:h-20 shrink-0 bg-gray-100 dark:bg-[#1f1a16] rounded-xl overflow-hidden flex items-center justify-center group">
           {/* Close / Remove Icon */}
           <button
-            onClick={() => dispatch(removeFromCart(id))}
+            onClick={() => {
+              trackRemoveFromCart({ id: productUuid || id, name, price, quantity });
+              dispatch(removeFromCart(id));
+            }}
             className="absolute top-1 left-1 z-50 w-6 h-6 rounded-full bg-white/90 dark:bg-[#2a211c] backdrop-blur-sm shadow-md
             flex items-center justify-center
             transition-all duration-300

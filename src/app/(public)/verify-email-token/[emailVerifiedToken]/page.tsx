@@ -10,6 +10,7 @@ import toast from "react-hot-toast";
 import { api } from "@/lib/api";
 import { useAppDispatch } from "@/store/hooks";
 import { setEmailVerified } from "@/store/slices/authSlice";
+import { trackCompleteRegistration } from "@/lib/analytics/pixelEvents";
 
 // ─── API Types ────────────────────────────────────────────────────────────────
 interface VerifySuccessData {
@@ -60,6 +61,12 @@ export default function VerifyEmailPage() {
           }
           setStatus("success");
           toast.success("Email verified successfully!");
+          // Fired here, not at the initial registration-form submit: this is
+          // the moment the account actually becomes usable. A reloaded/
+          // revisited verification link lands in the "already-verified"
+          // branch above instead (the backend itself won't verify twice), so
+          // this can never fire more than once per account.
+          trackCompleteRegistration();
         }
         startRedirectCountdown();
       } else {

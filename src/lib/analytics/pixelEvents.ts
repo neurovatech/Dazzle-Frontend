@@ -54,6 +54,11 @@ interface PendingFbCall {
   eventName: string;
   params: Record<string, unknown>;
   eventId?: string;
+  /** Meta standard events (Purchase, AddToCart, Lead, ...) use fbq("track", ...);
+   *  events with no Meta standard equivalent (RemoveFromCart, CouponApplied, ...)
+   *  must use fbq("trackCustom", ...) instead — Meta silently drops/mis-buckets
+   *  an unrecognized name sent via "track". */
+  method: "track" | "trackCustom";
 }
 
 // The Pixel base script is injected by next/script AFTER hydration (and, since
@@ -69,9 +74,9 @@ let fbFlushTimer: ReturnType<typeof setInterval> | null = null;
 
 function sendFbCall(call: PendingFbCall): void {
   if (call.eventId) {
-    window.fbq?.("track", call.eventName, call.params, { eventID: call.eventId });
+    window.fbq?.(call.method, call.eventName, call.params, { eventID: call.eventId });
   } else {
-    window.fbq?.("track", call.eventName);
+    window.fbq?.(call.method, call.eventName);
   }
 }
 
@@ -96,8 +101,31 @@ export function fbTrack(
   params: Record<string, unknown> = {},
   eventId?: string,
 ): void {
+  fbTrackWithMethod("track", eventName, params, eventId);
+}
+
+/**
+ * Same as fbTrack(), for an event that has NO Meta standard-event name
+ * (RemoveFromCart, CouponApplied, PaymentMethodSelected, PaymentFailed, ...).
+ * Meta requires these to go through fbq("trackCustom", ...) — sending a
+ * non-standard name via "track" gets silently mis-bucketed in Events Manager.
+ */
+export function fbTrackCustom(
+  eventName: string,
+  params: Record<string, unknown> = {},
+  eventId?: string,
+): void {
+  fbTrackWithMethod("trackCustom", eventName, params, eventId);
+}
+
+function fbTrackWithMethod(
+  method: "track" | "trackCustom",
+  eventName: string,
+  params: Record<string, unknown>,
+  eventId?: string,
+): void {
   if (typeof window === "undefined") return;
-  const call: PendingFbCall = { eventName, params, eventId };
+  const call: PendingFbCall = { eventName, params, eventId, method };
 
   if (typeof window.fbq === "function") {
     // Anything queued earlier goes out first so events keep their order.
@@ -136,6 +164,19 @@ function trackBoth(
   eventId: string,
 ): void {
   fbTrack(fbEventName, fbParams, eventId);
+  gaTrack(gaEventName, { ...gaParams, event_id: eventId });
+}
+
+/** Same as trackBoth(), for a Meta event with no standard-event name — see
+ *  fbTrackCustom(). */
+function trackBothCustom(
+  fbEventName: string,
+  gaEventName: string,
+  fbParams: Record<string, unknown>,
+  gaParams: Record<string, unknown>,
+  eventId: string,
+): void {
+  fbTrackCustom(fbEventName, fbParams, eventId);
   gaTrack(gaEventName, { ...gaParams, event_id: eventId });
 }
 
@@ -220,6 +261,36 @@ export function trackAddToCart(product: TrackedProduct): string {
 }
 
 /**
+ * Fired when a line item is removed from the cart (CartItem.tsx's remove
+ * button). No Meta standard event exists for this — sent as a custom event
+ * (fbTrackCustom) — but GA4 has a standard `remove_from_cart` ecommerce
+ * event, so the GA4 side still uses the ordinary name.
+ */
+export function trackRemoveFromCart(product: TrackedProduct): string {
+  const eventId = generateEventId();
+  const quantity = product.quantity ?? 1;
+  trackBothCustom(
+    "RemoveFromCart",
+    "remove_from_cart",
+    {
+      content_ids: [product.id],
+      content_name: product.name,
+      content_type: "product",
+      value: product.price * quantity,
+      currency: "BDT",
+      contents: [{ id: product.id, quantity }],
+    },
+    {
+      currency: "BDT",
+      value: product.price * quantity,
+      items: [{ item_id: product.id, item_name: product.name, price: product.price, quantity }],
+    },
+    eventId,
+  );
+  return eventId;
+}
+
+/**
  * Full product detail for the multi-product checkout-funnel events
  * (InitiateCheckout / AddPaymentInfo / Purchase), so every one of them carries
  * the same complete picture of the order: ids, per-line quantity AND price,
@@ -285,6 +356,105 @@ export function trackAddPaymentInfo(
     eventId,
   );
   return eventId;
+}
+
+/**
+ * Fired when the buyer picks/changes a payment method radio (bKash / SSLCommerz
+ * / Cash on Delivery / Pay at Store) on the checkout page — BEFORE they confirm
+ * the order (that moment is trackAddPaymentInfo, above). No Meta standard event
+ * exists for this, so it goes through fbTrackCustom.
+ */
+export function trackPaymentMethodSelected(paymentType: string): void {
+  const eventId = generateEventId();
+  trackBothCustom(
+    "PaymentMethodSelected",
+    "payment_method_selected",
+    { payment_type: paymentType },
+    { payment_type: paymentType },
+    eventId,
+  );
+}
+
+/**
+ * Fired when a payment attempt fails — either the gateway itself rejects it
+ * (bkash-pay/sslcommerz-pay/execute-order returning an error) or the customer
+ * is redirected back from bKash/SSLCommerz with a failure/cancel status. No
+ * Meta standard event exists for this.
+ */
+export function trackPaymentFailed(paymentType: string, reason?: string): void {
+  const eventId = generateEventId();
+  trackBothCustom(
+    "PaymentFailed",
+    "payment_failed",
+    { payment_type: paymentType, ...(reason ? { failure_reason: reason.slice(0, 200) } : {}) },
+    { payment_type: paymentType, ...(reason ? { failure_reason: reason.slice(0, 200) } : {}) },
+    eventId,
+  );
+}
+
+/**
+ * Coupon applied/removed on the checkout page. No Meta standard event exists
+ * for either.
+ */
+export function trackCouponApplied(couponCode: string, discountValue: number): void {
+  const eventId = generateEventId();
+  trackBothCustom(
+    "CouponApplied",
+    "coupon_applied",
+    { coupon: couponCode, value: discountValue, currency: "BDT" },
+    { coupon: couponCode, value: discountValue, currency: "BDT" },
+    eventId,
+  );
+}
+
+export function trackCouponRemoved(couponCode: string): void {
+  const eventId = generateEventId();
+  trackBothCustom(
+    "CouponRemoved",
+    "coupon_removed",
+    { coupon: couponCode },
+    { coupon: couponCode },
+    eventId,
+  );
+}
+
+/**
+ * Contact form successfully submitted (this site's /feedback page is its
+ * general-purpose contact form). Meta standard event.
+ */
+export function trackContact(): void {
+  const eventId = generateEventId();
+  trackBoth("Contact", "contact", {}, {}, eventId);
+}
+
+/**
+ * A lead successfully recorded (this site's trade-in request form). Meta
+ * standard event; GA4's matching standard event is `generate_lead`.
+ */
+export function trackLead(leadType: string): void {
+  const eventId = generateEventId();
+  trackBoth(
+    "Lead",
+    "generate_lead",
+    { content_name: leadType },
+    { lead_source: leadType },
+    eventId,
+  );
+}
+
+/**
+ * Account registration fully completed — fired once the customer verifies
+ * their email (see src/app/(public)/verify-email-token/[emailVerifiedToken]/
+ * page.tsx), not at the initial sign-up form submit: this site requires email
+ * verification before the account is actually usable, and the verify-email
+ * endpoint itself is naturally idempotent (a re-visited/reloaded verification
+ * link returns "already verified" instead of "success" the second time), so
+ * this never fires twice for the same account. Meta standard event; GA4's
+ * matching standard event is `sign_up`.
+ */
+export function trackCompleteRegistration(): void {
+  const eventId = generateEventId();
+  trackBoth("CompleteRegistration", "sign_up", { status: true }, {}, eventId);
 }
 
 // ─── Order handed to an external payment gateway ───────────────────────────
