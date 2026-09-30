@@ -1016,13 +1016,32 @@ export default function CheckoutPageCom() {
       // Meta can dedupe against the server-side Conversions API event the
       // backend fires from this same trackingMeta — see
       // docs/tracking-backend-requirements.txt.
+      //
+      // Field names here are camelCase (utmSource, not utm_source) to match
+      // the backend's actual create-order-invoice contract exactly — the
+      // backend deserializes this into a typed C# object, so a snake_case
+      // mismatch means the field is silently dropped, not just renamed.
+      // getClickIds() itself keeps snake_case internally (it's this app's own
+      // cookie/storage format, unrelated to any backend contract), so its
+      // fields are mapped one by one below rather than spread wholesale.
+      // `undefined` values are dropped by JSON.stringify, matching "every
+      // field except eventId is OPTIONAL" in
+      // docs/tracking-backend-requirements.txt.
       const purchaseEventId = generateEventId();
       const clickIds = getClickIds();
       const trackingMeta = {
         eventId: purchaseEventId,
+        eventSourceUrl: typeof window !== "undefined" ? window.location.href : undefined,
         fbp: readTrackingCookie("_fbp") || undefined,
         fbc: readTrackingCookie("_fbc") || undefined,
-        ...clickIds,
+        fbclid: clickIds.fbclid,
+        gclid: clickIds.gclid,
+        ttclid: clickIds.ttclid,
+        utmSource: clickIds.utm_source,
+        utmMedium: clickIds.utm_medium,
+        utmCampaign: clickIds.utm_campaign,
+        utmContent: clickIds.utm_content,
+        utmTerm: clickIds.utm_term,
       };
 
       // One full product list reused by every tracking call below

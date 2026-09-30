@@ -25,23 +25,24 @@ new object in the request body:
     {
       ...(existing fields, unchanged)...
       "trackingMeta": {
-        "eventId":      "9b1e1c0a-2f3e-4c9a-8b2a-3a2f6b9d7e10",   // uuid, ALWAYS present
-        "fbp":           "fb.1.1690000000000.123456789",          // Facebook browser id cookie — present once the pixel has loaded, otherwise omitted
-        "fbc":           "fb.1.1690000000000.AbCdEfGh",           // Facebook click-id cookie — only present if the visitor arrived via a Facebook/Instagram ad click
-        "fbclid":        "AbCdEfGh...",                           // raw click id from the ad URL, if present on any page this session visited
-        "gclid":         "Cj0KCQjw...",                           // Google Ads click id, same as above
-        "ttclid":        "...",                                   // TikTok click id, same as above
-        "utm_source":    "facebook",
-        "utm_medium":    "cpc",
-        "utm_campaign":  "...",
-        "utm_term":      "...",
-        "utm_content":   "...",
-        "landing_page":  "/product/iphone-17-pro-max",             // first page of this attribution session
-        "first_seen":    "2026-09-01T10:15:00.000Z"
+        "eventId":         "9b1e1c0a-2f3e-4c9a-8b2a-3a2f6b9d7e10",  // uuid, ALWAYS present
+        "eventSourceUrl":  "https://dazzle.com.bd/checkout",        // the page this order was placed from
+        "fbp":             "fb.1.1690000000000.123456789",          // Facebook browser id cookie — present once the pixel has loaded, otherwise omitted
+        "fbc":             "fb.1.1690000000000.AbCdEfGh",           // Facebook click-id cookie — only present if the visitor arrived via a Facebook/Instagram ad click
+        "fbclid":          "AbCdEfGh...",                           // raw click id from the ad URL, if present on any page this session visited
+        "gclid":           "Cj0KCQjw...",                           // Google Ads click id, same as above
+        "ttclid":          "...",                                   // TikTok click id, same as above
+        "utmSource":       "facebook",
+        "utmMedium":       "cpc",
+        "utmCampaign":     "...",
+        "utmTerm":         "...",
+        "utmContent":      "..."
       }
     }
 
 Notes:
+  - Field names are camelCase (utmSource, not utm_source) — this matches the
+    backend's own documented create-order-invoice contract exactly.
   - Every field except "eventId" is OPTIONAL — omit handling gracefully
     (a direct/organic visitor has none of the click-id/utm fields).
   - "eventId" is the ONLY field that matters for deduplication. Store it
@@ -49,6 +50,9 @@ Notes:
     again when the payment gateway webhook fires later.
   - fbp/fbc are read straight from cookies Facebook's own pixel script
     sets in the browser — we do not generate or modify them.
+  - "landing_page"/"first_seen" (an earlier version of this doc listed them)
+    are NOT sent — they were internal attribution fields never part of the
+    agreed backend contract and have been dropped from the actual payload.
 
 
 2. WHAT TO BUILD: FACEBOOK CONVERSIONS API (CAPI)

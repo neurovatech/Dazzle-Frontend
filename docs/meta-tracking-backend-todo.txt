@@ -1,0 +1,312 @@
+DAZZLE — ASP.NET BACKEND TO-DO LIST
+Meta Pixel + Conversions API Tracking Migration
+================================================================================
+For:     ASP.NET backend developer
+From:    Frontend (this Next.js repo)
+Source:  The SEO developer's "Meta Pixel + Conversions API Tracking
+         Migration" handoff doc (sections 10, 11, 14, 15, 16, 18.3, 19.2,
+         19.3), plus an earlier frontend→backend handoff already sitting in
+         this repo at docs/tracking-backend-requirements.txt (has exact
+         request/response shapes — keep it open alongside this list).
+
+Format: check items off top to bottom. Each item names what to build, why,
+and what "done" looks like. Items in section 0 are blocking — read them
+before starting anything else.
+
+
+================================================================================
+0. READ FIRST — CRITICAL CONTEXT
+================================================================================
+
+[ ] 0.1 Confirm whether you ALREADY send Meta CAPI events today.
+    Every call to POST /api/tokenized/v1/create-order-invoice from the
+    frontend includes a `trackingMeta` object with an `eventId` (uuid),
+    `fbp`, `fbc`, click-ids and UTM fields (full shape in
+    docs/tracking-backend-requirements.txt, section 1). If your team already
+    built a CAPI call from this field, THE FRONTEND IS ALSO CURRENTLY SENDING
+    A SEPARATE PURCHASE EVENT FOR THE SAME ORDER from its own Next.js API
+    route (src/app/api/analytics/purchase/route.ts), using the SAME event_id.
+    Meta will deduplicate the two (no double-counted conversions), but two
+    access tokens/services doing the same job is a maintenance problem.
+    ACTION: reply to the frontend team with yes/no. If yes, agree who keeps
+    sending CAPI Purchase (recommended: you) and the frontend disables its
+    relay.
+
+[ ] 0.2 Understand what the frontend can and cannot see.
+    The frontend can observe: COD/pay-at-store orders (execute-order
+    succeeds → order confirmed instantly), and bKash/SSLCommerz orders WHERE
+    the customer's browser returns to the payment-result page after a
+    successful gateway redirect. The frontend CANNOT see: a bKash/SSLCommerz
+    customer who pays but closes the tab / never returns to the site. Only
+    YOUR payment gateway webhook sees that outcome. This is the single
+    biggest tracking-accuracy gap in the current system and is entirely on
+    you to close (see section 2 below).
+
+
+================================================================================
+1. SERVICE SETUP (doc section 10.1)
+================================================================================
+
+[ ] 1.1 Create a dedicated Meta CAPI service, isolated from order/payment
+    business logic. Suggested layout (from the SEO doc):
+        Application/Services/Meta/
+            MetaCapiService.cs
+            MetaEvent.cs
+            MetaEventFactory.cs
+            MetaCapiOptions.cs
+            MetaCapiLogger.cs
+        Infrastructure/Meta/
+            MetaHttpClient.cs
+
+[ ] 1.2 Use dependency injection + a typed options class (MetaCapiOptions)
+    for: pixel ID, access token, API version. Read them from server-side
+    secrets/environment config only.
+
+[ ] 1.3 Never return the access token to the browser, ever — not in an API
+    response, not in a log, not in an error message.
+
+[ ] 1.4 One HTTP client/service for all Meta API calls, so a future API
+    version bump is a one-line change.
+
+    Endpoint (already documented with a full example body in
+    docs/tracking-backend-requirements.txt, section 2):
+        POST https://graph.facebook.com/v21.0/{PIXEL_ID}/events?access_token={TOKEN}
+
+
+================================================================================
+2. PURCHASE MUST COME FROM VERIFIED PAYMENT STATE (doc section 10.2)
+================================================================================
+
+[ ] 2.1 Cash-on-delivery / pay-at-store: fire Purchase the moment
+    /api/tokenized/v1/execute-order succeeds. (The frontend already does its
+    best-effort version of this client-side — your server copy is the
+    authoritative one and should use the SAME event_id from trackingMeta,
+    see section 4.)
+
+[ ] 2.2 bKash / SSLCommerz: fire Purchase from the GATEWAY'S OWN
+    success webhook/callback — NOT from any page the customer's browser
+    visits. This is the part the frontend genuinely cannot do (see 0.2). If
+    this webhook does not exist yet, it needs to.
+
+[ ] 2.3 Do NOT mark a Purchase solely because a browser visited a
+    thank-you/confirmation page. A reload or a direct URL visit to that page
+    must not create a second Purchase (this is exactly the bug the frontend
+    found and fixed on its own side this session — see
+    docs/meta-tracking-frontend-audit.txt, "Purchase idempotency fix" —
+    replicate the same principle server-side: key on order id, not on a page
+    render).
+
+
+================================================================================
+3. IDEMPOTENCY AND RETRIES (doc section 10.3)
+================================================================================
+
+[ ] 3.1 Persistent idempotency record per conversion event (see the
+    MetaEventLog data model in section 6 below) — NOT in-memory. (The
+    frontend's own stopgap CAPI relay only has an in-memory, single-process,
+    10-minute dedupe window — explicitly documented as not a real solution;
+    yours must be the real one.)
+
+[ ] 3.2 If a Meta API call times out or errors, retry the SAME event_id —
+    never generate a new one for a retry of the same conversion.
+
+[ ] 3.3 Make the payment provider's webhook handler itself idempotent:
+    a duplicate webhook callback (providers do resend) must not create a
+    second Purchase event or a second CAPI call.
+
+[ ] 3.4 Record the HTTP status / Meta error category for every attempt.
+    Never log the access token or full request/response bodies if they could
+    contain payment details.
+
+
+================================================================================
+4. EVENT ID / DEDUPLICATION — MUST MATCH THE FRONTEND (doc section 8)
+================================================================================
+
+[ ] 4.1 For Purchase: use the `eventId` you already receive in trackingMeta
+    on create-order-invoice (see 0.1) as the CAPI `event_id` — this is the
+    SAME id the frontend's browser Pixel call uses (`fbq('track', 'Purchase',
+    payload, {eventID: event_id})`). Do not derive a different one.
+
+[ ] 4.2 event_name in your CAPI payload must be the exact standard name
+    ("Purchase") matching what the browser sends — not a custom variant.
+
+[ ] 4.3 If you decide to send other events server-side (InitiateCheckout,
+    AddPaymentInfo, Lead, CompleteRegistration — see section 5's table),
+    reuse the eventId the frontend already generates and forwards for that
+    same action, rather than minting a new one. Check with the frontend team
+    which of these already have an eventId forwarded today vs. which would
+    need a new field added to their payload.
+
+
+================================================================================
+5. SERVER-SIDE EVENTS TO PRIORITIZE (doc sections 11-12)
+================================================================================
+
+    Event                  Priority   Status / note
+    ---------------------------------------------------------------------
+    Purchase               P0         REQUIRED. See section 2.
+    Lead                   P1         Only if you want server-side
+                                       confirmation of trade-in submissions
+                                       (browser-side Lead already fires from
+                                       the frontend — see
+                                       meta-tracking-frontend-audit.txt).
+                                       Optional.
+    CompleteRegistration   P1         Browser-side already fires on email
+                                       verification. Server copy optional.
+    AddPaymentInfo         P2         Optional — browser-side already fires.
+    PaymentFailed          P2         Optional — browser-side already fires
+                                       on gateway/execute-order failure AND
+                                       on a gateway error/cancel return.
+    Contact                P2         Optional — browser-side already fires.
+    Subscribe / StartTrial N/A        This store has no subscriptions/trials
+                                       — skip.
+
+    Everything except Purchase is marked "Optional" in the SEO doc's own
+    catalog (section 12) — do not feel obligated to build server-side copies
+    of everything the frontend already sends. Purchase is the one that
+    matters because it's the one the frontend structurally cannot always see
+    (see 0.2).
+
+
+================================================================================
+6. DATA MODEL (doc section 14)
+================================================================================
+
+[ ] 6.1 Create a persistent MetaEventLog table (or equivalent):
+
+    MetaEventLog
+    ------------
+    Id
+    EventName
+    EventId
+    OrderId (nullable)
+    UserId (nullable)
+    Source              // "browser" | "server"
+    Status              // "pending" | "sent" | "failed"
+    AttemptCount
+    MetaHttpStatus
+    MetaResponseCode
+    CreatedAt
+    SentAt
+    LastAttemptAt
+
+[ ] 6.2 Do NOT store in this table (or anywhere in logs):
+        - the Meta access token
+        - card/payment credentials
+        - unnecessary raw personal data (raw email/phone — store hashed
+          versions only if you need them for matching, see section 7)
+
+
+================================================================================
+7. MATCHING DATA (doc section 9) — optional but improves ad performance
+================================================================================
+
+[ ] 7.1 fbp/fbc are already forwarded to you in trackingMeta (see
+    docs/tracking-backend-requirements.txt) — use them in CAPI's user_data.
+
+[ ] 7.2 client_ip_address / client_user_agent — read from the incoming HTTP
+    request (the order-confirmation call or the gateway webhook), not from
+    the frontend.
+
+[ ] 7.3 Hashed email/phone (optional, higher match quality): SHA-256 of
+    lowercased+trimmed email, and of phone digits only (E.164, digits only).
+    Never send raw email/phone to Meta. The frontend does NOT currently send
+    email/phone in trackingMeta — if you want this, tell the frontend team
+    and it can be added (they've flagged this as easy to do if asked).
+
+
+================================================================================
+8. TEST EVENTS / TEST MODE (doc section 19.2-19.4)
+================================================================================
+
+[ ] 8.1 Support Meta's `test_event_code` as a server-side-only, explicit
+    config value — never a NEXT_PUBLIC_* var, never hardcoded, never
+    triggerable by an ordinary customer request parameter. Example shape
+    from the SEO doc:
+        APP_ENV=production
+        META_TRACKING_MODE=test
+        META_TEST_EVENT_CODE=<temporary code from Meta>
+    Rule: include test_event_code in the CAPI payload only when
+    META_TRACKING_MODE=="test"; never in normal production traffic.
+
+[ ] 8.2 Test mode must NOT change real order/payment state, must not expose
+    credentials, and must be disabled again after QA — don't leave it on.
+
+[ ] 8.3 Test Purchase flow (doc 19.3): use one controlled/approved test
+    order (never a real customer's), confirm your backend marks it PAID,
+    persist one stable Purchase event_id for it, send the CAPI event with
+    that id + test_event_code, verify it in Events Manager → Test Events,
+    then reload the confirmation page / replay the webhook and confirm NO
+    second Purchase is created (this exercises your idempotency work from
+    section 3).
+
+
+================================================================================
+9. LEGACY AUDIT ON YOUR SIDE (doc section 18.3-18.4)
+================================================================================
+
+The frontend has already audited its own repo (see
+meta-tracking-frontend-audit.txt) and cannot see into the backend, database,
+CMS/admin panel, or Cloudflare/CDN config. Please run:
+
+[ ] 9.1 Search the whole ASP.NET solution for: Meta, Facebook, CAPI,
+    Conversions API, graph.facebook.com, access_token, pixel ID, event_name,
+    fbp, fbc, Purchase — find any pre-existing server-side Meta call before
+    building a new one (don't end up with two).
+
+[ ] 9.2 Inspect payment confirmation/webhook handlers specifically — old
+    server-side Purchase logic is most likely to be hiding there.
+
+[ ] 9.3 Inspect background jobs/queues/scheduled workers for legacy Meta
+    calls.
+
+[ ] 9.4 Check the database/CMS/admin panel for:
+        - Any stored GTM container ID, including these two the owner asked
+          about specifically: GTM-W6P39574, GTM-PBTMPBVG. (The frontend
+          checked the one CMS field it reads, `googleGTMCode` via the public
+          site-settings API — it currently holds GTM-NM9TVHT3, neither of
+          those two. Whether either of those two IDs exists elsewhere in the
+          database/admin panel — a different field, a different table, an
+          old integrations tab — could not be checked from the frontend and
+          needs your/the admin panel's direct access.)
+        - Custom Header/Footer/Integrations script fields that might inject
+          tracking independently of the CMS fields the frontend already
+          reads (facebookBaseCode, googleGTMCode, googleAnalyticsCode,
+          tikTokBaseCode — the full current list, confirmed live).
+        - Old/legacy Meta Pixel IDs or CAPI access tokens in env vars or
+          deployment secrets.
+
+[ ] 9.5 Check Cloudflare/CDN Workers, Zaraz, or any reverse-proxy
+    (Nginx/Apache) injection — if any of these exist and inject tracking
+    scripts, they bypass anything the Next.js app itself does.
+
+
+================================================================================
+10. SIGN-OFF CHECKLIST FOR THIS BACKEND WORK
+================================================================================
+
+[ ] Purchase is fired from verified payment state (webhook or execute-order),
+    never from a page visit alone
+[ ] Same event_id used on both browser and server for Purchase
+[ ] Reload of confirmation page / duplicate webhook does not create a second
+    Purchase
+[ ] Access token exists only in server-side secrets
+[ ] test_event_code absent from normal production requests
+[ ] MetaEventLog (or equivalent) persists every attempt, without storing the
+    token or raw payment/personal data
+[ ] Retries reuse the original event_id
+[ ] Section 9's audit completed and reported back (found/not found, action
+    taken) — especially the two GTM IDs
+[ ] Confirmed with frontend which side owns CAPI going forward (section 0.1)
+
+
+================================================================================
+REFERENCE
+================================================================================
+- Full CAPI request/response shape + hashing example:
+  docs/tracking-backend-requirements.txt (this repo)
+- What the frontend has already done (for cross-checking event names/ids):
+  docs/meta-tracking-frontend-audit.txt (Bangla)
+  docs/meta-tracking-seo-developer-response.txt (English, section-by-section
+  against the SEO developer's original handoff doc)
