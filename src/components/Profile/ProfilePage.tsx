@@ -49,10 +49,6 @@ const Profile: React.FC = () => {
 
   const handleDesktopMenuClick = (label: ActiveLabel): void => {
     setActiveLabel(label);
-    // Unlike the mobile handler, this never cleared an open order-detail
-    // view — clicking "Orders" in the sidebar while already viewing one
-    // (activeLabel is already "Orders", so the effect below never fires)
-    // did nothing, leaving the user stuck on the detail view.
     setSelectedOrder(null);
     setShowOtp(false);
   };

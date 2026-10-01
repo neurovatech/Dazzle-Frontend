@@ -64,7 +64,7 @@ function toOrderModel(o: ApiOrderItem): Order {
 }
 
 function StatusLabel({ order }: { order: ApiOrderItem }) {
-  if (order.isCancelled)
+  if (order.isCancelled || order.orderStatus === "Cancelled")
     return (
       <span className="text-xs font-bold text-red-500 shrink-0">Cancel</span>
     );
@@ -142,12 +142,12 @@ function OrderRow({
         <button
           onClick={onOpen}
           className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition ${
-            !order.isDelivered && !order.isCancelled
+            !order.isDelivered && !order.isCancelled && order.orderStatus !== "Cancelled"
               ? "bg-[#FFF1E0] text-[#7A4500] border border-[#E9CCAE] hover:bg-[#FCE7CE]"
               : "bg-white dark:bg-transparent border border-gray-200 dark:border-zinc-700 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-zinc-800"
           }`}
         >
-          {!order.isDelivered && !order.isCancelled
+          {!order.isDelivered && !order.isCancelled && order.orderStatus !== "Cancelled"
             ? "Track Order"
             : "See Details"}
         </button>

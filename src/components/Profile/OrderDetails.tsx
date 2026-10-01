@@ -694,14 +694,9 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({ order, onBack }) => {
     }
   };
 
-  // Single source of truth for cancelled/delivered — order-tracking's own
-  // fields and order-list's are combined with OR everywhere below, so the
-  // header badge, due-amount banner, and tracking timeline can never
-  // disagree about whether this order is cancelled (previously each checked
-  // a different subset of these two fields and could show "In Progress" at
-  // the top while the timeline below said "Cancelled").
-  const isOrderCancelled = Boolean(trackingData?.orderCancelled || rawOrder?.isCancelled);
-  const isOrderDelivered = Boolean(trackingData?.orderDelivered || rawOrder?.isDelivered);
+  console.log("order", trackingData)
+  const isOrderCancelled = Boolean(trackingData?.orderCancelled || trackingData?.orderStatus === "Cancelled");
+  const isOrderDelivered = Boolean(trackingData?.orderDelivered || rawOrder?.isDelivered || trackingData?.orderStatus === "Delivered");
 
   const statusText = isOrderCancelled
     ? "Cancelled"

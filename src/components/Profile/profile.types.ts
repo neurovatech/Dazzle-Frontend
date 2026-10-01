@@ -103,6 +103,7 @@ export interface OrderTrackingData {
   isHomeDelivery?: boolean;
   isStorePickup?: boolean;
   deliveryIns?: string;
+  orderStatus?: string;
   customerNotes?: string;
   subTotal: number;
   paidAmount: number;
