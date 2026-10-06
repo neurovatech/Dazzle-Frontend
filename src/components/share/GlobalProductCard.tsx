@@ -5,6 +5,7 @@ import ProductImage from "@/images/product.png";
 import ProductCardImage from "./ProductCardImage";
 import ProductCardWishlist from "./ProductCardWishlist";
 import ProductCardBuy from "./ProductCardBuy";
+import { stockStateOf } from "@/lib/stock";
 export type { DefaultVariantResponse } from "./ProductCardBuy";
 
 export interface ProductCardProps {
@@ -14,6 +15,8 @@ export interface ProductCardProps {
   badge?: string;
   title?: string;
   inStock?: boolean;
+  /** Backend `stockStatus` ("In Stock" / "Out of Stock") from a /products call made with stockAssort=1 — see lib/stock.ts. Leave undefined for data from any other source. */
+  stockStatus?: string;
   price?: number;
   originalPrice?: number;
   isBestDeal?: boolean;
@@ -40,6 +43,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   badge,
   title = "Product",
   inStock = true,
+  stockStatus,
   price = 0,
   originalPrice = 0,
   isBestDeal = false,
@@ -55,6 +59,9 @@ const ProductCard: React.FC<ProductCardProps> = ({
 }) => {
   const itemId = productUuid || uuid || "";
   const showTbaFlag = isTba ?? !inStock;
+  // Real stock from the backend when this card was fed by a stockAssort=1
+  // list call; otherwise undefined and the label keeps its old behaviour.
+  const stockState = stockStateOf(stockStatus);
   const resolvedSlug = slug || title?.toLowerCase().replace(/\s+/g, "-");
   const href = `/product/${resolvedSlug}`;
   const compareHref = `/product-compare/${resolvedSlug}`;
@@ -62,6 +69,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const isendOfLifeDisabled = allProduct
     ? allProduct.endOfLife === true
     : endOfLife === true;
+
   return (
     <div
       data-product-uuid={itemId}
@@ -194,13 +202,18 @@ const ProductCard: React.FC<ProductCardProps> = ({
                 {title.length > 30 ? title.slice(0, 30) + "..." : title}
               </span>
 
-              {/* endOfLife → no stock label */}
+              {/* Stock label. TBA and End-of-Life products get their own badge
+                  instead, so no stock label there. When the backend sent a
+                  real `stockStatus` (a /products call made with stockAssort=1)
+                  its text is shown as-is; for a card fed by any other source
+                  (no stockStatus) the label falls back to the old inStock-based
+                  one — never an empty span. */}
               {!showTbaFlag &&
                 !endOfLife &&
-                (inStock ? (
-                  <span className="text-[#03A000] font-bold"> In Stock </span>
+                (stockState === "in" || (!stockState && inStock) ? (
+                  <span className="text-[#03A000] font-bold"> {stockState ? stockStatus : "In Stock"} </span>
                 ) : (
-                  <span className="text-[#f00]"> Out Of Stock </span>
+                  <span className="text-[#f00]"> {stockState ? stockStatus : "Out Of Stock"} </span>
                 ))}
             </h3>
           </Link>

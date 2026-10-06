@@ -1,3 +1,4 @@
+import { withStockAssort } from "@/lib/stock";
 import Breadcrumb from "@/components/share/Breadcrumb";
 import { api } from "@/lib/api";
 import NewArrivalsClient from "@/components/NewArrivals/NewArrivalsClient";
@@ -153,7 +154,7 @@ export default async function FeatureProductsPages({
 
   try {
     const res = await api.get<ShowcaseItemsResponse>(
-      `/products?latest=1&page=1&limit=500`,
+      withStockAssort(`/products?latest=1&page=1&limit=500&stockAssort=1`),
       { next: { revalidate: 60 } }
     );
     initialProducts    = Array.isArray(res?.data) ? res.data : [];

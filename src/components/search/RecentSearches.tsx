@@ -236,7 +236,7 @@ export default function RecentSearches({ onSelectTerm, onClose }: RecentSearches
                 </div>
 
                 {/* Stock badge */}
-                <span
+                {/* <span
                   className={`shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
                     product.isStockAvailable
                       ? "bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400"
@@ -244,7 +244,7 @@ export default function RecentSearches({ onSelectTerm, onClose }: RecentSearches
                   }`}
                 >
                   {product.isStockAvailable ? "In Stock" : "Out"}
-                </span>
+                </span> */}
               </Link>
             ))}
           </div>

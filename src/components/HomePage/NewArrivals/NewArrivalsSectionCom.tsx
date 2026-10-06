@@ -1,3 +1,4 @@
+import { withStockAssort } from "@/lib/stock";
 import NewArrivals from "./NewArrivals";
 import { api, rethrowIfTransient } from "@/lib/api";
 import NoImg from "@/images/no_images.png";
@@ -16,6 +17,7 @@ interface ShowcaseItem {
   productSlug: string;
   productBadge: string;
   isTba: boolean;
+  stockStatus?: string;
   endOfLife?: boolean;
   allowPreOrder?: boolean;
   recognitionBadge?: string;
@@ -47,6 +49,7 @@ export interface ProductCardItem {
   badge: string;
   isBestDeal: boolean;
   inStock: boolean;
+  stockStatus?: string;
   image: string;
 }
 
@@ -61,6 +64,7 @@ function mapToProductCard(list: ShowcaseItem[]): ProductCardItem[] {
     badge: item.productBadge,
     isBestDeal: false,
     inStock: !item.isTba,
+    stockStatus:    item.stockStatus,
     image: item.thumbnails?.mediaFileUrl ?? NoImg,
     isTba:            item.isTba,
     endOfLife:        item.endOfLife        ?? false,
@@ -85,8 +89,8 @@ async function fetchShowcase(endpoint: string): Promise<ProductCardItem[]> {
 
 export default async function NewArrivalsSectionCom() {
   const [newestProducts, popularProducts] = await Promise.all([
-    fetchShowcase("/products?latest=1"),
-    fetchShowcase("/products?new-arrivals-popular=1"),
+    fetchShowcase(withStockAssort("/products?latest=1")),
+    fetchShowcase(withStockAssort("/products?new-arrivals-popular=1")),
   ]);
 
   const tabsData = [

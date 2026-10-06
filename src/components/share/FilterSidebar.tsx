@@ -290,8 +290,8 @@ export default function FilterSidebar({
         {openSections.includes("stockStatus") && (
           <div className="mt-3 flex flex-col gap-2.5">
             {[
-              { label: "Stock In", value: "0" },
-              { label: "Stock Out", value: "1" },
+              { label: "In Stock", value: "1" },
+              { label: "Out of Stock", value: "0" },
             ].map((option) => {
               const isChecked = stockStatus === option.value;
               return (

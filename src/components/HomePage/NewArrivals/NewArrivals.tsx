@@ -81,6 +81,7 @@ function NewArrivals({
               badge={product.badge}
               isBestDeal={product.isBestDeal}
               inStock={product.inStock}
+              stockStatus={product.stockStatus}
               image={product.image}
               // See ProductList.tsx's ProductCard for why: Swiper repositions
               // slides via transform after mount, which can leave the browser

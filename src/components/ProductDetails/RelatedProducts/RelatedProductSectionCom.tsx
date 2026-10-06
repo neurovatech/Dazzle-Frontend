@@ -1,4 +1,5 @@
 "use client";
+import { withStockAssort } from "@/lib/stock";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import RelatedProduct from "./RelatedProduct";
@@ -17,6 +18,7 @@ interface ProductItem {
   productSlug: string;
   productBadge: string;
   isTba: boolean;
+  stockStatus?: string;
   regularPrice: number;
   discountedPrice: number;
   disRate: number;
@@ -38,6 +40,7 @@ export interface ProductCardItem {
   badge: string;
   isBestDeal: boolean;
   inStock: boolean;
+  stockStatus?: string;
   image: string;
 }
 
@@ -68,7 +71,7 @@ export default function RelatedProductSectionCom({
     queryKey: ["related-products", subCategorySlug],
     queryFn: () =>
       api.get<ProductListResponse>(
-        `/products?subCategorySlug=${subCategorySlug ?? ""}`
+        withStockAssort(`/products?subCategorySlug=${subCategorySlug ?? ""}&stockAssort=1`)
       ),
     enabled: !!subCategorySlug,
     staleTime: 5 * 60 * 1000,
@@ -91,6 +94,7 @@ export default function RelatedProductSectionCom({
     badge:         item.productBadge ?? "",
     isBestDeal:    false,
     inStock:       !item.isTba,
+    stockStatus:    item.stockStatus,
     image:         getThumb(item.thumbnails),
   }));
 

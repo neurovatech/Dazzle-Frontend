@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 "use client";
+import { withStockAssort, stockStateOf } from "@/lib/stock";
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -42,6 +43,7 @@ interface ProductItem {
   productSlug: string;
   productBadge: string;
   isTba: boolean;
+  stockStatus?: string;
   regularPrice: number;
   discountedPrice: number;
   disRate: number;
@@ -99,6 +101,7 @@ function ProductSkeleton() {
 
 // ── Product card (shared between both screens) ──────────────────────
 function ProductRow({ product, onClose }: { product: NormalizedProduct; onClose?: () => void }) {
+  console.log("product", product);
   const formatPrice = (p: number) => `৳${p.toLocaleString("en-BD")}`;
   return (
     <Link
@@ -183,11 +186,12 @@ export default function ProductSearches({ query, onClose }: ProductSearchesProps
     queryKey: ["search-category", selectedCategory?.slug],
     queryFn: () =>
       api.get<ProductListResponse>(
-        `/products?categorySlug=${selectedCategory?.slug}&page=1&limit=50`
+        withStockAssort(`/products?categorySlug=${selectedCategory?.slug}&page=1&limit=50&stockAssort=1`)
       ),
     enabled: isCategoryMode,
     staleTime: 5 * 60 * 1000,
   });
+
 
   // Unique categories from keyword results
   const categories = Array.from(
@@ -229,6 +233,8 @@ export default function ProductSearches({ query, onClose }: ProductSearchesProps
     isTba:            h.document.isTba,
   }));
 
+  console.log(categoryQuery.data?.data, "categoryQuery.data?.data")
+
   // Normalise category products
   const categoryProducts: NormalizedProduct[] = (categoryQuery.data?.data ?? []).map((p) => ({
     id:               p.productUuid,
@@ -237,7 +243,7 @@ export default function ProductSearches({ query, onClose }: ProductSearchesProps
     thumbnailsUrl:    getThumbnail(p.thumbnails),
     regularPrice:     p.regularPrice,
     discountedPrice:  p.discountedPrice,
-    isStockAvailable: !p.isTba,
+    isStockAvailable: stockStateOf(p.stockStatus) ? stockStateOf(p.stockStatus) === "in" : !p.isTba,
     isTba:            p.isTba,
   }));
 

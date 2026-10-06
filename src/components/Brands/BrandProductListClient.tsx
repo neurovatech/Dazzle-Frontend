@@ -1,5 +1,6 @@
 "use client";
 
+import { withStockAssort } from "@/lib/stock";
 import { useState, useEffect, useRef, useCallback } from "react";
 import ProductCard from "@/components/share/GlobalProductCard";
 import ProductGridSkeleton from "@/components/Skeleton/ProductCardSkeleton";
@@ -23,6 +24,8 @@ export interface ProductItem {
   productSlug: string;
   productBadge: string;
   isTba: boolean;
+  /** Real stock ("In Stock" / "Out of Stock") — only meaningful when the list call sent stockAssort=1, see lib/stock.ts */
+  stockStatus?: string;
   endOfLife?: boolean;
   allowPreOrder?: boolean;
   recognitionBadge?: string;
@@ -164,7 +167,7 @@ export default function BrandProductListClient({
         let lastTotalPages = initialTotalPages;
 
         for (let p = 2; p <= loadedPages; p++) {
-          const res = await api.get<ProductListResponse>(`/products?${buildParams(p)}`);
+          const res = await api.get<ProductListResponse>(withStockAssort(`/products?${buildParams(p)}&stockAssort=1`));
           const items = res?.data ?? [];
           accumulated = [...accumulated, ...items];
           lastTotalPages = res?.totalPages ?? lastTotalPages;
@@ -242,7 +245,7 @@ export default function BrandProductListClient({
       setPage(1);
       setHasMore(false);
       try {
-        const res = await api.get<ProductListResponse>(`/products?${buildParams(1)}`);
+        const res = await api.get<ProductListResponse>(withStockAssort(`/products?${buildParams(1)}&stockAssort=1`));
         if (cancelled) return;
         const items = res?.data ?? [];
 
@@ -313,7 +316,7 @@ export default function BrandProductListClient({
     const nextPage = page + 1;
     setIsFetchingMore(true);
     try {
-      const res = await api.get<ProductListResponse>(`/products?${buildParams(nextPage)}`);
+      const res = await api.get<ProductListResponse>(withStockAssort(`/products?${buildParams(nextPage)}&stockAssort=1`));
       const newItems = res?.data ?? [];
       if (newItems.length > 0) {
         setAllProducts((prev) => [...prev, ...newItems]);
@@ -399,6 +402,7 @@ export default function BrandProductListClient({
               badge={product.productBadge || undefined}
               inStock={!product.isTba}
               isTba={product.isTba}
+              stockStatus={product.stockStatus}
               isBestDeal={false}
               slug={product.productSlug}
               endOfLife={product.endOfLife ?? false}

@@ -26,6 +26,8 @@ export interface ProductItem {
   productSlug: string;
   productBadge: string;
   isTba: boolean;
+  /** Real stock ("In Stock" / "Out of Stock") — only meaningful when the list call sent stockAssort=1, see lib/stock.ts */
+  stockStatus?: string;
   regularPrice: number;
   discountedPrice: number;
   disRate: number;
@@ -216,6 +218,7 @@ export default async function BrandDetailsPage({
       `/products?${new URLSearchParams({
         brandSlug: slug,
         page: "1",
+        stockAssort: "1",
         limit: String(LIMIT),
         ...(requestedCategory ? { categorySlug: requestedCategory } : {}),
       }).toString()}`,
@@ -259,6 +262,7 @@ export default async function BrandDetailsPage({
         `/products?${new URLSearchParams({
           brandSlug: slug,
           page: "1",
+          stockAssort: "1",
           limit: String(LIMIT),
         }).toString()}`,
         { next: { revalidate: 60 } },

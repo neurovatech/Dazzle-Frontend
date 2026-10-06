@@ -18,6 +18,8 @@ interface ProductItem {
   productSlug: string;
   productBadge: string;
   isTba: boolean;
+  /** Real stock ("In Stock" / "Out of Stock") — only meaningful when the list call sent stockAssort=1, see lib/stock.ts */
+  stockStatus?: string;
   endOfLife?: boolean;
   allowPreOrder?: boolean;
   recognitionBadge?: string;
@@ -141,6 +143,8 @@ function Product() {
       };
       if (sort) params.sort = sort;
       if (search) params.search = search;
+      // Real stock status for the cards (see lib/stock.ts).
+      // params.stockAssort = "1";
 
       return api.get<ProductListResponse>("products", {
         params,
@@ -288,6 +292,7 @@ function Product() {
                     badge={product.productBadge || undefined}
                     inStock={!product.isTba}
                     isTba={product.isTba}
+                    stockStatus={product.stockStatus}
                     isBestDeal={product.disRate > 0}
                     slug={product.productSlug || product.productUuid}
                     endOfLife={product.endOfLife ?? false}

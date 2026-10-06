@@ -45,7 +45,7 @@ function urlEntry(slug: string): string {
 }
 
 function fetchPage(page: number): Promise<any> {
-  return api.get<any>(`/products?page=${page}&limit=${LIMIT}`, {
+  return api.get<any>(`/products?page=${page}&limit=${LIMIT}&stockAssort=1`, {
     cache: "no-store",
     timeoutMs: TIMEOUT_MS,
   });

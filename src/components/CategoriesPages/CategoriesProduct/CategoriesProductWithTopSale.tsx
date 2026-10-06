@@ -196,7 +196,11 @@ function CategoriesProductWithTopSale({
         if (subCategorySlug)
           queryParams.set("subCategorySlug", subCategorySlug);
         if (selectedBrandSlug) queryParams.set("brandSlug", selectedBrandSlug);
+        // The stock FILTER is `stockStatus` (0 = out of stock, 1 = in stock) — verified
+        // live: /products/attributes only reacts to this one, `stockAssort` below is not
+        // a filter, so it alone left the sidebar counts ignoring the selected filter.
         if (stockStatus !== null) queryParams.set("stockStatus", stockStatus);
+        if (stockStatus !== null) queryParams.set("stockAssort", stockStatus);
         if (minPrice !== undefined)
           queryParams.set("minDiscountedPrice", String(minPrice));
         if (maxPrice !== undefined)

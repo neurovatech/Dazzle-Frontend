@@ -1,5 +1,6 @@
 "use client";
 
+import { withStockAssort } from "@/lib/stock";
 import { useState, useEffect, useRef, useCallback } from "react";
 import ProductCard from "@/components/share/GlobalProductCard";
 import NoImg from "@/images/no_images.png";
@@ -71,11 +72,12 @@ function BrandProductList({
         brandSlug,
         page:  String(nextPage),
         limit: String(LIMIT),
+        stockAssort: "1",
       });
       if (currentSort)   qp.set("sort",   currentSort);
       if (currentSearch) qp.set("search", currentSearch);
 
-      const res = await api.get<ProductListResponse>(`/products?${qp.toString()}`);
+      const res = await api.get<ProductListResponse>(withStockAssort(`/products?${qp.toString()}`));
       const newItems = res?.data ?? [];
       if (newItems.length > 0) {
         setAllProducts((prev) => [...prev, ...newItems]);
@@ -147,6 +149,7 @@ function BrandProductList({
                 badge={product.productBadge || undefined}
                 inStock={!product.isTba}
                 isTba={product.isTba}
+                stockStatus={product.stockStatus}
                 isBestDeal={false}
                 slug={product.productSlug || product.productUuid}
                 allProduct={product}

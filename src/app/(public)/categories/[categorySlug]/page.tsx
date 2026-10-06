@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { withStockAssort } from "@/lib/stock";
 import CategoriesProductWithTopSale from "@/components/CategoriesPages/CategoriesProduct/CategoriesProductWithTopSale";
 import Breadcrumb from "@/components/share/Breadcrumb";
 import ProductListSectionCom from "@/components/HomePage/ProductList/ProductListSectionCom";
@@ -41,6 +42,8 @@ export interface ProductItem {
   productSlug: string;
   productBadge: string;
   isTba: boolean;
+  /** Real stock ("In Stock" / "Out of Stock") — only meaningful when the list call sent stockAssort=1, see lib/stock.ts */
+  stockStatus?: string;
   endOfLife?: boolean;
   allowPreOrder?: boolean;
   recognitionBadge?: string;
@@ -192,13 +195,14 @@ export default async function CategoriesPage({
       const queryParams = new URLSearchParams({
         page: String(currentPage),
         limit: String(LIMIT),
+        stockAssort: "1",
         categorySlug,
       });
       if (sort) queryParams.set("sort", sort);
       if (search) queryParams.set("search", search);
 
       const res = await api.get<ProductListResponse>(
-        `/products?${queryParams.toString()}`,
+        withStockAssort(`/products?${queryParams.toString()}`),
         // Only the default view (page 1, no sort/search) is a shared, cached
         // response. Every other page/sort/search combination is its own URL and
         // would become its own file in .next/cache/fetch-cache (search text is

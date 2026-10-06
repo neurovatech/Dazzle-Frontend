@@ -77,6 +77,7 @@ export default function BrandCategoryFilter({
 }: Props) {
   const router   = useRouter();
   const pathname = usePathname();
+  console.log(products, "products")
 
   const navigate = (categoryUuid: string | null, page: number) => {
     const qp = new URLSearchParams();
@@ -135,6 +136,7 @@ export default function BrandCategoryFilter({
                   discount={product.disRate || 0}
                   badge={product.productBadge || undefined}
                   inStock={!product.isTba}
+                  stockStatus={product.stockStatus}
                   isTba={product.isTba}
                   isBestDeal= {false}
                   slug={product.productSlug || product.productUuid}

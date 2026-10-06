@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
+import { withStockAssort } from "@/lib/stock";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import ProductCard from "@/components/share/GlobalProductCard";
@@ -168,7 +169,7 @@ function AllProducts({
 
         for (let p = 2; p <= loadedPages; p++) {
           const res = await api.get<ProductListResponse>(
-            `/products?${buildParams(p)}`
+            withStockAssort(`/products?${buildParams(p)}&stockAssort=1`)
           );
           const items = res?.data ?? [];
           accumulated = [...accumulated, ...items];
@@ -254,7 +255,7 @@ function AllProducts({
         setIsFetchingMore(true);
         try {
           const res = await api.get<ProductListResponse>(
-            `/products?${buildParams(1)}`
+            withStockAssort(`/products?${buildParams(1)}&stockAssort=1`)
           );
           if (cancelled) return;
           const items = res?.data ?? [];
@@ -282,7 +283,7 @@ function AllProducts({
     setIsFetchingMore(true);
     try {
       const res = await api.get<ProductListResponse>(
-        `/products?${buildParams(nextPage)}`
+        withStockAssort(`/products?${buildParams(nextPage)}&stockAssort=1`)
       );
       const newItems = res?.data ?? [];
       if (newItems.length > 0) {
@@ -379,6 +380,7 @@ function AllProducts({
                 badge={product.productBadge || undefined}
                 inStock={!product.isTba}
                 isTba={product.isTba}
+                stockStatus={product.stockStatus}
                 isBestDeal={false}
                 slug={product.productSlug || product.productUuid}
                 endOfLife={product.endOfLife ?? false}

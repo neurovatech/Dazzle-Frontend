@@ -109,6 +109,7 @@ export default async function SearchList({ params }: PageProps) {
       `/products?${new URLSearchParams({
         brandSlug: slug,
         page:      "1",
+        stockAssort: "1",
         limit:     String(LIMIT),
       }).toString()}`,
       { next: { revalidate: 60 } } 

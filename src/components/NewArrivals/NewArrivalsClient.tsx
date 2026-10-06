@@ -1,4 +1,5 @@
 "use client";
+import { withStockAssort } from "@/lib/stock";
 import { useState, useEffect, useRef, useCallback } from "react";
 import ProductCard from "@/components/share/GlobalProductCard";
 import { api } from "@/lib/api";
@@ -10,6 +11,8 @@ interface ShowcaseItem {
   productSlug: string;
   productBadge: string;
   isTba: boolean;
+  /** Real stock ("In Stock" / "Out of Stock") — only meaningful when the list call sent stockAssort=1, see lib/stock.ts */
+  stockStatus?: string;
   regularPrice: number;
   discountedPrice: number;
   disRate: number;
@@ -59,7 +62,7 @@ export default function NewArrivalsClient({
       // No cache option: public catalog read, now cacheable via the proxy's
       // Cache-Control (see src/app/api/proxy/[...path]/route.ts).
       const res = await api.get<ShowcaseItemsResponse>(
-        `/products?latest=1&page=${nextPage}&limit=${LIMIT}`,
+        withStockAssort(`/products?latest=1&page=${nextPage}&limit=${LIMIT}&stockAssort=1`),
       );
       const newItems = res?.data ?? [];
       if (newItems.length > 0) {
@@ -107,6 +110,7 @@ export default function NewArrivalsClient({
             badge={product.productBadge || undefined}
             inStock={!product.isTba}
             isTba={product.isTba}
+            stockStatus={product.stockStatus}
             isBestDeal={false}
             slug={product.productSlug || product.productUuid}
           />

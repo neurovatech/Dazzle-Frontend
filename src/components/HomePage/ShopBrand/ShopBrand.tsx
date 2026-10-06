@@ -1,4 +1,5 @@
 "use client";
+import { withStockAssort } from "@/lib/stock";
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -33,6 +34,8 @@ interface ProductItem {
   productSlug: string;
   productBadge: string;
   isTba: boolean;
+  /** Real stock ("In Stock" / "Out of Stock") — only meaningful when the list call sent stockAssort=1, see lib/stock.ts */
+  stockStatus?: string;
   regularPrice: number;
   discountedPrice: number;
   disRate: number;
@@ -63,7 +66,7 @@ export default function ShopBrand({ brands }: Props) {
     refetchOnReconnect: false,
     queryFn: () =>
       api.get<ProductListResponse>(
-        `/products?brandSlug=${activeBrandSlug}&limit=12&page=1`,
+        withStockAssort(`/products?brandSlug=${activeBrandSlug}&limit=12&page=1&stockAssort=1`),
       ),
     enabled: !!activeBrandSlug,
   });
@@ -221,6 +224,7 @@ export default function ShopBrand({ brands }: Props) {
                       isBestDeal={false}
                       inStock={!product.isTba}
                       isTba={product.isTba}
+                      stockStatus={product.stockStatus}
                       image={product.thumbnails?.mediaFileUrl ?? ""}
                       // See ProductList.tsx's ProductCard for why: Swiper
                       // repositions slides via transform after mount, which

@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { withStockAssort } from "@/lib/stock";
 import CategoriesProduct from "@/components/CategoriesPages/CategoriesProduct/CategoriesProduct";
 
 import Breadcrumb from "@/components/share/Breadcrumb";
@@ -158,6 +159,7 @@ export default async function SubCategoriesPage({
       const queryParams = new URLSearchParams({
         page: String(currentPage),
         limit: String(LIMIT),
+        stockAssort: "1",
         categorySlug,
         subCategorySlug,
       });
@@ -168,7 +170,7 @@ export default async function SubCategoriesPage({
       // response; every other combination is fetched fresh so it does not
       // become its own file in .next/cache/fetch-cache (search text is unbounded).
       const res = await api.get<any>(
-        `/products?${queryParams.toString()}`,
+        withStockAssort(`/products?${queryParams.toString()}`),
         currentPage <= 1 && !sort && !search
           ? { next: { revalidate: 60 } }
           : { cache: "no-store" },
