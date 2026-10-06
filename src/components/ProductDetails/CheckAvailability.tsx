@@ -1090,14 +1090,13 @@ export default function CheckAvailability({
   return (
     <div className="lg:flex gap-3 my-6">
       {/* Minimum Booking */}
-      <button onClick={() => setIsOpen(true)} className="flex-1 w-full mb-4 lg:mb-0 flex items-center justify-between gap-2 bg-[linear-gradient(90deg,#F44336_0%,#FF9800_100%)] text-white font-semibold text-sm px-4 py-3 rounded-xl shadow-sm hover:opacity-90 transition-opacity cursor-pointer">
+      {/* <button onClick={() => setIsOpen(true)} className="flex-1 w-full mb-4 lg:mb-0 flex items-center justify-between gap-2 bg-[linear-gradient(90deg,#F44336_0%,#FF9800_100%)] text-white font-semibold text-sm px-4 py-3 rounded-xl shadow-sm hover:opacity-90 transition-opacity cursor-pointer">
         <div className="flex items-center gap-2">
           <span className="bg-white rounded-lg p-1.5">
             <CheckHome />
           </span>
           <div className="flex flex-col items-start">
             <span>Check Availability </span>
-            {/* <span> {product?.minBookingPrice} BDT</span> */}
           </div>
         </div>
         <svg
@@ -1110,7 +1109,7 @@ export default function CheckAvailability({
         >
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
         </svg>
-      </button>
+      </button> */}
 
       {/* Exchange */}
       <button onClick={() => setIsExchangeOpen(true)} className="flex-1 w-full mb-4 lg:mb-0 flex items-center justify-between gap-2 bg-[linear-gradient(270deg,#2CD8A4_0%,#36654B_94.87%)] text-white font-semibold text-sm px-4 py-3 rounded-xl shadow-sm hover:opacity-90 transition-opacity cursor-pointer">

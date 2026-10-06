@@ -25,6 +25,8 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "dazzle.sgp1.cdn.digitaloceanspaces.com" },
       { protocol: "https", hostname: "dzl.sgp1.cdn.digitaloceanspaces.com" },
       { protocol: "https", hostname: "store.storeimages.cdn-apple.com" },
+      {protocol: "https", hostname: "drive.google.com"},
+      { protocol: "https", hostname: "lh3.googleusercontent.com"},
     ],
   },
 };
