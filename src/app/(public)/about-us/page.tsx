@@ -329,10 +329,10 @@ export default async function AboutUs() {
           {cities.map(({ name, soon }) => (
             <span
               key={name}
-              className={`inline-flex items-center gap-3 rounded-full border px-6 py-3 text-base ${
+              className={`inline-flex items-center gap-3 rounded-full border px-6 py-3 dark:text-base ${
                 soon
                   ? "border-amber-500/30 text-amber-400"
-                  : "border-white/10 text-white"
+                  : " border-black/10 dark:border-white/10 dark:text-white text-black"
               }`}
             >
               <span
