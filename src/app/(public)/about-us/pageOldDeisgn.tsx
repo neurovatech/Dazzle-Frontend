@@ -14,7 +14,7 @@ import FirstImg from "@/images/about_1.png";
 import FirstImg2 from "@/images/about_2.png";
 
 const stats = [
-  { value: "393,000+", label: "Unique Customers" },
+  { value: "1,624,848 +", label: "Unique Customers" },
   { value: "820,000+", label: "Products Delivered" },
   { value: "1.2 Million+", label: "Social Media Followers" },
   { value: "7,000+", label: "5-Star Google Reviews" },

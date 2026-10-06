@@ -17,117 +17,125 @@ import FirstImg4 from "@/images/card-03.jpeg";
 
 const stats = [
   {
-    value: "393,000+",
-    label: "Unique Customers",
-    details:
-      "A growing family of satisfied clients who trust Dazzle for all their tech needs.",
+    value: "1,624,848 +",
+    label: "Unique customers served",
+    details: "",
   },
   {
-    value: "820,000+",
+    value: "4.7M +",
     label: "Products Delivered",
-    details:
-      "From smartphones to laptops, smartwatches to accessories, we’ve made dreams come true across the nation.",
+    details: "",
   },
   {
-    value: "1.2 Million+",
-    label: "Social Media Followers",
-    details: "A community built on trust and love for our brand.",
+    value: "2.2M +",
+    label: "Followers across social media",
+    details: "",
   },
 
   {
-    value: "7,000+",
+    value: "16,000 +",
     label: "5-Star Google Reviews",
-    details:
-      "A testimony to our commitment to excellence and customer satisfaction.",
+    details: "",
   },
   {
-    value: "99.7%",
-    label: "Customer Satisfaction",
-    details: "Our highest priority is making you smile.",
+    value: "16,589 +",
+    label: "Replacement guarantees honored",
+    details: "",
   },
   {
-    value: "9000+",
-    label: "Successful Warranty Claims",
-    details: "Hassle-free after-sales service to ensure peace of mind",
+    value: "15+",
+    label: "Physical outlets nationwide",
+    details: "",
   },
   {
-    value: "6",
-    label: "Physical Showrooms",
-    details:
-      "Convenient locations across Dhaka and Chittagong for a seamless shopping experience.",
+    value: "271 +",
+    label: "Team members",
+    details: "",
   },
   {
-    value: "127+",
-    label: "Member Team",
-    details: "Experts who ensure you get the best service, online and offline.",
+    value: "17,000 +",
+    label: "Product SKUs in stock",
+    details: "",
   },
   {
-    value: "Global Hubs",
-    // label: "Global Hubs in Dubai, Hong Kong & Singapore",
-    label:
-      "Global Hubs in Dubai, Hong Kong & Singapore: Bringing world-class products and services right to your doorstep.",
+    value: "113 +",
+    label: "Global brands under one roof",
     highlight: true,
   },
 ];
 const stats2 = [
   {
     value: "",
-    label: "Countrywide Free Delivery",
+    label: "Smartphones",
     details:
-      "No matter where you are in Bangladesh, your order reaches you without any delivery charges",
+      "The latest flagships and everyday drivers from every major brand, all genuine.",
   },
   {
     value: "",
-    label: "36-Month EMI Facility",
-    details: "Flexible payment options for products over BDT 5,000 through 39 partner banks",
+    label: "Laptops & Tablets",
+    details:
+      "For work, school, and everything after hours — with real after-sales support.",
   },
   {
     value: "",
-    label: "Exclusive Exchange Offers",
-    details: "Upgrade your gadgets with the best value for your old devices",
+    label: "Wearables",
+    details: "Smartwatches and fitness bands to keep pace with your day.",
   },
 
   {
     value: "",
-    label: "Competitive Pricing",
-    details: "Unbeatable prices for a wide range of electronics, accessories, and more",
+    label: "Audio",
+    details: "Earbuds and speakers built for how you actually listen.",
   },
   {
     value: "",
-    label: "Authentic Products",
-    details: "100% original gadgets and accessories from globally renowned brands",
+    label: "Smart TVs",
+    details: "Big screens, real warranties, delivered and set up right.",
   },
   {
     value: "",
-    label: "Comprehensive Warranty Services",
-    details: "Extended warranties for added peace of mind",
+    label: "Accessories",
+    details:
+      "Cases, chargers, and the small things that make the big things last.",
   },
-  {
-    value: "",
-    label: "Pre-Orders for Any Electronics",
-    details: "Get the latest devices delivered within 15 days",
-  },
-  {
-    value: "",
-    label: "After-Sales Service",
-    details: "From expert assistance to smooth warranty claims, we’re here for you",
-  },
-  {
-    value: "",
-    label: "24/7 Customer Support",
-    details: "Round-the-clock service to ensure you never face any inconvenience",
-  },
-  {
-    value: "",
-    label: "Fast Delivery",
-    details: "Quick and reliable delivery services tailored to your needs",
-  },
+
+  // {
+  //   value: "",
+  //   label: "Pre-Orders for Any Electronics",
+  //   details: "Get the latest devices delivered within 15 days",
+  // },
+  // {
+  //   value: "",
+  //   label: "After-Sales Service",
+  //   details: "From expert assistance to smooth warranty claims, we’re here for you",
+  // },
+  // {
+  //   value: "",
+  //   label: "24/7 Customer Support",
+  //   details: "Round-the-clock service to ensure you never face any inconvenience",
+  // },
+  // {
+  //   value: "",
+  //   label: "Fast Delivery",
+  //   details: "Quick and reliable delivery services tailored to your needs",
+  // },
+];
+
+const cities = [
+  { name: "Dhaka", soon: false },
+  { name: "Chattogram", soon: false },
+  { name: "Rajshahi", soon: true },
+  { name: "Khulna", soon: true },
+  { name: "Cumilla", soon: true },
+  { name: "Bogura", soon: true },
 ];
 
 export default async function AboutUs() {
   let brandsCount = 0;
   try {
-    const brands = await api.get<unknown[]>("/brands", { next: { revalidate: 60 } });
+    const brands = await api.get<unknown[]>("/brands", {
+      next: { revalidate: 60 },
+    });
     if (Array.isArray(brands)) {
       brandsCount = brands.length;
     }
@@ -232,7 +240,9 @@ export default async function AboutUs() {
 
           {/* Description */}
           <p className="text-[13px] text-gray-500 dark:text-gray-400 leading-[1.8] mb-8 max-w-full">
-            Over 9 years of experience, we have crafted thousands of strategic discovery process that ? enables us to peel back the layers which enable us to understand, connect.
+            Over 9 years of experience, we have crafted thousands of strategic
+            discovery process that ? enables us to peel back the layers which
+            enable us to understand, connect.
           </p>
         </div>
 
@@ -286,10 +296,10 @@ export default async function AboutUs() {
                     : "bg-white"
                 }`}
               >
-                <span className="font-bold text-[15px] text-gray-900 dark:text-white leading-tight">
+                <span className="font-bold text-[15px] text-gray-900 leading-tight">
                   {stat.value}
                 </span>
-                <span className="text-[11px] text-gray-500 dark:text-gray-300 mt-1 leading-snug">
+                <span className="text-[11px] text-gray-500 mt-1 leading-snug">
                   {stat.label}
                 </span>
               </div>
@@ -298,7 +308,7 @@ export default async function AboutUs() {
         </div>
 
         <div className="w-full rounded-xl overflow-hidden">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-[54px] mb-[20px]">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mt-[54px] mb-[20px]">
             {stats2.map((stat, i) => (
               <div
                 key={i}
@@ -315,7 +325,26 @@ export default async function AboutUs() {
           </div>
         </div>
 
-
+        <div className="flex flex-wrap gap-x-4 gap-y-5 p-6 font-mono">
+          {cities.map(({ name, soon }) => (
+            <span
+              key={name}
+              className={`inline-flex items-center gap-3 rounded-full border px-6 py-3 text-base ${
+                soon
+                  ? "border-amber-500/30 text-amber-400"
+                  : "border-white/10 text-white"
+              }`}
+            >
+              <span
+                className={`h-2 w-2 animate-pulse rounded-full ${
+                  soon ? "bg-amber-400" : "bg-emerald-600"
+                }`}
+              />
+              {name}
+              {soon && " — opening soon"}
+            </span>
+          ))}
+        </div>
       </div>
     </div>
   );
