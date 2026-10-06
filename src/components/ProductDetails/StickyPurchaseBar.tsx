@@ -571,13 +571,13 @@ export default function StickyPurchaseBar({
       </div>
 
       {/* WhatsApp FAB */}
-      <button
+      {/* <button
         onClick={handleWhatsApp}
         aria-label="Contact via WhatsApp"
         className="fixed md:bottom-5 bottom-10 mb-24 md:mb-0 right-4 z-9999999 w-12 h-12 bg-green-500 hover:bg-green-600 active:bg-green-700 text-white rounded-full flex items-center justify-center shadow-lg transition-colors duration-150"
       >
         <WhatsAppIcon />
-      </button>
+      </button> */}
     </div>
   );
 }
