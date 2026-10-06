@@ -40,7 +40,7 @@ export default function BrandCategoryButtons({ categories, activeCategorySlug: a
         All
       </button>
 
-      {/* Category buttons */}
+ 
       {categories
         .filter((c) => c.is_active)
         .map((cat) => (

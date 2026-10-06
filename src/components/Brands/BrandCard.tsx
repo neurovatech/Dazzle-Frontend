@@ -5,7 +5,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { Brand } from "@/app/(public)/brands/page";
 
-// ✅ Move constant outside component — stable reference, no SSR/client mismatch
 const ALPHABET = ["All", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("")];
 
 function BrandCard({ brands }: { brands: Brand[] }) {
@@ -29,9 +28,7 @@ function BrandCard({ brands }: { brands: Brand[] }) {
 
   return (
     <div className="w-full py-4">
-      {/* Top Filter Section */}
       <div className="grid grid-cols-1 lg:grid-cols-12 mb-6 gap-4">
-        {/* Search */}
         <div className="lg:col-span-4 w-full">
           <input
             type="text"
@@ -49,7 +46,6 @@ function BrandCard({ brands }: { brands: Brand[] }) {
 
         {/* A–Z Filter */}
         <div className="lg:col-span-8 flex flex-wrap gap-2">
-          {/* ✅ Use flex-wrap instead of grid — avoids invalid nesting & layout mismatch */}
           {ALPHABET.map((letter) => (
             <button
               key={letter}
@@ -68,8 +64,7 @@ function BrandCard({ brands }: { brands: Brand[] }) {
           ))}
         </div>
       </div>
-
-      {/* Brand Grid */}
+      
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 lg:gap-4 gap-2">
         {filteredBrands.length > 0 ? (
           filteredBrands.map((brand, i) => (
