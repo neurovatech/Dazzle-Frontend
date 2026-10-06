@@ -1,0 +1,311 @@
+DAZZLE — META (FACEBOOK) CATALOG: ASP.NET BACKEND TO-DO LIST
+================================================================================
+For:     ASP.NET backend developer
+From:    Frontend (this Next.js repo)
+Source:  "Meta / Facebook Catalog Integration — Developer Implementation
+         Documentation" (sections 5-11, 17-19, 21-25, 27, 29-30)
+Related: docs/meta-tracking-backend-todo.txt (the CAPI / retry-worker list —
+         this file covers the CATALOG half; both are needed)
+
+How to use: go top to bottom, tick each [ ]. The frontend half is already
+done — see docs/meta-catalog-frontend-done.txt. Everything below is yours.
+
+
+================================================================================
+0. THE ONE DECISION THAT EVERYTHING DEPENDS ON — THE PRODUCT ID
+================================================================================
+
+The catalog item id (`g:id`) MUST be byte-for-byte the same value the
+website's Pixel sends in `content_ids` and the CAPI sends in `contents[].id`.
+Meta only links a "ViewContent / AddToCart / Purchase" to a catalog product
+when these match exactly.
+
+>>> DECIDED: use `productUuid` as the catalog `g:id`. <<<
+
+  Example:  g:id = 9efc5af3-d3bc-442c-9b47-248c35810bb9
+            (the `productUuid` of "Xiaomi Pad 7 Ultra")
+
+Why the Meta doc's usual advice (SKU / productCode) is NOT used here — checked
+against the live API, not assumed:
+  - `productCode` is EMPTY for some products. The live product
+    "xiaomi-pad-7-ultra" returns productCode = "" ; in a 300-product sample
+    ~9% (27 of 300) had no productCode. An empty g:id is invalid and an
+    empty content_id can never match anything.
+  - Some productCodes contain characters that are awkward in an id,
+    e.g. "AWS(2-55ED15", "DBG(7-6A3807", "HX(-0DD2F8C".
+  - `productUuid` is always present, unique, never changes when a name or
+    slug changes, and is URL/XML safe.
+  - The frontend ALREADY sends productUuid on every event (ViewContent,
+    AddToCart, InitiateCheckout, Purchase — verified call site by call site),
+    so using it means nothing on the website has to change.
+
+[ ] 0.1 Confirm in writing that `g:id` = productUuid (reply to the frontend
+    team). If you strongly prefer productCode instead, first back-fill every
+    empty/duplicate/odd-character productCode in the database, then tell the
+    frontend — it is a one-line change on our side, but it MUST be a joint
+    change or events stop matching.
+
+[ ] 0.2 Variants: the site has per-product variants (color / RAM-storage) with
+    their own variantUuid and price. This first version is ONE CATALOG ITEM PER
+    PRODUCT (price/image/availability of the product's default variant — the
+    same values the product API returns as regularPrice/discountedPrice/
+    thumbnails). Per-variant catalog items (g:item_group_id = productUuid,
+    g:id = variantUuid) is a possible later upgrade for color-accurate dynamic
+    ads; it would need the frontend to send variantUuid in content_ids too, so
+    do NOT do it on your side alone.
+
+
+================================================================================
+1. THE FEED ENDPOINT (doc sections 7-10)
+================================================================================
+
+[ ] 1.1 Build   GET {API_BASE}/api/meta/product-feed
+    (API_BASE = https://apix.bigpoint.com.bd). It reads the LIVE database on
+    each call (or from a short cache you control, <= 10 min — see 1.8).
+
+[ ] 1.2 Auth: require the header   X-Meta-Feed-Key: <META_FEED_TOKEN>
+    Compare in constant time. Wrong/missing -> 401. The frontend forwards this
+    header itself, so nothing public ever sees your host or the key.
+    (Meta never calls your host directly — see section 2.)
+
+[ ] 1.3 Response: HTTP 200, `Content-Type: application/xml; charset=utf-8`,
+    RSS 2.0 with the Google namespace (exact skeleton in section 4). The
+    frontend refuses to pass through anything whose content-type does not
+    contain "xml" (so a JSON/HTML error page can never reach Meta as "the
+    catalog") — return a real 4xx/5xx with a non-XML body on failure.
+
+[ ] 1.4 Only export products that should be sold/advertised:
+        - IsActive = true
+        - not discontinued (endOfLife = true  -> EXCLUDE the product entirely)
+        - has a name, a public product URL, a price > 0 and at least one image
+    Skip (and log) anything that fails — never emit an invalid <item>; one
+    bad item must not break the whole feed.
+
+[ ] 1.5 Performance: the full catalog is ~4,300 products. Stream the XML
+    (XmlWriter / write to the response stream) — do NOT build one giant
+    string/array in memory. Load products in pages from the DB. NOTE: the
+    existing /products?limit=2000 endpoint takes ~27s per page and sometimes
+    returns HTTP 500 — the feed must NOT be built by calling that endpoint;
+    query the database directly. Target: whole feed < 30 s.
+
+[ ] 1.6 XML correctness: escape & < > " ' in EVERY text value (titles and
+    descriptions contain "&" and quotes). Strip HTML tags from descriptions.
+    Wrap description in CDATA only if you also strip "]]>" from it.
+    Use an XML writer, never string concatenation.
+
+[ ] 1.7 Log (server-side, no secrets): items exported, items skipped + reason,
+    generation time, and any exception.
+
+[ ] 1.8 Optional: cache the generated XML for up to 10 minutes (the frontend/
+    Cloudflare also caches for 10 min — see section 2). Price and stock must
+    still reach Meta within ~15-20 minutes of changing in the admin panel.
+
+
+================================================================================
+2. HOW META REACHES IT (frontend already built this — nothing for you to code)
+================================================================================
+
+The frontend exposes the feed to Meta at
+
+    https://dazzle.com.bd/api/meta/product-feed?key=<META_FEED_TOKEN>
+
+(src/app/api/meta/product-feed/route.ts). It checks ?key=, calls YOUR
+endpoint with X-Meta-Feed-Key, streams the XML back with a 10-minute cache
+header. Why: the feed lives on the same domain as the product pages and
+images; your host stays hidden; Cloudflare absorbs repeat fetches.
+
+[ ] 2.1 Agree the token with the frontend team (any long random string, e.g.
+    `openssl rand -hex 32`). It must be set as env var META_FEED_TOKEN on BOTH
+    the backend and the frontend server. Never commit it.
+
+[ ] 2.2 Make sure the backend's WAF/Cloudflare rules do not block the Next.js
+    server calling GET /api/meta/product-feed (it is a normal server-to-server
+    HTTPS request with one custom header).
+
+[ ] 2.3 Give the frontend the final upstream URL if it is not exactly
+    {API_BASE}/api/meta/product-feed (it can be overridden with
+    META_FEED_UPSTREAM_URL).
+
+
+================================================================================
+3. FIELD MAPPING — USING THE FIELDS THE PRODUCT API ALREADY HAS
+================================================================================
+
+Checked against the live API (/product/{slug}, /products, /product-variants).
+Use the DB columns behind these.
+
+  Meta field            Source / rule
+  ----------------------------------------------------------------------------
+  g:id                  productUuid                                  (REQUIRED)
+  g:title               productName                                  (REQUIRED)
+                        Max 200 chars (150 recommended). Plain text.
+  g:description         shortDesc, falling back to description.      (REQUIRED)
+                        Strip HTML, collapse whitespace, max ~5,000 chars,
+                        never empty (fall back to the product name).
+  g:link                https://dazzle.com.bd/product/{productSlug}  (REQUIRED)
+                        Absolute https URL. The path is /product/<slug>
+                        (singular "product"), exactly as on the website.
+  g:image_link          First thumbnail's mediaFileUrl               (REQUIRED)
+                        Public https CDN URL (dazzle.sgp1.cdn.digitaloceanspaces
+                        .com/...). Image should be >= 500x500.
+  g:additional_image_link   Up to 10 more thumbnails (optional)
+  g:brand               brandName                                    (REQUIRED)
+  g:condition           new
+  g:price               regularPrice + " BDT"   e.g. 109990 BDT
+                        (the "was" price; plain number, no thousands
+                        separator, dot as decimal separator, then a space and
+                        the ISO code)
+  g:sale_price          discountedPrice + " BDT"  e.g. 104990 BDT
+                        ONLY when 0 < discountedPrice < regularPrice.
+                        If there is no discount: g:price = discountedPrice
+                        (or regularPrice) and OMIT g:sale_price.
+  g:availability        see section 3.1
+  g:product_type        "{category} > {subCategoryName}" if available
+                        (e.g. "Tablet > Xiaomi Tablet"), optional but helps
+                        ad targeting.
+  g:google_product_category   optional; add if the category mapping exists.
+
+[ ] 3.1 Availability (the product API's own flags; confirmed names):
+        endOfLife = true                      -> do not export at all
+        isTba = false                         -> in stock
+        isTba = true  AND allowPreOrder=true  -> preorder
+              (Meta REQUIRES g:availability_date for preorder, ISO 8601,
+               e.g. 2026-11-01T00:00-06:00 — if you do not have a real date,
+               use "out of stock" instead; never invent a date)
+        isTba = true  AND allowPreOrder=false -> out of stock
+    (This mirrors exactly what the website already shows and what its
+    schema.org JSON-LD already says: isTba is the site's "not in stock"
+    signal.) If a stock-quantity column exists and is the real source of truth,
+    use it as the doc suggests (stock > 0 -> in stock) — but keep the same
+    flags above for TBA/preorder/discontinued so the feed and the website never
+    disagree.
+
+[ ] 3.2 g:price vs g:sale_price: the frontend/website shows discountedPrice as
+    the selling price and regularPrice crossed out. Meta must show the same,
+    otherwise Meta flags a "price mismatch" between feed and landing page and
+    can pause the item.
+
+
+================================================================================
+4. FEED SKELETON — A REAL ITEM BUILT FROM THE LIVE API
+================================================================================
+(Product: "Xiaomi Pad 7 Ultra", https://dazzle.com.bd/product/xiaomi-pad-7-ultra)
+
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
+  <channel>
+    <title>Dazzle Products</title>
+    <link>https://dazzle.com.bd</link>
+    <description>Dazzle product catalog</description>
+
+    <item>
+      <g:id>9efc5af3-d3bc-442c-9b47-248c35810bb9</g:id>
+      <g:title>Xiaomi Pad 7 Ultra</g:title>
+      <g:description>Display: 14.0" 120Hz AMOLED, Gorilla Glass 5. Performance: Xring O1, 10-core CPU, HyperOS 2. Rear Camera: 50MP Wide, 4K video.</g:description>
+      <g:link>https://dazzle.com.bd/product/xiaomi-pad-7-ultra</g:link>
+      <g:image_link>https://dazzle.sgp1.cdn.digitaloceanspaces.com/41881/Xiaomi-Pad-7-Ultra-Price-in-bangladesh-blue.jpg</g:image_link>
+      <g:additional_image_link>https://dazzle.sgp1.cdn.digitaloceanspaces.com/41882/Xiaomi-Pad-7-Ultra-Price-in-bangladesh-gray.jpg</g:additional_image_link>
+      <g:brand>Xiaomi</g:brand>
+      <g:condition>new</g:condition>
+      <g:availability>in stock</g:availability>
+      <g:price>109990 BDT</g:price>
+      <g:sale_price>104990 BDT</g:sale_price>
+      <g:product_type>Tablet &gt; Xiaomi Tablet</g:product_type>
+    </item>
+  </channel>
+</rss>
+
+Notes on the sample: the quote characters in the description are escaped by the
+XML writer (shown unescaped here only for readability); "&gt;" in product_type
+is already escaped.
+
+
+================================================================================
+5. COMMERCE MANAGER SETUP (owner / marketing — not code, but needed)
+================================================================================
+
+[ ] 5.1 Meta Business Suite -> Commerce Manager -> create a Catalog
+    (type: E-commerce). Note the Catalog ID (-> META_CATALOG_ID, doc sec. 23).
+[ ] 5.2 Catalog -> Data sources -> Add items -> "Data feed" -> "Scheduled
+    feed" -> URL:  https://dazzle.com.bd/api/meta/product-feed?key=<token>
+    Currency BDT. Schedule: hourly (or the most frequent option offered).
+[ ] 5.3 After the first fetch, open the feed's diagnostics: it lists every
+    rejected item with the reason. Fix at the source until 0 errors.
+[ ] 5.4 Catalog -> Settings -> connect the existing Pixel
+    (1665562014226088) to this catalog, so events can be matched to items.
+[ ] 5.5 Verify the website domain in Business Settings -> Brand safety ->
+    Domains (needed to use the catalog for ads on dazzle.com.bd).
+
+
+================================================================================
+6. MATCHING EVENTS TO THE CATALOG — CAPI SIDE (ties into the CAPI list)
+================================================================================
+
+[ ] 6.1 Every server-side event that carries products (Purchase, and any
+    InitiateCheckout/AddToCart you choose to send) must send
+        content_type = "product"
+        content_ids  = [productUuid, ...]
+        contents     = [{ "id": productUuid, "quantity": n, "item_price": x }]
+    where the id is the SAME productUuid as g:id above. If your order-line
+    table stores variant ids (variantUuid), map each line back to its
+    productUuid before sending — a variantUuid in content_ids will NOT match
+    any catalog item.
+[ ] 6.2 Purchase `value` = the backend order total (NOT a value sent by the
+    browser), currency = "BDT" — the Catalog doc's security rule (section 22).
+[ ] 6.3 Same event_id as the browser Pixel copy — already covered in
+    docs/meta-tracking-backend-todo.txt, section 4 (trackingMeta.eventId).
+    Remember the frontend sends it camelCase on create-order-invoice.
+
+
+================================================================================
+7. HEALTH CHECK (doc section 24 — optional)
+================================================================================
+
+[ ] 7.1 Optional GET /api/meta/health returning {status, lastFeedBuildUtc,
+    itemsExported, itemsSkipped}. No secrets. Helps diagnose "Meta cannot
+    fetch the feed" without reading server logs.
+
+
+================================================================================
+8. ENVIRONMENT VARIABLES (names only — never commit values)
+================================================================================
+
+  Backend (ASP.NET)                        Frontend (Next.js server)
+  ---------------------------------------  -----------------------------------
+  META_FEED_TOKEN                          META_FEED_TOKEN   (same value)
+  META_CAPI_ACCESS_TOKEN (already exists)  META_FEED_UPSTREAM_URL (optional)
+  META_PIXEL_ID, META_API_VERSION
+  META_CATALOG_ID, META_BUSINESS_ID  (only if you call Graph API for catalog
+                                       health/diagnostics — not needed for a
+                                       scheduled feed)
+
+
+================================================================================
+9. ACCEPTANCE CHECKLIST FOR THE BACKEND HALF (doc section 30)
+================================================================================
+
+[ ] A product added in the admin appears in the feed with no manual step
+[ ] Price change reflected (price/sale_price) within ~20 minutes
+[ ] Stock/TBA -> out of stock; discontinued -> removed; both within ~20 min
+[ ] g:id == productUuid == Pixel content_ids == CAPI contents[].id (spot-check
+    5 products end to end: feed XML, product page's `product:retailer_item_id`
+    meta tag, a ViewContent event in Events Manager, a test Purchase)
+[ ] Feed validates: 200, application/xml, well-formed, no duplicate g:id, all
+    URLs public https, every item has price + currency
+[ ] Meta's feed diagnostics show 0 errors
+[ ] Purchase value/products come from the backend order; same event_id as the
+    browser copy; no duplicate Purchase in Events Manager
+[ ] No access token / feed token appears in any log or response
+
+
+================================================================================
+10. WHAT THE FRONTEND NEEDS BACK FROM YOU
+================================================================================
+
+  1. "g:id = productUuid" — confirmed? (section 0.1)
+  2. The feed token to set on the frontend server (section 2.1)
+  3. The exact upstream feed URL, if different (section 2.3)
+  4. Which products/flags you export (section 1.4) so marketing knows what to
+     expect in the catalog
+  5. Do you already send CAPI Purchase from trackingMeta.eventId? (see
+     docs/meta-tracking-backend-todo.txt, section 0.1) — still open.

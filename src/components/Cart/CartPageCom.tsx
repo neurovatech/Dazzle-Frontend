@@ -51,10 +51,14 @@ export default function CartPageCom() {
   const dispatch = useAppDispatch();
   const cartItems = useAppSelector((state) => state.cart.items);
 
-  // CartView — fired once per page view, not on every cart mutation.
+  // CartView — fired once per page view, not on every cart mutation, and only
+  // once the cart actually has items: on a direct load/refresh of /cart the
+  // persisted cart rehydrates after mount, so firing on first run reported an
+  // empty cart (value 0) for a cart that wasn't empty. An empty cart view has
+  // no catalog meaning anyway.
   const cartViewTracked = useRef(false);
   useEffect(() => {
-    if (cartViewTracked.current) return;
+    if (cartViewTracked.current || cartItems.length === 0) return;
     cartViewTracked.current = true;
     trackCartView(
       cartItems.map((i) => ({
@@ -66,7 +70,7 @@ export default function CartPageCom() {
       })),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [cartItems.length]);
   const token = useAppSelector((state) => state.auth.token);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);

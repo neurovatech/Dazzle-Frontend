@@ -387,8 +387,13 @@ export default function CheckoutPageCom() {
       cartItems.map((i) => ({ id: i.productUuid || i.id, name: i.name, price: i.price, quantity: i.quantity, brand: i.brand || undefined })),
       cartItems.reduce((s, i) => s + i.price * i.quantity, 0),
     );
+    // Depends on the item COUNT, not []: on a direct load / refresh of
+    // /checkout the persisted cart rehydrates AFTER this component mounts, so
+    // the first run sees an empty cart and returns early — with [] it never
+    // ran again and InitiateCheckout was silently never sent. The ref above
+    // still keeps it to exactly one event.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [cartItems.length]);
 
 
   const [serviceLevel, setServiceLevel] = useState<ServiceLevel>("regular");

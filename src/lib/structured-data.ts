@@ -143,6 +143,7 @@ export function breadcrumbSchema(items: { name: string; path: string }[]) {
 export interface ProductSchemaInput {
   productName?: string;
   productSlug?: string;
+  productUuid?: string;
   productCode?: string;
   brandName?: string;
   description?: string;
@@ -208,6 +209,11 @@ export function productSchema(p: ProductSchemaInput) {
     "@type": "Product",
     name: p.productName,
     description: toPlainText(p.metaTags?.description) || toPlainText(p.shortDesc) || toPlainText(p.description),
+    // schema.org `productID` = the stable product id this shop uses EVERYWHERE
+    // else — Meta Catalog `g:id`, Pixel `content_ids`, CAPI `contents[].id`
+    // (all productUuid; see docs/meta-catalog-frontend-done.txt for why not
+    // productCode). Emitted alongside the existing sku/mpn, which stay as is.
+    productID: p.productUuid || undefined,
     sku: p.productCode || undefined,
     // No distinct manufacturer part number exists in the catalogue API, so
     // this reuses the same real productCode already used as `sku` — the same

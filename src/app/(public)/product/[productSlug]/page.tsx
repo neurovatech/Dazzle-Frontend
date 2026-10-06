@@ -64,6 +64,8 @@ export interface ProductApiData {
   isActive: boolean;
   isFba?: boolean;
   isTba?: boolean;
+  endOfLife?: boolean;
+  allowPreOrder?: boolean;
   disRate?: number;
   discountedPrice?: number;
   regularPrice?: number;
@@ -282,8 +284,34 @@ export default async function ProductDetailsPage({ params }: PageProps) {
     : undefined;
 
 
+  // Meta Catalog matching tags. When a Pixel event (ViewContent / AddToCart)
+  // arrives, Meta uses these to tie the page to a catalog item — a second
+  // signal on top of content_ids, and the fallback Meta reads when an event
+  // carries no usable id. `retailer_item_id` MUST equal the catalog `g:id`
+  // and the Pixel `content_ids` (all productUuid — see
+  // docs/meta-catalog-frontend-done.txt). React 19 hoists <meta> into <head>.
+  const metaPrice =
+    product && (product.discountedPrice && product.discountedPrice > 0 ? product.discountedPrice : product.regularPrice);
+  const metaAvailability = !product
+    ? undefined
+    : product.endOfLife
+      ? 'out of stock'
+      : product.isTba
+        ? (product.allowPreOrder ? 'preorder' : 'out of stock')
+        : 'in stock';
+
   return (
     <div>
+      {product && (
+        <>
+          <meta property="product:retailer_item_id" content={product.productUuid} />
+          {metaPrice ? <meta property="product:price:amount" content={String(metaPrice)} /> : null}
+          {metaPrice ? <meta property="product:price:currency" content="BDT" /> : null}
+          {metaAvailability ? <meta property="product:availability" content={metaAvailability} /> : null}
+          <meta property="product:condition" content="new" />
+          {product.brandName ? <meta property="product:brand" content={product.brandName} /> : null}
+        </>
+      )}
       {jsonLd && (
         <script
           type="application/ld+json"

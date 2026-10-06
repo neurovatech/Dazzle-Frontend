@@ -1,0 +1,175 @@
+DAZZLE — META (FACEBOOK) CATALOG: FRONTEND-এ কী কী করা হয়েছে (বাংলা)
+================================================================================
+তারিখ: ২০২৬-১০-০৬
+প্রসঙ্গ: "Meta / Facebook Catalog Integration" ডকুমেন্ট। এই ফাইলে শুধু
+         frontend (Next.js)-এর অংশ। backend-এর কাজ আলাদা ফাইলে:
+         docs/meta-catalog-backend-todo.txt (English, ধাপে ধাপে)।
+
+
+================================================================================
+প্রথমে সবচেয়ে গুরুত্বপূর্ণ কথা — Pixel দিয়ে Catalog হয় না
+================================================================================
+
+ডকুমেন্টের section ৪: Meta Pixel শুধু "ব্যবহারকারী কী করল" ট্র্যাক করে।
+Catalog-এ product (নাম, দাম, ছবি, stock) বানায় না। Catalog-এর জন্য আলাদা
+product FEED লাগে, যেটা backend (.NET) database থেকে বানাবে। অর্থাৎ:
+
+    Catalog বানানো  = backend-এর কাজ (feed)
+    Event পাঠানো    = frontend-এর কাজ (Pixel) + backend (CAPI)
+    দুটোকে জোড়া দেয় = একই PRODUCT ID
+
+এই ফাইলের বাকি অংশ ওই "একই ID" ঠিক রাখা আর feed-কে public করার কাজ।
+
+
+================================================================================
+ধাপ ১ — Product ID ঠিক করা (doc section ৫)
+================================================================================
+
+ডকুমেন্টের পরামর্শ: SKU ব্যবহার করো। আমি live API দেখে যাচাই করেছি, এবং
+SKU (এখানে `productCode`) ব্যবহার করা যাচ্ছে না:
+
+  - live product "xiaomi-pad-7-ultra"-এর productCode = ফাঁকা ("")।
+  - ৩০০টা product-এর নমুনায় ২৭টার (~৯%) productCode ফাঁকা।
+  - কিছু productCode-এ অদ্ভুত চিহ্ন আছে: "AWS(2-55ED15", "HX(-0DD2F8C"।
+  ফাঁকা ID দিয়ে Meta কিছুই মেলাতে পারে না।
+
+তাই সিদ্ধান্ত: Catalog `g:id` = Pixel `content_ids` = CAPI `contents[].id`
+                = **productUuid** (সবসময় আছে, unique, নাম/slug বদলালেও বদলায় না)।
+
+Frontend কোড আমি call site ধরে ধরে যাচাই করেছি — ViewContent, AddToCart
+(ProductCardBuy, ProductInfo, BuyMore, ClipToCartCard, QuickView, StickyBar,
+FrequentlyBoughtTogether), InitiateCheckout, Purchase — সবখানে productUuid-ই
+যাচ্ছে (শুধু productUuid না থাকলে variant ID-তে fallback, যেটা বাস্তবে প্রায়
+ঘটে না)। মানে এই ID-র জন্য website-এর কোড বদলাতে হয়নি, শুধু নিশ্চিত করা
+হয়েছে। Backend-কে একই ID ব্যবহার করতে বলা হয়েছে (backend ফাইলের section ০)।
+
+কেন variant-level না: প্রতিটা product-এর অনেক variant (রং, RAM/storage)।
+প্রথম সংস্করণে প্রতি product = একটা catalog item। পরে চাইলে variant-level
+করা যাবে — তখন frontend ও backend দুজনকেই একসাথে বদলাতে হবে।
+
+
+================================================================================
+ধাপ ২ — Feed-কে Meta-র কাছে public করা (doc section ৭, ১১)
+================================================================================
+
+নতুন ফাইল: src/app/api/meta/product-feed/route.ts
+
+  Meta এই URL fetch করবে:
+      https://dazzle.com.bd/api/meta/product-feed?key=<META_FEED_TOKEN>
+
+  এই route কী করে:
+   1. ?key= মিলিয়ে দেখে (constant-time compare) — ভুল হলে 401।
+   2. Backend-এর feed endpoint-কে call করে (X-Meta-Feed-Key header সহ)।
+   3. Backend থেকে আসা জিনিস XML না হলে (JSON/HTML error page) Meta-কে দেয়
+      না — 502 দেয়। নাহলে Meta ভুল জিনিসকে "catalog" ভেবে import করত।
+   4. XML সরাসরি stream করে (বড় ফাইল memory-তে জমায় না), ১০ মিনিটের cache
+      header সহ — Cloudflare cache করতে পারবে, backend-এ বারবার চাপ পড়বে না।
+   5. ৯০ সেকেন্ড timeout (সাধারণ /api/proxy-র ৩০ সেকেন্ডের চেয়ে বেশি, কারণ
+      ~৪,৩০০ product-এর XML বানাতে সময় লাগে)।
+
+  কেন সরাসরি backend URL Meta-কে না দিয়ে এই route: feed আর product page/ছবি
+  একই domain-এ থাকে (Meta domain মিলিয়ে দেখে), backend-এর host লুকানো থাকে
+  (এই app সব জায়গায় এটাই করে), আর Cloudflare cache কাজ করে।
+
+  Environment variable (server-only, NEXT_PUBLIC_ না):
+      META_FEED_TOKEN          — Meta যে key পাঠাবে; backend-এও একই মান।
+      META_FEED_UPSTREAM_URL   — ঐচ্ছিক; ডিফল্ট ${API_BASE_URL}/api/meta/product-feed
+
+  যতদিন backend-এর feed endpoint তৈরি না হচ্ছে, এই route 502
+  ("Product feed is temporarily unavailable") দেবে — ভাঙবে না, শুধু feed নেই।
+
+
+================================================================================
+ধাপ ৩ — Product page-এ Catalog-matching meta tag (Meta-র নিজস্ব সংকেত)
+================================================================================
+
+বদলানো ফাইল: src/app/(public)/product/[productSlug]/page.tsx
+
+প্রতিটা product page-এর <head>-এ এখন এই tag আছে:
+    product:retailer_item_id  = productUuid   ← Catalog g:id-র সমান
+    product:price:amount      = বিক্রয় মূল্য (discountedPrice, না থাকলে regular)
+    product:price:currency    = BDT
+    product:availability      = in stock / out of stock / preorder
+    product:condition         = new
+    product:brand             = brandName
+
+কেন: Pixel event এলে Meta content_ids দিয়ে মেলায়; এই tag দ্বিতীয় সংকেত,
+আর কোনো event-এ ID না থাকলে Meta page থেকেই পড়ে নেয়। availability-র নিয়ম
+website-এর নিজের নিয়মের (isTba) সাথে হুবহু এক: endOfLife → out of stock;
+isTba + allowPreOrder → preorder; isTba → out of stock; নাহলে in stock।
+
+JSON-LD (schema.org Product)-এও `productID` = productUuid যোগ করা হয়েছে
+(আগের sku/mpn অপরিবর্তিত) — src/lib/structured-data.ts।
+
+
+================================================================================
+ধাপ ৪ — Pixel event ঠিকমতো fire হচ্ছে কিনা (doc section ২৬) — দুটো বাগ ঠিক
+================================================================================
+
+ডকুমেন্টের checklist: "No duplicate events caused by re-renders" এবং
+"InitiateCheckout fires at checkout start"। কোড পড়ে যা পেলাম:
+
+  ✔ ViewContent  — প্রতি product-এ একবার (ref দিয়ে, StrictMode-এও)।
+  ✔ PageView     — প্রথম load Pixel-এর নিজে, route বদলালে RouteChangeTracker।
+  ✔ Pixel লোড    — layout.tsx-এ একবারই; production-only guard আগেই আছে।
+  ✔ AddToCart    — cart-এ আসলে যোগ হওয়ার পরই fire হয়।
+  ✔ Purchase     — order সফল হওয়ার পর, reload-এ দ্বিতীয়বার যায় না।
+  ✘ InitiateCheckout — BUG ছিল: /checkout সরাসরি খুললে বা refresh করলে cart
+        mount-এর পরে load হয়; effect শুধু একবার ([]) চলত, তখন cart ফাঁকা
+        দেখে return করত, আর কখনো আবার চলত না → event একেবারেই যেত না।
+        ঠিক করা হয়েছে: effect এখন cart-এর item সংখ্যার ওপর নির্ভর করে; ref
+        guard আছে তাই তবুও ঠিক একবারই fire হয়।   (CheckoutPageCom.tsx)
+  ✘ CartView — একই ধরনের সমস্যা: refresh-এ ফাঁকা cart (value 0) দিয়ে fire
+        হতো। এখন cart-এ item আসার পর একবার fire হয়।   (CartPageCom.tsx)
+
+Event-এর ভেতরের তথ্য (আগে থেকেই ঠিক ছিল, যাচাই করলাম): content_type =
+"product", content_ids = [productUuid...], contents = [{id, quantity,
+item_price}], value, currency = "BDT"।
+
+
+================================================================================
+ধাপ ৫ — যা frontend থেকে করা সম্ভব না / ইচ্ছা করে করিনি
+================================================================================
+
+  ✘ Feed তৈরি করা (.NET database থেকে) — backend। Frontend-এ product list API
+    থেকে feed বানানো যেত না: list API-তে brand/description নেই, আর সেই API ধীর
+    (২০০০ product-এ ~২৭ সেকেন্ড, মাঝে মাঝে 500)। Database থেকে সরাসরি
+    backend-ই পারে।
+  ✘ CAPI Purchase-এ product ID/value — backend (backend ফাইলের section ৬)।
+  ✘ Commerce Manager-এ catalog বানানো/feed যুক্ত করা/Pixel জোড়া — owner/
+    marketing (backend ফাইলের section ৫)।
+  ✘ Variant-level catalog — ইচ্ছা করে করিনি (ধাপ ১ দেখুন)।
+  ✘ Purchase event_id-কে order ID থেকে বানানো (doc section ১৯ উদাহরণ
+    event_id = ORDER-10025) — ইচ্ছা করে বদলাইনি: এখন browser আর backend CAPI
+    দুজনেই checkout-এ তৈরি একই UUID (trackingMeta.eventId) ব্যবহার করে, তাই
+    dedupe কাজ করছে। শুধু frontend একা order ID-র scheme-এ গেলে backend
+    UUID-ই পাঠালে Purchase দুইবার গোনা হতো। বদলাতে হলে backend-এর সাথে
+    একসাথে (দুই পক্ষই `purchase_<orderNo>` ব্যবহার করবে)।
+
+
+================================================================================
+যাচাই (এই কাজের পর)
+================================================================================
+
+  - npx tsc --noEmit           → ০ error
+  - npx eslint (বদলানো ফাইল)  → ০ error
+  - npx next build             → নিচে/চ্যাটে ফলাফল
+  - Feed route, নকল backend দিয়ে: 401 (ভুল key), 200 + XML (ঠিক key),
+    502 (backend নেই / XML না) — চ্যাটে ফলাফল
+  - Product page-এর HTML-এ meta tag — চ্যাটে ফলাফল
+
+  যা যাচাই হয়নি: আসল Meta Commerce Manager-এ feed import (backend feed আর
+  Meta account লাগবে), আর Events Manager-এ event ↔ catalog match।
+
+
+================================================================================
+Deploy-এর পর করণীয় (frontend server)
+================================================================================
+
+  1. Server env-এ  META_FEED_TOKEN=<backend-এর সাথে একই লম্বা random মান>
+     বসান (কোডে/git-এ নয়)। (META_FEED_UPSTREAM_URL দরকার শুধু backend URL
+     ডিফল্ট থেকে আলাদা হলে।)
+  2. Deploy + Cloudflare cache purge (/api/meta/* নতুন route)।
+  3. Backend-এর feed তৈরি হলে:
+        curl -i "https://dazzle.com.bd/api/meta/product-feed?key=<token>"
+     → 200, Content-Type: application/xml। এটাই Commerce Manager-এ দেবেন।
