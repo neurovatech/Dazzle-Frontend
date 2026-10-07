@@ -325,7 +325,7 @@ export default async function AboutUs() {
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-x-4 gap-y-5 p-6 font-mono">
+        <div className="flex flex-wrap gap-x-4 gap-y-5 p-6 ">
           {cities.map(({ name, soon }) => (
             <span
               key={name}
