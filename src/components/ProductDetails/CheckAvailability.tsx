@@ -912,13 +912,6 @@ export default function CheckAvailability({
     onExternalAvailabilityClose?.();
   };
   const [isExchangeOpen, setIsExchangeOpen] = useState(false);
-  const [userCoords, setUserCoords] = useState<{
-    lat: number;
-    lon: number;
-  } | null>(null);
-  const [isLocating, setIsLocating] = useState(false);
-  const [distances, setDistances] = useState<Record<string, number>>({});
-  const [locError, setLocError] = useState<string | null>(null);
 
   // Extract UUIDs
   const productUUID =
@@ -936,27 +929,6 @@ export default function CheckAvailability({
     product?.variants?.[0]?.variantUuid ||
     "";
 
-  const [nearestBranchUUID, setNearestBranchUUID] = useState<string | null>(null);
-
-  // Fetch real stock availability from API when modal is open
-  const {
-    data: stockData,
-    isLoading: isStockLoading,
-    isError: isStockError,
-  } = useQuery<StockAvailabilityResponse>({
-    queryKey: ["check-stock-availability", productUUID, variantUUID, nearestBranchUUID],
-    queryFn: () =>
-      api.get<StockAvailabilityResponse>("/check-stock-availability", {
-        params: {
-          productUUID,
-          variantUUID,
-          ...(nearestBranchUUID ? { branchUUID: nearestBranchUUID } : {}),
-        },
-      }),
-    enabled: availabilityModalOpen && !!productUUID,
-  });
-
-  const branchesList = stockData?.data || [];
 
   // ---- EMI modal state ----
   const [isEmiOpen, setIsEmiOpen] = useState(false);
@@ -1014,83 +986,10 @@ export default function CheckAvailability({
 
   const numericAmount = Number(amount) || 0;
 
-  // Sync distances whenever userCoords or branchesList changes
-  useEffect(() => {
-    if (userCoords && branchesList.length > 0) {
-      const computedDistances: Record<string, number> = {};
-      branchesList.forEach((branch) => {
-        const bLat = parseFloat(branch.latitude);
-        const bLon = parseFloat(branch.longitude);
-        if (!isNaN(bLat) && !isNaN(bLon)) {
-          computedDistances[branch.uuid] = parseFloat(
-            calculateDistance(userCoords.lat, userCoords.lon, bLat, bLon).toFixed(2),
-          );
-        }
-      });
-      setDistances(computedDistances);
-    }
-  }, [userCoords, branchesList]);
-
-  const handleGeoLocation = () => {
-    setIsLocating(true);
-    setLocError(null);
-
-    const computeAllDistances = (lat: number, lon: number) => {
-      setUserCoords({ lat, lon });
-      const computedDistances: Record<string, number> = {};
-      branchesList.forEach((branch) => {
-        const bLat = parseFloat(branch.latitude);
-        const bLon = parseFloat(branch.longitude);
-        if (!isNaN(bLat) && !isNaN(bLon)) {
-          computedDistances[branch.uuid] = parseFloat(
-            calculateDistance(lat, lon, bLat, bLon).toFixed(2),
-          );
-        }
-      });
-      setDistances(computedDistances);
-
-      if (Object.keys(computedDistances).length > 0) {
-        const nearestId = Object.keys(computedDistances).reduce(
-          (a, b) => (computedDistances[a] < computedDistances[b] ? a : b),
-          "",
-        );
-        if (nearestId) {
-          setNearestBranchUUID(nearestId);
-        }
-      }
-
-      setIsLocating(false);
-    };
-
-    if (!navigator.geolocation) {
-      setLocError("Geolocation is not supported by your browser.");
-      computeAllDistances(23.7771, 90.4262);
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        computeAllDistances(position.coords.latitude, position.coords.longitude);
-      },
-      (error) => {
-        console.error("Geolocation error:", error);
-        setLocError(
-          "Location access denied. Using center coordinates of Dhaka instead.",
-        );
-        computeAllDistances(23.7771, 90.4262);
-      },
-    );
-  };
-
-  const nearestBranchId = Object.keys(distances).reduce(
-    (a, b) => (distances[a] < distances[b] ? a : b),
-    "",
-  );
-
   return (
     <div className="lg:flex gap-3 my-6">
       {/* Minimum Booking */}
-      {/* <button onClick={() => setIsOpen(true)} className="flex-1 w-full mb-4 lg:mb-0 flex items-center justify-between gap-2 bg-[linear-gradient(90deg,#F44336_0%,#FF9800_100%)] text-white font-semibold text-sm px-4 py-3 rounded-xl shadow-sm hover:opacity-90 transition-opacity cursor-pointer">
+      <button onClick={() => setIsOpen(true)} className="flex-1 w-full mb-4 lg:mb-0 flex items-center justify-between gap-2 bg-[linear-gradient(90deg,#F44336_0%,#FF9800_100%)] text-white font-semibold text-sm px-4 py-3 rounded-xl shadow-sm hover:opacity-90 transition-opacity cursor-pointer">
         <div className="flex items-center gap-2">
           <span className="bg-white rounded-lg p-1.5">
             <CheckHome />
@@ -1109,7 +1008,7 @@ export default function CheckAvailability({
         >
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
         </svg>
-      </button> */}
+      </button>
 
       {/* Exchange */}
       <button onClick={() => setIsExchangeOpen(true)} className="flex-1 w-full mb-4 lg:mb-0 flex items-center justify-between gap-2 bg-[linear-gradient(270deg,#2CD8A4_0%,#36654B_94.87%)] text-white font-semibold text-sm px-4 py-3 rounded-xl shadow-sm hover:opacity-90 transition-opacity cursor-pointer">

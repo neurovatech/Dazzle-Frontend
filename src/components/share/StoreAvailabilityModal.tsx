@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQueries } from "@tanstack/react-query";
 import { MapPin, Navigation, Info } from "lucide-react";
 import GlobalModal from "@/components/share/GlobalModal";
@@ -35,6 +35,16 @@ interface StockAvailabilityResponse {
   data: BranchStock[];
 }
 
+/** One branch with each checked item's status there. */
+interface BranchRow {
+  uuid: string;
+  branchName: string;
+  branchAddress?: string;
+  latitude: string;
+  longitude: string;
+  items: { name: string; status: string; inStock: boolean }[];
+}
+
 interface StoreAvailabilityModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -65,8 +75,8 @@ function calculateDistance(
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-/** Centre of Dhaka — the fallback when the browser will not give us a fix. */
-const DHAKA = { lat: 23.7771, lon: 90.4262 };
+/** "Instant" = the branch has it in hand right now (any other status is a wait). */
+const isInstant = (status: string) => (status || "").trim().toLowerCase().startsWith("instant");
 
 /**
  * /check-stock-availability's `status` is free text from the backend —
@@ -108,17 +118,24 @@ export default function StoreAvailabilityModal({
   items,
   title = "Branch-wise Stock Availability",
 }: StoreAvailabilityModalProps) {
-  const [distances, setDistances] = useState<Record<string, number>>({});
-  const [nearestBranchId, setNearestBranchId] = useState<string | null>(null);
+  const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [isLocating, setIsLocating] = useState(false);
   const [locError, setLocError] = useState<string | null>(null);
+  // The device location is asked for automatically the FIRST time the modal
+  // opens; after that only the button asks again (a browser that already
+  // answered "block" will not prompt a second time anyway).
+  const askedForLocation = useRef(false);
 
   const checkable = useMemo(
     () => items.filter((i) => i.productUuid && i.variantUuid),
     [items],
   );
 
-  // Initial query: fetch all branches and their base stock availability
+  /**
+   * CALL 1 — every branch with its own status. Starts the moment the modal
+   * opens, in parallel with the location request, so neither waits for the
+   * other. Cached for 2 minutes: reopening the modal does not hit the API again.
+   */
   const results = useQueries({
     queries: checkable.map((item) => ({
       queryKey: ["check-stock-availability", item.productUuid, item.variantUuid],
@@ -134,69 +151,28 @@ export default function StoreAvailabilityModal({
     })),
   });
 
-  // Nearest branch query: triggered with branchUUID when nearest branch is identified
-  const nearestBranchResults = useQueries({
-    queries: checkable.map((item) => ({
-      queryKey: [
-        "check-stock-availability-nearest",
-        item.productUuid,
-        item.variantUuid,
-        nearestBranchId,
-      ],
-      queryFn: () =>
-        api.get<StockAvailabilityResponse>("/check-stock-availability", {
-          params: {
-            productUUID: item.productUuid,
-            variantUUID: item.variantUuid,
-            branchUUID: nearestBranchId!,
-          },
-        }),
-      enabled: isOpen && !!nearestBranchId,
-      staleTime: 2 * 60 * 1000,
-    })),
-  });
-
   const isLoading = results.some((r) => r.isLoading);
-  const isNearestLoading = nearestBranchResults.some(
-    (r) => r.isLoading || r.isFetching,
-  );
-
   const isError = results.length > 0 && results.every((r) => r.isError);
 
   /**
-   * One row per branch, carrying every item's status at that branch.
-   *
-   * Branches are keyed by uuid and seeded from whichever query answers first;
-   * an item missing from a branch's response is reported as unavailable rather
-   * than silently dropped, so a branch never looks better stocked than it is.
-   *
-   * When nearestBranchResults answers with specific branchUUID stock data,
-   * it overrides that branch's status with the real-time branch data.
+   * One row per branch, carrying every item's status at that branch, built from
+   * call 1 only. An item missing from a branch's response is reported as
+   * unavailable rather than silently dropped, so a branch never looks better
+   * stocked than it is.
    */
-  const branches = useMemo(() => {
-    const byUuid = new Map<
-      string,
-      {
-        uuid: string;
-        branchName: string;
-        branchAddress?: string;
-        latitude: string;
-        longitude: string;
-        items: { name: string; status: string; inStock: boolean }[];
-      }
-    >();
+  const baseBranches = useMemo(() => {
+    const byUuid = new Map<string, BranchRow>();
 
     results.forEach((res, idx) => {
-      const item = checkable[idx];
-      const label = item?.name || "This item";
+      const label = checkable[idx]?.name || "This item";
 
       (res.data?.data ?? []).forEach((branch) => {
-        const existing = byUuid.get(branch.uuid);
         const entry = {
           name: label,
           status: branch.status,
           inStock: isInStock(branch.status),
         };
+        const existing = byUuid.get(branch.uuid);
         if (existing) {
           existing.items.push(entry);
           if (branch.branchAddress && !existing.branchAddress) {
@@ -215,48 +191,6 @@ export default function StoreAvailabilityModal({
       });
     });
 
-    // Apply branch-specific stock overrides from the branchUUID query
-    nearestBranchResults.forEach((res, idx) => {
-      const item = checkable[idx];
-      const label = item?.name || "This item";
-
-      (res.data?.data ?? []).forEach((branch) => {
-        const existing = byUuid.get(branch.uuid);
-        if (existing) {
-          if (branch.branchAddress) {
-            existing.branchAddress = branch.branchAddress;
-          }
-          const itemEntry = existing.items.find((i) => i.name === label);
-          if (itemEntry) {
-            itemEntry.status = branch.status;
-            itemEntry.inStock = isInStock(branch.status);
-          } else {
-            existing.items.push({
-              name: label,
-              status: branch.status,
-              inStock: isInStock(branch.status),
-            });
-          }
-        } else {
-          byUuid.set(branch.uuid, {
-            uuid: branch.uuid,
-            branchName: branch.branchName,
-            branchAddress: branch.branchAddress,
-            latitude: branch.latitude,
-            longitude: branch.longitude,
-            items: [
-              {
-                name: label,
-                status: branch.status,
-                inStock: isInStock(branch.status),
-              },
-            ],
-          });
-        }
-      });
-    });
-
-    // An item that never appeared for a branch is not stocked there.
     const list = Array.from(byUuid.values());
     list.forEach((b) => {
       checkable.forEach((item) => {
@@ -266,68 +200,181 @@ export default function StoreAvailabilityModal({
         }
       });
     });
-
     return list;
-  }, [results, nearestBranchResults, checkable]);
+  }, [results, checkable]);
+
+  /** Distance (km) from the visitor to every branch — empty until a location is known. */
+  const distances = useMemo(() => {
+    const next: Record<string, number> = {};
+    if (!coords) return next;
+    baseBranches.forEach((branch) => {
+      const bLat = parseFloat(branch.latitude);
+      const bLon = parseFloat(branch.longitude);
+      if (!isNaN(bLat) && !isNaN(bLon)) {
+        next[branch.uuid] = parseFloat(
+          calculateDistance(coords.lat, coords.lon, bLat, bLon).toFixed(2),
+        );
+      }
+    });
+    return next;
+  }, [coords, baseBranches]);
+
+  /** The physically closest branch (any status) — gets the "Nearest Store" badge. */
+  const nearestBranchId = useMemo(() => {
+    const entries = Object.entries(distances);
+    if (entries.length === 0) return null;
+    return entries.reduce((min, cur) => (cur[1] < min[1] ? cur : min))[0];
+  }, [distances]);
+
+  /**
+   * The closest branch that really has the item in hand ("Instant" for EVERY
+   * item being checked). This is the branch call 2 is made for: the backend
+   * answers "how fast can each other branch get it" relative to the branch it is
+   * given, so it only makes sense to give it a branch that holds stock. Null
+   * (-> no call 2) when the location is unknown or no branch is Instant.
+   */
+  const instantBranchId = useMemo(() => {
+    if (!coords || checkable.length === 0) return null;
+    let best: string | null = null;
+    let bestDistance = Infinity;
+    for (const branch of baseBranches) {
+      const d = distances[branch.uuid];
+      if (d === undefined || d >= bestDistance) continue;
+      if (branch.items.length > 0 && branch.items.every((i) => isInstant(i.status))) {
+        best = branch.uuid;
+        bestDistance = d;
+      }
+    }
+    return best;
+  }, [coords, checkable, baseBranches, distances]);
+
+  /**
+   * CALL 2 — the same endpoint with branchUUID = the nearest Instant branch.
+   * Made ONCE for that branch (cached 2 minutes, never re-fired by a button
+   * click); it only runs again if the visitor's location changes enough to make
+   * a different branch the nearest Instant one.
+   */
+  const branchStockResults = useQueries({
+    queries: checkable.map((item) => ({
+      queryKey: [
+        "check-stock-availability-nearest",
+        item.productUuid,
+        item.variantUuid,
+        instantBranchId,
+      ],
+      queryFn: () =>
+        api.get<StockAvailabilityResponse>("/check-stock-availability", {
+          params: {
+            productUUID: item.productUuid,
+            variantUUID: item.variantUuid,
+            branchUUID: instantBranchId!,
+          },
+        }),
+      enabled: isOpen && !!instantBranchId,
+      staleTime: 2 * 60 * 1000,
+    })),
+  });
+
+  const isBranchStockLoading = branchStockResults.some((r) => r.isFetching);
+
+  /** Call 1's rows, with call 2's branch-relative statuses laid over them. */
+  const branches = useMemo(() => {
+    const byUuid = new Map<string, BranchRow>(
+      baseBranches.map((b) => [
+        b.uuid,
+        { ...b, items: b.items.map((i) => ({ ...i })) },
+      ]),
+    );
+
+    branchStockResults.forEach((res, idx) => {
+      const label = checkable[idx]?.name || "This item";
+
+      (res.data?.data ?? []).forEach((branch) => {
+        const entry = {
+          name: label,
+          status: branch.status,
+          inStock: isInStock(branch.status),
+        };
+        const existing = byUuid.get(branch.uuid);
+        if (existing) {
+          if (branch.branchAddress) existing.branchAddress = branch.branchAddress;
+          const itemEntry = existing.items.find((i) => i.name === label);
+          if (itemEntry) {
+            itemEntry.status = entry.status;
+            itemEntry.inStock = entry.inStock;
+          } else {
+            existing.items.push(entry);
+          }
+        } else {
+          byUuid.set(branch.uuid, {
+            uuid: branch.uuid,
+            branchName: branch.branchName,
+            branchAddress: branch.branchAddress,
+            latitude: branch.latitude,
+            longitude: branch.longitude,
+            items: [entry],
+          });
+        }
+      });
+    });
+
+    return Array.from(byUuid.values());
+  }, [baseBranches, branchStockResults, checkable]);
 
   /**
    * Nearest first — that is the branch the reader is going to walk to, so it
-   * belongs at the top whether or not it has stock. Everything else follows by
-   * distance, and branches with no distance yet keep their original order.
+   * belongs at the top whether or not it has stock. With no location every
+   * branch keeps the backend's own order.
    */
   const sortedBranches = useMemo(() => {
-    return [...branches].sort((a, b) => {
-      if (nearestBranchId === a.uuid) return -1;
-      if (nearestBranchId === b.uuid) return 1;
-      return (distances[a.uuid] ?? Infinity) - (distances[b.uuid] ?? Infinity);
-    });
-  }, [branches, distances, nearestBranchId]);
+    if (!coords) return branches;
+    return [...branches].sort(
+      (a, b) => (distances[a.uuid] ?? Infinity) - (distances[b.uuid] ?? Infinity),
+    );
+  }, [branches, coords, distances]);
 
-  const handleGeoLocation = () => {
-    setIsLocating(true);
-    setLocError(null);
-
-    const computeAll = (lat: number, lon: number) => {
-      const next: Record<string, number> = {};
-      branches.forEach((branch) => {
-        const bLat = parseFloat(branch.latitude);
-        const bLon = parseFloat(branch.longitude);
-        if (!isNaN(bLat) && !isNaN(bLon)) {
-          next[branch.uuid] = parseFloat(
-            calculateDistance(lat, lon, bLat, bLon).toFixed(2),
-          );
-        }
-      });
-      setDistances(next);
-
-      // Find nearest branch and trigger stock query with branchUUID
-      const entries = Object.entries(next);
-      if (entries.length > 0) {
-        const nearest = entries.reduce((min, cur) => (cur[1] < min[1] ? cur : min))[0];
-        setNearestBranchId(nearest);
-        // Force refetch to ensure fresh API call every time button is clicked
-        nearestBranchResults.forEach((r) => r.refetch());
-      }
-
-      setIsLocating(false);
-    };
-
-    if (!navigator.geolocation) {
-      setLocError("Geolocation is not supported by your browser.");
-      computeAll(DHAKA.lat, DHAKA.lon);
+  const requestLocation = useCallback(() => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setLocError(
+        "Your browser does not support location access, so branches are shown without distance.",
+      );
       return;
     }
 
+    setIsLocating(true);
+    setLocError(null);
+
     navigator.geolocation.getCurrentPosition(
-      (pos) => computeAll(pos.coords.latitude, pos.coords.longitude),
-      () => {
-        setLocError(
-          "Location access denied. Using center coordinates of Dhaka instead.",
-        );
-        computeAll(DHAKA.lat, DHAKA.lon);
+      (pos) => {
+        setCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+        setIsLocating(false);
       },
+      (err) => {
+        // No invented position: when the visitor says no (or the device cannot
+        // answer) the branches are simply shown as the backend sent them.
+        setIsLocating(false);
+        setLocError(
+          err.code === 1
+            ? "Location access is blocked, so branches are shown without distance. Allow location in your browser to see the nearest store first."
+            : "Could not get your location, so branches are shown without distance.",
+        );
+      },
+      { enableHighAccuracy: false, timeout: 10_000, maximumAge: 5 * 60 * 1000 },
     );
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen || askedForLocation.current) return;
+    // Deferred one tick (instead of calling requestLocation() straight from the
+    // effect body, which sets state synchronously). The flag is raised inside
+    // the timer so a cancelled-and-rescheduled run (StrictMode, fast re-render)
+    // still asks exactly once.
+    const timer = setTimeout(() => {
+      askedForLocation.current = true;
+      requestLocation();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [isOpen, requestLocation]);
 
   const showPerItem = checkable.length > 1;
 
@@ -335,8 +382,8 @@ export default function StoreAvailabilityModal({
     <GlobalModal isOpen={isOpen} onClose={onClose} title={title}>
       <div className="p-6 space-y-4 text-gray-800 dark:text-gray-100">
         <p className="text-xs text-gray-500 dark:text-white">
-          Real-time branch inventory tracker. Trigger distance calculation to
-          find your nearest Dazzle branch location.
+          Real-time branch inventory tracker. Allow location access and the
+          branches closest to you are listed first.
         </p>
 
         {showPerItem && (
@@ -347,25 +394,32 @@ export default function StoreAvailabilityModal({
 
         <button
           type="button"
-          onClick={handleGeoLocation}
-          disabled={isLocating || isLoading || isNearestLoading}
+          onClick={requestLocation}
+          disabled={isLocating || isLoading || isBranchStockLoading}
           className="w-full flex items-center justify-center gap-2 py-3 bg-[#7B4F1E] text-white hover:bg-[#6C4419] rounded-xl text-sm font-semibold transition cursor-pointer disabled:opacity-50"
         >
-          <Navigation
-            size={16}
-            className={isLocating || isNearestLoading ? "animate-spin" : ""}
-          />
-          {isLocating
-            ? "Locating Your Device..."
-            : isNearestLoading
-            ? "Checking Nearest Branch Stock..."
-            : "Find Nearest Branch Store"}
+          {/* Static on purpose: the ONE loader lives below (see the loading
+              rows) — a spinning icon here made the modal show two at once. */}
+          <Navigation size={16} />
+          Find Nearest Branch Store
         </button>
 
         {locError && (
           <div className="flex items-start gap-2 bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400 p-2.5 rounded-lg text-xs border border-amber-100 dark:border-amber-900/40">
             <Info size={14} className="flex-shrink-0 mt-0.5" />
             <span>{locError}</span>
+          </div>
+        )}
+
+        {/* Second-stage loader: only once the first request has finished (the
+            full-size loader below owns the very first wait), so at any moment
+            exactly ONE loader is on screen. The list stays visible under it. */}
+        {!isLoading && (isLocating || isBranchStockLoading) && (
+          <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+            <div className="w-4 h-4 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+            {isLocating
+              ? "Finding your nearest branch..."
+              : "Checking nearest branch stock..."}
           </div>
         )}
 
@@ -433,13 +487,7 @@ export default function StoreAvailabilityModal({
                               : " text-emerald-600 dark:text-emerald-400 "
                           }`}
                         >
-                          {isNearest && isNearestLoading ? (
-                            <span className="text-gray-400 font-normal">
-                              Checking branch stock...
-                            </span>
-                          ) : (
-                            branch.items[0]?.status 
-                          )} 
+                          {branch.items[0]?.status}
                         </p>
                       )}
 
