@@ -101,6 +101,77 @@ const isInStock = (status: string) => {
 /* ------------------------------------------------------------------ */
 
 /**
+ * One row per branch from one /check-stock-availability response per checked
+ * item, each row carrying every item's status at that branch. An item missing
+ * from a branch's response is reported as unavailable rather than silently
+ * dropped, so a branch never looks better stocked than it is.
+ */
+function buildBranchRows(
+  responses: (StockAvailabilityResponse | undefined)[],
+  checkable: AvailabilityItem[],
+): BranchRow[] {
+  const byUuid = new Map<string, BranchRow>();
+
+  responses.forEach((res, idx) => {
+    const label = checkable[idx]?.name || "This item";
+
+    (res?.data ?? []).forEach((branch) => {
+      const entry = {
+        name: label,
+        status: branch.status,
+        inStock: isInStock(branch.status),
+      };
+      const existing = byUuid.get(branch.uuid);
+      if (existing) {
+        existing.items.push(entry);
+        if (branch.branchAddress && !existing.branchAddress) {
+          existing.branchAddress = branch.branchAddress;
+        }
+      } else {
+        byUuid.set(branch.uuid, {
+          uuid: branch.uuid,
+          branchName: branch.branchName,
+          branchAddress: branch.branchAddress,
+          latitude: branch.latitude,
+          longitude: branch.longitude,
+          items: [entry],
+        });
+      }
+    });
+  });
+
+  const list = Array.from(byUuid.values());
+  list.forEach((b) => {
+    checkable.forEach((item) => {
+      const label = item.name || "This item";
+      if (!b.items.some((i) => i.name === label)) {
+        b.items.push({ name: label, status: "Out of Stock", inStock: false });
+      }
+    });
+  });
+  return list;
+}
+
+/** Distance (km) from a position to each branch that has coordinates. */
+function distancesFrom(
+  coords: { lat: number; lon: number } | null,
+  list: BranchRow[],
+): Record<string, number> {
+  const next: Record<string, number> = {};
+  if (!coords) return next;
+  list.forEach((branch) => {
+    const bLat = parseFloat(branch.latitude);
+    const bLon = parseFloat(branch.longitude);
+    if (!isNaN(bLat) && !isNaN(bLon)) {
+      next[branch.uuid] = parseFloat(
+        calculateDistance(coords.lat, coords.lon, bLat, bLon).toFixed(2),
+      );
+    }
+  });
+  return next;
+}
+
+/**
  * Branch-wise stock availability, shared by the product page and checkout.
  *
  * The product page checks a single item; checkout checks the whole cart, so the
@@ -155,76 +226,20 @@ export default function StoreAvailabilityModal({
   const isError = results.length > 0 && results.every((r) => r.isError);
 
   /**
-   * One row per branch, carrying every item's status at that branch, built from
-   * call 1 only. An item missing from a branch's response is reported as
-   * unavailable rather than silently dropped, so a branch never looks better
-   * stocked than it is.
+   * CALL 1's rows — one per branch, each carrying every checked item's status
+   * there. This is what is shown first, and what decides which branch call 2 is
+   * made for.
    */
-  const baseBranches = useMemo(() => {
-    const byUuid = new Map<string, BranchRow>();
+  const baseBranches = useMemo(
+    () => buildBranchRows(results.map((r) => r.data), checkable),
+    [results, checkable],
+  );
 
-    results.forEach((res, idx) => {
-      const label = checkable[idx]?.name || "This item";
-
-      (res.data?.data ?? []).forEach((branch) => {
-        const entry = {
-          name: label,
-          status: branch.status,
-          inStock: isInStock(branch.status),
-        };
-        const existing = byUuid.get(branch.uuid);
-        if (existing) {
-          existing.items.push(entry);
-          if (branch.branchAddress && !existing.branchAddress) {
-            existing.branchAddress = branch.branchAddress;
-          }
-        } else {
-          byUuid.set(branch.uuid, {
-            uuid: branch.uuid,
-            branchName: branch.branchName,
-            branchAddress: branch.branchAddress,
-            latitude: branch.latitude,
-            longitude: branch.longitude,
-            items: [entry],
-          });
-        }
-      });
-    });
-
-    const list = Array.from(byUuid.values());
-    list.forEach((b) => {
-      checkable.forEach((item) => {
-        const label = item.name || "This item";
-        if (!b.items.some((i) => i.name === label)) {
-          b.items.push({ name: label, status: "Out of Stock", inStock: false });
-        }
-      });
-    });
-    return list;
-  }, [results, checkable]);
-
-  /** Distance (km) from the visitor to every branch — empty until a location is known. */
-  const distances = useMemo(() => {
-    const next: Record<string, number> = {};
-    if (!coords) return next;
-    baseBranches.forEach((branch) => {
-      const bLat = parseFloat(branch.latitude);
-      const bLon = parseFloat(branch.longitude);
-      if (!isNaN(bLat) && !isNaN(bLon)) {
-        next[branch.uuid] = parseFloat(
-          calculateDistance(coords.lat, coords.lon, bLat, bLon).toFixed(2),
-        );
-      }
-    });
-    return next;
-  }, [coords, baseBranches]);
-
-  /** The physically closest branch (any status) — gets the "Nearest Store" badge. */
-  const nearestBranchId = useMemo(() => {
-    const entries = Object.entries(distances);
-    if (entries.length === 0) return null;
-    return entries.reduce((min, cur) => (cur[1] < min[1] ? cur : min))[0];
-  }, [distances]);
+  /** Distances from the visitor to call 1's branches (used to pick the branch for call 2). */
+  const baseDistances = useMemo(
+    () => distancesFrom(coords, baseBranches),
+    [coords, baseBranches],
+  );
 
   /**
    * The closest branch that really has the item in hand ("Instant" for EVERY
@@ -238,7 +253,7 @@ export default function StoreAvailabilityModal({
     let best: string | null = null;
     let bestDistance = Infinity;
     for (const branch of baseBranches) {
-      const d = distances[branch.uuid];
+      const d = baseDistances[branch.uuid];
       if (d === undefined || d >= bestDistance) continue;
       if (branch.items.length > 0 && branch.items.every((i) => isInstant(i.status))) {
         best = branch.uuid;
@@ -246,7 +261,7 @@ export default function StoreAvailabilityModal({
       }
     }
     return best;
-  }, [coords, checkable, baseBranches, distances]);
+  }, [coords, checkable, baseBranches, baseDistances]);
 
   /**
    * CALL 2 — the same endpoint with branchUUID = the nearest Instant branch.
@@ -277,49 +292,36 @@ export default function StoreAvailabilityModal({
 
   const isBranchStockLoading = branchStockResults.some((r) => r.isFetching);
 
-  /** Call 1's rows, with call 2's branch-relative statuses laid over them. */
-  const branches = useMemo(() => {
-    const byUuid = new Map<string, BranchRow>(
-      baseBranches.map((b) => [
-        b.uuid,
-        { ...b, items: b.items.map((i) => ({ ...i })) },
-      ]),
-    );
+  /**
+   * What is actually listed. Once call 2 has answered for every item, the list
+   * IS call 2's response — its branches and its branch-relative statuses
+   * ("In Stock - Ready within 1 Hour" ...), nothing carried over from call 1
+   * (a branch call 2 does not return is not shown). Until then — or when there
+   * was no call 2 (no location, no Instant branch) or it failed — call 1's list
+   * is shown, so the visitor never sees an empty modal.
+   */
+  const branchStockReady =
+    !!instantBranchId &&
+    branchStockResults.length > 0 &&
+    branchStockResults.every((r) => r.isSuccess && (r.data?.data?.length ?? 0) > 0);
 
-    branchStockResults.forEach((res, idx) => {
-      const label = checkable[idx]?.name || "This item";
+  const branches = useMemo(
+    () =>
+      branchStockReady
+        ? buildBranchRows(branchStockResults.map((r) => r.data), checkable)
+        : baseBranches,
+    [branchStockReady, branchStockResults, checkable, baseBranches],
+  );
 
-      (res.data?.data ?? []).forEach((branch) => {
-        const entry = {
-          name: label,
-          status: branch.status,
-          inStock: isInStock(branch.status),
-        };
-        const existing = byUuid.get(branch.uuid);
-        if (existing) {
-          if (branch.branchAddress) existing.branchAddress = branch.branchAddress;
-          const itemEntry = existing.items.find((i) => i.name === label);
-          if (itemEntry) {
-            itemEntry.status = entry.status;
-            itemEntry.inStock = entry.inStock;
-          } else {
-            existing.items.push(entry);
-          }
-        } else {
-          byUuid.set(branch.uuid, {
-            uuid: branch.uuid,
-            branchName: branch.branchName,
-            branchAddress: branch.branchAddress,
-            latitude: branch.latitude,
-            longitude: branch.longitude,
-            items: [entry],
-          });
-        }
-      });
-    });
+  /** Distance (km) from the visitor to every LISTED branch — empty until a location is known. */
+  const distances = useMemo(() => distancesFrom(coords, branches), [coords, branches]);
 
-    return Array.from(byUuid.values());
-  }, [baseBranches, branchStockResults, checkable]);
+  /** The physically closest listed branch (any status). */
+  const nearestBranchId = useMemo(() => {
+    const entries = Object.entries(distances);
+    if (entries.length === 0) return null;
+    return entries.reduce((min, cur) => (cur[1] < min[1] ? cur : min))[0];
+  }, [distances]);
 
   /** A branch is "Instant" when EVERY checked item is Instant there (after call 2's statuses). */
   const isInstantBranch = (b: BranchRow) =>
