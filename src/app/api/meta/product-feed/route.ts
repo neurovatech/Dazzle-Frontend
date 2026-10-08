@@ -24,9 +24,12 @@ import { timingSafeEqual } from "crypto";
  * Env (server-only — never NEXT_PUBLIC_*):
  *   META_FEED_TOKEN         secret that Meta must send as ?key=. If unset the
  *                           feed is public (it only contains public product
- *                           data), but setting it is recommended. The same
- *                           value is forwarded to the backend as the
- *                           X-Meta-Feed-Key header.
+ *                           data), but setting it is recommended.
+ *   META_CAPI_INTERNAL_AUTH_KEY
+ *                           the backend's own key (its .env value of the same
+ *                           name). Sent to the backend as the X-Meta-Feed-Key
+ *                           header — the backend answers 401 without it. If
+ *                           unset, META_FEED_TOKEN is sent instead.
  *   META_FEED_UPSTREAM_URL  backend feed URL. Defaults to
  *                           ${API_BASE_URL}/api/meta/product-feed.
  */
@@ -47,6 +50,8 @@ function keyMatches(provided: string | null, expected: string): boolean {
 
 export async function GET(request: NextRequest) {
   const token = process.env.META_FEED_TOKEN;
+  // What the BACKEND wants in X-Meta-Feed-Key (its META_CAPI_INTERNAL_AUTH_KEY).
+  const upstreamKey = process.env.META_CAPI_INTERNAL_AUTH_KEY || token;
 
   if (token && !keyMatches(request.nextUrl.searchParams.get("key"), token)) {
     return new NextResponse("Invalid or missing feed key.", { status: 401 });
@@ -56,7 +61,7 @@ export async function GET(request: NextRequest) {
     const upstream = await fetch(UPSTREAM_URL, {
       headers: {
         Accept: "application/xml",
-        ...(token ? { "X-Meta-Feed-Key": token } : {}),
+        ...(upstreamKey ? { "X-Meta-Feed-Key": upstreamKey } : {}),
       },
       cache: "no-store",
       signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),

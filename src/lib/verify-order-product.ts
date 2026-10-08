@@ -48,6 +48,12 @@ export interface UnresolvedItem extends VerifiableItem {
    * neither is available (e.g. the request never reached the server).
    */
   reason: string;
+  /**
+   * True when `reason` is the backend's own message (e.g. "Oh no! This item is
+   * currently out of stock."), as opposed to a fallback this file made up
+   * because the request never got an answer.
+   */
+  fromBackend?: boolean;
 }
 
 export interface VerifyResult {
@@ -75,12 +81,12 @@ interface DefaultVariantResponse {
 }
 
 /** Pulls the human-readable reason out of a failed verify-order-product call. */
-function reasonFromError(err: unknown): string {
+function reasonFromError(err: unknown): { reason: string; fromBackend: boolean } {
   if (err instanceof ApiError) {
-    if (err.errors.length > 0) return err.errors.join(" ");
-    if (err.payload.message) return err.payload.message;
+    if (err.errors.length > 0) return { reason: err.errors.join(" "), fromBackend: true };
+    if (err.payload.message) return { reason: err.payload.message, fromBackend: true };
   }
-  return "Could not be verified.";
+  return { reason: "Could not be verified.", fromBackend: false };
 }
 
 /**
@@ -92,7 +98,7 @@ function reasonFromError(err: unknown): string {
  */
 async function checkOrderable(
   item: VerifiableItem,
-): Promise<{ ok: true } | { ok: false; reason: string }> {
+): Promise<{ ok: true } | { ok: false; reason: string; fromBackend?: boolean }> {
   if (!item.productUuid || !item.variantUuid) {
     return { ok: false, reason: "Missing product information." };
   }
@@ -112,7 +118,7 @@ async function checkOrderable(
     if (res?.statusCode === 200 || res?.status === "success") return { ok: true };
     return { ok: false, reason: "Could not be verified." };
   } catch (err) {
-    return { ok: false, reason: reasonFromError(err) };
+    return { ok: false, ...reasonFromError(err) };
   }
 }
 
@@ -151,7 +157,11 @@ export async function verifyOrderProducts(
         : null;
 
       if (!fresh?.variantUUID) {
-        unresolved.push({ ...item, reason: result.reason });
+        unresolved.push({
+          ...item,
+          reason: result.reason,
+          fromBackend: result.fromBackend,
+        });
         return;
       }
 
@@ -170,22 +180,41 @@ export async function verifyOrderProducts(
   return { patches, unresolved };
 }
 
-/** Single-line convenience for the BUY NOW buttons. */
+/**
+ * ADD TO CART / BUY NOW for one line: a plain yes or no from the backend.
+ *
+ * Unlike verifyOrderProducts (used on the cart page, where a stale variant
+ * saved in localStorage is silently repaired), a shopper pressing the button
+ * is asking about exactly this variant. verify-order-product answering "out of
+ * stock" is the answer — repairing it through get-default-variant would hand
+ * back the SAME rejected variant and let it into the cart anyway. So:
+ *   - accepted  -> `unresolved` is empty, the caller adds to the cart;
+ *   - rejected  -> `unresolved[0].reason` is the backend's own message, which
+ *                  the caller shows; nothing is added, nothing is redirected.
+ * `patches` is always empty here (kept so existing callers need no change).
+ */
 export async function verifyOrderProduct(
   item: VerifiableItem,
 ): Promise<VerifyResult> {
-  return verifyOrderProducts([item]);
+  const result = await checkOrderable(item);
+  if (result.ok) return { patches: [], unresolved: [] };
+  return {
+    patches: [],
+    unresolved: [
+      { ...item, reason: result.reason, fromBackend: result.fromBackend },
+    ],
+  };
 }
 
 /**
  * Turns a verify-order-product rejection into a message an end user can act
- * on. `reason` is the backend's own words ("variantUuid is invalid.",
- * "Missing product information.") — accurate for debugging, but it names
- * internal fields a shopper has never heard of and gives no next step. This
- * always frames the message around the product itself and what to do next;
- * the raw `reason` is still there on the object for anyone logging it.
+ * on. When the backend itself answered ("Oh no! This item is currently out of
+ * stock.") that message is shown exactly as sent. Only when there is no backend
+ * answer (network failure, missing ids) is a generic line framed around the
+ * product used instead. The raw `reason` is still on the object for logging.
  */
 export function friendlyUnresolvedMessage(item: UnresolvedItem): string {
+  if (item.fromBackend && item.reason.trim()) return item.reason.trim();
   const name = item.name?.trim() || "This item";
   return `Sorry, "${name}" is currently unavailable and couldn't be added to your cart. Please try again in a moment or choose a different option.`;
 }
