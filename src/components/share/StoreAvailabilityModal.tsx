@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQueries } from "@tanstack/react-query";
 import { MapPin, Navigation, Info } from "lucide-react";
 import GlobalModal from "@/components/share/GlobalModal";
@@ -321,17 +321,27 @@ export default function StoreAvailabilityModal({
     return Array.from(byUuid.values());
   }, [baseBranches, branchStockResults, checkable]);
 
+  /** A branch is "Instant" when EVERY checked item is Instant there (after call 2's statuses). */
+  const isInstantBranch = (b: BranchRow) =>
+    b.items.length > 0 && b.items.every((i) => isInstant(i.status));
+
   /**
-   * Nearest first — that is the branch the reader is going to walk to, so it
-   * belongs at the top whether or not it has stock. With no location every
-   * branch keeps the backend's own order.
+   * Order: branches that have it Instant come first, then everything else —
+   * and inside each of the two groups the nearest branch is first (distance,
+   * when the location is known). Nothing is hidden: the slower branches stay
+   * listed under the Instant ones. Array.sort is stable, so with no location
+   * each group keeps the backend's own order.
    */
   const sortedBranches = useMemo(() => {
-    if (!coords) return branches;
-    return [...branches].sort(
-      (a, b) => (distances[a.uuid] ?? Infinity) - (distances[b.uuid] ?? Infinity),
-    );
-  }, [branches, coords, distances]);
+    return [...branches].sort((a, b) => {
+      const ia = isInstantBranch(a) ? 0 : 1;
+      const ib = isInstantBranch(b) ? 0 : 1;
+      if (ia !== ib) return ia - ib;
+      return (distances[a.uuid] ?? Infinity) - (distances[b.uuid] ?? Infinity);
+    });
+  }, [branches, distances]);
+
+  const instantCount = sortedBranches.filter(isInstantBranch).length;
 
   const requestLocation = useCallback(() => {
     if (typeof navigator === "undefined" || !navigator.geolocation) {
@@ -444,17 +454,40 @@ export default function StoreAvailabilityModal({
           </div>
         ) : (
           <div className="space-y-3 pt-2 h-[300px] overflow-y-auto">
-            {sortedBranches.map((branch) => {
+            {sortedBranches.map((branch, index) => {
               const distance = distances[branch.uuid];
               const isNearest = nearestBranchId === branch.uuid;
+              const isNearestInstant = instantBranchId === branch.uuid;
+              // The card to highlight: the nearest Instant branch — or, when no
+              // branch is Instant, simply the nearest one.
+              const isHighlighted = instantBranchId ? isNearestInstant : isNearest;
+              const badge = isNearestInstant
+                ? isNearest
+                  ? "Nearest Store"
+                  : "Nearest Instant Store"
+                : isNearest
+                ? "Nearest Store"
+                : null;
               const availableCount = branch.items.filter((i) => i.inStock).length;
               const allAvailable = availableCount === branch.items.length;
+              // Group headings only when there is something to separate.
+              const groupLabel =
+                instantCount > 0 && index === 0
+                  ? `Instant — ready now (${instantCount})`
+                  : instantCount > 0 && index === instantCount
+                  ? "Other branches"
+                  : null;
 
               return (
+                <Fragment key={branch.uuid}>
+                  {groupLabel && (
+                    <p className="text-[11px] font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400 pt-1">
+                      {groupLabel}
+                    </p>
+                  )}
                 <div
-                  key={branch.uuid}
                   className={`p-3.5 rounded-xl border transition ${
-                    isNearest
+                    isHighlighted
                       ? "border-orange-500 bg-orange-500/5 dark:bg-orange-950/10"
                       : "border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-[#1f1a16]"
                   }`}
@@ -465,9 +498,15 @@ export default function StoreAvailabilityModal({
                         <span className="font-bold text-sm text-gray-900 dark:text-white">
                           {branch.branchName}
                         </span>
-                        {isNearest && (
-                          <span className="text-[9px] bg-orange-600 text-white font-extrabold px-2 py-0.5 rounded-full flex items-center gap-0.5 animate-pulse">
-                            <MapPin size={8} /> Nearest Store
+                        {badge && (
+                          <span
+                            className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full flex items-center gap-0.5 ${
+                              isHighlighted
+                                ? "bg-orange-600 text-white animate-pulse"
+                                : "border border-orange-500 text-orange-600 dark:text-orange-400"
+                            }`}
+                          >
+                            <MapPin size={8} /> {badge}
                           </span>
                         )}
                       </div>
@@ -533,6 +572,7 @@ export default function StoreAvailabilityModal({
                     </ul>
                   )}
                 </div>
+                </Fragment>
               );
             })}
           </div>
