@@ -862,10 +862,17 @@ function parseEmiTable(html: string): EmiBankRow[] {
           .trim();
         if (!name) continue;
 
+        // Line the header up with this row from the RIGHT. The header row has
+        // an (empty) cell above the bank-name column, so its "3 Months" cell
+        // sits at the same index as the row's 3-month value; a header without
+        // that blank cell is one shorter, and the offset absorbs it. A fixed
+        // `idx + 1` shifted every value one month to the left of its heading
+        // (3 months showed the 6-month rate) and pushed 24/36 off the end.
+        const offset = cells.length - headerCells.length;
         const months: Record<number, number | null> = {};
         monthColumns.forEach((month, idx) => {
           if (!month || Number.isNaN(month)) return;
-          const raw = (cells[idx + 1]?.textContent || "")
+          const raw = (cells[idx + offset]?.textContent || "")
             .replace(/\u00A0/g, " ")
             .trim();
           const pctMatch = raw.match(/([\d.]+)\s*%/);
