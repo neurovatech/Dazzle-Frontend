@@ -15,6 +15,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import type { PrefetchedQuery } from "@/lib/showcase-prefetch";
 import Image from "next/image";
 import Link from "next/link";
 import { Autoplay, Pagination, Navigation } from "swiper/modules";
@@ -34,7 +35,7 @@ interface BannerItem {
   navigateToUrl:   string;
 }
 
-interface BannerEscalateResponse {
+export interface BannerEscalateResponse {
   statusCode: number;
   status:     string;
   found:      boolean;
@@ -49,6 +50,8 @@ interface Props {
   categorySlug:    string;
   queryParam?:     "category" | "subCategory";
   activeBrandSlug?: string | null;
+  /** Fetched on the server so the first paint has no skeleton to swap or collapse. */
+  initial?: PrefetchedQuery<BannerEscalateResponse>;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -57,6 +60,7 @@ export default function BannerEscalate({
   categorySlug,
   queryParam = "category",
   activeBrandSlug,
+  initial,
 }: Props) {
   const showcaseSlug  = activeBrandSlug?.trim() || categorySlug;
   const showcaseParam = activeBrandSlug?.trim() ? "brand" : queryParam;
@@ -67,6 +71,12 @@ export default function BannerEscalate({
       api.get<BannerEscalateResponse>(
         `/banner-escalate/${showcaseSlug}?${showcaseParam}=1`,
       ),
+    // Server-supplied answer (see lib/showcase-prefetch.ts) — only while the key it was
+    // fetched for is still the one in use, so a chip change never shows stale data.
+    initialData:
+      initial && initial.slug === showcaseSlug && initial.param === showcaseParam
+        ? initial.response
+        : undefined,
     staleTime: 5 * 60 * 1000,
     gcTime:    30 * 60 * 1000,
     refetchOnWindowFocus: false,

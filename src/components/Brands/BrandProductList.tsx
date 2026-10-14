@@ -101,7 +101,11 @@ function BrandProductList({
           fetchNextPage();
         }
       },
-      { threshold: 0.1 }
+      // Start the next page ~2400px (about one page of products on a phone) BEFORE the sentinel is on screen. Loading only once it is
+      // visible meant the skeleton and the new rows were inserted while the content below the
+      // list (SEO text, footer) was already in view, shoving it down (CLS). Appending while
+      // that content is still off-screen moves nothing the visitor can see.
+      { rootMargin: "0px 0px 2400px 0px", threshold: 0 }
     );
     const el = loaderRef.current;
     if (el) observer.observe(el);

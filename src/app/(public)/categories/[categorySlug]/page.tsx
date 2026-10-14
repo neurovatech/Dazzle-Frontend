@@ -7,6 +7,9 @@ import { api } from "@/lib/api";
 import type { AttributeGroup } from "@/components/share/FilterSidebar";
 import type { Metadata } from "next";
 import { lookupCategoryNames, toTitleCase } from "@/lib/category-lookup";
+import { prefetchBanner, prefetchShowcase } from "@/lib/showcase-prefetch";
+import type { BannerEscalateResponse } from "@/components/CategoriesPages/CategoriesBanner/BannerEscalate";
+import type { CategoryShowcaseResponse } from "@/components/CategoriesPages/CategoryShowcaseSections";
 import {
   SITE_NAME,
   OG_LOCALE,
@@ -261,11 +264,16 @@ export default async function CategoriesPage({
     }
   }
 
-  const [productData, brands, { attributes, priceData }] = await Promise.all([
-    fetchProducts(),
-    fetchBrands(),
-    fetchAttributes(),
-  ]);
+  // Banner + Top Selling/Trending are fetched here rather than in the browser so
+  // the block is in the first HTML at its final size (no skeleton -> collapse).
+  const [productData, brands, { attributes, priceData }, initialBanner, initialShowcase] =
+    await Promise.all([
+      fetchProducts(),
+      fetchBrands(),
+      fetchAttributes(),
+      prefetchBanner<BannerEscalateResponse>(categorySlug, "category"),
+      prefetchShowcase<CategoryShowcaseResponse>(categorySlug, "category"),
+    ]);
 
   // ── Breadcrumb ────────────────────────────────────────────────────────────────
   const breadcrumbItems = [
@@ -308,6 +316,8 @@ export default async function CategoriesPage({
           brands={brands}
           attributes={attributes}
           priceData={priceData}
+          initialBanner={initialBanner}
+          initialShowcase={initialShowcase}
           topSellingSlot={<ProductListSectionCom showcaseSlug="top-selling" />}
           runningOfferSlot={
             <ProductListSectionCom showcaseSlug="running-offer" />

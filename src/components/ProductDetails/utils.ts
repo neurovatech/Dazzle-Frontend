@@ -8,6 +8,8 @@ export interface VariantRow {
   thumbnailUrl: string;
   isActive: boolean;
   isTba: boolean;
+  /** true -> this variant is sold as a pre-order (stocked in 7-15 days). Sent on every row of the variant. */
+  isPreOrder?: boolean;
 }
 
 export interface VariantApiResponse {
@@ -26,6 +28,8 @@ export interface ConsolidatedVariant {
   price: number;
   thumbnailUrl: string;
   attributes: Record<string, string>;
+  /** Pre-order variant — see VariantRow.isPreOrder. */
+  isPreOrder?: boolean;
 }
 
 export function consolidateVariants(rows: VariantRow[]): {
@@ -118,6 +122,9 @@ export function consolidateVariants(rows: VariantRow[]): {
       existing.price = row.retailUnitSale;
       existing.mrp = row.mrpUnitSale;
     }
+
+    // A variant is a pre-order if the API says so on any of its rows.
+    if (row.isPreOrder) existing.isPreOrder = true;
 
     // Track isTba per variant
     if (row.isTba && !existing.attributes["_isTba"]) {

@@ -1,12 +1,14 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
-import { useState, useEffect, Suspense, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import FilterSidebar, { AttributeGroup, PriceData } from "@/components/share/FilterSidebar";
 import BrandProductListClient from "@/components/Brands/BrandProductListClient";
 import BrandShowcaseSections from "@/components/Brands/BrandShowcaseSections";
-import BannerEscalate from "@/components/CategoriesPages/CategoriesBanner/BannerEscalate";
+import BannerEscalate, { type BannerEscalateResponse } from "@/components/CategoriesPages/CategoriesBanner/BannerEscalate";
+import type { BrandShowcaseResponse } from "@/components/Brands/BrandShowcaseSections";
+import type { PrefetchedQuery } from "@/lib/showcase-prefetch";
 import { SlidersHorizontal, X } from "lucide-react";
 import { api } from "@/lib/api";
 
@@ -33,6 +35,9 @@ interface Props {
    * chips are sub-categories, this is their parent.
    */
   initialTopCategory?: string | null;
+  /** Banner + Top Selling/Trending answers fetched on the server — see lib/showcase-prefetch.ts. */
+  initialBanner?: PrefetchedQuery<BannerEscalateResponse>;
+  initialShowcase?: PrefetchedQuery<BrandShowcaseResponse>;
 }
 
 export interface ProductItem {
@@ -71,6 +76,8 @@ export default function BrandProducts({
   initialTotalCount,
   initialTotalPages,
   initialTopCategory = null,
+  initialBanner,
+  initialShowcase,
 }: Props) {
   const searchParams = useSearchParams();
 
@@ -534,15 +541,16 @@ export default function BrandProducts({
             categorySlug={activeCategory || brandSlug}
             queryParam="category"
             activeBrandSlug={activeCategory || brandSlug}
+            initial={initialBanner}
           />
 
           {/* ── Top Selling + Trending — brand-specific from showcase-escalate ── */}
-          <BrandShowcaseSections brandSlug={brandSlug} activeCategory={activeCategory} topCategory={topCategory} />
+          <BrandShowcaseSections brandSlug={brandSlug} activeCategory={activeCategory} topCategory={topCategory} initial={initialShowcase} />
 
           {/* productList area */}
           <div ref={productListRef} className="scroll-mt-4">
           {/* React Query client list — filter/page changes never trigger SSR */}
-          <Suspense>
+          {/* No <Suspense> here: it made the list stream in after the shell (layout shift). */}
             <BrandProductListClient
               brandSlug={brandSlug}
               categorySlug={activeCategory ?? undefined}
@@ -575,7 +583,6 @@ export default function BrandProducts({
               initialTotalPages={initialTotalPages}
               filterApplyKey={filterApplyKey}
             />
-          </Suspense>
           </div>
         </div>
 

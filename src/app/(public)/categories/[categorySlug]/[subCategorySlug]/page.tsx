@@ -6,6 +6,9 @@ import Breadcrumb from "@/components/share/Breadcrumb";
 import { api } from "@/lib/api";
 import type { Metadata } from "next";
 import { lookupCategoryNames, toTitleCase } from "@/lib/category-lookup";
+import { prefetchBanner, prefetchShowcase } from "@/lib/showcase-prefetch";
+import type { BannerEscalateResponse } from "@/components/CategoriesPages/CategoriesBanner/BannerEscalate";
+import type { CategoryShowcaseResponse } from "@/components/CategoriesPages/CategoryShowcaseSections";
 import {
   SITE_NAME,
   OG_LOCALE,
@@ -266,13 +269,23 @@ export default async function SubCategoriesPage({
     }
   }
 
-  const [productData, banners, brands, { attributes, priceData }] =
-    await Promise.all([
-      fetchProducts(),
-      fetchBanners(),
-      fetchBrands(),
-      fetchAttributes(),
-    ]);
+  // Banner + Top Selling/Trending are fetched here rather than in the browser so
+  // the block is in the first HTML at its final size (no skeleton -> collapse).
+  const [
+    productData,
+    banners,
+    brands,
+    { attributes, priceData },
+    initialBanner,
+    initialShowcase,
+  ] = await Promise.all([
+    fetchProducts(),
+    fetchBanners(),
+    fetchBrands(),
+    fetchAttributes(),
+    prefetchBanner<BannerEscalateResponse>(subCategorySlug, "subCategory"),
+    prefetchShowcase<CategoryShowcaseResponse>(subCategorySlug, "subCategory"),
+  ]);
 
   // ── Breadcrumb ────────────────────────────────────────────────────────────────
   const breadcrumbItems = [
@@ -325,6 +338,8 @@ export default async function SubCategoriesPage({
           brands={brands}
           attributes={attributes}
           priceData={priceData}
+          initialBanner={initialBanner}
+          initialShowcase={initialShowcase}
         />
       </div>
 

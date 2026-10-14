@@ -368,6 +368,15 @@ img {
 @media (min-width: 640px) { .pre-clip:not(.swiper-initialized) { --pg: 14px; --pw: calc((100cqw - 14px) / 2); } }
 @media (min-width: 768px) { .pre-clip:not(.swiper-initialized) { --pg: 16px; --pw: calc((100cqw - 16px) / 2); } }
 @media (min-width: 1024px) { .pre-clip:not(.swiper-initialized) { --pg: 10px; --pw: calc((100cqw - 40px) / 5); } }
+/* TrendingNow (Top Selling / Trending rows on brand + category pages):
+   slidesPerView 2 (gap 4) / 2 (6 from 640) / 2 (20 from 768) / 4 (gap 4 from 1024).
+   Slide width = (row - (n-1) * gap) / n, exactly as Swiper computes it. Without this the
+   cards were laid out at one width and then re-spaced when Swiper initialised
+   (a sideways layout shift of ~0.05 on every brand/category page). */
+.pre-trending:not(.swiper-initialized) { --pg: 4px; --pw: calc((100cqw - 4px) / 2); }
+@media (min-width: 640px) { .pre-trending:not(.swiper-initialized) { --pg: 6px; --pw: calc((100cqw - 6px) / 2); } }
+@media (min-width: 768px) { .pre-trending:not(.swiper-initialized) { --pg: 20px; --pw: calc((100cqw - 20px) / 2); } }
+@media (min-width: 1024px) { .pre-trending:not(.swiper-initialized) { --pg: 4px; --pw: calc((100cqw - 12px) / 4); } }
 /* Shop by Brand logo row: 4 / 2 / 2 / 2 / 8 */
 .pre-brand:not(.swiper-initialized) { --pg: 6px; --pw: calc((100cqw - 18px) / 4); }
 @media (min-width: 480px) { .pre-brand:not(.swiper-initialized) { --pg: 2px; --pw: calc((100cqw - 2px) / 2); } }

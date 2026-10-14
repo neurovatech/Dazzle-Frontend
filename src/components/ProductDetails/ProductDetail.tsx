@@ -160,6 +160,25 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
     );
   }, [groups, variants, selectedAttrs]);
 
+  /**
+   * Variant the pre-order notice is about. `selectedVariant` only exists after the effect
+   * above has picked the default options, i.e. after hydration — a notice keyed on it alone
+   * would pop in late and push the whole selector down. Until a selection exists, use the
+   * very variant that effect is about to select (first option of every group), so the notice
+   * is already in the server HTML.
+   */
+  const noticeVariant = useMemo(() => {
+    if (selectedVariant) return selectedVariant;
+    if (groups.length === 0 || Object.keys(selectedAttrs).length > 0) return null;
+    const defaults: Record<string, string | undefined> = {};
+    groups.forEach((g) => {
+      defaults[g] = variants.find((v) => v.attributes[g])?.attributes[g];
+    });
+    return (
+      variants.find((v) => groups.every((g) => v.attributes[g] === defaults[g])) ?? null
+    );
+  }, [selectedVariant, groups, variants, selectedAttrs]);
+
   const isOptionAvailable = (group: string, option: string) =>
     variants.some(
       (v) =>
@@ -738,6 +757,15 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
                     <span className="text-red-500 text-lg">😔</span>
                     <p className="text-sm font-semibold text-red-600 dark:text-red-400">
                       Sorry! This variant is not available
+                    </p>
+                  </div>
+                )}
+                {/* Pre-order variant: the API sets isPreOrder on the variant row. */}
+                {!isSelectionUnavailable && noticeVariant?.isPreOrder && (
+                  <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 rounded-xl px-4 py-3 mb-4">
+                    <span className="text-lg">⏳</span>
+                    <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">
+                      Pre-order variant. It takes 7–15 days to stock.
                     </p>
                   </div>
                 )}

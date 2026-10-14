@@ -71,7 +71,7 @@ function TrendingNow({
             spaceBetween: 4,
           },
         }}
-        className="mySwiper w-full"
+        className="mySwiper pre-swiper pre-trending w-full"
       >
         {products.map((product, i) => (
           <SwiperSlide key={product.uuid || i}>

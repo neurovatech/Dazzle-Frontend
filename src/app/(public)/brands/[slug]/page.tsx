@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Metadata } from "next";
-import { Suspense, cache } from "react";
+import { cache } from "react";
 import BrandProducts, { CategoryItem } from "@/components/Brands/BrandProduct";
 import Breadcrumb from "@/components/share/Breadcrumb";
 import { api } from "@/lib/api";
@@ -11,6 +11,9 @@ import {
   absoluteUrl,
 } from "@/lib/seo-config";
 import JsonLd from "@/components/share/JsonLd";
+import { prefetchBanner, prefetchShowcase } from "@/lib/showcase-prefetch";
+import type { BannerEscalateResponse } from "@/components/CategoriesPages/CategoriesBanner/BannerEscalate";
+import type { BrandShowcaseResponse } from "@/components/Brands/BrandShowcaseSections";
 import {
   buildJsonLd,
   breadcrumbSchema,
@@ -98,7 +101,7 @@ interface PageProps {
    * `?fromCategory=` is set by the mega menu — see brandHref() in ExplorePanel.
    * Deliberately not `category`, which the chip row uses for sub-category slugs.
    */
-  searchParams: Promise<{ fromCategory?: string }>;
+  searchParams: Promise<{ fromCategory?: string; category?: string }>;
 }
 
 // ─── Config ───────────────────────────────────────────────────────────────────
@@ -191,7 +194,7 @@ export default async function BrandDetailsPage({
   searchParams,
 }: PageProps) {
   const { slug } = await params;
-  const { fromCategory } = await searchParams;
+  const { fromCategory, category } = await searchParams;
   const brandName = toTitleCase(slug);
 
   /*
@@ -280,6 +283,19 @@ export default async function BrandDetailsPage({
   const priceData: any =
     attrResult.status === "fulfilled" ? attrResult.value?.priceData : undefined;
 
+  // Banner + Top Selling/Trending: fetched here (not in the browser) so the block is
+  // in the first HTML at its final size instead of a skeleton that later swaps or
+  // collapses. The slug/param pairs mirror exactly what BrandProduct asks for.
+  const chip = category?.trim() || null; // sub-category chip in the URL
+  const [initialBanner, initialShowcase] = await Promise.all([
+    prefetchBanner<BannerEscalateResponse>(chip || slug, "brand", Boolean(chip)),
+    chip
+      ? prefetchShowcase<BrandShowcaseResponse>(chip, "subCategory", true)
+      : activeTopCategory
+        ? prefetchShowcase<BrandShowcaseResponse>(activeTopCategory, "category")
+        : prefetchShowcase<BrandShowcaseResponse>(slug, "brand"),
+  ]);
+
   // Same cached call generateMetadata made, so this costs nothing extra.
   const brandSeo = await getBrandSeo(slug);
   const brandSeoContent = brandSeo?.bottomContent?.trim() || "";
@@ -307,19 +323,22 @@ export default async function BrandDetailsPage({
           <Breadcrumb items={breadcrumbItems} />
         </div>
 
-        {/* BrandProducts renders category buttons + FilterSidebar + Suspense-wrapped product list */}
-        <Suspense>
-          <BrandProducts
-            brandSlug={slug}
-            categories={categories}
-            attributes={attributes}
-            priceData={priceData}
-            initialProducts={initialProductData.data}
-            initialTotalCount={initialProductData.totalCount}
-            initialTotalPages={initialProductData.totalPages}
-            initialTopCategory={activeTopCategory}
-          />
-        </Suspense>
+        {/* BrandProducts renders category buttons + FilterSidebar + the product list.
+            Deliberately NOT inside <Suspense>: with a boundary here the whole block was
+            streamed in after the shell, so the SEO text below it was painted at the top
+            first and then pushed ~2,400px down when the list swapped in (CLS 0.8). */}
+        <BrandProducts
+          brandSlug={slug}
+          categories={categories}
+          attributes={attributes}
+          priceData={priceData}
+          initialProducts={initialProductData.data}
+          initialTotalCount={initialProductData.totalCount}
+          initialTotalPages={initialProductData.totalPages}
+          initialTopCategory={activeTopCategory}
+          initialBanner={initialBanner}
+          initialShowcase={initialShowcase}
+        />
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start  relative">
           <div className="lg:col-span-3 md:block hidden"></div>

@@ -16,6 +16,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import type { PrefetchedQuery } from "@/lib/showcase-prefetch";
 import TrendingNow from "@/components/HomePage/TrendingNow/TrendingNow";
 import type { ProductCardItem } from "@/components/HomePage/TrendingNow/TrendingNowSectionCom";
 
@@ -36,7 +37,7 @@ interface ShowcaseProduct {
   thumbnails: { fileUuid: string; mediaFileUrl: string } | null;
 }
 
-interface CategoryShowcaseResponse {
+export interface CategoryShowcaseResponse {
   statusCode: number;
   status: string;
   found: boolean;
@@ -86,12 +87,15 @@ interface Props {
   queryParam?: "category" | "subCategory";
   /** When a brand chip is active, call the API with that brand slug + brand=1 instead */
   activeBrandSlug?: string | null;
+  /** Fetched on the server so the first paint has no skeleton to swap or collapse. */
+  initial?: PrefetchedQuery<CategoryShowcaseResponse>;
 }
 
 export default function CategoryShowcaseSections({
   categorySlug,
   queryParam = "category",
   activeBrandSlug,
+  initial,
 }: Props) {
   // Brand chip selected → use brand slug with brand=1
   // Otherwise → use category/subCategory slug with the appropriate param
@@ -104,6 +108,12 @@ export default function CategoryShowcaseSections({
       api.get<CategoryShowcaseResponse>(
         `/showcase-escalate/${showcaseSlug}?${showcaseParam}=1`,
       ),
+    // Server-supplied answer (see lib/showcase-prefetch.ts) — only while the key it was
+    // fetched for is still the one in use, so a chip change never shows stale data.
+    initialData:
+      initial && initial.slug === showcaseSlug && initial.param === showcaseParam
+        ? initial.response
+        : undefined,
     staleTime: 10 * 60 * 1000,
     gcTime:    60 * 60 * 1000,
     refetchOnWindowFocus: false,

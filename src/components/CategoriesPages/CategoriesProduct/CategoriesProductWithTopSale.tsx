@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, startTransition } from "react";
 import { useSearchParams } from "next/navigation";
 import AllProducts from "@/components/CategoriesPages/CategoriesProduct/AllProducts";
 import FilterSidebar, {
@@ -19,6 +19,9 @@ import TopSellingCom from "@/components/CategoriesPages/TopSelling/TopSellingCom
 import RunningOfferCom from "@/components/CategoriesPages/RunningOffer/RunningOfferCom";
 import CategoryShowcaseSections from "@/components/CategoriesPages/CategoryShowcaseSections";
 import BannerEscalate from "@/components/CategoriesPages/CategoriesBanner/BannerEscalate";
+import type { BannerEscalateResponse } from "@/components/CategoriesPages/CategoriesBanner/BannerEscalate";
+import type { CategoryShowcaseResponse } from "@/components/CategoriesPages/CategoryShowcaseSections";
+import type { PrefetchedQuery } from "@/lib/showcase-prefetch";
 
 // TrendingNowSectionCom will be passed as a prop from the Server Component
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -39,6 +42,9 @@ interface CategoriesProductProps {
   trendingNowSlot?: React.ReactNode;
   topSellingSlot?: React.ReactNode;
   runningOfferSlot?: React.ReactNode;
+  /** Banner + Top Selling/Trending answers fetched on the server — see lib/showcase-prefetch.ts. */
+  initialBanner?: PrefetchedQuery<BannerEscalateResponse>;
+  initialShowcase?: PrefetchedQuery<CategoryShowcaseResponse>;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -59,6 +65,8 @@ function CategoriesProductWithTopSale({
   trendingNowSlot,
   topSellingSlot,
   runningOfferSlot,
+  initialBanner,
+  initialShowcase,
 }: CategoriesProductProps) {
   const searchParams = useSearchParams();
 
@@ -293,19 +301,25 @@ function CategoriesProductWithTopSale({
    * from the same clean slate.
    */
   const handleBrandSelect = (brandSlug: string | null) => {
-    setSelectedBrandSlug(brandSlug);
-    // Reset every dependent filter — see note above.
-    setSelectedAttributes([]);
-    setMinPrice(undefined);
-    setMaxPrice(undefined);
-    setStockStatus(null);
-    // Keep the mobile filter modal in step, so reopening it shows nothing ticked.
-    setPendingAttributes([]);
-    setPendingMinPrice(undefined);
-    setPendingMaxPrice(undefined);
-    setPendingStockStatus(null);
-    setFilterApplyKey((prev) => prev + 1);
-    setActivePage(1);
+    // Filter changes re-render the whole list + sidebar (hundreds of nodes). Marking the
+    // state updates as a transition lets the browser paint right after the tap and render
+    // the result in slices instead of blocking the next frame (INP). The URL update below
+    // stays outside on purpose.
+    startTransition(() => {
+      setSelectedBrandSlug(brandSlug);
+      // Reset every dependent filter — see note above.
+      setSelectedAttributes([]);
+      setMinPrice(undefined);
+      setMaxPrice(undefined);
+      setStockStatus(null);
+      // Keep the mobile filter modal in step, so reopening it shows nothing ticked.
+      setPendingAttributes([]);
+      setPendingMinPrice(undefined);
+      setPendingMaxPrice(undefined);
+      setPendingStockStatus(null);
+      setFilterApplyKey((prev) => prev + 1);
+      setActivePage(1);
+    });
 
     const params = new URLSearchParams(window.location.search);
     if (brandSlug) {
@@ -332,8 +346,14 @@ function CategoriesProductWithTopSale({
       ? selectedAttributes.filter((v) => v !== value)
       : [...selectedAttributes, value];
 
-    setSelectedAttributes(nextAttrs);
-    setActivePage(1);
+    // Filter changes re-render the whole list + sidebar (hundreds of nodes). Marking the
+    // state updates as a transition lets the browser paint right after the tap and render
+    // the result in slices instead of blocking the next frame (INP). The URL update below
+    // stays outside on purpose.
+    startTransition(() => {
+      setSelectedAttributes(nextAttrs);
+      setActivePage(1);
+    });
 
     const params = new URLSearchParams(window.location.search);
     if (nextAttrs.length > 0) {
@@ -352,9 +372,15 @@ function CategoriesProductWithTopSale({
   };
 
   const handlePriceChange = (min: number, max: number) => {
-    setMinPrice(min);
-    setMaxPrice(max);
-    setActivePage(1);
+    // Filter changes re-render the whole list + sidebar (hundreds of nodes). Marking the
+    // state updates as a transition lets the browser paint right after the tap and render
+    // the result in slices instead of blocking the next frame (INP). The URL update below
+    // stays outside on purpose.
+    startTransition(() => {
+      setMinPrice(min);
+      setMaxPrice(max);
+      setActivePage(1);
+    });
 
     const params = new URLSearchParams(window.location.search);
     params.set("minDiscountedPrice", String(min));
@@ -371,8 +397,14 @@ function CategoriesProductWithTopSale({
 
   const handleStockStatusToggle = (status: string) => {
     const nextStatus = stockStatus === status ? null : status;
-    setStockStatus(nextStatus);
-    setActivePage(1);
+    // Filter changes re-render the whole list + sidebar (hundreds of nodes). Marking the
+    // state updates as a transition lets the browser paint right after the tap and render
+    // the result in slices instead of blocking the next frame (INP). The URL update below
+    // stays outside on purpose.
+    startTransition(() => {
+      setStockStatus(nextStatus);
+      setActivePage(1);
+    });
 
     const params = new URLSearchParams(window.location.search);
     if (nextStatus !== null) {
@@ -565,12 +597,14 @@ function CategoriesProductWithTopSale({
             categorySlug={categorySlug}
             queryParam="category"
             activeBrandSlug={selectedBrandSlug}
+            initial={initialBanner}
           />
 
           {/* Category-specific Top Selling + Trending from showcase-escalate */}
           <CategoryShowcaseSections
             categorySlug={categorySlug}
             activeBrandSlug={selectedBrandSlug}
+            initial={initialShowcase}
           />
 
           {/* Top Selling */}

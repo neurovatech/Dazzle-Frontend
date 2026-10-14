@@ -15,6 +15,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import type { PrefetchedQuery } from "@/lib/showcase-prefetch";
 import TrendingNow from "@/components/HomePage/TrendingNow/TrendingNow";
 import type { ProductCardItem } from "@/components/HomePage/TrendingNow/TrendingNowSectionCom";
 
@@ -35,7 +36,7 @@ interface ShowcaseProduct {
   thumbnails: { fileUuid: string; mediaFileUrl: string } | null;
 }
 
-interface BrandShowcaseResponse {
+export interface BrandShowcaseResponse {
   statusCode: number;
   status: string;
   found: boolean;
@@ -104,9 +105,11 @@ interface Props {
    * stay brand-only.
    */
   topCategory?: string | null;
+  /** Fetched on the server so the first paint has no skeleton to swap or collapse. */
+  initial?: PrefetchedQuery<BrandShowcaseResponse>;
 }
 
-export default function BrandShowcaseSections({ brandSlug, activeCategory, topCategory }: Props) {
+export default function BrandShowcaseSections({ brandSlug, activeCategory, topCategory, initial }: Props) {
   const chipSlug = activeCategory?.trim() || null;
   const topSlug  = topCategory?.trim() || null;
 
@@ -130,6 +133,12 @@ export default function BrandShowcaseSections({ brandSlug, activeCategory, topCa
       api.get<BrandShowcaseResponse>(
         `/showcase-escalate/${showcaseSlug}?${showcaseParam}=1`,
       ),
+    // Server-supplied answer (see lib/showcase-prefetch.ts) — only while the key it was
+    // fetched for is still the one in use, so a chip change never shows stale data.
+    initialData:
+      initial && initial.slug === showcaseSlug && initial.param === showcaseParam
+        ? initial.response
+        : undefined,
     staleTime: 10 * 60 * 1000,
     gcTime:    60 * 60 * 1000,
     refetchOnWindowFocus: false,

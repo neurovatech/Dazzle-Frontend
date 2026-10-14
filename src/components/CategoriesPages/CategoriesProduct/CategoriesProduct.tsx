@@ -19,6 +19,9 @@ import TopSellingCom from "@/components/CategoriesPages/TopSelling/TopSellingCom
 import RunningOfferCom from "@/components/CategoriesPages/RunningOffer/RunningOfferCom";
 import CategoryShowcaseSections from "@/components/CategoriesPages/CategoryShowcaseSections";
 import BannerEscalate from "@/components/CategoriesPages/CategoriesBanner/BannerEscalate";
+import type { BannerEscalateResponse } from "@/components/CategoriesPages/CategoriesBanner/BannerEscalate";
+import type { CategoryShowcaseResponse } from "@/components/CategoriesPages/CategoryShowcaseSections";
+import type { PrefetchedQuery } from "@/lib/showcase-prefetch";
 
 // TrendingNowSectionCom will be passed as a prop from the Server Component
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -37,6 +40,9 @@ interface CategoriesProductProps {
   priceData?: PriceData;
   banners?: any;
   trendingNowSlot?: React.ReactNode;
+  /** Banner + Top Selling/Trending answers fetched on the server — see lib/showcase-prefetch.ts. */
+  initialBanner?: PrefetchedQuery<BannerEscalateResponse>;
+  initialShowcase?: PrefetchedQuery<CategoryShowcaseResponse>;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -55,6 +61,8 @@ function CategoriesProduct({
   priceData,
   banners,
   trendingNowSlot,
+  initialBanner,
+  initialShowcase,
 }: CategoriesProductProps) {
   const searchParams = useSearchParams();
 
@@ -561,11 +569,13 @@ function CategoriesProduct({
                 categorySlug={subCategorySlug}
                 queryParam="subCategory"
                 activeBrandSlug={selectedBrandSlug}
+                initial={initialBanner}
               />
               <CategoryShowcaseSections
                 categorySlug={subCategorySlug}
                 queryParam="subCategory"
                 activeBrandSlug={selectedBrandSlug}
+                initial={initialShowcase}
               />
             </>
           )}
