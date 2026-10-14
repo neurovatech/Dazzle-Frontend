@@ -765,7 +765,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
                   <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 rounded-xl px-4 py-3 mb-4">
                     <span className="text-lg">⏳</span>
                     <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">
-                      Pre-order variant. It takes 7–15 days to stock.
+                      It takes 7–15 days to stock.
                     </p>
                   </div>
                 )}
