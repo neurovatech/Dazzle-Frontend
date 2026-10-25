@@ -160,7 +160,7 @@ export default function TransparentProfitMeterArea({
       </button>
 
       {/* ── 3. Live Other Price Check button ── */}
-      <button onClick={handleOpenPriceCheck}
+      {/* <button onClick={handleOpenPriceCheck}
         className="flex-1 w-full mb-4 lg:mb-0 flex items-center justify-between gap-2 bg-[#EEEEEE] text-[#222222] font-semibold text-sm px-4 py-3 rounded-xl shadow-sm hover:opacity-90 transition-opacity cursor-pointer"
       >
         <div className="flex flex-col items-center gap-2 w-full">
@@ -173,7 +173,7 @@ export default function TransparentProfitMeterArea({
           </span>
           <span>Live other price check</span>
         </div>
-      </button>
+      </button> */}
 
       {/* ══ MODAL 1 — Transparent Profit Meter ══ */}
       <GlobalModal isOpen={showProfit} onClose={() => setShowProfit(false)} title="Transparent Profit Meter">
