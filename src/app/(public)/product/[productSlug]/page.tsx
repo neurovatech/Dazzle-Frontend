@@ -300,6 +300,8 @@ export default async function ProductDetailsPage({ params }: PageProps) {
         ? (product.allowPreOrder ? 'preorder' : 'out of stock')
         : 'in stock';
 
+        console.log(product, "productproductproductproduct")
+
   return (
     <div>
       {product && (

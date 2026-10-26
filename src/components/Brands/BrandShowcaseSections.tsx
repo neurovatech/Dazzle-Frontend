@@ -120,12 +120,22 @@ export default function BrandShowcaseSections({ brandSlug, activeCategory, topCa
     showcaseSlug = chipSlug;
     showcaseParam = "subCategory";
   } else if (topSlug) {
-    showcaseSlug = topSlug;
-    showcaseParam = "category";
+    showcaseSlug = brandSlug;
+    showcaseParam = "brand";
   } else {
     showcaseSlug = brandSlug;
     showcaseParam = "brand";
   }
+  // if (chipSlug) {
+  //   showcaseSlug = chipSlug;
+  //   showcaseParam = "subCategory";
+  // } else if (topSlug) {
+  //   showcaseSlug = topSlug;
+  //   showcaseParam = "category";
+  // } else {
+  //   showcaseSlug = brandSlug;
+  //   showcaseParam = "brand";
+  // }
 
   const { data, isLoading } = useQuery<BrandShowcaseResponse>({
     queryKey: ["brand-showcase", showcaseSlug, showcaseParam],
@@ -144,6 +154,11 @@ export default function BrandShowcaseSections({ brandSlug, activeCategory, topCa
     refetchOnWindowFocus: false,
     refetchOnReconnect:   false,
   });
+
+  console.log("data", `/showcase-escalate/${showcaseSlug}?${showcaseParam}=1`)
+  console.log("data", data)
+
+
   const topSelling = mapToCards(data?.data?.topSelling ?? []);
   const trending   = mapToCards(data?.data?.trending   ?? []);
 

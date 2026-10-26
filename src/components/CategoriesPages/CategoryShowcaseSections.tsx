@@ -120,6 +120,9 @@ export default function CategoryShowcaseSections({
     refetchOnReconnect:   false,
   });
 
+  console.log("data", `/showcase-escalate/${showcaseSlug}?${showcaseParam}=1`)
+  console.log("data", data)
+
   const topSelling = mapToCards(data?.data?.topSelling ?? []);
   const trending   = mapToCards(data?.data?.trending   ?? []);
 

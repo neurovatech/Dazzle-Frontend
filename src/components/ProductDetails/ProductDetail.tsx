@@ -120,6 +120,8 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
       initialData: initialVariants,
     });
 
+    console.log("variantApiData", variantApiData)
+
   const { data: planAccessoriesData } = useQuery<PlanAccessoriesResponse>({
     queryKey: ["plan-accessories", product?.productUuid],
     queryFn: () =>
@@ -183,7 +185,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
     variants.some(
       (v) =>
         v.attributes[group] === option &&
-        v.attributes["_isTba"] !== "true" &&
         Object.entries(selectedAttrs)
           .filter(([g]) => g !== group)
           .every(([g, val]) => v.attributes[g] === val),
@@ -318,8 +319,49 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
   // Shared by StickyPurchaseBar and the variant-selector banner — one
   // definition of "this exact selection doesn't exist as a real variant".
   const isSelectionUnavailable =
-    price === 0 ||
+    (!selectedVariant?.isTba && price === 0) ||
     (!isVariantLoading && variants.length > 0 && selectedVariant === null);
+
+  const variantNotice = useMemo(() => {
+    if (isSelectionUnavailable || !noticeVariant) return null;
+    if (noticeVariant.isTba) {
+      return {
+        icon: "⏳",
+        text: "Coming soon.",
+        containerClass:
+          "bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800/40",
+        textClass: "text-blue-700 dark:text-blue-400",
+      };
+    }
+    if (noticeVariant.isPreOrder) {
+      return {
+        icon: "⏳",
+        text: "Pre-order now to be among the first to receive it.",
+        containerClass:
+          "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/40",
+        textClass: "text-amber-700 dark:text-amber-400",
+      };
+    }
+    if (noticeVariant.isLs) {
+      return {
+        icon: "🏬",
+        text: "Available at our outlets. Check branch availability.",
+        containerClass:
+          "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/40",
+        textClass: "text-emerald-700 dark:text-emerald-400",
+      };
+    }
+    if (noticeVariant.isFs) {
+      return {
+        icon: "✈️",
+        text: "Ships from our overseas warehouse. Delivery in 7–15 days.",
+        containerClass:
+          "bg-sky-50 dark:bg-sky-950/30 border-sky-200 dark:border-sky-800/40",
+        textClass: "text-sky-700 dark:text-sky-400",
+      };
+    }
+    return null;
+  }, [isSelectionUnavailable, noticeVariant]);
 
   // Toast fires once per transition into "unavailable" (keyed on selectedAttrs
   // so re-selecting the same bad combination — e.g. toggling Color back and
@@ -640,7 +682,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
         qty={qty}
         onQtyChange={setQty}
         isUnavailable={isSelectionUnavailable}
-        isTba={product?.isTba ?? false}
+        isTba={selectedVariant?.isTba ?? product?.isTba ?? false}
         endOfLife={product?.endOfLife ?? false}
         onExploreFinancing={() => setEmiOpen(true)}
         onStoreAvailability={() => setStoreAvailabilityOpen(true)}
@@ -760,15 +802,19 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
                     </p>
                   </div>
                 )}
-                {/* Pre-order variant: the API sets isPreOrder on the variant row. */}
-                {!isSelectionUnavailable && noticeVariant?.isPreOrder && (
-                  <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 rounded-xl px-4 py-3 mb-4">
-                    <span className="text-lg">⏳</span>
-                    <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">
-                      It takes 7–15 days to stock.
+                {!isSelectionUnavailable && variantNotice && (
+                  <div
+                    className={`flex items-center gap-2 border rounded-xl px-4 py-3 mb-4 ${variantNotice.containerClass}`}
+                  >
+                    <span className="text-lg">{variantNotice.icon}</span>
+                    <p
+                      className={`text-sm font-semibold ${variantNotice.textClass}`}
+                    >
+                      {variantNotice.text}
                     </p>
                   </div>
                 )}
+
                 {colorVariantGroups.length > 0 && (
                   <ProductColorVariants
                     groups={colorVariantGroups}
