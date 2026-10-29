@@ -139,12 +139,15 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
 
   useEffect(() => {
     if (groups.length === 0) return;
+    // isEcd: true যে variant এ আছে সেটাকে default হিসেবে select করব
+    // যদি কোনো isEcd variant না থাকে তাহলে প্রথম variant select হবে
+    const ecdVariant = variants.find((v) => v.isEcd);
     const initial: Record<string, string> = {};
     groups.forEach((group) => {
-      const firstVal = variants.find((v) => v.attributes[group])?.attributes[
-        group
-      ];
-      if (firstVal) initial[group] = firstVal;
+      const val =
+        ecdVariant?.attributes[group] ??
+        variants.find((v) => v.attributes[group])?.attributes[group];
+      if (val) initial[group] = val;
     });
     setSelectedAttrs(initial);
   }, [groups, variants]);
@@ -172,9 +175,13 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
   const noticeVariant = useMemo(() => {
     if (selectedVariant) return selectedVariant;
     if (groups.length === 0 || Object.keys(selectedAttrs).length > 0) return null;
+    // Pre-hydration এ isEcd: true variant কে default হিসেবে ব্যবহার করব
+    const ecdVariant = variants.find((v) => v.isEcd);
     const defaults: Record<string, string | undefined> = {};
     groups.forEach((g) => {
-      defaults[g] = variants.find((v) => v.attributes[g])?.attributes[g];
+      defaults[g] =
+        ecdVariant?.attributes[g] ??
+        variants.find((v) => v.attributes[g])?.attributes[g];
     });
     return (
       variants.find((v) => groups.every((g) => v.attributes[g] === defaults[g])) ?? null
@@ -329,8 +336,8 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
         icon: "⏳",
         text: "Coming soon.",
         containerClass:
-          "bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800/40",
-        textClass: "text-blue-700 dark:text-blue-400",
+          "bg-[#E9CCAE]/10 dark:bg-[#3e3329] border-[#E9CCAE]/50 dark:border-[#4a3f36]",
+        textClass: "text-[#B57908] dark:text-[#E9CCAE]",
       };
     }
     if (noticeVariant.isPreOrder) {
@@ -355,9 +362,10 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
       return {
         icon: "✈️",
         text: "Ships from our overseas warehouse. Delivery in 7–15 days.",
+        // Project theme color — gold/warm palette (আগে sky/blue ছিল যেটা wrong দেখাচ্ছিল)
         containerClass:
-          "bg-sky-50 dark:bg-sky-950/30 border-sky-200 dark:border-sky-800/40",
-        textClass: "text-sky-700 dark:text-sky-400",
+          "bg-[#E9CCAE]/10 dark:bg-[#3e3329] border-[#E9CCAE]/50 dark:border-[#4a3f36]",
+        textClass: "text-[#B57908] dark:text-[#E9CCAE]",
       };
     }
     return null;
