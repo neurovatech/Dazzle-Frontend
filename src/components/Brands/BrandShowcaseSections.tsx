@@ -117,13 +117,13 @@ export default function BrandShowcaseSections({ brandSlug, activeCategory, topCa
   let showcaseParam: "subCategory" | "category" | "brand";
 
   if (chipSlug) {
-    showcaseSlug = chipSlug;
+    showcaseSlug = `${chipSlug}?subCategory=1`;
     showcaseParam = "subCategory";
   } else if (topSlug) {
-    showcaseSlug = brandSlug;
+    showcaseSlug = `${brandSlug}?categorySlug=${topCategory}`;
     showcaseParam = "brand";
   } else {
-    showcaseSlug = brandSlug;
+    showcaseSlug = `${brandSlug}?brand=1`;
     showcaseParam = "brand";
   }
   // if (chipSlug) {
@@ -141,7 +141,7 @@ export default function BrandShowcaseSections({ brandSlug, activeCategory, topCa
     queryKey: ["brand-showcase", showcaseSlug, showcaseParam],
     queryFn: () =>
       api.get<BrandShowcaseResponse>(
-        `/showcase-escalate/${showcaseSlug}?${showcaseParam}=1`,
+        `/showcase-escalate/${showcaseSlug}`,
       ),
     // Server-supplied answer (see lib/showcase-prefetch.ts) — only while the key it was
     // fetched for is still the one in use, so a chip change never shows stale data.
@@ -157,6 +157,7 @@ export default function BrandShowcaseSections({ brandSlug, activeCategory, topCa
 
   console.log("data", `/showcase-escalate/${showcaseSlug}?${showcaseParam}=1`)
   console.log("data", data)
+  console.log("data", brandSlug, topCategory)
 
 
   const topSelling = mapToCards(data?.data?.topSelling ?? []);
