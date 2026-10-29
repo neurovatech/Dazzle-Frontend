@@ -2,7 +2,6 @@
 
 /**
  * BrandShowcaseSections
- *
  * Fetches /showcase-escalate/{brandSlug}?brand=1 which returns:
  *   { data: { topselling: [...], trending: [...] } }
  *
@@ -10,7 +9,6 @@
  *   1. Top Selling  — same visual as TopSellingCom  (grey bg)
  *   2. Trending     — same visual as RunningOfferCom (brown bg)
  *
- * Both are hidden when empty.
  */
 
 import { useQuery } from "@tanstack/react-query";
@@ -143,8 +141,6 @@ export default function BrandShowcaseSections({ brandSlug, activeCategory, topCa
       api.get<BrandShowcaseResponse>(
         `/showcase-escalate/${showcaseSlug}`,
       ),
-    // Server-supplied answer (see lib/showcase-prefetch.ts) — only while the key it was
-    // fetched for is still the one in use, so a chip change never shows stale data.
     initialData:
       initial && initial.slug === showcaseSlug && initial.param === showcaseParam
         ? initial.response
@@ -157,7 +153,7 @@ export default function BrandShowcaseSections({ brandSlug, activeCategory, topCa
 
   console.log("data", `/showcase-escalate/${showcaseSlug}?${showcaseParam}=1`)
   console.log("data", data)
-  console.log("data", brandSlug, topCategory)
+  // console.log("data 99", brandSlug, topCategory)
 
 
   const topSelling = mapToCards(data?.data?.topSelling ?? []);

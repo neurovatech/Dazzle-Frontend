@@ -482,7 +482,6 @@ function CategoriesProductWithTopSale({
       {/* ── Brand filter tabs ── */}
       {brands.length > 0 && (
         <div className="md:px-12.5 px-4 mt-1 flex flex-row md:flex-wrap flex-nowrap gap-2 overflow-x-auto md:overflow-visible py-2 scrollbar-hide">
-          {/* All tab */}
           <button
             onClick={() => handleBrandSelect(null)}
             className={`px-4 py-1.5 rounded-full text-sm font-semibold border transition-colors whitespace-nowrap shrink-0 ${

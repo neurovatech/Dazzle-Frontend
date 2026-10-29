@@ -101,12 +101,14 @@ export default function CategoryShowcaseSections({
   // Otherwise → use category/subCategory slug with the appropriate param
   const showcaseSlug  = activeBrandSlug?.trim() || categorySlug;
   const showcaseParam = activeBrandSlug?.trim() ? "brand" : queryParam;
+  const showcaseQuery = `${activeBrandSlug}?categorySlug=${categorySlug}`;
 
+  // `/showcase-escalate/${showcaseSlug}?${showcaseParam}=1`,
   const { data, isLoading } = useQuery<CategoryShowcaseResponse>({
     queryKey: ["category-showcase", showcaseSlug, showcaseParam],
     queryFn: () =>
       api.get<CategoryShowcaseResponse>(
-        `/showcase-escalate/${showcaseSlug}?${showcaseParam}=1`,
+        `/showcase-escalate/${showcaseQuery}`,
       ),
     // Server-supplied answer (see lib/showcase-prefetch.ts) — only while the key it was
     // fetched for is still the one in use, so a chip change never shows stale data.
@@ -120,8 +122,13 @@ export default function CategoryShowcaseSections({
     refetchOnReconnect:   false,
   });
 
-  console.log("data", `/showcase-escalate/${showcaseSlug}?${showcaseParam}=1`)
-  console.log("data", data)
+  // console.log("data", `/showcase-escalate/${showcaseSlug}?${showcaseParam}=1`)
+  console.log("data", `/showcase-escalate/${showcaseQuery}`,)
+  console.log("data", data,)
+  
+  // /showcase-escalate/samsung?categorySlug=phones?brand=1
+  // /showcase-escalate/samsung?categorySlug=phones?brand=1
+  // /showcase-escalate/samsung?categorySlug=phones?brand=1
 
   const topSelling = mapToCards(data?.data?.topSelling ?? []);
   const trending   = mapToCards(data?.data?.trending   ?? []);
