@@ -13,6 +13,7 @@ import ProductColorVariants from "./ProductColorVariants";
 import DazzleCare, { CareOption } from "./DazzleCare";
 import ContactOptions from "./ContactOptions";
 import CheckAvailability from "./CheckAvailability";
+import CheckAvailabilityTwo from "./CheckAvailabilityTwo";
 import TransparentProfitMeterArea from "./TransparentProfitMeterArea";
 import FrequentlyBoughtTogether from "./FrequentlyBoughtTogether";
 import ProductSpecifications from "./ProductSpecifications";
@@ -352,7 +353,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
     if (noticeVariant.isLs) {
       return {
         icon: "🏬",
-        text: "Available at our outlets. Check branch availability.",
+        text: "Available at our outlets.",
         containerClass:
           "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/40",
         textClass: "text-emerald-700 dark:text-emerald-400",
@@ -816,9 +817,25 @@ const ProductDetail: React.FC<ProductDetailProps> = ({
                   >
                     <span className="text-lg">{variantNotice.icon}</span>
                     <p
-                      className={`text-sm font-semibold ${variantNotice.textClass}`}
+                      className={`text-sm font-semibold flex gap-2 ${variantNotice.textClass}`}
                     >
                       {variantNotice.text}
+
+
+{/* {noticeVariant?.isLs ? "Check branch availability" : ""} */}
+{noticeVariant?.isLs ? <CheckAvailabilityTwo
+                product={product}
+                selectedVariant={selectedVariant}
+                currentPrice={(selectedVariant && selectedVariant.price > 0
+                    ? selectedVariant.price
+                    : price ?? 0) + careTotalOffer}
+                externalEmiOpen={emiOpen}
+                onExternalEmiClose={() => setEmiOpen(false)}
+                externalAvailabilityOpen={storeAvailabilityOpen}
+                onExternalAvailabilityClose={() =>
+                  setStoreAvailabilityOpen(false)
+                }
+              /> : ""}
                     </p>
                   </div>
                 )}

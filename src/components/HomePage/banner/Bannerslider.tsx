@@ -140,7 +140,8 @@ function Bannerslider({
             the first Swiper slide ends up with, so nothing moves. */}
         {firstSlide?.imageUrl ? (
           <div className="hero-pre">
-            <div className="hero-pre-slide relative w-full h-60 max-[450px]:h-50 sm:h-75 md:h-110 rounded-[15px] overflow-hidden block mb-[30px]">
+            {/* <div className="hero-pre-slide relative w-full h-60 max-[450px]:h-50 sm:h-75 md:h-110 rounded-[15px] overflow-hidden block mb-[30px]"> */}
+            <div className="hero-pre-slide relative w-full aspect-[2/1] rounded-[15px] overflow-hidden block mb-[30px]">
               <BannerImage
                 src={firstSlide.imageUrl}
                 alt={firstSlide.title || "Hero Banner"}
@@ -197,7 +198,8 @@ function Bannerslider({
                 href={(slide.content as string) || "#"}
                 target={slide.openNewTab ? "_blank" : undefined}
                 rel={slide.openNewTab ? "noopener noreferrer" : undefined}
-                className="relative w-full h-60 max-[450px]:h-50 sm:h-75 md:h-110 rounded-[15px] overflow-hidden block"
+                // className="relative w-full h-60 max-[450px]:h-50 sm:h-75 md:h-110 rounded-[15px] overflow-hidden block"
+                className="relative w-full aspect-[2/1] rounded-[15px] overflow-hidden block"
               >
                 <BannerImage
                   src={slide.imageUrl}
