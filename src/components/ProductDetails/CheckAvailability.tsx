@@ -821,8 +821,19 @@ const MONTH_ORDER = [3, 6, 9, 12, 18, 24, 30, 36];
 
 /**
  * The API returns a raw HTML blob containing several <table>s.
- * The EMI table is the one whose header row includes "30 Months"
- * (the other charge tables in the same content max out at 36 without 30).
+ * We pick the FIRST table that has at least one "N Months" header cell.
+ * Previously this required "30 Months" specifically, but the actual data
+ * only goes up to 36 months (no 30-month column), so the old check always
+ * failed and returned an empty list.
+ *
+ * Table structure (Table 1 — Normal Transaction):
+ *   Row 0: colspan title row
+ *   Row 1: "Name of Banks" | "Minimum Transaction" | colspan "Percentage"
+ *   Row 2: (month header cells: 3 Months, 6 Months, …, 36 Months)
+ *   Row 3+: bank data rows — "Bank Name" | "Min Amt" | pct | pct | …
+ *
+ * The month-header row is identified dynamically, so the parser works even
+ * if the backend ever adds/removes columns in future.
  */
 function parseEmiTable(html: string): EmiBankRow[] {
   if (typeof window === "undefined" || !html) return [];
@@ -834,9 +845,10 @@ function parseEmiTable(html: string): EmiBankRow[] {
     for (const table of tables) {
       const rows = Array.from(table.querySelectorAll("tr"));
 
+      // Find the row that contains month-header cells (e.g. "3 Months", "36 Months")
       const headerRowIndex = rows.findIndex((tr) =>
         Array.from(tr.querySelectorAll("td, th")).some((cell) =>
-          /30\s*Months?/i.test(cell.textContent || ""),
+          /\d+\s*Months?/i.test(cell.textContent || ""),
         ),
       );
 
@@ -846,6 +858,8 @@ function parseEmiTable(html: string): EmiBankRow[] {
         rows[headerRowIndex].querySelectorAll("td, th"),
       );
 
+      // Build a map: column-index-in-header-row → month number
+      // Cells that don't match "N Months" get NaN and are skipped.
       const monthColumns: number[] = headerCells.map((cell) => {
         const match = (cell.textContent || "").match(/(\d+)\s*Months?/i);
         return match ? parseInt(match[1], 10) : NaN;
@@ -862,17 +876,18 @@ function parseEmiTable(html: string): EmiBankRow[] {
           .trim();
         if (!name) continue;
 
-        // Line the header up with this row from the RIGHT. The header row has
-        // an (empty) cell above the bank-name column, so its "3 Months" cell
-        // sits at the same index as the row's 3-month value; a header without
-        // that blank cell is one shorter, and the offset absorbs it. A fixed
-        // `idx + 1` shifted every value one month to the left of its heading
-        // (3 months showed the 6-month rate) and pushed 24/36 off the end.
+        // The data rows have: [BankName, MinTransaction?, pct, pct, …]
+        // The header row has: [BankName?, MinTransaction?, 3M, 6M, …]
+        // We align them from the RIGHT so that the month columns always
+        // line up regardless of whether there is a "Minimum Transaction"
+        // column present or not.
         const offset = cells.length - headerCells.length;
         const months: Record<number, number | null> = {};
         monthColumns.forEach((month, idx) => {
           if (!month || Number.isNaN(month)) return;
-          const raw = (cells[idx + offset]?.textContent || "")
+          const cellIdx = idx + offset;
+          if (cellIdx < 0 || cellIdx >= cells.length) return;
+          const raw = (cells[cellIdx]?.textContent || "")
             .replace(/\u00A0/g, " ")
             .trim();
           const pctMatch = raw.match(/([\d.]+)\s*%/);
@@ -1105,7 +1120,7 @@ export default function CheckAvailability({
 
    {/* ---------------- EMI Options Modal ---------------- */}
 <GlobalModal isOpen={emiModalOpen} onClose={closeEmiModal} title="EMI Options">
-  <div className="flex flex-row h-[85dvh] sm:h-[75vh] max-h-[600px] overflow-hidden">
+  <div className="flex flex-row h-[85dvh] sm:h-[75vh] max-h-150 overflow-hidden">
     {/* Left: bank list */}
     <div className="w-45 sm:w-64 border-r border-gray-100 dark:border-gray-800 flex flex-col shrink-0 min-h-0">
       <div className="px-2 sm:px-4 py-2.5 sm:py-3 border-b border-gray-100 dark:border-gray-800">

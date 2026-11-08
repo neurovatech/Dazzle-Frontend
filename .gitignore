@@ -32,7 +32,6 @@ yarn-error.log*
 proxy-log.txt
 
 # env files (can opt-in for committing if needed)
-.env*
 
 # vercel
 .vercel
@@ -40,3 +39,4 @@ proxy-log.txt
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+config.bat
